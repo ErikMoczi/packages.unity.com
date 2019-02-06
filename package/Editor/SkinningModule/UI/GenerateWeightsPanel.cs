@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -24,7 +24,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public GenerateWeightsPanel()
         {
-            AddStyleSheetPath("GenerateWeightsPanelStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("GenerateWeightsPanelStyle"));
             if (EditorGUIUtility.isProSkin)
                 AddToClassList("Dark");
             AddToClassList("AssociateBoneEnabled");
@@ -85,7 +85,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static GenerateWeightsPanel GenerateFromUXML()
         {
             var visualTree = Resources.Load("GenerateWeightsPanel") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<GenerateWeightsPanel>("GenerateWeightsPanel");
+            var clone = visualTree.CloneTree().Q<GenerateWeightsPanel>("GenerateWeightsPanel");
             clone.BindElements();
             return clone;
         }

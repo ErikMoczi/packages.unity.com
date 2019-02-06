@@ -3,9 +3,9 @@
 /**********************************************************************************************************************/
 
 #CopyImage {
-    image: resource("Icons/CopyIcon");
+    background-image: resource("Icons/CopyIcon");
 }
 
 #PasteImage {
-    image: resource("Icons/PasteIcon");
+    background-image: resource("Icons/PasteIcon");
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:eui="UnityEditor.Experimental.UIElements" xmlns:aui="UnityEditor.Experimental.U2D.Animation">
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:eui="UnityEditor.Experimental.UIElements" xmlns:aui="UnityEditor.Experimental.U2D.Animation">
   <aui:WeightPainterPanel name="WeightPainterPanel" text="Weight Painter" picking-mode="Ignore">
     <ui:PopupWindow text="Weight Painter">
       <ui:VisualElement class="form-row">
@@ -24,7 +24,7 @@
       <ui:VisualElement name="Amount" class="form-row">
         <ui:Label name="AmountLabel" text="Amount" tooltip ="Weight amount"/>
         <ui:VisualElement class="form-editor">
-          <ui:Slider name="AmountSlider" direction="Horizontal" lowValue="-1" highValue="1" />
+          <ui:Slider name="AmountSlider" direction="Horizontal" low-value="-1" high-value="1" />
           <eui:FloatField name="AmountField" class="slider-field" value="0" />
         </ui:VisualElement>
       </ui:VisualElement>
@@ -33,14 +33,14 @@
       <ui:VisualElement name="Hardness" class="form-row">
         <ui:Label name="HardnessLabel" text="Hardness" tooltip ="Brush hardness"/>
         <ui:VisualElement class="form-editor">
-          <ui:Slider name="HardnessSlider" direction="Horizontal" lowValue="1" highValue="100" />
+          <ui:Slider name="HardnessSlider" direction="Horizontal" low-value="1" high-value="100" />
           <eui:IntegerField name="HardnessField" class="slider-field" value="1" />
         </ui:VisualElement>
       </ui:VisualElement>
       <ui:VisualElement name="Step" class="form-row">
         <ui:Label name="StepLabel" text="Step" tooltip ="Brush step size"/>
         <ui:VisualElement class="form-editor">
-          <ui:Slider name="StepSlider" direction="Horizontal" lowValue="1" highValue="100" />
+          <ui:Slider name="StepSlider" direction="Horizontal" low-value="1" high-value="100" />
           <eui:IntegerField name="StepField" class="slider-field" value="1" />
         </ui:VisualElement>
       </ui:VisualElement>

@@ -3,8 +3,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using UnityEditor.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
 {
@@ -32,7 +31,12 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
         {
             return m_DataProvider.GetDataProvider<T>();
         }
-        
+
+        public virtual SpriteRect[] GetSpriteRects()
+        {
+            return GetSpriteEditorDataProvider().GetSpriteRects();
+        }
+
         public void OnEnable()
         {
             m_DataProvider = GetSpriteEditorDataProvider();
@@ -62,7 +66,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
 
         public VisualElement GetMainVisualContainer()
         {
-            return this.GetRootVisualContainer();
+            return this.rootVisualElement;
         }
 
         public void SetPreviewTexture(Texture2D texture, int width, int height)
@@ -97,8 +101,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
         private int m_Subdivide;
 
         [OneTimeTearDown]
-        public void FullTeardown()
+        public void OneTimeTeardown()
         {
+            DoOtherOneTimeTeardown();
+
             GenerateGeomertySettings.alphaTolerance = m_AlphaTolerance;
             GenerateGeomertySettings.outlineDetail = m_OutlineDetail;
             GenerateGeomertySettings.subdivide = m_Subdivide;
@@ -117,8 +123,10 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             GenerateGeomertySettings.alphaTolerance = 15;
             GenerateGeomertySettings.outlineDetail = 50;
             GenerateGeomertySettings.subdivide = 100;
-            
+
             CloneTextureForTest("Texture2");
+
+            DoOtherOneTimeSetup();
         }
 
         private static void CloneTextureForTest(string textureName)
@@ -143,16 +151,24 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
         [SetUp]
         public void Setup()
         {
-            SetupWindow();
+            m_Window = GetWindowFake();
             m_Window.Focus();
             m_Window.Show();
             m_Window.Activate();
             DoOtherSetup();
         }
 
-        public virtual void SetupWindow()
+        protected virtual SpriteEditorWindowFake GetWindowFake()
         {
-            m_Window = EditorWindow.GetWindow<SpriteEditorWindowFake>();
+            return EditorWindow.GetWindow<SpriteEditorWindowFake>();
+        }
+
+        public virtual void DoOtherOneTimeSetup()
+        {
+        }
+
+        public virtual void DoOtherOneTimeTeardown()
+        {
         }
 
         public virtual void DoOtherSetup()

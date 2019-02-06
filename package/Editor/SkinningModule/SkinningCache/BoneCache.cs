@@ -242,6 +242,12 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
+        internal override void OnDestroy()
+        {
+            base.OnDestroy();
+            m_ChainedChild = null;
+        }
+
         new public void SetParent(TransformCache newParent)
         {
             SetParent(newParent, true);

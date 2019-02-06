@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 using System;
 using System.Linq;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -302,6 +302,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             switch (args.dragAndDropPosition)
             {
                 case DragAndDropPosition.UponItem:
+                case DragAndDropPosition.OutsideItems:
                 case DragAndDropPosition.BetweenItems:
                 {
                     var newParent = args.parentItem as TreeViewItemBase<BoneCache>;
@@ -309,13 +310,14 @@ namespace UnityEditor.Experimental.U2D.Animation
                     validDrag = GetController().CanReparent(newParent, draggedRows);
                     if (args.performDrop && validDrag)
                     {
-                        GetController().ReparentItems(newParent, draggedRows);
+                        GetController().ReparentItems(newParent, draggedRows, args.insertAtIndex);
                         Reload();
+                        var selectedIDs = draggedRows.ConvertAll(b => b.id);
+				        SetSelection(selectedIDs, TreeViewSelectionOptions.RevealAndFrame);
+                        SelectionChanged(selectedIDs);
                     }
                     return validDrag ? DragAndDropVisualMode.Move : DragAndDropVisualMode.None;
                 }
-                case DragAndDropPosition.OutsideItems:
-                    return DragAndDropVisualMode.None; //TODO: Reparent to skeleton root
             }
 
             return DragAndDropVisualMode.None;

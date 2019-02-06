@@ -18,7 +18,7 @@ LayoutOverlay > #HorizontalToolbar {
 }
 
 LayoutOverlay > #HorizontalHolder {
-    flex: 1;
+    flex:1 0 auto;
     flex-direction: row;
 }
 
@@ -51,15 +51,15 @@ LayoutOverlay > #DropdownOverlay {
 }
 
 LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow {
-    flex : 1;
+    flex:1 0 auto;
     width : 280;
     padding-left : 12;
     padding-bottom : 15;
     padding-right : 12;
 }
 
-LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow > #ContentContainer {
-    flex: 1;
+LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow > #unity-content-container {
+    flex:1 0 auto;
 }
 
 LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow .form-row {
@@ -86,6 +86,10 @@ LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow .slider-field {
 
 LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow Label {
     flex: 4;
+    margin-right : 4;
+    margin-left : 4;
+    margin-top : 2;
+    margin-bottom : 2;
 }
 
 LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow EnumField {
@@ -104,8 +108,16 @@ LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow PopupField {
     align-self: center;
 }
 
+LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow .unity-slider__input{
+    margin-left :1;
+}
+
 LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow Slider {
     flex: 7;
+    margin-left : 4;
+    margin-top :2;
+    margin-right : 10;
+    margin-bottom :2
 }
 
 LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow Button {
@@ -115,11 +127,16 @@ LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow Button {
     padding-right: 0;
     padding-top: 0;
     padding-bottom: 3;
-    flex : 1;
+    flex : 1 0 auto;
+    margin-left :4;
+    margin-right :4;
+    border-left:6;
+    border-right:6;
+    border-bottom:4;
+    border-top:4;
 }
 
 LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow Toggle {
-    padding-top: 4;
-    padding-left: 0;
-    padding-bottom: 0;
+    align-self : center;
+    margin-bottom: 4;
 }

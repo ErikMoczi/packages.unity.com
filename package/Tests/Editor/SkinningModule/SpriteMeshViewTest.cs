@@ -252,7 +252,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteMesh
             Assert.AreEqual(testCase.expected, m_SpriteMeshView.DoSelectVertex(out additive));
             Assert.AreEqual(testCase.expectedAdditive, additive, "Additive state is wrong");
             if (testCase.expected)
-                guiWrapper.Received(1).Repaint();
+                guiWrapper.Received().Repaint();
         }
 
         private static IEnumerable<ActionTestCase> MoveVertexCases()
@@ -358,7 +358,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteMesh
             Assert.AreEqual(testCase.expected, m_SpriteMeshView.DoSelectEdge(out additive));
             Assert.AreEqual(testCase.expectedAdditive, additive, "Additive state is wrong");
             if (testCase.expected)
-                guiWrapper.Received(1).Repaint();
+                guiWrapper.Received().Repaint();
         }
 
         private static IEnumerable<ActionTestCase> SplitEdgeCases()

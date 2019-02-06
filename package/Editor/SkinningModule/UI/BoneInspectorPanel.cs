@@ -1,7 +1,7 @@
 using System;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -29,7 +29,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public BoneInspectorPanel()
         {
-            AddStyleSheetPath("BoneInspectorPanelStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("BoneInspectorPanelStyle"));
 
             RegisterCallback<MouseDownEvent>((e) => { e.StopPropagation(); });
             RegisterCallback<MouseUpEvent>((e) => { e.StopPropagation(); });
@@ -39,8 +39,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             m_BoneNameField = this.Q<TextField>("BoneNameField");
             m_BoneDepthField = this.Q<IntegerField>("BoneDepthField");
-            m_BoneNameField.OnValueChanged(BoneNameChanged);
-            m_BoneDepthField.OnValueChanged(BoneDepthChanged);
+            m_BoneNameField.RegisterValueChangedCallback(BoneNameChanged);
+            m_BoneDepthField.RegisterValueChangedCallback(BoneDepthChanged);
         }
 
         private void BoneNameChanged(ChangeEvent<string> evt)
@@ -56,7 +56,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static BoneInspectorPanel GenerateFromUXML()
         {
             var visualTree = Resources.Load("BoneInspectorPanel") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<BoneInspectorPanel>("BoneInspectorPanel");
+            var clone = visualTree.CloneTree().Q<BoneInspectorPanel>("BoneInspectorPanel");
             clone.BindElements();
             return clone;
         }

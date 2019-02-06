@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Experimental.U2D.Common;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -9,13 +9,13 @@ namespace UnityEditor.Experimental.U2D.Animation
     {
         public class BoneToolbarFactory : UxmlFactory<BoneToolbar, BoneToolbarUxmlTraits> {}
         public class BoneToolbarUxmlTraits : VisualElement.UxmlTraits {}
-        
+
         public event Action<Tools> SetSkeletonTool = (mode) => {};
         public SkinningCache skinningCache { get; private set; }
 
         public BoneToolbar()
         {
-            AddStyleSheetPath("BoneToolbarStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("BoneToolbarStyle"));
         }
 
         public void BindElements()
@@ -91,7 +91,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static BoneToolbar GenerateFromUXML()
         {
             var visualTree = Resources.Load("BoneToolbar") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<BoneToolbar>("BoneToolbar");
+            var clone = visualTree.CloneTree().Q<BoneToolbar>("BoneToolbar");
             clone.BindElements();
             return clone;
         }

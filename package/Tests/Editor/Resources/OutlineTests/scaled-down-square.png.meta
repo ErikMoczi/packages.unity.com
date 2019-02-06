@@ -1,10 +1,12 @@
 fileFormatVersion: 2
 guid: f73e22f3ba4cd88438061d5871590439
 TextureImporter:
-  fileIDToRecycleName:
-    21300000: scaled-down-square_0
+  internalIDToNameTable:
+  - first:
+      213: 21300000
+    second: scaled-down-square_0
   externalObjects: {}
-  serializedVersion: 7
+  serializedVersion: 8
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -111,6 +113,7 @@ TextureImporter:
       tessellationDetail: 0
       bones: []
       spriteID: 38a8d8f96f88be24ab386f82a34199f9
+      internalID: 21300000
       vertices: []
       indices: 
       edges: []
@@ -119,10 +122,12 @@ TextureImporter:
     physicsShape: []
     bones: []
     spriteID: 16746052fbd4d5844a234bfac56f1e0e
+    internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
+    secondaryTextures: []
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

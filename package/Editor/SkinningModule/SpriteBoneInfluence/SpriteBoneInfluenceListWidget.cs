@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -39,8 +39,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         public SpriteBoneInfluenceListWidget()
         {
             var visualTree = Resources.Load("SpriteBoneInfluenceListWidget") as VisualTreeAsset;
-            var ve = visualTree.CloneTree(null).Q("Container");
-            ve.AddStyleSheetPath("SpriteBoneInfluenceListWidgetStyle");
+            var ve = visualTree.CloneTree().Q("Container");
+            ve.styleSheets.Add(Resources.Load<StyleSheet>("SpriteBoneInfluenceListWidgetStyle"));
             if (EditorGUIUtility.isProSkin)
                 AddToClassList("Dark");
             this.Add(ve);

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:aui="UnityEditor.Experimental.U2D.Animation">
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:aui="UnityEditor.Experimental.U2D.Animation">
         <aui:WeightToolbar name="WeightToolbar">
             <ui:PopupWindow name="PopupWindow" text="Weights">
             <ui:Button name="AutoGenerateWeight" tooltip="Wizard to generate, normalize and clear weights">

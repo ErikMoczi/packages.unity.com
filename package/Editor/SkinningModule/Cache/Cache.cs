@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -64,6 +65,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_UndoOperationName = operationName;
                 undo.RegisterCompleteObjectUndo(this, m_UndoOperationName);
                 undo.RegisterCompleteObjectUndo(m_CacheObjects.ToArray(), m_UndoOperationName);
+                undo.RegisterCompleteObjectUndo(m_RemovedCacheObjects.ToArray(), m_UndoOperationName);
             }
         }
 
@@ -79,13 +81,28 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public T CreateCache<T>() where T : CacheObject
         {
-            var cacheObject = CacheObject.Create<T>(this);
+            var cacheObject = FindRemovedCacheObject<T>();
+
+            if (cacheObject != null)
+            {
+                m_RemovedCacheObjects.Remove(cacheObject);
+                cacheObject.OnEnable();
+            }
+            else
+            {
+                cacheObject = CacheObject.Create<T>(this);
+            }
             
             m_CacheObjects.Add(cacheObject);
 
             cacheObject.OnCreate();
             
             return cacheObject;
+        }
+
+        private T FindRemovedCacheObject<T>() where T : CacheObject
+        {
+            return m_RemovedCacheObjects.FirstOrDefault((o) => o.GetType().Equals(typeof(T))) as T;
         }
 
         public void Destroy(CacheObject cacheObject)

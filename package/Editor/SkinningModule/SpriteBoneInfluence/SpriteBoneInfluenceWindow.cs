@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
-    using PopupWindow = UnityEngine.Experimental.UIElements.PopupWindow;
+    using PopupWindow = UnityEngine.UIElements.PopupWindow;
 
     internal interface ISpriteBoneInfluenceWindow
     {
@@ -42,7 +42,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         static internal SpriteBoneInfluenceWindow CreateFromUXML(string uxml)
         {
             var visualTree = Resources.Load(uxml) as VisualTreeAsset;
-            var ve = visualTree.CloneTree(null).Q("SpriteBoneInfluenceWindow") as SpriteBoneInfluenceWindow;
+            var ve = visualTree.CloneTree().Q("SpriteBoneInfluenceWindow") as SpriteBoneInfluenceWindow;
             ve.BindElements();
             return ve;
         }
@@ -55,7 +55,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_InfluencesList.onSelectionChanged = (s) => onSelectionChanged(s);
             m_InfluencesList.GetController = InternalGetController;
             m_HeaderLabel = this.Q<PopupWindow>();
-            this.AddStyleSheetPath("SpriteBoneInfluenceWindowStyle");
+            this.styleSheets.Add(Resources.Load<StyleSheet>("SpriteBoneInfluenceWindowStyle"));
         }
 
         SpriteBoneInflueceToolController InternalGetController()

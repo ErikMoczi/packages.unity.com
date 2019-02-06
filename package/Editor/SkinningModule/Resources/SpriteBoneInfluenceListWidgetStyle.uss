@@ -1,6 +1,6 @@
 #HeaderImage
 {
-    background-image: resource("Builtin Skins/LightSkin/Images/rol-header.png");
+    background-image: resource("Builtin Skins/LightSkin/images/rol-header.png");
     slice-left: 4;
     slice-right: 4;
     slice-top: 3;
@@ -18,7 +18,7 @@
 
 .Dark . #HeaderImage
 {
-    background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-header.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/d_rol-header.png");
 }
 
 
@@ -29,18 +29,21 @@
 
 #ListView
 {
-    background-image: resource("Builtin Skins/LightSkin/Images/rol-body.png");
+    background-image: resource("Builtin Skins/LightSkin/images/rol-body.png");
+    flex: 1 auto 0;
     slice-left: 6;
     slice-right: 3;
     slice-bottom: 6;
     height : 230;
     border-bottom : 5;
+    border-left : 1;
+    border-right : 1;
 }
 
 
 .Dark . #ListView
 {
-    background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-body.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/d_rol-body.png");
 }
 
 #ListRow
@@ -68,59 +71,77 @@
     background-color: #3C3C3C;
 }
 
-SelectListView :selected
+SelectListView . .unity-list-view__item--selected
 {
-    background-image: resource("Builtin Skins/LightSkin/Images/ro_selected_l.png");
+    background-image: resource("Builtin Skins/LightSkin/images/ro_selected_l.png");
     slice-left: 2;
     slice-right: 2;
     slice-bottom: 3;
 }
 
-.Dark . SelectListView :selected
+.Dark . SelectListView . .unity-list-view__item--selected
 {
-    background-image: resource("Builtin Skins/DarkSkin/Images/ro_selected_d.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/ro_selected_d.png");
 }
 
 ScrollView
 {
-    flex :1;
+    flex :1 0 auto;
 }
 
 .Dark . #ContentBackgroundImage
 {
-     background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-body.png");
+     background-image: resource("Builtin Skins/DarkSkin/images/d_rol-body.png");
 }
 
 #ButtonsContainer
 {
     flex-direction : row;
     align-self : flex-end;
-    background-image: resource("Builtin Skins/LightSkin/Images/rol-tab.png");
+    background-image: resource("Builtin Skins/LightSkin/images/rol-tab.png");
     slice-left: 4;
     slice-right: 4;
     slice-top: 3;
     slice-bottom: 4;
     height: 17;
-    position-top : -2;
+    width : 48;
+    position-top : -3;
 }
 
 .Dark . #ButtonsContainer
 {
-    background-image: resource("Builtin Skins/DarkSkin/Images/d_rol-tab.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/d_rol-tab.png");
 }
 
 #AddButton
 {
     background-image: resource("Icons/Toolbar Plus.png");
+}
+
+.unity-button
+{
+    flex : 0 0 auto;
+    slice-left: 0;
+    slice-right: 0;
+    slice-top: 0;
+    slice-bottom: 0;
+    align-self: center;
+    background-size : scale-to-fit;
+    background-color: rgb(221, 221, 221);
+    margin-top : 0;
+    margin-bottom : 0;
+    margin-left : 2;
+    margin-right : 2;
+    padding-top : 0;
+    padding-bottom : 0;
+    padding-left : 0;
+    padding-right : 0;
+    min-height : 0;
     height : 16;
     width : 16;
-    align-self: center;
-    background-size : 1;
-    background-color: rgb(221, 221, 221);
 }
 
 #AddButton:hover {
-    /* GUIState.textColor */
     background-color: rgb(255, 255, 255);
 }
 
@@ -137,11 +158,6 @@ ScrollView
 #RemoveButton
 {
     background-image: resource("Icons/Toolbar Minus.png");
-    height : 16;
-    width : 16;
-    align-self: center;
-    background-size : 1;
-    background-color: rgb(221, 221, 221);
 }
 
 .Dark . #RemoveButton
@@ -163,4 +179,12 @@ ScrollView
 
 Button:disabled {
     opacity: 0.5;
+}
+
+LayoutOverlay > #HorizontalHolder > #RightOverlay PopupWindow Slider {
+    flex: 1 0 0;
+    margin-left : 0;
+    margin-top :16;
+    margin-right : 0;
+    margin-bottom :16;
 }

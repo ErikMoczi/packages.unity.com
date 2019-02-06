@@ -3,7 +3,7 @@ using UnityEngine.Experimental.U2D.Common;
 using UnityEditor.Experimental.U2D.Layout;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -25,8 +25,8 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static VisibilityToolWindow CreateFromUXML()
         {
             var visualTree = Resources.Load("VisibilityToolWindow") as VisualTreeAsset;
-            var ve = visualTree.CloneTree(null).Q("VisibilityToolWindow") as VisibilityToolWindow;
-            ve.AddStyleSheetPath("VisibilityTool");
+            var ve = visualTree.CloneTree().Q("VisibilityToolWindow") as VisibilityToolWindow;
+            ve.styleSheets.Add(Resources.Load<StyleSheet>("VisibilityTool"));
             if (EditorGUIUtility.isProSkin)
                 ve.AddToClassList("Dark");
             ve.BindElements();
@@ -38,9 +38,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_SelectorContainer = this.Q("VisibilityToolSelection");
             m_Container = this.Q("VisibilityToolContainer");
             m_BoneOpacitySlider = this.Q<Slider>("BoneOpacitySlider");
-            m_BoneOpacitySlider.valueChanged += OnBoneOpacitySliderValueChangd;
+            m_BoneOpacitySlider.RegisterValueChangedCallback(OnBoneOpacitySliderValueChangd);
             m_MeshOpacitySlider = this.Q<Slider>("MeshOpacitySlider");
-            m_MeshOpacitySlider.valueChanged += OnMeshOpacitySliderValueChangd;
+            m_MeshOpacitySlider.RegisterValueChangedCallback(OnMeshOpacitySliderValueChangd);
             m_Tabs = new List<Button>();
             m_SelectorContainer.Clear();
         }
@@ -53,22 +53,24 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public void Show()
         {
+            m_Container.Clear();
             this.SetHiddenFromLayout(false);
         }
 
         public void Hide()
         {
+            m_Container.Clear();
             this.SetHiddenFromLayout(true);
         }
 
-        void OnBoneOpacitySliderValueChangd(float value)
+        void OnBoneOpacitySliderValueChangd(ChangeEvent<float> evt)
         {
-            onBoneOpacitySliderChange(value);
+            onBoneOpacitySliderChange(evt.newValue);
         }
 
-        void OnMeshOpacitySliderValueChangd(float value)
+        void OnMeshOpacitySliderValueChangd(ChangeEvent<float> evt)
         {
-            onMeshOpacitySliderChange(value);
+            onMeshOpacitySliderChange(evt.newValue);
         }
 
         public void SetBoneOpacitySliderValue(float value)

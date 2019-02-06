@@ -220,19 +220,24 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void AssociateSelectedBoneToCharacterPart()
         {
+            var mesh = meshTool.mesh;
+
             if (skinningCache.hasCharacter 
                 && skinningCache.mode == SkinningMode.Character
                 && m_WeightPainterPanel.boneIndex != -1 
-                && meshTool.mesh != null)
+                && mesh != null)
             {
-                var skeleton = skinningCache.GetEffectiveSkeleton(meshTool.mesh.sprite);
-                if (skeleton != null)
+                var skeleton = skinningCache.character.skeleton;
+
+                Debug.Assert(skeleton != null);
+
+                var bone = skeleton.GetBone(m_WeightPainterPanel.boneIndex);
+
+                if (!mesh.ContainsBone(bone))
                 {
-                    var bone = skeleton.GetBone(m_WeightPainterPanel.boneIndex).ToCharacterIfNeeded();
-                    var bonesInMesh = meshTool.mesh.bones.ToSpriteSheetIfNeeded();
-                    if (!bonesInMesh.Contains(bone))
+                    using (skinningCache.UndoScope(TextContent.addBoneInfluence))
                     {
-                        var characterPart = skinningCache.selectedSprite.GetCharacterPart();
+                        var characterPart = mesh.sprite.GetCharacterPart();
                         var characterBones = characterPart.bones.ToList();
                         characterBones.Add(bone);
                         characterPart.bones = characterBones.ToArray();

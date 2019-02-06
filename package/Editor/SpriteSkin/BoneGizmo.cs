@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Animation;
 using UnityEngine.Experimental.U2D.Common;
 
@@ -29,11 +30,16 @@ namespace UnityEditor.Experimental.U2D.Animation
             RegisterCallbacks();
         }
 
+        internal void ClearSpriteBoneCache()
+        {
+            boneGizmoController.ClearSpriteBoneCache();
+        }
+
         private void RegisterCallbacks()
         {
             EditorApplication.hierarchyChanged += OnHierarchyChange;
             Selection.selectionChanged += OnSelectionChanged;
-            SceneView.onSceneGUIDelegate += OnSceneGUI;
+            SceneView.duringSceneGui += OnSceneGUI;
         }
 
         private void OnSceneGUI(SceneView sceneView)
@@ -57,6 +63,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private const float kFadeStart = 0.75f;
         private const float kFadeEnd = 1.75f;
         private List<SpriteSkin> m_SkinComponents = new List<SpriteSkin>();
+        private Dictionary<Sprite, SpriteBone[]> m_SpriteBones = new Dictionary<Sprite, SpriteBone[]>();
         private Dictionary<Transform, Vector2> m_BoneData = new Dictionary<Transform, Vector2>();
         private HashSet<Transform> m_CachedBones = new HashSet<Transform>();
         private HashSet<Transform> m_SelectionRoots = new HashSet<Transform>();
@@ -148,6 +155,11 @@ namespace UnityEditor.Experimental.U2D.Animation
             SceneView.RepaintAll();
         }
 
+        internal void ClearSpriteBoneCache()
+        {
+            m_SpriteBones.Clear();
+        }
+
         private void PrepareBones()
         {
             if (!view.CanLayout())
@@ -167,6 +179,21 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
+        private SpriteBone[] GetSpriteBones(SpriteSkin spriteSkin)
+        {
+            Debug.Assert(spriteSkin.isValid);
+
+            var sprite = spriteSkin.spriteRenderer.sprite;
+            SpriteBone[] spriteBones;
+            if (!m_SpriteBones.TryGetValue(sprite, out spriteBones))
+            {
+                spriteBones = sprite.GetBones();
+                m_SpriteBones[sprite] = sprite.GetBones();
+            }
+            
+            return spriteBones;
+        }
+
         private void PrepareBones(SpriteSkin spriteSkin)
         {
             Debug.Assert(spriteSkin != null);
@@ -177,8 +204,11 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             var sprite = spriteSkin.spriteRenderer.sprite;
             var boneTransforms = spriteSkin.boneTransforms;
-            var spriteBones = spriteSkin.spriteBones;
+            var spriteBones = GetSpriteBones(spriteSkin);
             var alpha = 1f;
+
+            if (spriteBones == null)
+                return;
             
             for (int i = 0; i < boneTransforms.Length; ++i)
             {

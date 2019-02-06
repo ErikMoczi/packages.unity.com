@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Layout
 {
@@ -11,18 +10,18 @@ namespace UnityEditor.Experimental.U2D.Layout
 
 		/*
 		private ButtonGroup m_ButtonGroup;
-		
+
 		public DropdownMenu()
 		{
 			RegisterCallback<FocusOutEvent>(OnFocusOut, Capture.NoCapture);
 			RegisterCallback<MouseLeaveEvent>(OnMouseLeaveEvent);
 		}
-		
+
 		public void InitialiseWithButtonGroup(ButtonGroup buttonGroup)
 		{
 			if (m_ButtonGroup == buttonGroup)
 				return;
-			
+
 			m_ButtonGroup = buttonGroup;
 			var buttonGroupLocalPosition = parent.WorldToLocal(new Vector2(buttonGroup.worldBound.x, buttonGroup.worldBound.y));
 			style.positionType = PositionType.Absolute;
@@ -37,7 +36,7 @@ namespace UnityEditor.Experimental.U2D.Layout
 		{
 			Close();
 		}
-		
+
 		private void OnFocusOut(FocusOutEvent evt)
 		{
 			Close();
@@ -48,7 +47,7 @@ namespace UnityEditor.Experimental.U2D.Layout
 			foreach (var element in contentContainer.Children())
 				m_ButtonGroup.elements.Add(element);
 			this.contentContainer.Clear();
-			
+
 			style.width = 0;
 			style.height = 0;
 			m_ButtonGroup = null;

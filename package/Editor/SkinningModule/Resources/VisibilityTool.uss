@@ -1,17 +1,17 @@
 VisibilityToolWindow {
-    flex: 1;
+    flex:1 0 auto;
 }
 
 BoneVisibilityToolView{
-    flex : 1;
+    flex:1 0 auto;
 }
 
 SpriteVisibilityToolView{
-    flex : 1;
+    flex:1 0 auto;
 }
 
 MeshVisibilityToolView{
-    flex : 1;
+    flex:1 0 auto;
 }
 
 #VisibilityToolSelection{
@@ -20,16 +20,16 @@ MeshVisibilityToolView{
 }
 
 #VisibilityToolContainer{
-    flex : 1;
+    flex:1 0 auto;
 }
 
 #VisibilityToolSelection > Label{
-    flex : 1;
+    flex:1 0 auto;
     flex-grow : 1;
 }
 
 #HierarchyToolButtonImage{
-    image: resource("Icons/HierarchyTool");
+    background-image: resource("Icons/HierarchyTool");
 }
 
 #VisibilityToolSelection > Button{
@@ -56,7 +56,7 @@ MeshVisibilityToolView{
     slice-top: 4;
     slice-right: 6;
     slice-bottom: 4;
-    flex :1;
+    flex :1 0 auto;
     margin-top: 0;
     margin-left: 0;
     margin-bottom: 0;
@@ -76,14 +76,13 @@ MeshVisibilityToolView{
 }
 
 .visibilityToolTab:checked{
-    background-image: resource("Builtin Skins/LightSkin/Images/tabbar on f.png");
+    background-image: resource("Builtin Skins/LightSkin/images/tabbar on f.png");
     text-color: #505050;
-    flex :1;
+    flex :1 0 auto;
     slice-left: 6;
     slice-top: 4;
     slice-right: 6;
     slice-bottom: 4;
-    flex :1;
     margin-top: 0;
     margin-left: 0;
     margin-bottom: 0;
@@ -99,18 +98,17 @@ MeshVisibilityToolView{
 }
 
 .visibilityToolTabDark:checked{
-    background-image: resource("Builtin Skins/DarkSkin/Images/tabbar on f.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/tabbar on f.png");
     text-color: #B4B4B4;
 }
 
 .visibilityToolTab:hover:active:checked{
-    background-image: resource("Builtin Skins/LightSkin/Images/tabbar on.png");
-    flex :1;
+    background-image: resource("Builtin Skins/LightSkin/images/tabbar on.png");
+    flex :1 0 auto;
     slice-left: 6;
     slice-top: 4;
     slice-right: 6;
     slice-bottom: 4;
-    flex :1;
     margin-top: 0;
     margin-left: 0;
     margin-bottom: 0;
@@ -126,18 +124,17 @@ MeshVisibilityToolView{
 }
 
 .visibilityToolTabDark:hover:active:checked{
-    background-image: resource("Builtin Skins/DarkSkin/Images/tabbar on.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/tabbar on.png");
 }
 
 .visibilityToolTab:hover:active{
-    background-image: resource("Builtin Skins/LightSkin/Images/tabbar on.png");
+    background-image: resource("Builtin Skins/LightSkin/images/tabbar on.png");
     text-color: #505050;
-    flex :1;
+    flex :1 0 auto;
     slice-left: 6;
     slice-top: 4;
     slice-right: 6;
     slice-bottom: 4;
-    flex :1;
     margin-top: 0;
     margin-left: 0;
     margin-bottom: 0;
@@ -153,7 +150,7 @@ MeshVisibilityToolView{
 }
 
 .visibilityToolTabDark:hover:active{
-    background-image: resource("Builtin Skins/DarkSkin/Images/tabbar on.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/tabbar on.png");
 }
 
 #OpacitySliderGroup
@@ -167,14 +164,14 @@ MeshVisibilityToolView{
 {
     flex-direction:row;
     height : 16;
-    flex :1;
+    flex :1 0 auto;
 }
 
 #MeshOpacitySliderGroup
 {
     flex-direction:row;
     height : 16;
-    flex :1;
+    flex :1 0 auto;
 }
 
 #MeshOpacitySlider
@@ -190,28 +187,28 @@ MeshVisibilityToolView{
 
 #BoneOpacitySliderIcon
 {
-    image: resource("Icons/SpriteIconsLight/SpriteEditor/Bone");
+    background-image: resource("Icons/SpriteIconsLight/SpriteEditor/Bone");
     width : 16;
     height : 16;
 }
 
 #MeshOpacitySliderIcon
 {
-    image: resource("Icons/SpriteIconsLight/SpriteEditor/Mesh");
+    background-image: resource("Icons/SpriteIconsLight/SpriteEditor/Mesh");
     width : 16;
     height : 16;
 }
 
 .Dark #BoneOpacitySliderIcon
 {
-    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Bone");
+    background-image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Bone");
     width : 16;
     height : 16;
 }
 
 .Dark  #MeshOpacitySliderIcon
 {
-    image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Mesh");
+    background-image: resource("Icons/SpriteIconsDark/SpriteEditor/d_Mesh");
     width : 16;
     height : 16;
 }

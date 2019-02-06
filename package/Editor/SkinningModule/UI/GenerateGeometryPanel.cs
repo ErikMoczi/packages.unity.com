@@ -1,8 +1,7 @@
 using System;
-using UnityEditor.Experimental.U2D.Layout;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -34,7 +33,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public GenerateGeometryPanel()
         {
-            AddStyleSheetPath("GenerateGeometryPanelStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("GenerateGeometryPanelStyle"));
             RegisterCallback<MouseDownEvent>((e) => { e.StopPropagation(); });
             RegisterCallback<MouseUpEvent>((e) => { e.StopPropagation(); });
         }
@@ -69,7 +68,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             });
             m_AlphaToleranceField.SetValueWithoutNotify(GenerateGeomertySettings.alphaTolerance);
             slider.SetValueWithoutNotify(GenerateGeomertySettings.alphaTolerance);
-            
+
             slider = this.Q<Slider>("SubdivideSlider");
             LinkSliderToFloatField(slider, m_SubdivideField,(x) =>
             {
@@ -77,9 +76,9 @@ namespace UnityEditor.Experimental.U2D.Animation
             });
             m_SubdivideField.SetValueWithoutNotify(GenerateGeomertySettings.subdivide);
             slider.SetValueWithoutNotify(GenerateGeomertySettings.subdivide);
-            
+
             m_Toggle.value = GenerateGeomertySettings.generateWeights;
-            m_Toggle.OnValueChanged((evt) =>
+            m_Toggle.RegisterValueChangedCallback((evt) =>
             {
                 GenerateGeomertySettings.generateWeights = evt.newValue;
             });
@@ -87,17 +86,17 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void LinkSliderToFloatField(Slider slider, IntegerField field, Action<int> updatePreferenceAction)
         {
-            slider.valueChanged += (val) =>
+            slider.RegisterValueChangedCallback((evt) =>
                 {
-                    if (!val.Equals(field.value))
+                    if (!evt.newValue.Equals(field.value))
                     {
-                        var intValue = Mathf.RoundToInt(val);
+                        var intValue = Mathf.RoundToInt(evt.newValue);
                         field.SetValueWithoutNotify(intValue);
                         updatePreferenceAction(intValue);
                     }
-                        
-                };
-            field.OnValueChanged((evt) =>
+
+                });
+            field.RegisterValueChangedCallback((evt) =>
                 {
                     var newValue = evt.newValue;
                     if (!newValue.Equals(slider.value))
@@ -133,7 +132,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static GenerateGeometryPanel GenerateFromUXML()
         {
             var visualTree = Resources.Load("GenerateGeometryPanel") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<GenerateGeometryPanel>("GenerateGeometryPanel");
+            var clone = visualTree.CloneTree().Q<GenerateGeometryPanel>("GenerateGeometryPanel");
             clone.BindElements();
             return clone;
         }

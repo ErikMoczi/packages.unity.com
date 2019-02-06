@@ -2,8 +2,20 @@
     "name": "Unity.2D.Animation.Runtime",
     "references": [
         "Unity.2D.Common.Runtime",
-        "Unity.InternalAPIEngineBridge.001"
+        "Unity.InternalAPIEngineBridge.001",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.Entities.Hybrid",
+        "Unity.Transforms",
+        "Unity.Burst",
+        "Unity.Transforms.Hybrid"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
 }

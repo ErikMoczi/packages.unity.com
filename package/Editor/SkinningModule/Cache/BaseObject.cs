@@ -50,8 +50,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             s_Objects.Add(m_InstanceID, this);
         }
 
-        protected virtual void OnEnable() {}
-        protected virtual void OnDestroy() {}
+        internal virtual void OnEnable() {}
+        internal virtual void OnDestroy() {}
 
         public int GetInstanceID()
         {
@@ -102,7 +102,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             return EditorUtility.InstanceIDToObject(instanceID) as BaseObject;
         }
 
-        protected virtual void OnEnable() {}
+        internal virtual void OnEnable() {}
         internal virtual void OnDestroy() {}
     }
 #endif

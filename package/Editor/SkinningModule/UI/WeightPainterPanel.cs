@@ -1,9 +1,8 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -25,7 +24,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private PopupField<string> m_BonePopup;
         private bool m_SliderActive = false;
         private WeightInspectorIMGUIPanel m_WeightInspectorPanel;
-        private UnityEngine.Experimental.UIElements.PopupWindow m_PopupWindow;
+        private UnityEngine.UIElements.PopupWindow m_PopupWindow;
 
         public event Action<int> bonePopupChanged = (s) => {};
         public event Action sliderStarted = () => {};
@@ -103,7 +102,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public WeightPainterPanel()
         {
-            AddStyleSheetPath("WeightPainterPanelStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("WeightPainterPanelStyle"));
             if (EditorGUIUtility.isProSkin)
                 AddToClassList("Dark");
 
@@ -126,22 +125,22 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_AmountField = this.Q<FloatField>("AmountField");
             m_AmountField.isDelayed = true;
             m_WeightInspectorPanel = this.Q<WeightInspectorIMGUIPanel>("WeightsInspector");
-            m_PopupWindow = this.Q<UnityEngine.Experimental.UIElements.PopupWindow>();
+            m_PopupWindow = this.Q<UnityEngine.UIElements.PopupWindow>();
 
             LinkSliderToIntegerField(this.Q<Slider>("HardnessSlider"), m_HardnessField);
             LinkSliderToIntegerField(this.Q<Slider>("StepSlider"), m_StepField);
 
-            m_ModeField.OnValueChanged((evt) =>
+            m_ModeField.RegisterValueChangedCallback((evt) =>
                 {
                     SetupMode();
                 });
 
-            m_AmountSlider.valueChanged += (val) =>
+            m_AmountSlider.RegisterValueChangedCallback((evt) =>
                 {
-                    if (!val.Equals(m_AmountField.value))
-                        m_AmountField.value = (float)System.Math.Round((double)val, 2);
-                };
-            m_AmountField.OnValueChanged((evt) =>
+                    if (!evt.Equals(m_AmountField.value))
+                        m_AmountField.value = (float)System.Math.Round((double)evt.newValue, 2);
+                });
+            m_AmountField.RegisterValueChangedCallback((evt) =>
                 {
                     var newValue = Mathf.Clamp(evt.newValue, m_AmountSlider.lowValue, m_AmountSlider.highValue);
 
@@ -190,14 +189,14 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private void LinkSliderToIntegerField(Slider slider, IntegerField field)
         {
-            slider.valueChanged += (val) =>
+            slider.RegisterValueChangedCallback((evt) =>
                 {
-                    if (!val.Equals(field.value))
-                        field.value = Mathf.RoundToInt(val);
-                };
-            field.OnValueChanged((evt) =>
+                    if (!evt.newValue.Equals(field.value))
+                        field.value = Mathf.RoundToInt(evt.newValue);
+                });
+            field.RegisterValueChangedCallback((evt) =>
                 {
-                    if (!evt.newValue.Equals(slider.value))
+                    if (!evt.newValue.Equals((int)slider.value))
                         slider.value = evt.newValue;
                 });
         }
@@ -223,7 +222,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             m_BonePopup = new PopupField<string>(new List<string>(names), 0);
             m_BonePopup.name = "BonePopupField";
-            m_BonePopup.OnValueChanged((evt) =>
+            m_BonePopup.RegisterValueChangedCallback((evt) =>
                 {
                     bonePopupChanged(boneIndex);
                 });
@@ -239,7 +238,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static WeightPainterPanel GenerateFromUXML()
         {
             var visualTree = Resources.Load("WeightPainterPanel") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<WeightPainterPanel>("WeightPainterPanel");
+            var clone = visualTree.CloneTree().Q<WeightPainterPanel>("WeightPainterPanel");
 
             // EnumField can only get type of Enum from the current running assembly when defined through UXML
             // Manually create the EnumField here

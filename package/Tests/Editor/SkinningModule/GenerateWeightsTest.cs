@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
 {

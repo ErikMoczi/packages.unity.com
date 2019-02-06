@@ -5,8 +5,8 @@ using UnityEngine;
 using UnityEditor.Experimental.U2D.Layout;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Experimental.U2D.Common;
-using UnityEngine.Experimental.UIElements;
 using Debug = UnityEngine.Debug;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -297,14 +297,17 @@ namespace UnityEditor.Experimental.U2D.Animation
             var sprite = characterPart.sprite;
             var characterPartBones = characterPart.bones;
             var newBones = new List<BoneCache>(characterPartBones);
-            var hasNullBones = newBones.Contains(null);
-            newBones.RemoveAll(b => IsRemoved(b));
+            newBones.RemoveAll(b =>
+            {
+                return b == null || IsRemoved(b) || b.skeleton != character.skeleton;
+            });
+            var removedBonesCount = characterPartBones.Length - newBones.Count;
 
             characterPartBones = newBones.ToArray();
             characterPart.bones = characterPartBones;
             sprite.UpdateMesh(characterPartBones);
 
-            if (hasNullBones)
+            if (removedBonesCount > 0)
                 sprite.SmoothFill();
         }
 

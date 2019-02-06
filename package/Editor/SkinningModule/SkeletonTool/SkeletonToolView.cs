@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEditor.Experimental.U2D.Layout;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {

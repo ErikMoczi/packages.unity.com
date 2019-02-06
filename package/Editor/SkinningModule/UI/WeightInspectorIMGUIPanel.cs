@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -19,7 +19,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public WeightInspectorIMGUIPanel()
         {
             name = "WeightInspectorIMGUIPanel";
-            AddStyleSheetPath("WeightInspectorIMGUIPanelStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("WeightInspectorIMGUIPanelStyle"));
 
             this.Add(new IMGUIContainer(OnGUI));
             this.pickingMode = PickingMode.Ignore;

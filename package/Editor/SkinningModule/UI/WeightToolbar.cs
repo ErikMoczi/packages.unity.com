@@ -1,21 +1,20 @@
 using System;
 using UnityEditor.Experimental.U2D.Layout;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.U2D.Common;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
     internal class WeightToolbar : Toolbar
     {
         public class CustomUXMLFactor : UxmlFactory<WeightToolbar, UxmlTraits> {}
-        
+
         public event Action<Tools> SetWeightTool = (mode) => {};
         public SkinningCache skinningCache { get; set; }
 
         public WeightToolbar()
         {
-            AddStyleSheetPath("WeightToolbarStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("WeightToolbarStyle"));
         }
 
         public void EnableBoneInfluenceWidget()
@@ -46,7 +45,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static WeightToolbar GenerateFromUXML()
         {
             var visualTree = Resources.Load("WeightToolbar") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<WeightToolbar>("WeightToolbar");
+            var clone = visualTree.CloneTree().Q<WeightToolbar>("WeightToolbar");
             clone.BindElements();
             return clone;
         }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Layout
 {
@@ -66,12 +66,14 @@ namespace UnityEditor.Experimental.U2D.Layout
         public ScrollableToolbar(bool isHorizontal)
         {
             m_ScrollView = new ScrollView() {name = "ScrollView"};;
-            shadow.Add(m_ScrollView);
+            m_ScrollView.StretchToParentSize();
+            hierarchy.Add(m_ScrollView);
 
             m_IsHorizontal = isHorizontal;
             SetupScrolling();
 
-            AddStyleSheetPath("ScrollableToolbar");
+            //styleSheets.Add(Resources.Load<StyleSheet>("ScrollableToolbar");
+            styleSheets.Add(Resources.Load<StyleSheet>("ScrollableToolbar"));
 
             // TODO: Add onto current ScrollView internal WheelEvent
             m_ScrollView.RegisterCallback<WheelEvent>(OnScrollWheel);
@@ -105,7 +107,7 @@ namespace UnityEditor.Experimental.U2D.Layout
                 m_ScrollView.contentViewport.style.marginTop = 0;
                 m_ScrollView.contentViewport.style.marginBottom = 0;
                 m_ScrollView.contentContainer.style.flexDirection = FlexDirection.Row;
-                m_ScrollView.stretchContentWidth = false;
+                m_ScrollView.contentContainer.style.flexGrow = 1f;
             }
             else
             {
@@ -115,7 +117,7 @@ namespace UnityEditor.Experimental.U2D.Layout
                 m_ScrollView.contentViewport.style.marginTop = 10;
                 m_ScrollView.contentViewport.style.marginBottom = 10;
                 m_ScrollView.contentContainer.style.flexDirection = FlexDirection.Column;
-                m_ScrollView.stretchContentWidth = true;
+                m_ScrollView.contentContainer.style.flexGrow = 1f;
             }
         }
 

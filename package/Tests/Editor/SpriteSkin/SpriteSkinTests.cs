@@ -14,9 +14,11 @@ using UnityEngine.Experimental.U2D.Common;
 using Unity.Jobs;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using Unity.Mathematics;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
 {
+
     public class SpriteSkinTests
     {
         private class Vector3Compare : IEqualityComparer<Vector3>
@@ -27,6 +29,21 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
             }
 
             public int GetHashCode(Vector3 v)
+            {
+                return v.GetHashCode();
+            }
+
+            private static readonly float Epsilon = 0.001f;
+        }
+
+        private class Float3Compare : IEqualityComparer<float3>
+        {
+            public bool Equals(float3 a, float3 b)
+            {
+                return math.distance(a, b) < Epsilon;
+            }
+
+            public int GetHashCode(float3 v)
             {
                 return v.GetHashCode();
             }
@@ -49,80 +66,80 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
             private static readonly float Epsilon = 0.001f;
         }
 
-        private readonly Vector3[] kRootRotateDeformedVertices =
+        private readonly float3[] kRootRotateDeformedVertices =
         {
-            new Vector3(-1.010294f, 2.572992f, 0f),
-            new Vector3(-1.030294f, 2.752992f, 0f),
-            new Vector3(-1.090294f, 2.752992f, 0f),
-            new Vector3(-1.360294f, 2.202992f, 0f),
-            new Vector3(-1.540294f, 2.112992f, 0f),
-            new Vector3(-1.740294f, 1.982992f, 0f),
-            new Vector3(-1.750294f, 1.952992f, 0f),
-            new Vector3(-1.750294f, 1.792992f, 0f),
-            new Vector3(-1.680294f, 1.802992f, 0f),
-            new Vector3(-1.690294f, 1.592992f, 0f),
-            new Vector3(-1.650294f, 1.572992f, 0f),
-            new Vector3(-1.630294f, 1.572992f, 0f),
-            new Vector3(-1.580294f, 1.652992f, 0f),
-            new Vector3(-1.580294f, 1.282992f, 0f),
-            new Vector3(-1.750294f, 1.112992f, 0f),
-            new Vector3(-1.750294f, 1.042992f, 0f),
-            new Vector3(-1.700294f, 0.972992f, 0f),
-            new Vector3(-1.180294f, 0.802992f, 0f),
-            new Vector3(-1.220294f, 0.5829921f, 0f),
-            new Vector3(-1.550294f, 0.382992f, 0f),
-            new Vector3(-1.550294f, 0.3429921f, 0f),
-            new Vector3(-1.220294f, 0.362992f, 0f),
-            new Vector3(-1.310294f, 0.2429921f, 0f),
-            new Vector3(-1.340294f, 0.1929921f, 0f),
-            new Vector3(-1.050294f, 0.1929921f, 0f),
-            new Vector3(-0.970294f, 0.2029921f, 0f),
-            new Vector3(-0.750294f, 0.472992f, 0f),
-            new Vector3(-0.7502939f, 0.822992f, 0f),
-            new Vector3(-0.5502939f, 0.992992f, 0f),
-            new Vector3(-0.450294f, 1.222992f, 0f),
-            new Vector3(-0.4502939f, 1.682992f, 0f),
-            new Vector3(-0.530294f, 1.932992f, 0f),
-            new Vector3(-0.6202939f, 2.072992f, 0f),
-            new Vector3(-0.9102941f, 2.462992f, 0f)
+            new float3(-1.010294f, 2.572992f, 0f),
+            new float3(-1.030294f, 2.752992f, 0f),
+            new float3(-1.090294f, 2.752992f, 0f),
+            new float3(-1.360294f, 2.202992f, 0f),
+            new float3(-1.540294f, 2.112992f, 0f),
+            new float3(-1.740294f, 1.982992f, 0f),
+            new float3(-1.750294f, 1.952992f, 0f),
+            new float3(-1.750294f, 1.792992f, 0f),
+            new float3(-1.680294f, 1.802992f, 0f),
+            new float3(-1.690294f, 1.592992f, 0f),
+            new float3(-1.650294f, 1.572992f, 0f),
+            new float3(-1.630294f, 1.572992f, 0f),
+            new float3(-1.580294f, 1.652992f, 0f),
+            new float3(-1.580294f, 1.282992f, 0f),
+            new float3(-1.750294f, 1.112992f, 0f),
+            new float3(-1.750294f, 1.042992f, 0f),
+            new float3(-1.700294f, 0.972992f, 0f),
+            new float3(-1.180294f, 0.802992f, 0f),
+            new float3(-1.220294f, 0.5829921f, 0f),
+            new float3(-1.550294f, 0.382992f, 0f),
+            new float3(-1.550294f, 0.3429921f, 0f),
+            new float3(-1.220294f, 0.362992f, 0f),
+            new float3(-1.310294f, 0.2429921f, 0f),
+            new float3(-1.340294f, 0.1929921f, 0f),
+            new float3(-1.050294f, 0.1929921f, 0f),
+            new float3(-0.970294f, 0.2029921f, 0f),
+            new float3(-0.750294f, 0.472992f, 0f),
+            new float3(-0.7502939f, 0.822992f, 0f),
+            new float3(-0.5502939f, 0.992992f, 0f),
+            new float3(-0.450294f, 1.222992f, 0f),
+            new float3(-0.4502939f, 1.682992f, 0f),
+            new float3(-0.530294f, 1.932992f, 0f),
+            new float3(-0.6202939f, 2.072992f, 0f),
+            new float3(-0.9102941f, 2.462992f, 0f)
         };
 
-        private readonly Vector3[] kChildRotateDeformedVertices =
+        private readonly float3[] kChildRotateDeformedVertices =
         {
-            new Vector3(-0.6816357f, 1.782048f, 0f),
-            new Vector3(-0.7016357f, 1.962048f, 0f),
-            new Vector3(-0.7616357f, 1.962048f, 0f),
-            new Vector3(-1.031636f, 1.412048f, 0f),
-            new Vector3(-1.211636f, 1.322048f, 0f),
-            new Vector3(-1.411636f, 1.192048f, 0f),
-            new Vector3(-1.421636f, 1.162048f, 0f),
-            new Vector3(-1.421636f, 1.002048f, 0f),
-            new Vector3(-1.351636f, 1.012048f, 0f),
-            new Vector3(-1.361636f, 0.8020483f, 0f),
-            new Vector3(-1.321636f, 0.7820483f, 0f),
-            new Vector3(-1.301636f, 0.7820483f, 0f),
-            new Vector3(-1.251636f, 0.8620483f, 0f),
-            new Vector3(-1.251636f, 0.4920483f, 0f),
-            new Vector3(-1.421636f, 0.3220483f, 0f),
-            new Vector3(-1.421636f, 0.2520483f, 0f),
-            new Vector3(-1.371636f, 0.1820483f, 0f),
-            new Vector3(-0.84188f, 0.02294878f, 0f),
-            new Vector3(-0.890622f, 0.07894892f, 0f),
-            new Vector3(-1.09f, 0.585f, 0f),
-            new Vector3(-1.13f, 0.585f, 0f),
-            new Vector3(-1.097388f, 0.2155563f, 0f),
-            new Vector3(-1.23f, 0.345f, 0f),
-            new Vector3(-1.28f, 0.375f, 0f),
-            new Vector3(-1.228463f, 0.02196335f, 0f),
-            new Vector3(-1.178291f, -0.08154059f, 0f),
-            new Vector3(-0.6511877f, -0.2770902f, 0f),
-            new Vector3(-0.4241534f, 0.02932463f, 0f),
-            new Vector3(-0.2216356f, 0.2020484f, 0f),
-            new Vector3(-0.1216356f, 0.4320484f, 0f),
-            new Vector3(-0.1216356f, 0.8920484f, 0f),
-            new Vector3(-0.2016356f, 1.142048f, 0f),
-            new Vector3(-0.2916357f, 1.282048f, 0f),
-            new Vector3(-0.5816357f, 1.672048f, 0f)
+            new float3(-0.6816357f, 1.782048f, 0f),
+            new float3(-0.7016357f, 1.962048f, 0f),
+            new float3(-0.7616357f, 1.962048f, 0f),
+            new float3(-1.031636f, 1.412048f, 0f),
+            new float3(-1.211636f, 1.322048f, 0f),
+            new float3(-1.411636f, 1.192048f, 0f),
+            new float3(-1.421636f, 1.162048f, 0f),
+            new float3(-1.421636f, 1.002048f, 0f),
+            new float3(-1.351636f, 1.012048f, 0f),
+            new float3(-1.361636f, 0.8020483f, 0f),
+            new float3(-1.321636f, 0.7820483f, 0f),
+            new float3(-1.301636f, 0.7820483f, 0f),
+            new float3(-1.251636f, 0.8620483f, 0f),
+            new float3(-1.251636f, 0.4920483f, 0f),
+            new float3(-1.421636f, 0.3220483f, 0f),
+            new float3(-1.421636f, 0.2520483f, 0f),
+            new float3(-1.371636f, 0.1820483f, 0f),
+            new float3(-0.84188f, 0.02294878f, 0f),
+            new float3(-0.890622f, 0.07894892f, 0f),
+            new float3(-1.09f, 0.585f, 0f),
+            new float3(-1.13f, 0.585f, 0f),
+            new float3(-1.097388f, 0.2155563f, 0f),
+            new float3(-1.23f, 0.345f, 0f),
+            new float3(-1.28f, 0.375f, 0f),
+            new float3(-1.228463f, 0.02196335f, 0f),
+            new float3(-1.178291f, -0.08154059f, 0f),
+            new float3(-0.6511877f, -0.2770902f, 0f),
+            new float3(-0.4241534f, 0.02932463f, 0f),
+            new float3(-0.2216356f, 0.2020484f, 0f),
+            new float3(-0.1216356f, 0.4320484f, 0f),
+            new float3(-0.1216356f, 0.8920484f, 0f),
+            new float3(-0.2016356f, 1.142048f, 0f),
+            new float3(-0.2916357f, 1.282048f, 0f),
+            new float3(-0.5816357f, 1.672048f, 0f)
         };
 
         private SpriteSkin m_SpriteSkin;
@@ -131,7 +148,35 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
         private Sprite staticSprite;
 
         private Vector3Compare vec3Compare = new Vector3Compare();
+        private Float3Compare float3Compare = new Float3Compare();
         private QuaternionCompare quatCompare = new QuaternionCompare();
+        private static string kTestAssetsFolder = "Packages/com.unity.2d.animation/Tests/Editor/Resources/";
+        private static string kTestTempFolder = "Assets/Temp/";
+
+        [OneTimeTearDown]
+        public void FullTeardown()
+        {
+            // Delete cloned sprites
+            AssetDatabase.DeleteAsset(Path.GetDirectoryName(kTestTempFolder));
+        }
+
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            CloneSpriteForTest("bird.png");
+            CloneSpriteForTest("star.png");
+        }
+
+        private static void CloneSpriteForTest(string filename)
+        {
+            ValidateDirectory(kTestTempFolder);
+            // var filename = Path.GetFileName(path);
+
+            File.Copy(kTestAssetsFolder + filename, kTestTempFolder + filename);
+            File.Copy(kTestAssetsFolder + filename + ".meta", kTestTempFolder + filename + ".meta");
+
+            AssetDatabase.Refresh();
+        }
 
         private static void ValidateDirectory(string path)
         {
@@ -144,8 +189,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
         [SetUp]
         public void Setup()
         {
-            riggedSprite = Resources.Load<Sprite>("bird");
-            staticSprite = Resources.Load<Sprite>("star");
+            riggedSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Temp/bird.png");
+            staticSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Temp/star.png");
 
             m_SpriteSkin = new GameObject("TestObject1").AddComponent<SpriteSkin>();
             m_SpriteSkin.spriteRenderer.sprite = riggedSprite;
@@ -270,32 +315,23 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
             Assert.AreEqual(localScale, m_SpriteSkin.boneTransforms[1].localScale);
         }
 
-        private JobHandle DeformJob(SpriteSkin spriteSkin, NativeArray<Vector3> deformedVertices)
+        private void DeformJob(SpriteSkin spriteSkin, NativeArray<Vector3> deformableVertices)
         {
-            var sprite = spriteSkin.spriteRenderer.sprite;
-            var bindPoses = sprite.GetBindPoses();
-            var boneWeights = sprite.GetBoneWeights();
-            var transformMatrices = new NativeArray<Matrix4x4>(spriteSkin.boneTransforms.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-
-            for (int i = 0; i < spriteSkin.boneTransforms.Length; ++i)
-                transformMatrices[i] = spriteSkin.boneTransforms[i].localToWorldMatrix;
-
-            return SpriteSkinUtility.Deform(sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position), boneWeights, spriteSkin.transform.worldToLocalMatrix, bindPoses, transformMatrices, deformedVertices);
+            SpriteSkinUtility.Deform(spriteSkin.spriteRenderer.sprite, spriteSkin.transform.worldToLocalMatrix, m_SpriteSkin.boneTransforms, ref deformableVertices);
         }
 
-        private void AssertAABB(Bounds bounds, Bounds expectedBounds)
+        private void AssertDeformation(SpriteSkin spriteSkin, float3[] expectedVertices)
         {
-            Assert.That(bounds.center, Is.EqualTo(expectedBounds.center).Using(vec3Compare));
-            Assert.That(bounds.extents, Is.EqualTo(expectedBounds.extents).Using(vec3Compare));
-        }
+            var deformedVertices = new NativeArray<Vector3>(spriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Temp);
 
-        private void AssertDeformation(SpriteSkin spriteSkin, Vector3[] expectedVertices)
-        {
-            var deformedVertices = new NativeArray<Vector3>(spriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Persistent);
-            DeformJob(spriteSkin, deformedVertices).Complete();
+            DeformJob(spriteSkin, deformedVertices);
 
             for (var i = 0; i < deformedVertices.Length; ++i)
-                Assert.That(deformedVertices[i], Is.EqualTo(expectedVertices[i]).Using(vec3Compare));
+            {
+                var v3 = deformedVertices[i];
+                var f3 = new float3(v3.x, v3.y, v3.z);
+                Assert.That(f3, Is.EqualTo(expectedVertices[i]).Using(float3Compare));
+            }
 
             deformedVertices.Dispose();
         }
@@ -317,71 +353,82 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
         }
 
         [Test]
-        public void DisableSpriteSkin_RestoresSpriteBounds()
+        public void RotateTransform_ChangesHash()
         {
-            var bounds = m_SpriteSkin.bounds;
-
-            var expectedBounds = new Bounds();
-
-            AssertAABB(bounds, expectedBounds);
-
-            m_SpriteSkin.enabled = false;
-
-            var spriteRendererBounds = m_SpriteSkin.spriteRenderer.bounds;
-            var spriteBounds = m_SpriteSkin.spriteRenderer.sprite.bounds;
-
-            AssertAABB(spriteRendererBounds, spriteBounds);
+            int hash = m_SpriteSkin.CalculateTransformHash();
+            m_SpriteSkin.boneTransforms[1].Rotate(new Vector3(0, 0, 90.0f));
+            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
+            m_SpriteSkin.ResetBindPose();
+            Assert.That(hash, Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
+            m_SpriteSkin.transform.Rotate(new Vector3(0, 0, 90.0f));
+            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
         }
 
         [Test]
-        public void CalculateBounds()
+        public void MoveTransform_ChangesHash()
         {
-            var expectedBounds = new Bounds();
-            expectedBounds.center = new Vector3(1.139787f, 0.3959408f, 0f);
-            expectedBounds.extents = new Vector3(1.552842f, 0.9320881f, 0f);
+            int hash = m_SpriteSkin.CalculateTransformHash();
+            m_SpriteSkin.boneTransforms[1].position += Vector3.one;
+            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
+            m_SpriteSkin.ResetBindPose();
+            Assert.That(hash, Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
+            m_SpriteSkin.transform.position += Vector3.one;
+            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
+        }
 
-            m_SpriteSkin.CalculateBounds();
-
-            AssertAABB(m_SpriteSkin.bounds, expectedBounds);
+        [Test]
+        public void ScaleTransform_ChangesHash()
+        {
+            int hash = m_SpriteSkin.CalculateTransformHash();
+            m_SpriteSkin.boneTransforms[1].localScale = Vector3.one * 2f;
+            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
+            m_SpriteSkin.ResetBindPose();
+            Assert.That(hash, Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
+            m_SpriteSkin.transform.localScale = Vector3.one * 2f;
+            Assert.That(hash, !Is.EqualTo(m_SpriteSkin.CalculateTransformHash()));
         }
 
         [Test]
         public void Deform_ThrowsException_WhenBoneTransformLength_DoesNotMatch_BindPoseLength()
         {
-            var deformedVertices = new NativeArray<Vector3>(m_SpriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Persistent);
-            var transformMatrices = new NativeArray<Matrix4x4>(1, Allocator.Persistent);
+            var outputVertices = new NativeArray<float3>(m_SpriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Persistent);
+            var transformMatrices = new NativeArray<float4x4>(1, Allocator.Temp);
 
-            Assert.Throws<InvalidOperationException>(
+            Assert.Throws<IndexOutOfRangeException>(
                 () => {
                     var sprite = m_SpriteSkin.spriteRenderer.sprite;
-                    var bindPoses = sprite.GetBindPoses();
-                    var boneWeights = sprite.GetBoneWeights();
-
-                    SpriteSkinUtility.Deform(sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position), boneWeights, m_SpriteSkin.transform.worldToLocalMatrix, bindPoses, transformMatrices, deformedVertices);
+                    var boneWeights = sprite.GetVertexAttribute<BoneWeight>(VertexAttribute.BlendWeight);
+                    var spriteVertices = sprite.GetVertexAttribute<Vector3>(UnityEngine.Rendering.VertexAttribute.Position).SliceWithStride<float3>();
+                    var influences = sprite.GetVertexAttribute<BoneWeight>(UnityEngine.Rendering.VertexAttribute.BlendWeight);
+                    var bindPoses = new NativeSlice<Matrix4x4>(sprite.GetBindPoses()).SliceWithStride<float4x4>();
+                    
+                    SpriteSkinUtility.Deform(m_SpriteSkin.transform.worldToLocalMatrix, spriteVertices, boneWeights, transformMatrices, bindPoses, outputVertices);
                 },
                 "BoneTransforms should have same length as BindPoses");
 
-            deformedVertices.Dispose();
+            outputVertices.Dispose();
             transformMatrices.Dispose();
         }
 
         [Test]
         public void Deform_ThrowsException_WhenBoneWeightsLength_DoesNotMatch_VerticesLength()
         {
-            var deformedVertices = new NativeArray<Vector3>(m_SpriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Persistent);
+            var outputVertices = new NativeArray<float3>(m_SpriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Persistent);
             var boneWeights = new NativeArray<BoneWeight>(3, Allocator.Persistent);
-            var transformMatrices = new NativeArray<Matrix4x4>(m_SpriteSkin.boneTransforms.Length, Allocator.Persistent);
+            var transformMatrices = new NativeArray<float4x4>(m_SpriteSkin.boneTransforms.Length, Allocator.Persistent);
 
-            Assert.Throws<InvalidOperationException>(
+            Assert.Throws<IndexOutOfRangeException>(
                 () => {
                     var sprite = m_SpriteSkin.spriteRenderer.sprite;
-                    var bindPoses = sprite.GetBindPoses();
+                    var spriteVertices = sprite.GetVertexAttribute<Vector3>(UnityEngine.Rendering.VertexAttribute.Position).SliceWithStride<float3>();
+                    var influences = sprite.GetVertexAttribute<BoneWeight>(UnityEngine.Rendering.VertexAttribute.BlendWeight);
+                    var bindPoses = new NativeSlice<Matrix4x4>(sprite.GetBindPoses()).SliceWithStride<float4x4>();
 
-                    SpriteSkinUtility.Deform(sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position), boneWeights, m_SpriteSkin.transform.worldToLocalMatrix, bindPoses, transformMatrices, deformedVertices);
+                    SpriteSkinUtility.Deform(m_SpriteSkin.transform.worldToLocalMatrix, spriteVertices, boneWeights, transformMatrices, bindPoses, outputVertices);
                 },
                 "BoneWeights should have same length as input Vertices");
 
-            deformedVertices.Dispose();
+            outputVertices.Dispose();
             boneWeights.Dispose();
             transformMatrices.Dispose();
         }
@@ -389,20 +436,23 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Skinning
         [Test]
         public void Deform_ThrowsException_WhenOutputVerticesLength_DoesNotMatch_VerticesLength()
         {
-            var deformedVertices = new NativeArray<Vector3>(1, Allocator.Persistent);
-            var transformMatrices = new NativeArray<Matrix4x4>(m_SpriteSkin.boneTransforms.Length, Allocator.Persistent);
+            var outputVertices = new NativeArray<float3>(m_SpriteSkin.spriteRenderer.sprite.GetVertexCount(), Allocator.Persistent);
+            var boneWeights = new NativeArray<BoneWeight>(3, Allocator.Persistent);
+            var transformMatrices = new NativeArray<float4x4>(m_SpriteSkin.boneTransforms.Length, Allocator.Persistent);
 
-            Assert.Throws<InvalidOperationException>(
+            Assert.Throws<IndexOutOfRangeException>(
                 () => {
                     var sprite = m_SpriteSkin.spriteRenderer.sprite;
-                    var bindPoses = sprite.GetBindPoses();
-                    var boneWeights = sprite.GetBoneWeights();
+                    var spriteVertices = sprite.GetVertexAttribute<Vector3>(UnityEngine.Rendering.VertexAttribute.Position).SliceWithStride<float3>();
+                    var influences = sprite.GetVertexAttribute<BoneWeight>(UnityEngine.Rendering.VertexAttribute.BlendWeight);
+                    var bindPoses = new NativeSlice<Matrix4x4>(sprite.GetBindPoses()).SliceWithStride<float4x4>();
 
-                    SpriteSkinUtility.Deform(sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position), boneWeights, m_SpriteSkin.transform.worldToLocalMatrix, bindPoses, transformMatrices, deformedVertices);
+                    SpriteSkinUtility.Deform(m_SpriteSkin.transform.worldToLocalMatrix, spriteVertices, boneWeights, transformMatrices, bindPoses, outputVertices);
                 },
-                "BoneTransforms should have same length as BindPoses");
+                "OutputVertices should have same length as VertexCount");
 
-            deformedVertices.Dispose();
+            outputVertices.Dispose();
+            boneWeights.Dispose();
             transformMatrices.Dispose();
         }
     }

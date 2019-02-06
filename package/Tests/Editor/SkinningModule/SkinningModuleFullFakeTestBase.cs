@@ -205,7 +205,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             return this;
         }
 
-        public SpriteRect[] GetSpriteRects()
+        public override SpriteRect[] GetSpriteRects()
         {
             return m_SpriteRects;
         }
@@ -354,19 +354,21 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
 
     public class SkinningModuleFullFakeTestBase : SkinningModuleTestBase
     {
-        public override void SetupWindow()
+        protected override SpriteEditorWindowFake GetWindowFake()
         {
-            m_Window = EditorWindow.GetWindow<SpriteEditorWindowFullFake>();
-            ((SpriteEditorWindowFullFake) m_Window).Populate(false);
+            var window = EditorWindow.GetWindow<SpriteEditorWindowFullFake>();
+            window.Populate(false);
+            return window;
         }
     }
 
     public class SkinningModuleFullFakeCharacterTestBase : SkinningModuleTestBase
     {
-        public override void SetupWindow()
+        protected override SpriteEditorWindowFake GetWindowFake()
         {
-            m_Window = EditorWindow.GetWindow<SpriteEditorWindowFullFake>();
-            ((SpriteEditorWindowFullFake) m_Window).Populate(true);
+            var window = EditorWindow.GetWindow<SpriteEditorWindowFullFake>();
+            window.Populate(true);
+            return window;
         }
     }
 }

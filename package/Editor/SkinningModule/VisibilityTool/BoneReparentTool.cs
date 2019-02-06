@@ -2,7 +2,7 @@ using System;
 using UnityEditor.Experimental.U2D.Layout;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -88,7 +88,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         static internal BoneReparentToolWindow CreateFromUXML()
         {
             var visualTree = Resources.Load("BoneReparentWindow") as VisualTreeAsset;
-            var ve = visualTree.CloneTree(null).Q("BoneReparentToolWindow") as BoneReparentToolWindow;
+            var ve = visualTree.CloneTree().Q("BoneReparentToolWindow") as BoneReparentToolWindow;
             ve.BindElements();
             return ve;
         }
@@ -98,7 +98,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_ToolView = this.Q<BoneReparentToolView>();
             m_ToolView.GetModel = InternalGetModel;
             m_ToolView.GetController = InternalGetController;
-            this.AddStyleSheetPath("BoneReparentStyle");
+            this.styleSheets.Add(Resources.Load<StyleSheet>("BoneReparentStyle"));
         }
 
         IBoneTreeViewModel InternalGetModel()

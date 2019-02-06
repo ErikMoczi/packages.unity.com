@@ -173,14 +173,24 @@ namespace UnityEditor.Experimental.U2D.Animation
             for (int i = 0; i < spriteMeshData.vertexCount; ++i)
                 m_VerticesTemp.Add(spriteMeshData.GetPosition(i));
             
-            spriteMeshData.Clear();
+            try
+            {
+                var indices = new List<int>();
 
-            triangulator.Tessellate(0f, 0f, 0f, largestAreaFactor, 100, m_VerticesTemp, m_EdgesTemp, spriteMeshData.indices);
+                triangulator.Tessellate(0f, 0f, 0f, largestAreaFactor, 100, m_VerticesTemp, m_EdgesTemp, indices);
 
-            for (int i = 0; i < m_VerticesTemp.Count; ++i)
-                spriteMeshData.AddVertex(m_VerticesTemp[i], default(BoneWeight));
+                spriteMeshData.Clear();
 
-            spriteMeshData.edges.AddRange(m_EdgesTemp);
+                for (int i = 0; i < m_VerticesTemp.Count; ++i)
+                    spriteMeshData.AddVertex(m_VerticesTemp[i], default(BoneWeight));
+
+                spriteMeshData.edges.AddRange(m_EdgesTemp);
+                spriteMeshData.indices.AddRange(indices);
+            }
+            catch (Exception)
+            {
+                
+            }
         }
 
         public void ClearWeights(ISelection<int> selection)

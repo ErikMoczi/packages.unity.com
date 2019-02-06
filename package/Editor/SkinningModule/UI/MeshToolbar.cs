@@ -2,7 +2,7 @@ using System;
 using UnityEditor.Experimental.U2D.Layout;
 using UnityEngine;
 using UnityEngine.Experimental.U2D.Common;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -16,7 +16,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public MeshToolbar()
         {
-            AddStyleSheetPath("MeshToolbarStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("MeshToolbarStyle"));
         }
 
         public void BindElements()
@@ -59,7 +59,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static MeshToolbar GenerateFromUXML()
         {
             var visualTree = Resources.Load("MeshToolbar") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<MeshToolbar>("MeshToolbar");
+            var clone = visualTree.CloneTree().Q<MeshToolbar>("MeshToolbar");
             clone.BindElements();
             return clone;
         }

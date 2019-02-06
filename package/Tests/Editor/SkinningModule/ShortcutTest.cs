@@ -1,11 +1,83 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
 {
+    internal static class ShortcutTestHelper
+    {
+        private const string kShortcutProfileName = "2D-Animation-Shortcut-Test";
+
+        public static void SetupShortcutTest()
+        {
+            var shortcutManager = ShortcutManager.instance;
+            if (shortcutManager.GetAvailableProfileIds().Contains(kShortcutProfileName))
+                ShortcutManager.instance.DeleteProfile(kShortcutProfileName);
+
+            shortcutManager.CreateProfile(kShortcutProfileName);
+            shortcutManager.activeProfileId = kShortcutProfileName;
+
+            var animationShortcutBindings = new HashSet<ShortcutBinding>();
+            var otherShortcuts = new Dictionary<string, ShortcutBinding>();
+
+            var shortcutIds = shortcutManager.GetAvailableShortcutIds();
+            foreach (var shortcutId in shortcutIds)
+            {
+                if (shortcutId.StartsWith("2D/Animation"))
+                {
+                    animationShortcutBindings.Add(shortcutManager.GetShortcutBinding(shortcutId));
+                }
+                else
+                {
+                    otherShortcuts.Add(shortcutId, shortcutManager.GetShortcutBinding(shortcutId));
+                }
+            }
+
+            animationShortcutBindings.IntersectWith(otherShortcuts.Values);
+            foreach (var shortcutPair in otherShortcuts)
+            {
+                if (animationShortcutBindings.Contains(shortcutPair.Value) && (!shortcutPair.Key.StartsWith("2D/Animation")))
+                {
+                    shortcutManager.RebindShortcut(shortcutPair.Key, new ShortcutBinding(new KeyCombination(KeyCode.F13, ShortcutModifiers.Alt | ShortcutModifiers.Action | ShortcutModifiers.Shift)));
+                }
+            }
+        }
+
+        public static void TeardownShortcutTest()
+        {
+            ShortcutManager.instance.activeProfileId = ShortcutManager.defaultProfileId;
+            ShortcutManager.instance.DeleteProfile(kShortcutProfileName);
+        }
+
+        public static void CheckTestProfile()
+        {
+            Assert.AreEqual(ShortcutManager.instance.activeProfileId, kShortcutProfileName);
+        }
+    }
+
     public class ShortcutSpriteSheetTest : SkinningModuleTestBase
     {
+        public override void DoOtherOneTimeSetup()
+        {
+            base.DoOtherOneTimeSetup();
+            ShortcutTestHelper.SetupShortcutTest();
+        }
+
+        public override void DoOtherOneTimeTeardown()
+        {
+            ShortcutTestHelper.TeardownShortcutTest();
+            base.DoOtherOneTimeTeardown();
+        }
+
+        [Test]
+        public void TestProfile_IsSet()
+        {
+            ShortcutTestHelper.CheckTestProfile();
+        }
+        
         [Test]
         public void DefaultMode_IsSpriteSheetMode()
         {
@@ -215,6 +287,24 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
 
     public class ShortcutCharacterTest : SkinningModuleCharacterTestBase
     {
+        public override void DoOtherOneTimeSetup()
+        {
+            base.DoOtherOneTimeSetup();
+            ShortcutTestHelper.SetupShortcutTest();
+        }
+
+        public override void DoOtherOneTimeTeardown()
+        {
+            ShortcutTestHelper.TeardownShortcutTest();
+            base.DoOtherOneTimeTeardown();
+        }
+
+        [Test]
+        public void TestProfile_IsSet()
+        {
+            ShortcutTestHelper.CheckTestProfile();
+        }
+
         [Test]
         public void DefaultMode_IsCharacterMode()
         {

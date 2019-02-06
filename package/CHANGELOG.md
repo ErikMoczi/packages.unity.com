@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0-preview.1] - 2019-01-25
+### Added
+- Update package to work with 2019.1
+- Improve animation runtime performance
+- Fix bone reparenting sibling order
+- Fix Sprite Visibility Tool in disabled state in certain cases
+- Update documents
 
 ## [2.0.0-preview.1] - 2018-11-20
 ### Added

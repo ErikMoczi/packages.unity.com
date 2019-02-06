@@ -1,15 +1,14 @@
 ﻿using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Layout
 {
-    public interface IDraggable 
+    public interface IDraggable
     {
         bool IsMovableNow();
-        void UpdatePresenterPosition();        
+        void UpdatePresenterPosition();
     }
-    
+
     public class Draggable : MouseManipulator
     {
         private Vector2 m_Start;
@@ -105,14 +104,17 @@ namespace UnityEditor.Experimental.U2D.Layout
                 Vector2 diff = e.localMousePosition - m_Start;
                 Rect rect = CalculatePosition(target.layout.x + diff.x, target.layout.y + diff.y, target.layout.width, target.layout.height);
 
-                if (target.style.positionType == PositionType.Manual)
+                if (target.style.position == Position.Relative)
                 {
-                    target.layout = rect;
+                    target.style.left = rect.xMin;
+                    target.style.top = rect.yMin;
+                    target.style.right = rect.xMax;
+                    target.style.bottom = rect.yMax;
                 }
-                else if (target.style.positionType == PositionType.Absolute)
+                else if (target.style.position == Position.Absolute)
                 {
-                    target.style.positionLeft = rect.x;
-                    target.style.positionTop = rect.y;
+                    target.style.left = rect.x;
+                    target.style.top = rect.y;
                 }
 
                 e.StopPropagation();

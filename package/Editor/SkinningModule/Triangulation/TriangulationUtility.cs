@@ -80,6 +80,9 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             statistic.Update((UnityEngine.Experimental.U2D.TriangleNet.Mesh)mesh, 1);
 
+            if (statistic.LargestArea < 0.01f)
+                throw new System.Exception("Invalid Mesh: Largest triangle area too small");
+
             var maxAreaToApply = (double)Mathf.Max((float)statistic.LargestArea * largestTriangleAreaFactor, (float)(statistic.MeshArea * meshAreaFactor));
             var qualityOptions = new QualityOptions() { SteinerPoints = 0 };
 

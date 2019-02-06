@@ -148,6 +148,10 @@ namespace  UnityEditor.Experimental.U2D.Animation.Test.BoneVisibilityTests
             b.parentBone.Returns(bones[1]);
             b = bones[1];
             b.parentBone.Returns(bones[0]);
+            bones[0].siblingIndex.Returns(0);
+            bones[1].siblingIndex.Returns(0);
+            bones[2].siblingIndex.Returns(0);
+            bones[3].siblingIndex.Returns(1);
 
             skeleton.bones.Returns(bones);
             m_Model.GetSelectedSkeleton().Returns(skeleton);
@@ -352,11 +356,11 @@ namespace  UnityEditor.Experimental.U2D.Animation.Test.BoneVisibilityTests
 
         [Test]
         [TestCase(0, new[] {0}, false, TestName = "Reparent root to root")]
-        [TestCase(0, new[] {1, 2}, false, TestName = "Reparent item already parented to root")]
+        [TestCase(0, new[] {1, 2}, true, TestName = "Reparent item already parented to root")]
         [TestCase(0, new[] {2, 3}, true, TestName = "Reparent items does not same parent")]
         [TestCase(3, new[] {1, 2}, true, TestName = "Reparent child to root")]
         [TestCase(1, new[] {3}, true, TestName = "Reparent root to non root")]
-        [TestCase(1, new[] {2}, false, TestName = "Reparent item already parented")]
+        [TestCase(1, new[] {2}, true, TestName = "Reparent item already parented")]
         [TestCase(1, new[] {0}, false, TestName = "Reparent parent to children")]
         public void CanReparent(int parentIndex, int[] draggedItemIndex, bool expected)
         {
@@ -377,6 +381,10 @@ namespace  UnityEditor.Experimental.U2D.Animation.Test.BoneVisibilityTests
             b.parentBone.Returns(bones[1]);
             b = bones[1];
             b.parentBone.Returns(bones[0]);
+            bones[0].siblingIndex.Returns(0);
+            bones[1].siblingIndex.Returns(0);
+            bones[2].siblingIndex.Returns(0);
+            bones[3].siblingIndex.Returns(1);
 
             skeleton.bones.Returns(bones);
             m_Model.GetSelectedSkeleton().Returns(skeleton);
@@ -420,6 +428,10 @@ namespace  UnityEditor.Experimental.U2D.Animation.Test.BoneVisibilityTests
             b.parentBone.Returns(bones[1]);
             b = bones[1];
             b.parentBone.Returns(bones[0]);
+            bones[0].siblingIndex.Returns(0);
+            bones[1].siblingIndex.Returns(0);
+            bones[2].siblingIndex.Returns(0);
+            bones[3].siblingIndex.Returns(1);
 
             skeleton.bones.Returns(bones);
             m_Model.GetSelectedSkeleton().Returns(skeleton);
@@ -438,20 +450,20 @@ namespace  UnityEditor.Experimental.U2D.Animation.Test.BoneVisibilityTests
                 ++eventCalled;
             };
             m_EventSystem.skeletonTopologyChanged.AddListener(callback);
-            m_Controller.ReparentItems(parentItem, draggedItem);
+            m_Controller.ReparentItems(parentItem, draggedItem, 0);
             m_EventSystem.skeletonTopologyChanged.RemoveListener(callback);
             if (shouldReparent)
             {
                 Assert.AreEqual(draggedItem.Count, eventCalled);
-                m_Model.Received(draggedItem.Count).SetBoneParent(Arg.Any<BoneCache>(), Arg.Any<BoneCache>());
+                m_Model.Received(draggedItem.Count).SetBoneParent(Arg.Any<BoneCache>(), Arg.Any<BoneCache>(), 0);
                 for (int i = 0; i < draggedItem.Count; ++i)
                 {
-                    m_Model.Received(1).SetBoneParent(Arg.Is<BoneCache>(x => x == parentItem.customData), Arg.Is<BoneCache>(y => y == ((TreeViewItemBase<BoneCache>)draggedItem[i]).customData));
+                    m_Model.Received(1).SetBoneParent(Arg.Is<BoneCache>(x => x == parentItem.customData), Arg.Is<BoneCache>(y => y == ((TreeViewItemBase<BoneCache>)draggedItem[i]).customData), 0);
                 }
             }
             else
             {
-                m_Model.DidNotReceiveWithAnyArgs().SetBoneParent(Arg.Any<BoneCache>(), Arg.Any<BoneCache>());
+                m_Model.DidNotReceiveWithAnyArgs().SetBoneParent(Arg.Any<BoneCache>(), Arg.Any<BoneCache>(), 0);
                 Assert.AreEqual(0, eventCalled);
             }
         }

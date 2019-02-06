@@ -182,6 +182,27 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
         }
 
         [Test]
+        public void SelectedSprite_DoCopyAndPasteMesh_DoesNotPasteBonesToSprite()
+        {
+            m_CopyTool.OnCopyActivated();
+
+            var sprite = skinningCache.GetSprites()[1];
+            skinningCache.events.selectedSpriteChanged.Invoke(sprite);
+
+            var skeletonCopyCache = sprite.GetSkeleton();
+            Assert.AreEqual(2, skeletonCopyCache.BoneCount);
+            Assert.AreEqual("Bone-2-1", skeletonCopyCache.bones[0].name);
+            Assert.AreEqual("Bone-2-2", skeletonCopyCache.bones[1].name);
+
+            m_CopyTool.OnPasteActivated(false, true, false, false);
+
+            skeletonCopyCache = sprite.GetSkeleton();
+            Assert.AreEqual(2, skeletonCopyCache.BoneCount);
+            Assert.AreEqual("Bone-2-1", skeletonCopyCache.bones[0].name);
+            Assert.AreEqual("Bone-2-2", skeletonCopyCache.bones[1].name);
+        }
+
+        [Test]
         public void SelectedSprite_DoCopyAndPasteMesh_FlipX_PastesToSprite()
         {
             m_CopyTool.OnCopyActivated();

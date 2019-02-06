@@ -1,12 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Jobs;
+using UnityEngine.Experimental.U2D;
+using UnityEngine.Experimental.U2D.Common;
+
 using Unity.Jobs;
 using Unity.Collections;
-using UnityEngine;
-using UnityEngine.Experimental.U2D;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
+using Unity.Mathematics;
+using Unity.Entities;
+using Unity.Transforms;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace UnityEngine.Experimental.U2D.Animation
 {
@@ -28,17 +33,13 @@ namespace UnityEngine.Experimental.U2D.Animation
     {
         internal static SpriteSkinValidationResult Validate(this SpriteSkin spriteSkin)
         {
-            var sprite = spriteSkin.spriteRenderer.sprite; 
-            if (sprite == null)
+            if (spriteSkin.spriteRenderer.sprite == null)
                 return SpriteSkinValidationResult.SpriteNotFound;
 
-            var bindPoses = sprite.GetBindPoses();
+            var bindPoses = spriteSkin.spriteRenderer.sprite.GetBindPoses();
 
             if (bindPoses.Length == 0)
                 return SpriteSkinValidationResult.SpriteHasNoSkinningInformation;
-
-            if (sprite.GetBoneWeights().Length == 0)
-                return SpriteSkinValidationResult.SpriteHasNoWeights;
 
             if (spriteSkin.rootBone == null)
                 return SpriteSkinValidationResult.RootTransformNotFound;
@@ -171,37 +172,103 @@ namespace UnityEngine.Experimental.U2D.Animation
             return path;
         }
 
-        internal static JobHandle Deform(NativeSlice<Vector3> inputVertices, NativeArray<BoneWeight> boneWeights, Matrix4x4 worldToLocalMatrix,
-            NativeArray<Matrix4x4> bindPoses, NativeArray<Matrix4x4> transformMatrices, NativeArray<Vector3> outputVertices)
+        internal static int CalculateTransformHash(this SpriteSkin spriteSkin)
         {
-            if (bindPoses.Length != transformMatrices.Length)
-                throw new InvalidOperationException("Invalid TransformMatrices array length.");
-            if (boneWeights.Length != inputVertices.Length)
-                throw new InvalidOperationException("Invalid BoneWeight array length");
-            if (outputVertices.Length != inputVertices.Length)
-                throw new InvalidOperationException("Invalid output Vertices array length");
-
-            var skinningMatrices = new NativeArray<Matrix4x4>(transformMatrices.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-
-            var boneJob = new BoneJob()
+            int bits = 0;
+            int boneTransformHash = spriteSkin.transform.localToWorldMatrix.GetHashCode() >> bits;
+            bits++;
+            foreach (var transform in spriteSkin.boneTransforms)
             {
-                rootInv = worldToLocalMatrix,
-                bindPoses = bindPoses,
-                bones = transformMatrices,
-                output = skinningMatrices
-            };
-
-            var skinJob = new SkinJob()
-            {
-                influenceCount = 4,
-                influences = boneWeights,
-                vertices = inputVertices,
-                bones = skinningMatrices,
-                output = outputVertices
-            };
-
-            return skinJob.Schedule(boneJob.Schedule());
+                boneTransformHash ^= (transform.localToWorldMatrix.GetHashCode() >> bits);
+                bits = (bits + 1) % 8;
+            }
+            return boneTransformHash;
         }
+
+        internal unsafe static void Deform(Matrix4x4 rootInv, NativeSlice<Vector3> vertices, NativeSlice<BoneWeight> boneWeights, NativeArray<Matrix4x4> boneTransforms, NativeSlice<Matrix4x4> bindPoses, NativeArray<Vector3> deformableVertices)
+        {
+            var verticesFloat3 = vertices.SliceWithStride<float3>();
+            var bindPosesFloat4x4 = bindPoses.SliceWithStride<float4x4>();
+            var boneTransformsFloat4x4 = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<float4x4>(boneTransforms.GetUnsafePtr(), boneTransforms.Length, Allocator.None);
+            var deformableVerticesFloat3 = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<float3>(deformableVertices.GetUnsafePtr(), deformableVertices.Length, Allocator.None);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            var handle1 = CreateSafetyChecks<float4x4>(ref boneTransformsFloat4x4);
+            var handle2 = CreateSafetyChecks<float3>(ref deformableVerticesFloat3);
+#endif
+
+            Deform(rootInv, verticesFloat3, boneWeights, boneTransformsFloat4x4, bindPosesFloat4x4, deformableVerticesFloat3);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            DisposeSafetyChecks(handle1);
+            DisposeSafetyChecks(handle2);
+#endif
+        }
+
+        internal static void Deform(float4x4 rootInv, NativeSlice<float3> vertices, NativeSlice<BoneWeight> boneWeights, NativeArray<float4x4> boneTransforms, NativeSlice<float4x4> bindPoses, NativeArray<float3> deformed)
+        {
+            if(boneTransforms.Length == 0)
+                return;
+
+            for (var i = 0; i < boneTransforms.Length; i++)
+            {
+                var bindPoseMat = bindPoses[i];
+                var boneTransformMat = boneTransforms[i];
+                boneTransforms[i] = math.mul(rootInv,  math.mul(boneTransformMat, bindPoseMat));
+            }
+
+            for (var i = 0; i < vertices.Length; i++)
+            {
+                var bone0 = boneWeights[i].boneIndex0;
+                var bone1 = boneWeights[i].boneIndex1;
+                var bone2 = boneWeights[i].boneIndex2;
+                var bone3 = boneWeights[i].boneIndex3;
+
+                deformed[i] =
+                    math.transform(boneTransforms[bone0], vertices[i]) * boneWeights[i].weight0 +
+                    math.transform(boneTransforms[bone1], vertices[i]) * boneWeights[i].weight1 +
+                    math.transform(boneTransforms[bone2], vertices[i]) * boneWeights[i].weight2 +
+                    math.transform(boneTransforms[bone3], vertices[i]) * boneWeights[i].weight3;
+            }
+        }
+
+        internal unsafe static void Deform(Sprite sprite, Matrix4x4 invRoot, Transform[] boneTransformsArray, ref NativeArray<Vector3> deformableVertices)
+        {
+            Debug.Assert(sprite != null);
+            Debug.Assert(sprite.GetVertexCount() == deformableVertices.Length);
+            
+            var vertices = sprite.GetVertexAttribute<Vector3>(UnityEngine.Rendering.VertexAttribute.Position);
+            var boneWeights = sprite.GetVertexAttribute<BoneWeight>(UnityEngine.Rendering.VertexAttribute.BlendWeight);
+            var bindPoses = sprite.GetBindPoses();
+            
+            Debug.Assert(bindPoses.Length == boneTransformsArray.Length);
+            Debug.Assert(boneWeights.Length == sprite.GetVertexCount());
+            
+            var boneTransforms = new NativeArray<Matrix4x4>(boneTransformsArray.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
+            for (var i = 0; i < boneTransformsArray.Length; ++i)
+                boneTransforms[i] = boneTransformsArray[i].localToWorldMatrix;
+
+            Deform(invRoot, vertices, boneWeights, boneTransforms, bindPoses, deformableVertices);
+
+            boneTransforms.Dispose();
+        }
+        
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        private static AtomicSafetyHandle CreateSafetyChecks<T>(ref NativeArray<T> array) where T : struct
+        {
+            var handle = AtomicSafetyHandle.Create();
+            AtomicSafetyHandle.SetAllowSecondaryVersionWriting(handle, true);
+            AtomicSafetyHandle.UseSecondaryVersion(ref handle);
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle<T>(ref array, handle);
+            return handle;
+        }
+
+        private static void DisposeSafetyChecks(AtomicSafetyHandle handle)
+        {
+            AtomicSafetyHandle.Release(handle);
+        }
+#endif
 
         internal static Vector3[] Bake(this SpriteSkin spriteSkin)
         {
@@ -209,24 +276,13 @@ namespace UnityEngine.Experimental.U2D.Animation
                 throw new Exception("Bake error: invalid SpriteSkin");
 
             var sprite = spriteSkin.spriteRenderer.sprite;
-            var boneTransforms = spriteSkin.boneTransforms;
-            var bindPoses = sprite.GetBindPoses();
-            var boneWeights = sprite.GetBoneWeights();
-            var outputVertices = new NativeArray<Vector3>(sprite.GetVertexCount(), Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            var transformMatrices = new NativeArray<Matrix4x4>(boneTransforms.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            var vertices = sprite.GetVertexAttribute<Vector3>(VertexAttribute.Position);
-            if (vertices.Length == 0 || transformMatrices.Length == 0 || boneWeights.Length == 0 || outputVertices.Length == 0)
-                return new Vector3[0];
-            for (int i = 0; i < boneTransforms.Length; ++i)
-                transformMatrices[i] = boneTransforms[i].localToWorldMatrix;
+            var boneTransformsArray = spriteSkin.boneTransforms;
+            var deformableVertices = new NativeArray<Vector3>(sprite.GetVertexCount(), Allocator.Temp, NativeArrayOptions.UninitializedMemory);
 
-            var jobHandle = SpriteSkinUtility.Deform(vertices, boneWeights, Matrix4x4.identity, bindPoses, transformMatrices, outputVertices);
-            jobHandle.Complete();
-
-            var result = outputVertices.ToArray();
-
-            outputVertices.Dispose();
-
+            Deform(sprite, Matrix4x4.identity, boneTransformsArray, ref deformableVertices);
+            
+            var result = deformableVertices.ToArray();
+            deformableVertices.Dispose();
             return result;
         }
 
@@ -235,20 +291,19 @@ namespace UnityEngine.Experimental.U2D.Animation
             Debug.Assert(spriteSkin.isValid);
 
             var rootBone = spriteSkin.rootBone;
-            var deformedVertices = spriteSkin.Bake();
+            var deformableVertices = spriteSkin.Bake();
             var bounds = new Bounds();
 
-            if (deformedVertices.Length > 0)
+            if (deformableVertices.Length > 0)
             {
-                bounds.min = rootBone.InverseTransformPoint(deformedVertices[0]);
+                bounds.min = rootBone.InverseTransformPoint(deformableVertices[0]);
                 bounds.max = bounds.min;
             }
 
-            foreach(var v in deformedVertices)
+            foreach(var v in deformableVertices)
                 bounds.Encapsulate(rootBone.InverseTransformPoint(v));
 
             bounds.extents = Vector3.Scale(bounds.extents, new Vector3(1.25f, 1.25f, 1f)); 
-            
             spriteSkin.bounds = bounds;
         }
     }

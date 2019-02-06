@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using UnityEngine.Experimental.U2D.Common;
 
 namespace UnityEditor.Experimental.U2D.Animation
@@ -15,7 +15,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public CopyToolbar()
         {
-            AddStyleSheetPath("CopyToolbarStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("CopyToolbarStyle"));
         }
 
         public void DoCopy()
@@ -40,7 +40,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static CopyToolbar GenerateFromUXML()
         {
             var visualTree = Resources.Load("CopyToolbar") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<CopyToolbar>("CopyToolbar");
+            var clone = visualTree.CloneTree().Q<CopyToolbar>("CopyToolbar");
             clone.BindElements();
             return clone;
         }

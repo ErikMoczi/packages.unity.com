@@ -82,7 +82,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        public void SetBoneParent(BoneCache newParent, BoneCache bone)
+        public void SetBoneParent(BoneCache newParent, BoneCache bone, int insertAtIndex)
         {
             TransformCache parent = newParent;
 
@@ -91,6 +91,11 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             skinningCache.RestoreBindPose();
             bone.SetParent(parent, true);
+
+            if (insertAtIndex == -1)
+                insertAtIndex = parent.ChildCount;
+
+            bone.siblingIndex = insertAtIndex;
             bone.SetDefaultPose();
         }
 
@@ -135,7 +140,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         void SetVisibility(BoneCache bone, bool visibility);
         bool GetVisibility(BoneCache bone);
         void SetName(BoneCache bone, string name);
-        void SetBoneParent(BoneCache newParent, BoneCache bone);
+        void SetBoneParent(BoneCache newParent, BoneCache bone, int insertAtIndex);
         int GetDepth(BoneCache bone);
         void SetDepth(BoneCache bone, int depth);
         void SetAllVisibility(SkeletonCache skeleton, bool visibility);

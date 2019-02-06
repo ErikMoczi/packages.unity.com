@@ -34,18 +34,18 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                 pointNormalStyle = new GUIStyle();
                 pointNormalStyle.normal.background = pointNormal;
-                pointNormalStyle.fixedWidth = 10f;
-                pointNormalStyle.fixedHeight = 10f;
+                pointNormalStyle.fixedWidth = 8f;
+                pointNormalStyle.fixedHeight = 8f;
 
                 pointHoveredStyle = new GUIStyle();
                 pointHoveredStyle.normal.background = pointHovered;
-                pointHoveredStyle.fixedWidth = 16f;
-                pointHoveredStyle.fixedHeight = 16f;
+                pointHoveredStyle.fixedWidth = 10f;
+                pointHoveredStyle.fixedHeight = 10f;
 
                 pointSelectedStyle = new GUIStyle();
                 pointSelectedStyle.normal.background = pointSelected;
-                pointSelectedStyle.fixedWidth = 14f;
-                pointSelectedStyle.fixedHeight = 14f;
+                pointSelectedStyle.fixedWidth = 10f;
+                pointSelectedStyle.fixedHeight = 10f;
             }
         }
 
@@ -65,6 +65,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         int m_HoveredEdgeControlID = -1;
         int m_MoveEdgeControlID = -1;
         int m_HoveredVertex = -1;
+        int m_PrevHoveredVertex = -1;
         int m_HoveredVertexControlID = -1;
         int m_MoveVertexControlID = -1;
         Color m_TempColor;
@@ -134,6 +135,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 m_MouseWorldPosition = guiWrapper.GUIToWorld(guiWrapper.mousePosition);
                 m_HoveredVertexControlID = vertexControlID;
                 m_HoveredEdgeControlID = edgeControlID;
+                m_PrevHoveredVertex = m_HoveredVertex;
                 m_HoveredVertex = -1;
                 m_HoveredEdge = -1;
 
@@ -155,6 +157,10 @@ namespace UnityEditor.Experimental.U2D.Animation
 
             if (guiWrapper.IsControlNearest(m_HoveredEdgeControlID))
                 m_HoveredEdge = m_NearestEdge;
+
+            if (guiWrapper.eventType == EventType.Layout)
+                if (m_PrevHoveredVertex != m_HoveredVertex)
+                    guiWrapper.Repaint();
         }
 
         public void LayoutVertex(Vector2 position, int index)

@@ -89,22 +89,24 @@ namespace UnityEditor.Experimental.U2D.Animation
             if (skeleton != null)
             {
                 var bones = skeleton.bones;
-                foreach (var bone in bones)
-                {
-                    if (bone.parentBone == null)
-                        AddTreeViewItem(rows, bone, bones, 0);
-                }
+                var children = bones.Where(x => x.parentBone == null).ToArray();
+                System.Array.Sort(children, (a,b) => a.siblingIndex.CompareTo(b.siblingIndex));
+                
+                foreach (var bone in children)
+                    AddTreeViewItem(rows, bone, bones, 0);
             }
             return rows;
         }
 
         private static void AddTreeViewItem(IList<TreeViewItem> rows, BoneCache bone, BoneCache[] bones, int depth)
         {
-            var item = new TreeViewItemBase<BoneCache>(bone.GetInstanceID(), -1, bone.name, bone);
-            item.depth = depth;
+            var item = new TreeViewItemBase<BoneCache>(bone.GetInstanceID(), depth, bone.name, bone);
             rows.Add(item);
 
-            foreach (var childBone in bones.Where(x => x.parentBone == bone))
+            var children = bones.Where(x => x.parentBone == bone).ToArray();
+            System.Array.Sort(children, (a,b) => a.siblingIndex.CompareTo(b.siblingIndex));
+
+            foreach (var childBone in children)
                 AddTreeViewItem(rows, childBone, bones, depth + 1);
         }
 
@@ -226,25 +228,26 @@ namespace UnityEditor.Experimental.U2D.Animation
             TreeViewItemBase<BoneCache> currentParent = parent;
             while (currentParent != null)
             {
-                if (draggedItems.Contains(currentParent) || draggedItems.Any(x => ((TreeViewItemBase<BoneCache>)x).customData.parentBone == parent.customData))
+                if (draggedItems.Contains(currentParent))
                     return false;
                 currentParent = currentParent.parent as TreeViewItemBase<BoneCache>;
             }
             return true;
         }
 
-        public void ReparentItems(TreeViewItemBase<BoneCache> newParent, List<TreeViewItem> draggedItems)
+        public void ReparentItems(TreeViewItemBase<BoneCache> newParent, List<TreeViewItem> draggedItems, int insertAtIndex)
         {
             if ((m_Model.hasCharacter && m_Model.mode != SkinningMode.Character) ||
                 (!m_Model.hasCharacter && m_Model.mode == SkinningMode.Character))
                 return;
 
+            var parent = newParent != null ? newParent.customData : null;
             using (m_Model.UndoScope(TextContent.setParentBone))
             {
-                for (int i = 0; i < draggedItems.Count; ++i)
+                for (var i = draggedItems.Count - 1; i >= 0; --i)
                 {
                     var bone = ((TreeViewItemBase<BoneCache>)draggedItems[i]).customData;
-                    m_Model.SetBoneParent(newParent != null ? newParent.customData : null, bone);
+                    m_Model.SetBoneParent(parent, bone, insertAtIndex);
                     m_SkinningEvents.skeletonTopologyChanged.Invoke(bone.skeleton);
                 }
             }

@@ -2,7 +2,7 @@ using UnityEditor.Experimental.U2D.Common;
 using UnityEditor.Experimental.U2D.Layout;
 using UnityEngine;
 using UnityEditor.ShortcutManagement;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -15,7 +15,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         private InternalEditorBridge.ShortcutContext m_ShortcutContext;
 
-        private static SkinningModule GetModuleFromContext(InternalEditorBridge.WrappedShortcutArguments args)
+        private static SkinningModule GetModuleFromContext(ShortcutArguments args)
         {
             var sc = args.context as InternalEditorBridge.ShortcutContext;
             if (sc == null)
@@ -24,8 +24,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             return sc.context as SkinningModule;
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Toggle Tool Text", typeof(InternalEditorBridge.ShortcutContext), "#`")]
-        private static void CollapseToolbar(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Toggle Tool Text", typeof(InternalEditorBridge.ShortcutContext), KeyCode.BackQuote, ShortcutModifiers.Shift)]
+        private static void CollapseToolbar(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null)
@@ -34,9 +34,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Restore Bind Pose", typeof(InternalEditorBridge.ShortcutContext), "#1")]
-        private static void DisablePoseModeKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Restore Bind Pose", typeof(InternalEditorBridge.ShortcutContext), KeyCode.Alpha1, ShortcutModifiers.Shift)]
+        private static void DisablePoseModeKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled && sm.skinningCache.GetEffectiveSkeleton(sm.skinningCache.selectedSprite).isPosePreview)
@@ -49,8 +48,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Toggle Character Mode", typeof(InternalEditorBridge.ShortcutContext), "#2")]
-        private static void ToggleCharacterModeKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Toggle Character Mode", typeof(InternalEditorBridge.ShortcutContext), KeyCode.Alpha2, ShortcutModifiers.Shift)]
+        private static void ToggleCharacterModeKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled && sm.skinningCache.hasCharacter)
@@ -64,13 +63,13 @@ namespace UnityEditor.Experimental.U2D.Animation
                     else
                         tool.Activate();
                 }
-                
+
                 sm.skinningCache.events.shortcut.Invoke("#2");
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Preview Pose", typeof(InternalEditorBridge.ShortcutContext), "#q")]
-        private static void EditPoseKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Preview Pose", typeof(InternalEditorBridge.ShortcutContext), KeyCode.Q, ShortcutModifiers.Shift)]
+        private static void EditPoseKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -80,8 +79,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Edit Joints", typeof(InternalEditorBridge.ShortcutContext), "#w")]
-        private static void EditJointsKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Edit Joints", typeof(InternalEditorBridge.ShortcutContext), KeyCode.W, ShortcutModifiers.Shift)]
+        private static void EditJointsKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -91,8 +90,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Create Bone", typeof(InternalEditorBridge.ShortcutContext), "#e")]
-        private static void CreateBoneKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Create Bone", typeof(InternalEditorBridge.ShortcutContext), KeyCode.E, ShortcutModifiers.Shift)]
+        private static void CreateBoneKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -102,8 +101,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Split Bone", typeof(InternalEditorBridge.ShortcutContext), "#r")]
-        private static void SplitBoneKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Split Bone", typeof(InternalEditorBridge.ShortcutContext), KeyCode.R, ShortcutModifiers.Shift)]
+        private static void SplitBoneKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -113,8 +112,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Reparent Bone", typeof(InternalEditorBridge.ShortcutContext), "#t")]
-        private static void ReparentBoneKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Reparent Bone", typeof(InternalEditorBridge.ShortcutContext), KeyCode.T, ShortcutModifiers.Shift)]
+        private static void ReparentBoneKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -124,8 +123,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Auto Geometry", typeof(InternalEditorBridge.ShortcutContext), "#a")]
-        private static void GenerateGeometryKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Auto Geometry", typeof(InternalEditorBridge.ShortcutContext), KeyCode.A, ShortcutModifiers.Shift)]
+        private static void GenerateGeometryKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -135,8 +134,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Edit Geometry", typeof(InternalEditorBridge.ShortcutContext), "#s")]
-        private static void MeshSelectionKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Edit Geometry", typeof(InternalEditorBridge.ShortcutContext), KeyCode.S, ShortcutModifiers.Shift)]
+        private static void MeshSelectionKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -146,8 +145,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Create Vertex", typeof(InternalEditorBridge.ShortcutContext), "#d")]
-        private static void CreateVertex(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Create Vertex", typeof(InternalEditorBridge.ShortcutContext), KeyCode.D, ShortcutModifiers.Shift)]
+        private static void CreateVertex(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -157,8 +156,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Create Edge", typeof(InternalEditorBridge.ShortcutContext), "#g")]
-        private static void CreateEdgeKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Create Edge", typeof(InternalEditorBridge.ShortcutContext), KeyCode.G, ShortcutModifiers.Shift)]
+        private static void CreateEdgeKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -168,8 +167,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Split Edge", typeof(InternalEditorBridge.ShortcutContext), "#h")]
-        private static void SplitEdge(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Split Edge", typeof(InternalEditorBridge.ShortcutContext), KeyCode.H, ShortcutModifiers.Shift)]
+        private static void SplitEdge(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -179,8 +178,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Auto Weights", typeof(InternalEditorBridge.ShortcutContext), "#z")]
-        private static void GenerateWeightsKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Auto Weights", typeof(InternalEditorBridge.ShortcutContext), KeyCode.Z, ShortcutModifiers.Shift)]
+        private static void GenerateWeightsKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -190,8 +189,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Weight Slider", typeof(InternalEditorBridge.ShortcutContext), "#x")]
-        private static void WeightSliderKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Weight Slider", typeof(InternalEditorBridge.ShortcutContext), KeyCode.X, ShortcutModifiers.Shift)]
+        private static void WeightSliderKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -201,8 +200,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Weight Brush", typeof(InternalEditorBridge.ShortcutContext), "#c")]
-        private static void WeightBrushKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Weight Brush", typeof(InternalEditorBridge.ShortcutContext), KeyCode.C, ShortcutModifiers.Shift)]
+        private static void WeightBrushKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -212,8 +211,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Bone Influence", typeof(InternalEditorBridge.ShortcutContext), "#v")]
-        private static void BoneInfluenceKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Bone Influence", typeof(InternalEditorBridge.ShortcutContext), KeyCode.V, ShortcutModifiers.Shift)]
+        private static void BoneInfluenceKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled && sm.skinningCache.mode == SkinningMode.Character)
@@ -223,8 +222,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Paste Panel Weights", typeof(InternalEditorBridge.ShortcutContext), "#b")]
-        private static void PastePanelKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Paste Panel Weights", typeof(InternalEditorBridge.ShortcutContext), KeyCode.B, ShortcutModifiers.Shift)]
+        private static void PastePanelKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -234,8 +233,8 @@ namespace UnityEditor.Experimental.U2D.Animation
             }
         }
 
-        [InternalEditorBridge.WrappedShortcut("2D/Animation/Visibility Panel", typeof(InternalEditorBridge.ShortcutContext), "#p")]
-        private static void VisibilityPanelKey(InternalEditorBridge.WrappedShortcutArguments args)
+        [Shortcut("2D/Animation/Visibility Panel", typeof(InternalEditorBridge.ShortcutContext), KeyCode.P, ShortcutModifiers.Shift)]
+        private static void VisibilityPanelKey(ShortcutArguments args)
         {
             var sm = GetModuleFromContext(args);
             if (sm != null && !sm.spriteEditor.editingDisabled)
@@ -248,7 +247,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         private void AddMainUI(VisualElement mainView)
         {
             var visualTree = Resources.Load("LayoutOverlay") as VisualTreeAsset;
-            VisualElement clone = visualTree.CloneTree(null);
+            VisualElement clone = visualTree.CloneTree();
             m_LayoutOverlay = clone.Q<LayoutOverlay>("LayoutOverlay");
 
             mainView.Add(m_LayoutOverlay);
@@ -259,8 +258,11 @@ namespace UnityEditor.Experimental.U2D.Animation
             CreateMeshToolbar();
             CreateWeightToolbar();
 
-            m_ShortcutContext = InternalEditorBridge.CreateShortcutContext(isFocused);
-            m_ShortcutContext.context = this;
+            m_ShortcutContext = new InternalEditorBridge.ShortcutContext()
+            {
+                isActive = isFocused,
+                context = this
+            };
             InternalEditorBridge.RegisterShortcutContext(m_ShortcutContext);
             InternalEditorBridge.AddEditorApplicationProjectLoadedCallback(OnProjectLoaded);
         }
@@ -293,6 +295,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_LayoutOverlay.verticalToolbar.AddToContainer(m_BoneToolbar);
 
             m_BoneToolbar.SetSkeletonTool += SetSkeletonTool;
+            m_BoneToolbar.SetEnabled(!spriteEditor.editingDisabled);
         }
 
         private void CreateMeshToolbar()
@@ -302,6 +305,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_LayoutOverlay.verticalToolbar.AddToContainer(m_MeshToolbar);
 
             m_MeshToolbar.SetMeshTool += SetMeshTool;
+            m_MeshToolbar.SetEnabled(!spriteEditor.editingDisabled);
         }
 
         private void CreateWeightToolbar()
@@ -310,6 +314,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_WeightToolbar.skinningCache = skinningCache;
             m_LayoutOverlay.verticalToolbar.AddToContainer(m_WeightToolbar);
             m_WeightToolbar.SetWeightTool += SetWeightTool;
+            m_WeightToolbar.SetEnabled(!spriteEditor.editingDisabled);
         }
 
         private void SetSkeletonTool(Tools toolType)

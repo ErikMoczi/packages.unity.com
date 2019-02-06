@@ -3,7 +3,7 @@
 /**********************************************************************************************************************/
 
 .Toolbar {
-     flex:1;
+     flex:0 0 auto;
 }
 
 Button {
@@ -13,20 +13,28 @@ Button {
     margin-top: 0;
     margin-bottom: 0;
     flex-direction : row;
+    border-left:6;
+    border-right:6;
+    border-bottom:4;
+    border-top:4;
+    padding-left:0;
+    padding-right:0;
+    padding-bottom:2;
+    padding-top:2;
 }
 
 Button > Image {
-    margin-left: -5;
     width: 16;
     height: 16;
 }
 
-.Collapse Button > Image {
-    width: 16;
-    height: 16;
+.Collapse Button {
+    margin-top: -1;
+    width: 26;
+    height: 26;
 }
 
-Button > Label {
+Button > .unity-label {
     margin-left: 2;
     margin-right: 0;
     margin-top: 0;
@@ -35,10 +43,12 @@ Button > Label {
     padding-right: 0;
     padding-top: 0;
     padding-bottom: 0;
+    text-alignment: middle-left;
 }
 
 .Collapse Button > Label {
     visibility : hidden;
+    position : Absolute;
 }
 
 Button.Checked > Label {
@@ -51,11 +61,11 @@ PopupWindow{
     border-right :2;
     margin-top : 0;
     margin-bottom : -4;
-    background-image: resource("Builtin Skins/LightSkin/Images/PopupWindowOff.png");
+    background-image: resource("Builtin Skins/LightSkin/images/PopupWindowOff.png");
 }
 
 .Dark PopupWindow{
-    background-image: resource("Builtin Skins/DarkSkin/Images/PopupWindowOff.png");
+    background-image: resource("Builtin Skins/DarkSkin/images/PopupWindowOff.png");
 }
 
 .Collapse PopupWindow

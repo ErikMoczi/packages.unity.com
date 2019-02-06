@@ -1,4 +1,5 @@
-﻿using UnityEngine.Experimental.UIElements;
+﻿using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Layout
 {
@@ -6,7 +7,7 @@ namespace UnityEditor.Experimental.U2D.Layout
 	{
 		public class LayoutOverlayFactory : UxmlFactory<LayoutOverlay, LayoutOverlayUxmlTraits> {}
 		public class LayoutOverlayUxmlTraits : VisualElement.UxmlTraits {}
-		
+
 		private ScrollableToolbar m_HorizontalToolbar;
 		private ScrollableToolbar m_VerticalToolbar;
 		private VisualElement m_HorizontalHolder;
@@ -23,7 +24,7 @@ namespace UnityEditor.Experimental.U2D.Layout
 				return m_HorizontalToolbar;
 			}
 		}
-		
+
 		public ScrollableToolbar verticalToolbar
 		{
 			get
@@ -43,7 +44,7 @@ namespace UnityEditor.Experimental.U2D.Layout
 				return m_HorizontalHolder;
 			}
 		}
-		
+
 		public VisualElement leftOverlay
 		{
 			get
@@ -53,7 +54,7 @@ namespace UnityEditor.Experimental.U2D.Layout
 				return m_LeftOverlay;
 			}
 		}
-		
+
 		public VisualElement rightOverlay
 		{
 			get
@@ -89,7 +90,7 @@ namespace UnityEditor.Experimental.U2D.Layout
 		public LayoutOverlay()
 		{
 			this.StretchToParentSize();
-			AddStyleSheetPath("LayoutOverlayStyle");
+			styleSheets.Add(Resources.Load<StyleSheet>("LayoutOverlayStyle"));
 		}
 	}
 }

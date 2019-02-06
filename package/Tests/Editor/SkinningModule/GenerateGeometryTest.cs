@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
 {
@@ -24,9 +24,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             var sprite = skinningCache.selectedSprite;
             var meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(169, meshCache.vertexCount);
-            Assert.AreEqual(798, meshCache.indices.Count);
-            Assert.AreEqual(70, meshCache.edges.Count);
+            Assert.AreEqual(139, meshCache.vertexCount);
+            Assert.AreEqual(630, meshCache.indices.Count);
+            Assert.AreEqual(66, meshCache.edges.Count);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
             {
@@ -73,9 +73,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             skinningCache.events.selectedSpriteChanged.Invoke(sprite);
             var meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(169, meshCache.vertexCount);
-            Assert.AreEqual(798, meshCache.indices.Count);
-            Assert.AreEqual(70, meshCache.edges.Count);
+            Assert.AreEqual(139, meshCache.vertexCount);
+            Assert.AreEqual(630, meshCache.indices.Count);
+            Assert.AreEqual(66, meshCache.edges.Count);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
             {
@@ -87,9 +87,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             skinningCache.events.selectedSpriteChanged.Invoke(sprite);
             meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(81, meshCache.vertexCount);
-            Assert.AreEqual(390, meshCache.indices.Count);
-            Assert.AreEqual(30, meshCache.edges.Count);
+            Assert.AreEqual(83, meshCache.vertexCount);
+            Assert.AreEqual(399, meshCache.indices.Count);
+            Assert.AreEqual(31, meshCache.edges.Count);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
             {
@@ -108,9 +108,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             var sprite = skinningCache.selectedSprite;
             var meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(169, meshCache.vertexCount);
-            Assert.AreEqual(798, meshCache.indices.Count);
-            Assert.AreEqual(70, meshCache.edges.Count);
+            Assert.AreEqual(139, meshCache.vertexCount);
+            Assert.AreEqual(630, meshCache.indices.Count);
+            Assert.AreEqual(66, meshCache.edges.Count);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
             {
@@ -137,9 +137,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             skinningCache.events.selectedSpriteChanged.Invoke(sprite);
             var meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(169, meshCache.vertexCount);
-            Assert.AreEqual(798, meshCache.indices.Count);
-            Assert.AreEqual(70, meshCache.edges.Count);
+            Assert.AreEqual(139, meshCache.vertexCount);
+            Assert.AreEqual(630, meshCache.indices.Count);
+            Assert.AreEqual(66, meshCache.edges.Count);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
             {
@@ -151,9 +151,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             skinningCache.events.selectedSpriteChanged.Invoke(sprite);
             meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(81, meshCache.vertexCount);
-            Assert.AreEqual(390, meshCache.indices.Count);
-            Assert.AreEqual(30, meshCache.edges.Count);
+            Assert.AreEqual(83, meshCache.vertexCount);
+            Assert.AreEqual(399, meshCache.indices.Count);
+            Assert.AreEqual(31, meshCache.edges.Count);
 
             // No Bones in Sprite 2
             for (int i = 0; i < meshCache.vertexCount; ++i)
@@ -185,9 +185,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             var sprite = skinningCache.selectedSprite;
             var meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(169, meshCache.vertexCount);
-            Assert.AreEqual(798, meshCache.indices.Count);
-            Assert.AreEqual(70, meshCache.edges.Count);
+            Assert.AreEqual(139, meshCache.vertexCount);
+            Assert.AreEqual(630, meshCache.indices.Count);
+            Assert.AreEqual(66, meshCache.edges.Count);
             Assert.AreEqual(0, meshCache.bones.Length);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
@@ -215,9 +215,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             var sprite = skinningCache.selectedSprite;
             var meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(169, meshCache.vertexCount);
-            Assert.AreEqual(798, meshCache.indices.Count);
-            Assert.AreEqual(70, meshCache.edges.Count);
+            Assert.AreEqual(139, meshCache.vertexCount);
+            Assert.AreEqual(630, meshCache.indices.Count);
+            Assert.AreEqual(66, meshCache.edges.Count);
             Assert.AreEqual(2, meshCache.bones.Length);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
@@ -245,9 +245,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             var sprite = skinningCache.selectedSprite;
             var meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(169, meshCache.vertexCount);
-            Assert.AreEqual(798, meshCache.indices.Count);
-            Assert.AreEqual(70, meshCache.edges.Count);
+            Assert.AreEqual(139, meshCache.vertexCount);
+            Assert.AreEqual(630, meshCache.indices.Count);
+            Assert.AreEqual(66, meshCache.edges.Count);
             Assert.AreEqual(2, meshCache.bones.Length);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)
@@ -259,9 +259,9 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SkinningModuleTests
             sprite = skinningCache.GetSprites()[1];
             meshCache = sprite.GetMesh();
 
-            Assert.AreEqual(81, meshCache.vertexCount);
-            Assert.AreEqual(390, meshCache.indices.Count);
-            Assert.AreEqual(30, meshCache.edges.Count);
+            Assert.AreEqual(83, meshCache.vertexCount);
+            Assert.AreEqual(399, meshCache.indices.Count);
+            Assert.AreEqual(31, meshCache.edges.Count);
             Assert.AreEqual(1, meshCache.bones.Length);
 
             for (int i = 0; i < meshCache.vertexCount; ++i)

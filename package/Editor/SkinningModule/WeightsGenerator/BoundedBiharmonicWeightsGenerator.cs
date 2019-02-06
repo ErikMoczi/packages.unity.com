@@ -28,6 +28,17 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public BoneWeight[] Calculate(Vector2[] vertices, Edge[] edges, Vector2[] controlPoints, Edge[] bones, int[] pins)
         {
+            var weights = new BoneWeight[vertices.Length];
+
+            for (var i = 0; i < weights.Length; ++i)
+                weights[i] = defaultWeight;
+
+            var indices = new List<int>(vertices.Length);
+            TriangulationUtility.Triangulate(vertices, edges, indices);
+
+            if (indices.Count < 3)
+                return weights;
+
             var boneSamples = SampleBones(controlPoints, bones, kNumSamples);
             var verticesList = new List<Vector2>(vertices.Length + controlPoints.Length + boneSamples.Length);
             var edgesList = new List<Edge>(edges);
@@ -37,11 +48,17 @@ namespace UnityEditor.Experimental.U2D.Animation
             verticesList.AddRange(controlPoints);
             verticesList.AddRange(boneSamples);
 
-            TriangulationUtility.Tessellate(kMinAngle, 0f, kMeshAreaFactor, kLargestTriangleAreaFactor, 0, verticesList, edgesList, indicesList);
+            try
+            {
+                TriangulationUtility.Tessellate(kMinAngle, 0f, kMeshAreaFactor, kLargestTriangleAreaFactor, 0, verticesList, edgesList, indicesList);
+            }
+            catch (Exception)
+            {
+                return weights;
+            }
 
             var tessellatedVertices = verticesList.ToArray();
             var tessellatedIndices = indicesList.ToArray();
-            var weights = new BoneWeight[vertices.Length];
 
             GCHandle verticesHandle = GCHandle.Alloc(tessellatedVertices, GCHandleType.Pinned);
             GCHandle indicesHandle = GCHandle.Alloc(tessellatedIndices, GCHandleType.Pinned);

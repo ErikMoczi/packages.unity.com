@@ -6,7 +6,8 @@
         "Unity.2D.Animation.Editor",
         "Unity.2D.Animation.Runtime",
         "Unity.2D.Triangle.Runtime",
-        "Unity.InternalAPIEngineBridge.001"
+        "Unity.InternalAPIEngineBridge.001",
+        "Unity.Mathematics"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
@@ -18,5 +19,6 @@
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": true
+    "autoReferenced": true,
+    "defineConstraints": []
 }

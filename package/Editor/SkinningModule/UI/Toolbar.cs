@@ -1,5 +1,6 @@
+using UnityEngine;
 using UnityEngine.Experimental.U2D.Common;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -11,7 +12,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public Toolbar()
         {
             AddToClassList("Toolbar");
-            AddStyleSheetPath("ToolbarStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("ToolbarStyle"));
             if (EditorGUIUtility.isProSkin)
                 AddToClassList("Dark");
         }

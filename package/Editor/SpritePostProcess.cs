@@ -51,6 +51,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                 AssetDatabase.ForceReserializeAssets(assetPathModified, ForceReserializeAssetsOptions.ReserializeMetadata);
                 EditorPrefs.SetBool("VerifySavingAssets", originalValue);
                 m_AssetList.Clear();
+                BoneGizmo.instance.ClearSpriteBoneCache();
             }
         }
 
@@ -187,7 +188,7 @@ namespace UnityEditor.Experimental.U2D.Animation
                     sprite.SetVertexCount(vertices.Length);
                     sprite.SetVertexAttribute<Vector3>(VertexAttribute.Position, vertexArray);
                     sprite.SetIndices(indicesArray);
-                    sprite.SetBoneWeights(boneWeightArray);
+                    sprite.SetVertexAttribute<BoneWeight>(VertexAttribute.BlendWeight, boneWeightArray);
                     vertexArray.Dispose();
                     boneWeightArray.Dispose();
                     indicesArray.Dispose();
@@ -196,6 +197,16 @@ namespace UnityEditor.Experimental.U2D.Animation
 
                     if (hasBones && hasInvalidWeights)
                         Debug.LogWarning("Sprite \"" + spriteRect.name + "\" contains bone weights which sum zero or are not normalized. To avoid visual artifacts please consider fixing them.");
+                }
+                else
+                {
+                    var boneWeightArray = new NativeArray<BoneWeight>(sprite.GetVertexCount(), Allocator.Temp);
+                    var defaultBoneWeight = new BoneWeight() { weight0 = 1f };
+
+                    for (var i = 0; i < boneWeightArray.Length; ++i)
+                        boneWeightArray[i] = defaultBoneWeight;
+
+                    sprite.SetVertexAttribute<BoneWeight>(VertexAttribute.BlendWeight, boneWeightArray);
                 }
             }
 

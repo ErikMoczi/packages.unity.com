@@ -1,5 +1,4 @@
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -11,13 +10,13 @@ namespace UnityEditor.Experimental.U2D.Animation
             {
                 element.SetEnabled(false);
                 element.visible = false;
-                element.style.positionType = PositionType.Absolute;
+                element.style.position = Position.Absolute;
             }
             else
             {
                 element.SetEnabled(true);
                 element.visible = true;
-                element.style.positionType = PositionType.Relative;
+                element.style.position = Position.Relative;
             }
         }
     }

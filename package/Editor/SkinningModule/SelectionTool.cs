@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor.Experimental.U2D.Layout;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using System.Linq;
 
 namespace UnityEditor.Experimental.U2D.Animation
@@ -162,40 +162,33 @@ namespace UnityEditor.Experimental.U2D.Animation
                 var ray = new Ray((Vector3)mousePosition - spritePosition + Vector3.back, Vector3.forward);
                 var bounds = meshPreview.mesh.bounds;
 
-                if (bounds.IntersectRay(ray))
+                if (sprite.GetMesh().indices.Count >= 3)
                 {
-                    var mesh = sprite.GetMesh();
-
-                    Debug.Assert(mesh != null);
-
-                    var indices = mesh.indices;
-                    for (var i = 0; i < indices.Count; i += 3)
+                    if (bounds.IntersectRay(ray))
                     {
-                        var p1 = meshPreview.vertices[indices[i]];
-                        var p2 = meshPreview.vertices[indices[i + 1]];
-                        var p3 = meshPreview.vertices[indices[i + 2]];
+                        var mesh = sprite.GetMesh();
 
-                        if (MathUtility.Intersect(p1, p2, p3, ray))
-                            return sprite;
+                        Debug.Assert(mesh != null);
+
+                        var indices = mesh.indices;
+                        for (var i = 0; i < indices.Count; i += 3)
+                        {
+                            var p1 = meshPreview.vertices[indices[i]];
+                            var p2 = meshPreview.vertices[indices[i + 1]];
+                            var p3 = meshPreview.vertices[indices[i + 2]];
+
+                            if (MathUtility.Intersect(p1, p2, p3, ray))
+                                return sprite;
+                        }
                     }
                 }
-            }
-
-            for (int index = 0; index < m_Sprites.Count; ++index)
-            {
-                var sprite = m_Sprites[(currentSelectedIndex + index) % m_Sprites.Count];
-                if (notVisiblePart.Contains(sprite))
-                    continue;
-                var skeleton = skinningCache.GetEffectiveSkeleton(sprite);
-
-                if (skeleton.isPosePreview)
-                    continue;
-
-                var matrix = sprite.GetLocalToWorldMatrixFromMode();
-                var rect = new Rect(matrix.MultiplyPoint3x4(Vector3.zero), sprite.textureRect.size);
-
-                if (rect.Contains(mousePosition))
-                    return sprite;
+                else
+                {
+                    if (meshPreview.defaultMesh.bounds.IntersectRay(ray))
+                    {
+                        return sprite;
+                    }
+                }
             }
 
             return null;

@@ -601,8 +601,8 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.SpriteMesh
             m_SpriteMeshData.frame = spriteRect.rect;
             m_SpriteMeshDataController.OutlineFromAlpha(new OutlineGenerator(), textureDataProvider, 0f, 0);
 
-            Assert.AreEqual(30, m_SpriteMeshData.vertices.Count, "Incorrect number of vertices generated");
-            Assert.AreEqual(30, m_SpriteMeshData.edges.Count, "Incorrect number of edges generated");
+            Assert.AreEqual(27, m_SpriteMeshData.vertices.Count, "Incorrect number of vertices generated");
+            Assert.AreEqual(27, m_SpriteMeshData.edges.Count, "Incorrect number of edges generated");
         }
 
         [Test]

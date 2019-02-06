@@ -146,7 +146,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
             bool doingTest = false;
             bool testDone = false;
             Vector2 sceneViewMousePosition = Vector2.zero;
-            SceneView.OnSceneFunc sceneViewDelegate = (sceneView) =>
+            Action<SceneView> sceneViewDelegate = (sceneView) =>
                 {
                     if (sceneView != s_SceneView)
                         return;
@@ -160,12 +160,12 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
                     }
                 };
 
-            SceneView.onSceneGUIDelegate += sceneViewDelegate;
+            SceneView.duringSceneGui += sceneViewDelegate;
             while (!testDone)
             {
                 yield return null;
             }
-            SceneView.onSceneGUIDelegate -= sceneViewDelegate;
+            SceneView.duringSceneGui -= sceneViewDelegate;
 
             SceneViewMouseClick(sceneViewMousePosition);
 
@@ -191,7 +191,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
             bool doingTest = false;
             bool testDone = false;
             Vector2 sceneViewMousePosition = Vector2.zero;
-            SceneView.OnSceneFunc sceneViewDelegate = (sceneView) =>
+            Action<SceneView> sceneViewDelegate = (sceneView) =>
                 {
                     if (sceneView != s_SceneView)
                         return;
@@ -205,12 +205,12 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.BoneGizmo
                     }
                 };
 
-            SceneView.onSceneGUIDelegate += sceneViewDelegate;
+            SceneView.duringSceneGui += sceneViewDelegate;
             while (!testDone)
             {
                 yield return null;
             }
-            SceneView.onSceneGUIDelegate -= sceneViewDelegate;
+            SceneView.duringSceneGui -= sceneViewDelegate;
 
             SceneViewMouseClick(sceneViewMousePosition);
 

@@ -1,11 +1,8 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using NSubstitute;
 using NUnit.Framework;
-using UnityEditor.Experimental.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.Experimental.U2D.Animation.Test.VisibilityToolTests
@@ -22,7 +19,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.VisibilityToolTests
         {
             m_VisibilityToolView = VisibilityToolWindow.CreateFromUXML();
             m_Window = EditorWindow.GetWindow<TestWindow>();
-            m_Window.GetRootVisualContainer().Add(m_VisibilityToolView);
+            m_Window.rootVisualElement.Add(m_VisibilityToolView);
         }
 
         [TearDown]

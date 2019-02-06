@@ -93,7 +93,7 @@ Click __Apply__ to apply the settings when ready. Refer to the __PSD Importer__ 
 
 # Tool Preferences
 
-The Unity 2D Animation preferences menu is found in the Preferences menu by going to  **Edit** > **Preferences** > **Unity 2D Animation**. It provides several options to customize aspects of the animation tool.
+The Unity 2D Animation preferences menu is found in the Preferences menu by going to  **Edit** > **Preferences** > **2D** > **Animation**. It provides several options to customize aspects of the animation tool.
 
 ![Tool Preferences](images/2DAnimationV2_ToolPreferences.png)
 

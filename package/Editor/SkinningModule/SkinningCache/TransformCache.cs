@@ -29,6 +29,17 @@ namespace UnityEditor.Experimental.U2D.Animation
             get { return m_Children.ToArray(); }
         }
 
+        internal virtual int siblingIndex
+        {
+            get { return GetSiblingIndex(); }
+            set { SetSiblingIndex(value); }
+        }
+
+        public int ChildCount
+        {
+            get { return m_Children.Count; }
+        }
+
         public Vector3 localPosition
         {
             get { return m_LocalPosition; }
@@ -116,6 +127,9 @@ namespace UnityEditor.Experimental.U2D.Animation
         {
             if (parent != null)
                 parent.RemoveChild(this);
+
+            m_Parent = null;
+            m_Children.Clear();
         }
 
         private void Update()
@@ -131,9 +145,37 @@ namespace UnityEditor.Experimental.U2D.Animation
             m_Children.Add(transform);
         }
 
+        private void InsertChildAt(int index, TransformCache transform)
+        {
+            m_Children.Insert(index, transform);
+        }
+
         private void RemoveChild(TransformCache transform)
         {
             m_Children.Remove(transform);
+        }
+
+        private void RemoveChildAt(int index)
+        {
+            m_Children.RemoveAt(index);
+        }
+
+        private int GetSiblingIndex()
+        {
+            if (parent == null)
+                return -1;
+
+            return parent.m_Children.IndexOf(this);
+        }
+        private void SetSiblingIndex(int index)
+        {
+            if (parent != null)
+            {
+                var currentIndex = parent.m_Children.IndexOf(this);
+                var indexToRemove = index < currentIndex ? currentIndex + 1 : currentIndex;
+                parent.InsertChildAt(index, this);
+                parent.RemoveChildAt(indexToRemove);
+            }
         }
 
         public void SetParent(TransformCache newParent)
@@ -143,6 +185,9 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public void SetParent(TransformCache newParent, bool worldPositionStays)
         {
+            if (m_Parent == newParent)
+                return;
+
             var oldPosition = position;
             var oldRotation = rotation;
 

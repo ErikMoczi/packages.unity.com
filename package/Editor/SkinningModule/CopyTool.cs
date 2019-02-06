@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Experimental.U2D;
 using UnityEditor.Experimental.U2D.Layout;
 using UnityEngine.Assertions;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -214,7 +214,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             using (skinningCache.UndoScope(TextContent.pasteData))
             {
                 BoneCache[] newBones = null;
-                if (copyMultiple && skinningCache.hasCharacter)
+                if (bone && copyMultiple && skinningCache.hasCharacter)
                 {
                     var skinningSpriteData = skinningCopyData.copyData[0];
                     newBones = skinningCache.CreateBoneCacheFromSpriteBones(skinningSpriteData.spriteBones.ToArray(), scale);

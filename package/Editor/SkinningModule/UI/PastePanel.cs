@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEditor.Experimental.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.Experimental.U2D.Animation
 {
@@ -10,7 +10,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public class PastePanelFactory : UxmlFactory<PastePanel, PastePanelUxmlTraits> {}
         public class PastePanelUxmlTraits : VisualElement.UxmlTraits {}
 
-        public event Action<bool, bool, bool, bool> onPasteActivated = (bones, mesh, flipX, flipY) => {}; 
+        public event Action<bool, bool, bool, bool> onPasteActivated = (bones, mesh, flipX, flipY) => {};
 
         private Toggle m_BonesToggle;
         private Toggle m_MeshToggle;
@@ -43,7 +43,7 @@ namespace UnityEditor.Experimental.U2D.Animation
 
         public PastePanel()
         {
-            AddStyleSheetPath("PastePanelStyle");
+            styleSheets.Add(Resources.Load<StyleSheet>("PastePanelStyle"));
             if (EditorGUIUtility.isProSkin)
                 AddToClassList("Dark");
 
@@ -61,7 +61,7 @@ namespace UnityEditor.Experimental.U2D.Animation
             var pasteButton = this.Q<Button>("PasteButton");
             pasteButton.clickable.clicked += OnPasteActivated;
         }
-        
+
         public void OnPasteActivated()
         {
             onPasteActivated(bones, mesh, flipX, flipY);
@@ -70,7 +70,7 @@ namespace UnityEditor.Experimental.U2D.Animation
         public static PastePanel GenerateFromUXML()
         {
             var visualTree = Resources.Load("PastePanel") as VisualTreeAsset;
-            var clone = visualTree.CloneTree(null).Q<PastePanel>("PastePanel");
+            var clone = visualTree.CloneTree().Q<PastePanel>("PastePanel");
             clone.BindElements();
             return clone;
         }

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:aui="UnityEditor.Experimental.U2D.Animation">
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:aui="UnityEditor.Experimental.U2D.Animation">
   <aui:BoneToolbar name="BoneToolbar">
       <ui:PopupWindow name="PopupWindow" text="Bones">
           <ui:Button name="EditPose" tooltip="Pose character to view setup">

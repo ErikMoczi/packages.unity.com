@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
-public static class LayoutOverlayUtility 
+public static class LayoutOverlayUtility
 {
     public static Button CreateButton(string name, Action clickEvent, string tooltip = null, string text = null, string imageResourcePath = null, string stylesheetPath = null)
     {
@@ -19,12 +19,12 @@ public static class LayoutOverlayUtility
             {
                 Image image = new Image();
                 image.image = texture;
-                button.Add(image);    
+                button.Add(image);
             }
         }
         if (!String.IsNullOrEmpty(stylesheetPath))
-            button.AddStyleSheetPath(stylesheetPath);
-        
+            button.styleSheets.Add(Resources.Load<StyleSheet>(stylesheetPath));
+
         return button;
     }
 }

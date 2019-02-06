@@ -59,6 +59,40 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Weights
         }
 
         [Test]
+        public void NoVertices_ReturnsEmptyWeightsArray()
+        {
+            m_SpriteMeshData.vertices.Clear();
+
+            BoneWeight[] boneWeights = CalculateWeights();
+
+            Assert.AreEqual(0, boneWeights.Length, "Weights count don't match vertex count");
+        }
+
+        [Test]
+        public void NoTriangles_ReturnsDefaultWeights()
+        {
+            var v0 = m_SpriteMeshData.vertices[0];
+            var v1 = m_SpriteMeshData.vertices[1];
+            m_SpriteMeshData.vertices.Clear();
+            m_SpriteMeshData.vertices.Add(v0);
+            m_SpriteMeshData.edges.Clear();
+            m_SpriteMeshData.indices.Clear();
+
+            BoneWeight[] boneWeights = CalculateWeights();
+
+            Assert.AreEqual(1, boneWeights.Length, "Weights count don't match vertex count");
+            AssertBoneWeightContainsChannels(BoundedBiharmonicWeightsGenerator.defaultWeight, boneWeights[0]);
+
+            m_SpriteMeshData.vertices.Add(v1);
+
+            boneWeights = CalculateWeights();
+
+            Assert.AreEqual(2, boneWeights.Length, "Weights count don't match vertex count");
+            AssertBoneWeightContainsChannels(BoundedBiharmonicWeightsGenerator.defaultWeight, boneWeights[0]);
+            AssertBoneWeightContainsChannels(BoundedBiharmonicWeightsGenerator.defaultWeight, boneWeights[1]);
+        }
+
+        [Test]
         public void NoBones_ReturnsDefaultBoneWeight()
         {
             m_SpriteMeshData.bones.Clear();
@@ -81,6 +115,7 @@ namespace UnityEditor.Experimental.U2D.Animation.Test.Weights
         }
 
         [Test]
+        [Ignore("TriangleNET will enter in infinite recursion")]
         public void AllVerticesZero_ReturnsDefaultBoneWeight()
         {
             SetAllVerticesToZero();
