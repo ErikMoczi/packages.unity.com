@@ -32,23 +32,32 @@ namespace Unity.InteractiveTutorials
             if (IsInitilized())
                 return;
 
-            //we delay the call because (i think) all tutorial assets are not loaded yet
-            EditorApplication.update += InitRunStartupCode;
+            // Temporarily enter play mode to work around issue with asset importing
+            // ScriptableObject asset might be imported twice depending on the asset import order
+            // When the same asset is imported again the previous instance is unloaded
+            // This can cause existing references to become invalid (i.e. m_CachedPtr == 0x0)
+            // Entering and and immediately existing play mode forces a domain reload which fixes this issue
+            EditorApplication.isPlaying = true;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        static void OnPlayModeStateChanged(PlayModeStateChange playModeStateChange)
+        {
+            switch (playModeStateChange)
+            {
+                case PlayModeStateChange.EnteredPlayMode:
+                    EditorApplication.isPlaying = false;
+                    break;
+
+                case PlayModeStateChange.EnteredEditMode:
+                    EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+                    InitRunStartupCode();
+                    break;
+            }
         }
 
         private static void InitRunStartupCode()
         {
-            // Work around issue where loaded tutorial has invalid references to its pages
-            // Something goes wrong when importing the tutorial assets
-            // This causes the tutorial pages to be deserialized twice invaliding the previous instance
-            // Entering play mode here triggers a domain reload which fixes the issue
-            // When the first tutorial is started we exit play mode again
-            if (!EditorApplication.isPlaying)
-            {
-                EditorApplication.isPlaying = true;
-                return;
-            }
-
             SetInitilized();
             EditorApplication.update -= InitRunStartupCode;
             RunStartupCode();

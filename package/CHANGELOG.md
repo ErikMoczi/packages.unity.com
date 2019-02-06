@@ -4,19 +4,24 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.11] - 2019-01-17
+### Fixed
+- Fix 2019.1 compilation errors
+- Improve invalid ScriptableObject reference workaround to always exit play mode after project load
+
 ## [0.1.10] - 2019-01-11
-## Fixed
+### Fixed
 - Fix invalid CHANGELOG formatting.
 
 ## [0.1.9] - 2019-01-11
-## Changed
+### Changed
 - SceneViewCameraMovedCriterion will also complete if the user changes the camera orientation.
 
-## Fixed
+### Fixed
 - Added work around for issue where tutorial is not loaded initial project load
 
 ## [0.1.8] - 2018-12-11
-## Fixed
+### Fixed
 - Fixed build script
 
 ## [0.1.7] - 2018-12-10
@@ -56,5 +61,5 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated usages of obsolete APIs
 
 ### Changed
-- Initial version of the in editor tutorial framework as a package. 
+- Initial version of the in editor tutorial framework as a package.
 - Contained the use of internals to a single folder.

@@ -12,6 +12,7 @@ namespace Unity.InteractiveTutorials.Tests
     public class UnmaskedViewTests
     {
         [Test]
+        [Ignore("Annoyingly closes Test Runner window and clears test results of other tests")]
         public void TestGetViewsAndRects_ThrowsArgumentException_WhenTryingToGetRectsFromTwoEditorWindowsInTheSameDockArea()
         {
             EditorUtility.LoadWindowLayout("Packages/com.unity.learn.iet-framework/Tests/Editor/UnmaskedViewTestLayout.dwlt");

@@ -10,3 +10,4 @@
 0.1.8-preview
 0.1.9-preview
 0.1.10-preview
+0.1.11-preview

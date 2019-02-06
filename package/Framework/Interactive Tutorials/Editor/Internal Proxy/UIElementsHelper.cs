@@ -2,7 +2,13 @@ using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+using VisualContainer = UnityEngine.UIElements.VisualElement;
+#else
 using UnityEngine.Experimental.UIElements;
+#endif
 
 namespace Unity.InteractiveTutorials
 {
@@ -75,6 +81,26 @@ namespace Unity.InteractiveTutorials
         public static VisualElement GetVisualTree(GUIViewProxy guiViewProxy)
         {
             return (VisualElement)s_VisualTreeProperty.GetValue(guiViewProxy.guiView, new object[0]);
+        }
+
+        public static void SetLayout(this VisualElement element, Rect rect)
+        {
+#if UNITY_2019_1_OR_NEWER
+            var style = element.style;
+            style.position = Position.Absolute;
+            style.marginLeft = 0.0f;
+            style.marginRight = 0.0f;
+            style.marginBottom = 0.0f;
+            style.marginTop = 0.0f;
+            style.left = rect.x;
+            style.top = rect.y;
+            style.right = float.NaN;
+            style.bottom = float.NaN;
+            style.width = rect.width;
+            style.height = rect.height;
+#else
+            element.layout = rect;
+#endif
         }
     }
 }

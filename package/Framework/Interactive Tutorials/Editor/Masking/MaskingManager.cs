@@ -3,8 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+using VisualContainer = UnityEngine.UIElements.VisualElement;
+#else
 using UnityEngine.Experimental.UIElements;
-using UnityObject = UnityEngine.Object;
+#endif
 
 namespace Unity.InteractiveTutorials
 {
@@ -140,7 +145,7 @@ namespace Unity.InteractiveTutorials
                     {
                         var mask = new VisualElement();
                         mask.style.backgroundColor = maskColor;
-                        mask.layout = rect;
+                        mask.SetLayout(rect);
                         UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
                         s_Masks.Add(mask);
                     }
@@ -151,7 +156,7 @@ namespace Unity.InteractiveTutorials
                         {
                             var mask = new VisualElement();
                             mask.style.backgroundColor = blockedInteractionsColor;
-                            mask.layout = rect;
+                            mask.SetLayout(rect);
                             UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
                             s_Masks.Add(mask);
                         }
@@ -162,7 +167,7 @@ namespace Unity.InteractiveTutorials
                 {
                     var mask = new VisualElement();
                     mask.style.backgroundColor = maskColor;
-                    mask.layout = viewRect;
+                    mask.SetLayout(viewRect);
                     UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
                     s_Masks.Add(mask);
                 }
@@ -189,7 +194,7 @@ namespace Unity.InteractiveTutorials
                             layout.yMin -= highlightThickness;
                             layout.yMax += highlightThickness;
                         }
-                        highlighter.layout = layout;
+                        highlighter.SetLayout(layout);
                         UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), highlighter);
                         s_Highlighters.Add(highlighter);
                     }

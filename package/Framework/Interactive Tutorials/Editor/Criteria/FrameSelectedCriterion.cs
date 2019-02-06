@@ -24,12 +24,20 @@ namespace Unity.InteractiveTutorials
 
         public override void StartTesting()
         {
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui += OnSceneGUI;
+#else
             SceneView.onSceneGUIDelegate += OnSceneGUI;
+#endif
         }
 
         public override void StopTesting()
         {
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui -= OnSceneGUI;
+#else
             SceneView.onSceneGUIDelegate -= OnSceneGUI;
+#endif
         }
 
         // Overriding the update completion state, as this criterion is not state based
