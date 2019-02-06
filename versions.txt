@@ -3,3 +3,4 @@
 0.0.1-preview.3
 0.0.1-preview.4
 0.0.1-preview.5
+0.0.2-preview.1

@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Unity.EditorCoroutines.Editor
 {
     /// <summary>
-    /// Instances of the EditorCoroutine class do not expose properties or functions, their sole purpose is to reference the ongoing coroutine process.
+    /// A handle to an EditorCoroutine, can be passed to <see cref="EditorCoroutineUtility">EditorCoroutineUtility</see> methods to control lifetime.
     /// </summary>
     public class EditorCoroutine
     {
@@ -75,14 +75,14 @@ namespace Unity.EditorCoroutines.Editor
 
                 if(advance)
                 {
-                    data = default; 
+                    data = default(ProcessorData); 
                     return enumerator.MoveNext();
                 }
                 return true;
             }
         }
 
-        WeakReference m_Owner;
+        internal WeakReference m_Owner;
         IEnumerator m_Routine;
         YieldProcessor m_Processor;
 
