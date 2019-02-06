@@ -22,7 +22,17 @@ namespace Unity.Tiny
 
         private static void HandleAssemblyReloaded()
         {
-            Assert.IsFalse(s_Loaded, $"{TinyConstants.ApplicationName}: A {TinyConstants.ApplicationName} project should not be loaded during assembly reload");
+            // This check is intentional so that we don't allocate the string every time this method is called.
+            if (!s_Loaded)
+            {
+                Assert.IsFalse(s_Loaded, GetAssemblyReloadErrorString());
+            }
+        }
+        
+        // This method exists only to lazily compute the error string, when needed.
+        private static string GetAssemblyReloadErrorString()
+        {
+            return  $"{TinyConstants.ApplicationName}: A {TinyConstants.ApplicationName} project should not be loaded during assembly reload";
         }
 
         internal static void LoadDomain()

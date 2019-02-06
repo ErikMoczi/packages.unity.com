@@ -12,31 +12,41 @@
         "Name": "Began",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "3152f4d5f49c7e42043e7b0f72e64c09",
         "Name": "Moved",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "c60f32fa598d34ceb762e0e12e472505",
         "Name": "Stationary",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "19c514a58e6d4b760b26b32e2ce66eac",
         "Name": "Ended",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "9f4a4960e9df8f48d85d2336c2dd10d1",
         "Name": "Canceled",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "7c93ed01a62324edc6fab76efa37258b", "Name": "TouchState" },

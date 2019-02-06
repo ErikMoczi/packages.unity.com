@@ -46,14 +46,12 @@ namespace Unity.Tiny.Test
 
             {
                 var c = m_DefaultEntity.AddComponent((TinyType.Reference) m_ComponentType);
-                c.Refresh();
             }
             
             // Create another entity with our test component
             m_OverridenEntity = m_Registry.CreateEntity(TinyId.New(), "OverridenEntity");
             {
                 var c = m_OverridenEntity.AddComponent((TinyType.Reference) m_ComponentType);
-                c.Refresh();
                 c["TestIntField"] = KTestFieldOverrideValue;
             }
         }

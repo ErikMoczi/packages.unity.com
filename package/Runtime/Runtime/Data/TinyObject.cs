@@ -47,7 +47,10 @@ namespace Unity.Tiny
         public TinyType.Reference Type
         {
             get { return s_TypeProperty.GetValue(this); }
-            set { s_TypeProperty.SetValue(this, value); }
+            set { 
+                s_TypeProperty.SetValue(this, value);
+                Refresh();
+            }
         }
 
         public string Name { get; set; }
@@ -133,7 +136,7 @@ namespace Unity.Tiny
                 m_SharedVersionStorage?.IncrementVersion(property, container);
             }
         }
-
+        
         /// <summary>
         /// Updates the value tree based on its internal type and migrates any values
         ///
@@ -142,7 +145,7 @@ namespace Unity.Tiny
         ///     - Ensure types are up to date
         ///     - Rebuild properties
         /// </summary>
-        public void Refresh(TinyObject defaultValue = null, bool skipTypeCheck = false)
+        internal void Refresh(TinyObject defaultValue = null, bool skipTypeCheck = false)
         {
             var type = Type.Dereference(Registry);
 
@@ -155,14 +158,14 @@ namespace Unity.Tiny
             if (!IsDefaultValue)
             {
                 // Force the type to be refreshed
-                if (!skipTypeCheck)
-                {
-                    type.Refresh();
-                }
+//                if (!skipTypeCheck)
+//                {
+//                    type.Refresh();
+//                }
 
                 if (defaultValue == null)
                 {
-                    defaultValue = type.GetDefaultValue() as TinyObject;
+                    defaultValue = type.GetDefaultValue(true) as TinyObject;
                 }
             }
 

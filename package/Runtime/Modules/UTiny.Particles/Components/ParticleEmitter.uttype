@@ -11,31 +11,41 @@
         "Name": "particle",
         "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "13086d56f39cb49c5b0e1e401d4e806e",
         "Name": "maxParticles",
         "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "84390aea1b8206bde9a10198c173a24f",
         "Name": "emitRate",
         "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "40e4136a8ca14c6a7142dc7fd7e41bdf",
         "Name": "lifetime",
         "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "64243372734ef0a8264e693dd4da217a",
         "Name": "attachToEmitter",
         "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "c8371d148850d1a696b747b09999a478", "Name": "ParticleEmitter" },

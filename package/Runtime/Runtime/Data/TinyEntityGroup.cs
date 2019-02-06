@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Properties;
 
 namespace Unity.Tiny
@@ -109,6 +110,39 @@ namespace Unity.Tiny
                 if (null != s)
                 {
                     m_Entities[i] = (TinyEntity.Reference) s;
+                }
+            }
+        }
+
+        public override void Restore(IMemento memento)
+        {
+            base.Restore(memento);
+            (Registry.FindById(Id) as TinyEntityGroup)?.ValidateEntities();
+        }
+
+        private void ValidateEntities()
+        {
+            if (Entities.Deref(Registry).All(e => e.EntityGroup == this))
+            {
+                return;
+            }
+            
+            using (Registry.DontTrackChanges())
+            {
+                var entitiesToRemove = ListPool<TinyEntity.Reference>.Get();
+                
+                try
+                {
+                    entitiesToRemove.AddRange(Entities.Deref(Registry).Where(e => e.EntityGroup != this).Select(e => e.Ref));
+
+                    foreach (var reference in entitiesToRemove)
+                    {
+                        RemoveEntityReference(reference);
+                    }
+                }
+                finally
+                {
+                    ListPool<TinyEntity.Reference>.Release(entitiesToRemove);
                 }
             }
         }

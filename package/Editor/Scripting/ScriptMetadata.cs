@@ -452,7 +452,11 @@ namespace Unity.Tiny
 
             foreach (var kvp in requiredFences)
             {
-                Assert.IsNotNull(kvp.Value, $"Could not find expected system: '{kvp.Key}'");
+                // This check is intentional so that we don't allocate the string every time this method is called.
+                if (null != kvp.Value)
+                {
+                    Assert.IsNotNull(kvp.Value, GetSystemNotFoundErrorString(kvp.Key));
+                }
             }
 
             if (requiredFences.Any(f => f.Value == null))
@@ -637,6 +641,12 @@ namespace Unity.Tiny
                 PropertyContainer.Transfer(v, instance);
                 return instance;
             });
+        }
+        
+        // This method exists only to lazily compute the error string, when needed.
+        private static string GetSystemNotFoundErrorString(string key)
+        {
+            return  $"Could not find expected system: '{key}'";
         }
     }
 

@@ -11,19 +11,25 @@
         "Name": "clip",
         "FieldType": { "Id": "1ae8c073dc444f4fb2d3120e5e618326", "Name": "AudioClipEntity" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "14ccd7413d1ab4076bd28c8f8f774a68",
         "Name": "volume",
         "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "8f3775e9c41b81057f7d2d3dc311175d",
         "Name": "loop",
         "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "a60aa1b9ad84a83eefb0d5382a4d5967", "Name": "AudioSource" },

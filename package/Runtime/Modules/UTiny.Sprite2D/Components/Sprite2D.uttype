@@ -11,19 +11,25 @@
         "Name": "image",
         "FieldType": { "Id": "373ed9034ede4f84829bf01ed265f6ee", "Name": "Texture2DEntity" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "98b501e487708cf862d51f1aeed5fed6",
         "Name": "imageRegion",
         "FieldType": { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "8a8cb38545ce089fcefa6c210da6c426",
         "Name": "pivot",
         "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "bfaba92347219714d5784f79def27ae1", "Name": "Sprite2D" },

@@ -50,7 +50,6 @@ namespace Unity.Tiny
             from.allowDynamicResolution = false;
 #endif
 
-            camera.Refresh();
             camera.AssignIfDifferent("clearFlags", from.clearFlags);
             camera.AssignIfDifferent("backgroundColor", from.backgroundColor);
             camera.AssignIfDifferent("layerMask", from.cullingMask);

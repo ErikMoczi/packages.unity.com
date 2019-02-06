@@ -11,7 +11,9 @@
         "Name": "angularVelocity",
         "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "e866135321023b24c4dd1d5769536277", "Name": "EmitterInitialAngularVelocity" }

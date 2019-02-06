@@ -12,9 +12,11 @@ namespace Unity.Tiny
     {
         private readonly Dictionary<TinyField, RenamableLabel> Labels = new Dictionary<TinyField, RenamableLabel>();
         public override bool UseDefaultMargins() => true;
-        private const float k_Spacing = 4.0f;
+        private const float k_Spacing = 4.0f; 
         private const float k_DoubleSpacing = k_Spacing * 2.0f;
         private const string k_DocumentationPrefix = "Tiny_ShowDocumentation_";
+        private bool m_SetInitialVersion = true;
+        private int m_FirstVersion;
 
         private static bool GetFolded(IIdentified<TinyId> field)
         {
@@ -42,8 +44,7 @@ namespace Unity.Tiny
                 return;
             }
 
-            var typeRef = (TinyType.Reference) type;
-            type = typeRef.Dereference(type.Registry);
+            type = type.Ref.Dereference(type.Registry);
         }
 
         protected override void Reload()
@@ -68,73 +69,123 @@ namespace Unity.Tiny
 
         protected override void OnInspect(TinyType type)
         {
-            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+            try
             {
-                GUILayout.Space(k_Spacing);
-                DrawDocumentation(type);
-                DrawUnlistedField(type);
-                GUILayout.Space(k_Spacing);
-                DrawSeparator();
-                GUILayout.Space(k_Spacing);
-
-                var defaultValue = type.DefaultValue as TinyObject;
-                m_DefaultValueVisitor.SetTargets(new List<IPropertyContainer> { defaultValue });
-
-                var mainModule = TinyEditorApplication.Module;
-                var dependencies = new HashSet<TinyModule>(mainModule.EnumerateDependencies());
-
-                foreach (var field in type.Fields)
+                if (m_SetInitialVersion)
                 {
-                    var showProperties = DrawField(type, field);
+                    m_FirstVersion = type.Version;
+                    m_SetInitialVersion = false;
+                }
 
-                    try
+                using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+                {
+                    GUILayout.Space(k_Spacing);
+                    DrawDocumentation(type);
+                    DrawUnlistedField(type);
+                    GUILayout.Space(k_Spacing);
+                    DrawSeparator();
+                    GUILayout.Space(k_Spacing);
+
+                    var defaultValue = type.GetDefaultValue(true) as TinyObject;
+                    m_DefaultValueVisitor.SetTargets(new List<IPropertyContainer> {defaultValue});
+
+                    var mainModule = TinyEditorApplication.Module;
+                    var dependencies = new HashSet<TinyModule>(mainModule.EnumerateDependencies());
+
+                    foreach (var field in type.Fields)
                     {
-                        if (!showProperties)
-                        {
-                            continue;
-                        }
+                        var showProperties = DrawField(type, field);
 
-                        GUILayout.Space(k_Spacing);
-                        ++EditorGUI.indentLevel;
-
-                        using (new EditorGUILayout.HorizontalScope())
+                        try
                         {
-                            using (new EditorGUILayout.VerticalScope())
+                            if (!showProperties)
                             {
-                                if (EditorPrefs.GetBool(k_DocumentationPrefix + field.Id, false))
+                                continue;
+                            }
+
+                            GUILayout.Space(k_Spacing);
+                            ++EditorGUI.indentLevel;
+
+                            using (new EditorGUILayout.HorizontalScope())
+                            {
+                                using (new EditorGUILayout.VerticalScope())
                                 {
-                                    using (new EditorGUILayout.HorizontalScope())
+                                    if (EditorPrefs.GetBool(k_DocumentationPrefix + field.Id, false))
                                     {
-                                        DrawDocumentation(field);
+                                        using (new EditorGUILayout.HorizontalScope())
+                                        {
+                                            DrawDocumentation(field);
+                                        }
+                                    }
+
+                                    var module = Registry.CacheManager.GetModuleOf(field.FieldType);
+                                    if (TinyType.BuiltInTypes.Contains(field.FieldType.Dereference(Registry)) ||
+                                        dependencies.Contains(module))
+                                    {
+                                        VisitFieldDefaultValue(defaultValue, field.Name,
+                                            field.FieldType.Dereference(defaultValue.Registry), m_DefaultValueVisitor,
+                                            field.Array);
+                                    }
+                                    else
+                                    {
+                                        ShowModuleMissing(mainModule, module, field);
                                     }
                                 }
 
-                                var module = Registry.CacheManager.GetModuleOf(field.FieldType);
-                                if (TinyType.BuiltInTypes.Contains(field.FieldType.Dereference(Registry)) || dependencies.Contains(module))
-                                {
-                                    VisitFieldDefaultValue(defaultValue, field.Name,
-                                        field.FieldType.Dereference(defaultValue.Registry), m_DefaultValueVisitor,
-                                        field.Array);
-                                }
-                                else
-                                {
-                                    ShowModuleMissing(mainModule, module, field);
-                                }
+                                GUILayout.Space(IconSpace(type));
                             }
 
-                            GUILayout.Space(IconSpace(type));
+                            --EditorGUI.indentLevel;
                         }
-
-                        --EditorGUI.indentLevel;
+                        finally
+                        {
+                            GUILayout.Space(k_DoubleSpacing);
+                        }
                     }
-                    finally
+
+                    DrawAddNewField(type);
+                    GUILayout.FlexibleSpace();
+                    DrawSeparator();
+                }
+            }
+            finally
+            {
+                if (m_FirstVersion != type.Version)
+                {
+                    ApplyAndRefresh();
+                }
+            }
+        }
+
+        private void ApplyAndRefresh()
+        {
+            var mainType = MainTarget;
+            var version = mainType.Version;
+            var typeRef = mainType.Ref;
+            mainType.Refresh();
+
+            // Refresh all the types that could use this type
+            if (!MainTarget.IsComponent)
+            {
+                foreach (var type in Registry.FindAllByType<TinyType>())
+                {
+                    if (type != mainType)
                     {
-                        GUILayout.Space(k_DoubleSpacing);
+                        type.Refresh();
                     }
                 }
-
-                DrawAddNewField(type);
             }
+            
+            // Refresh all the TinyObjects
+            if (MainTarget.IsComponent || MainTarget.IsConfiguration)
+            {
+                foreach (var component in Registry.FindAllByType<TinyEntity>().GetComponents(typeRef))
+                {
+                    component.Refresh();
+                }
+            }
+
+            m_FirstVersion = version;
         }
 
         protected override bool IsPartOfModule(TinyModule module, TinyId mainAssetId)
@@ -169,7 +220,6 @@ namespace Unity.Tiny
                 if (GUI.Button(iconRect, content, (field.Array ? TinyStyles.ArrayStyle : TinyStyles.NonArrayStyle)))
                 {
                     field.Array = !field.Array;
-                    type.Refresh();
                     GUIUtility.ExitGUI();
                 }
             }
@@ -185,7 +235,6 @@ namespace Unity.Tiny
                 if (GUI.Button(iconRect, content, visible ? TinyStyles.NonVisibleStyle : TinyStyles.VisibleStyle))
                 {
                     field.Visibility ^= TinyVisibility.HideInInspector;
-                    type.Refresh();
                     GUIUtility.ExitGUI();
                 }
             }
@@ -291,7 +340,7 @@ namespace Unity.Tiny
                 var c = new GUIContent(field.FieldType.Name);
                 if (EditorGUI.DropdownButton(rect, c, FocusType.Passive))
                 {
-                    AddFieldWindow.Show(rect, type.Registry, type, field);
+                    AddFieldWindow.Show(rect, type.Registry, type, field, OnChangedField);
                 }
             }
         }
@@ -318,7 +367,7 @@ namespace Unity.Tiny
                     // @HACK
                     if (type.Fields.Count > 1)
                     {
-                        var defaultEnum = type.DefaultValue as TinyObject;
+                        var defaultEnum = type.GetDefaultValue(true) as TinyObject;
                         defaultEnum[field.Name] = (int) defaultEnum[type.Fields[type.Fields.Count - 2].Name] + 1;
                     }
 
@@ -340,16 +389,14 @@ namespace Unity.Tiny
         private static void RemoveField(TinyType type, TinyField field)
         {
             type.RemoveField(field);
-            type.Refresh();
         }
 
         private void DuplicateField(TinyType type, TinyField field)
         {
             var newField = type.CreateField(TinyId.New(), TinyUtility.GetUniqueName(type.Fields, field.Name), field.FieldType,
                 field.Array);
-            type.Refresh();
             newField.Documentation.Summary = field.Documentation.Summary;
-            (type.DefaultValue as TinyObject)[newField.Name] = (type.DefaultValue as TinyObject)[field.Name];
+            (type.GetDefaultValue(true) as TinyObject)[newField.Name] = (type.GetDefaultValue(true) as TinyObject)[field.Name];
 
             OnCreateField(newField);
         }
@@ -368,7 +415,6 @@ namespace Unity.Tiny
         {
             type.RemoveField(field);
             type.InsertField(index, field);
-            type.Refresh();
         }
 
         private static void VisitFieldDefaultValue(TinyObject defaultValue, string name, TinyType fieldType,
@@ -479,6 +525,16 @@ namespace Unity.Tiny
                             visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, AnimationClip>(
                                 defaultValue.Properties, name);
                         }
+                        else if (fieldType == TinyType.TileEntity)
+                        {
+                            visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, UnityEngine.Tilemaps.TileBase>(
+                                defaultValue.Properties, name);
+                        }
+                        else if (fieldType == TinyType.TilemapEntity)
+                        {
+                            visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, UnityEngine.Tilemaps.Tilemap>(
+                                defaultValue.Properties, name);
+                        }
                         else
                         {
                             throw new ArgumentOutOfRangeException();
@@ -495,8 +551,14 @@ namespace Unity.Tiny
             }
         }
         
+        private void OnChangedField(TinyField field)
+        {
+            ApplyAndRefresh();
+        }
+        
         private void OnCreateField(TinyField field)
         {
+            ApplyAndRefresh();
             GetRenamableLabel(field.FieldType.Dereference(Registry), field).RenameOnNextUpdate = true;
         }
 

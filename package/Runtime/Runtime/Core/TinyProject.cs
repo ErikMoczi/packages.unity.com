@@ -8,7 +8,7 @@ namespace Unity.Tiny
 {
     internal sealed partial class TinyProject : TinyRegistryObjectBase, IPersistentObject
     {
-        public const int CurrentSerializedVersion = 6;
+        public const int CurrentSerializedVersion = 7;
         public const string MainProjectName = "Main";
         
         static partial void InitializeCustomProperties()

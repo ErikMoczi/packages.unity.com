@@ -11,7 +11,9 @@
         "Name": "file",
         "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "81d61455a9c0de7e848742038c4b3de3", "Name": "AnimationClipSource" }

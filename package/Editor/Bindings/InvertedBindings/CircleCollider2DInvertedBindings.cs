@@ -28,7 +28,6 @@ namespace Unity.Tiny
 
         private static void SyncCircleCollider2D(CircleCollider2D circle, [NotNull] TinyObject collider)
         {
-            collider.Refresh();
             collider.AssignIfDifferent("radius", circle.radius);
             collider.AssignIfDifferent("pivot", -new Vector2(circle.offset.x / circle.radius - 0.5f, circle.offset.y / circle.radius - 0.5f));
         }

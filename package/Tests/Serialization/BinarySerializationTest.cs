@@ -78,8 +78,6 @@ namespace Unity.Tiny.Test
                 
                     // if (i < kCount)
                     {
-                        transform.Refresh(null, true);
-                    
                         var position = transform["Position"] as TinyObject;
                         position["X"] = i * 2f;
                     }

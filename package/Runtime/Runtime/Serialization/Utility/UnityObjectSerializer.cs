@@ -22,8 +22,10 @@ namespace Unity.Tiny.Serialization
     /// </summary>
     internal static class UnityObjectSerializer
     {
+#if UNITY_EDITOR
         private static readonly string s_EmptyGuid = Guid.Empty.ToString();
         private static readonly string s_EmptyJsonObject = UnityEditor.EditorJsonUtility.ToJson(new Container { o = null });
+#endif
 
 #if UNITY_EDITOR
         private class Container

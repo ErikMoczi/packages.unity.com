@@ -8,7 +8,7 @@ namespace Unity.Tiny
     internal class IMGUIUnityTypesAdapter:
         IVisitValueAdapter<Texture2D>
         ,IVisitValueAdapter<Sprite>
-        ,IVisitValueAdapter<Tile>
+        ,IVisitValueAdapter<TileBase>
         ,IVisitValueAdapter<Tilemap>
         ,IVisitValueAdapter<AudioClip>
         ,IVisitValueAdapter<AnimationClip>
@@ -30,11 +30,11 @@ namespace Unity.Tiny
             where TContainer : struct, IPropertyContainer
             => IMGUIVisitorHelper.AsLeafItem(ref container, ref context, IMGUIVisitorHelper.PropertyField);
 
-        public bool CustomClassVisit<TContainer>(ref TContainer container, ref UIVisitContext<Tile> context)
+        public bool CustomClassVisit<TContainer>(ref TContainer container, ref UIVisitContext<TileBase> context)
             where TContainer : class, IPropertyContainer
             => IMGUIVisitorHelper.AsLeafItem(ref container, ref context, IMGUIVisitorHelper.PropertyField);
 
-        public bool CustomStructVisit<TContainer>(ref TContainer container, ref UIVisitContext<Tile> context)
+        public bool CustomStructVisit<TContainer>(ref TContainer container, ref UIVisitContext<TileBase> context)
             where TContainer : struct, IPropertyContainer
             => IMGUIVisitorHelper.AsLeafItem(ref container, ref context, IMGUIVisitorHelper.PropertyField);
 

@@ -3,7 +3,7 @@
     "Id": "38cddb9154a8669901635780ed05188b",
     "Name": "TileData",
     "ExportFlags": 1,
-    "Unlisted": false,
+    "Unlisted": true,
     "Visibility": 0,
     "TypeCode": "Struct",
     "Fields": [{
@@ -11,13 +11,41 @@
         "Name": "position",
         "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "69e52621929b9cbe7d7988850720b0ab",
         "Name": "tile",
         "FieldType": { "Id": "ba863be1346c460f80e3e371b0cf255b", "Name": "TileEntity" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "7d9ac3533b688a85352c516bec8a9da4",
+        "Name": "bakedSprite",
+        "FieldType": { "Id": "cf54a635a25248ab87f2563bb840ed5b", "Name": "SpriteEntity" },
+        "Array": false,
+        "Visibility": 1,
+        "EditorOnly": true,
+        "Versioned": true
+    }, {
+        "Id": "375086e8262a0b90bcdb63be77ea2f4a",
+        "Name": "bakedColor",
+        "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
+        "Array": false,
+        "Visibility": 1,
+        "EditorOnly": true,
+        "Versioned": true
+    }, {
+        "Id": "d478d52efee3fecc2d5444573474c32d",
+        "Name": "bakedColliderType",
+        "FieldType": { "Id": "e0d9472237aa48632dd3b57962899ffd", "Name": "TileColliderType" },
+        "Array": false,
+        "Visibility": 1,
+        "EditorOnly": true,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "38cddb9154a8669901635780ed05188b", "Name": "TileData" },

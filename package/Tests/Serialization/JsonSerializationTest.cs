@@ -115,7 +115,6 @@ namespace Unity.Tiny.Test
                 "TestEntity");
 
             var component = entity.AddComponent((TinyType.Reference) type);
-            component.Refresh();
 
             component["TestIntField"] = 10;
             component["TestStringField"] = "Test";
@@ -247,7 +246,6 @@ namespace Unity.Tiny.Test
                 
                     // if (i < kCount)
                     {
-                        transform.Refresh(null, true);
                     
                         var position = transform["Position"] as TinyObject;
                         position["X"] = i * 2f;

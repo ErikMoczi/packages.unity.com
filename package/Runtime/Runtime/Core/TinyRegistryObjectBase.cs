@@ -47,6 +47,11 @@ namespace Unity.Tiny
         public int Version { get; protected set; }
         public bool IsRuntimeIncluded => 0 != (ExportFlags & TinyExportFlags.RuntimeIncluded);
         public bool IsDefinedInScript => 0 != (ExportFlags & TinyExportFlags.DefinedInScript);
+
+        protected bool IsStableType =>
+            ExportFlags.HasFlag(TinyExportFlags.EditorExtension) ||
+            ExportFlags.HasFlag(TinyExportFlags.RuntimeIncluded) ||
+            ExportFlags.HasFlag(TinyExportFlags.Development);
         
         public TinyDocumentation Documentation => DocumentationProperty.GetValue(this);
         
@@ -105,7 +110,7 @@ namespace Unity.Tiny
             return new CommandMemento(this);
         }
 
-        public void Restore(IMemento memento)
+        public virtual void Restore(IMemento memento)
         {
             ((CommandMemento)memento).Restore(this);
             Version = memento.Version;

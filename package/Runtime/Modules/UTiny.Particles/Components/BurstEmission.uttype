@@ -11,19 +11,25 @@
         "Name": "count",
         "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "a00449e8076b19bbd7968ce58c5821e5",
         "Name": "interval",
         "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "870ba8672d394c47e421e0d712249a4e",
         "Name": "cycles",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "154b94993492d3ea71f7049ab36776c0", "Name": "BurstEmission" },

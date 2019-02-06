@@ -11,25 +11,33 @@
         "Name": "style",
         "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "6e79437a63443868e3f2c6a878185982",
         "Name": "text",
         "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "0ddc67bacd3a08c346a070233c8fa337",
         "Name": "pivot",
         "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "ed70080e2b8b52338e6b03100ac7d1f5",
         "Name": "blending",
         "FieldType": { "Id": "78fe1548d31b94b79668981ae1d3279d", "Name": "BlendOp" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "617fd26299c944d58b61164e0c9c9353", "Name": "Text2DRenderer" },

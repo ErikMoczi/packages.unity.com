@@ -50,7 +50,7 @@ namespace Unity.Tiny
         /// <summary>
         /// Tracked versions for ALL objects
         /// </summary>
-        private readonly Dictionary<TinyId, int> m_Versions = new Dictionary<TinyId, int>();
+        private readonly Dictionary<TinyId, int> m_BaselineVersion = new Dictionary<TinyId, int>();
 
         public bool HasChanges => m_VersionStorage.Changed.Any();
         
@@ -82,6 +82,11 @@ namespace Unity.Tiny
             OnEndUpdate?.Invoke();
         }
 
+        public void SetBaselineVersion(TinyId id, int version)
+        {
+            m_BaselineVersion[id] = version;
+        }
+
         public bool HasObjectChanged(IPropertyContainer @object)
         {
             return m_VersionStorage.Changed.Contains(@object);
@@ -102,7 +107,7 @@ namespace Unity.Tiny
 
                     var id = originator.Id;
 
-                    if (!m_Versions.TryGetValue(id, out var version) || version == originator.Version)
+                    if (!m_BaselineVersion.TryGetValue(id, out var version) || version == originator.Version)
                     {
                         continue;
                     }
@@ -122,14 +127,14 @@ namespace Unity.Tiny
 
                 var id = originator.Id;
 
-                if (!m_Versions.TryGetValue(id, out var version))
+                if (!m_BaselineVersion.TryGetValue(id, out var baselineVersion))
                 {
-                    m_Versions.Add(id, originator.Version);
+                    m_BaselineVersion.Add(id, originator.Version);
                 }
 
-                if (version == originator.Version || OnGenerateMemento == null)
+                if (baselineVersion == originator.Version || OnGenerateMemento == null)
                 {
-                    return;
+                    continue;
                 }
 
                 var memento = originator.Save();

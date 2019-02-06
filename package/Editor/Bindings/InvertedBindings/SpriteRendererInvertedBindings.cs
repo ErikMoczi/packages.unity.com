@@ -45,14 +45,12 @@ namespace Unity.Tiny
         private static void SyncRenderer(SpriteRenderer from, [NotNull] TinyObject renderer)
         {
             from.sharedMaterial = new Material(Shader.Find("Tiny/Sprite2D"));
-            renderer.Refresh();
             renderer.AssignIfDifferent("sprite", from.sprite);
             renderer.AssignIfDifferent("color", from.color);
         }
 
         private static void SyncRendererOptions(SpriteRenderer from, [NotNull] TinyObject tiling)
         {
-            tiling.Refresh();
             tiling.AssignIfDifferent("drawMode", Translate(from.drawMode, from.tileMode));
             tiling.AssignIfDifferent("size", from.size);
         }
@@ -75,7 +73,6 @@ namespace Unity.Tiny
         public override void Create(TinyEntityView view, SpriteRenderer spriteRenderer)
         {
             var sr = new TinyObject(view.Registry, GetMainTinyType());
-            sr.Refresh();
             SyncRenderer(spriteRenderer, sr);
 
             TinyObject srt = null;

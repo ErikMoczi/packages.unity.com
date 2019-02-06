@@ -14,7 +14,7 @@ namespace Unity.Tiny
         /// <summary>
         /// Generates the platform-agnostic IDL file from the given TinyProject.
         /// </summary>
-        public static void GenerateIDL(TinyBuildOptions options, FileInfo destination)
+        public static bool GenerateIDL(TinyBuildOptions options, FileInfo destination)
         {
             var writer = new TinyCodeWriter
             {
@@ -65,8 +65,10 @@ namespace Unity.Tiny
             {
                 WriteSystem(writer, system);
             }
-            
+
+            destination.Directory.Create();
             File.WriteAllText(destination.FullName, writer.ToString(), Encoding.UTF8);
+            return true;
         }
 
         private static void WriteBehaviour(TinyCodeWriter writer, ScriptComponentBehaviour behaviour)
@@ -139,7 +141,7 @@ namespace Unity.Tiny
                     Writer.Line($"/*");
                     Writer.Line($" * !!! TEMP UNITL PROPER SCENE FORMAT !!!");
                     Writer.Line($" */");
-                    using (Writer.Scope($"namespace {TinyHtml5Builder.KEntityGroupNamespace}.{module.Namespace}"))
+                    using (Writer.Scope($"namespace {TinyHTML5Builder.k_EntityGroupNamespace}.{module.Namespace}"))
                     {
                         foreach (var entityGroupRef in module.EntityGroups)
                         {

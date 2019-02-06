@@ -53,7 +53,6 @@ namespace Unity.Tiny.Test
 
             m_Entity = m_Registry.CreateEntity(TinyId.New(), "TestEntity");
             var component = m_Entity.AddComponent((TinyType.Reference) m_ComponentType);
-            component.Refresh();
         }
 
         /// <summary>
@@ -268,7 +267,6 @@ namespace Unity.Tiny.Test
 
             var entity = registry.FindById<TinyEntity>(m_Entity.Id);
             var component = entity.GetComponent((TinyType.Reference) componentType);
-            component.Refresh();
 
             var enumReference = (TinyEnum.Reference) component["TestEnumField"];
 

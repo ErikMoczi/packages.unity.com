@@ -11,7 +11,9 @@
         "Name": "axis",
         "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "301b45e5168992b0907ceeaec4764727", "Name": "Camera2DAxisSort" },

@@ -11,19 +11,25 @@
         "Name": "radius",
         "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "a38bded3dc84a2ddcd6394658cad23a6",
         "Name": "speed",
         "FieldType": { "Id": "0617b7f4431866888bfdb077d683c2ce", "Name": "Range" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "baf2f317b7a7abd764dd244b254089bb",
         "Name": "speedBasedOnRadius",
         "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "785c1d627066f74bdd2cd6f67dc46586", "Name": "EmitterCircleSource" },

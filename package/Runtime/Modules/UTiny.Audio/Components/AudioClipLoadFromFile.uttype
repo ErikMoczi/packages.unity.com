@@ -11,7 +11,9 @@
         "Name": "fileName",
         "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "8a98c537af2529ff3129223be034eab3", "Name": "AudioClipLoadFromFile" }

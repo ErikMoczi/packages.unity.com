@@ -1266,7 +1266,7 @@ namespace Unity.Tiny
                 yield return file;
             }
             
-            foreach (var subDirectory in directory.EnumerateDirectories("*", SearchOption.AllDirectories))
+            foreach (var subDirectory in directory.EnumerateDirectories("*", SearchOption.TopDirectoryOnly))
             {
                 var subDirectoryGuid = GetGuidRelativeToProjectPath(subDirectory.FullName);
                 
@@ -1277,7 +1277,7 @@ namespace Unity.Tiny
                 }
 
                 // All files of this directory should be considered as sub assets
-                foreach (var file in EnumerateAssetFiles(subDirectory))
+                foreach (var file in EnumerateAssetFilesRecursive(subDirectory))
                 {
                     yield return file;
                 }

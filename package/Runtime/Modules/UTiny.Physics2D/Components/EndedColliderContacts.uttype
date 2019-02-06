@@ -11,7 +11,9 @@
         "Name": "contacts",
         "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "3b69b55ae4346477176219d5526c2c34", "Name": "EndedColliderContacts" }

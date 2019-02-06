@@ -22,8 +22,8 @@ namespace Unity.Tiny.Runtime.EditorExtensions
                     return TypeRefs.EditorExtensions.AssetReferenceSprite;
                 case var type when type == typeof(SpriteAtlas):
                     return TypeRefs.EditorExtensions.AssetReferenceSpriteAtlas;
-                case var type when type == typeof(Tile):
-                    return TypeRefs.EditorExtensions.AssetReferenceTile;
+                case var type when type == typeof(TileBase):
+                    return TypeRefs.EditorExtensions.AssetReferenceTileBase;
                 case var type when type == typeof(AudioClip):
                     return TypeRefs.EditorExtensions.AssetReferenceAudioClip;
                 case var type when type == typeof(TMPro.TMP_FontAsset):
@@ -41,7 +41,7 @@ namespace Unity.Tiny.Runtime.EditorExtensions
                 type.Id == TypeRefs.EditorExtensions.AssetReferenceTexture2D.Id ||
                 type.Id == TypeRefs.EditorExtensions.AssetReferenceSprite.Id ||
                 type.Id == TypeRefs.EditorExtensions.AssetReferenceSpriteAtlas.Id ||
-                type.Id == TypeRefs.EditorExtensions.AssetReferenceTile.Id ||
+                type.Id == TypeRefs.EditorExtensions.AssetReferenceTileBase.Id ||
                 type.Id == TypeRefs.EditorExtensions.AssetReferenceAudioClip.Id ||
                 type.Id == TypeRefs.EditorExtensions.AssetReferenceTMP_FontAsset.Id ||
                 type.Id == TypeRefs.EditorExtensions.AssetReferenceAnimationClip.Id;

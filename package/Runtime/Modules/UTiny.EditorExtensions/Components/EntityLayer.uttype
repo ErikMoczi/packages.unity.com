@@ -11,7 +11,9 @@
         "Name": "layer",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "09e72db86387b48e184be0f9d847d0e8", "Name": "EntityLayer" },

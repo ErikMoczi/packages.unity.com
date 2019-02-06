@@ -32,10 +32,28 @@ namespace Unity.Tiny.Runtime.Tilemap2D
             set => Tiny.AssignIfDifferent(nameof(@position), value);
         }
 
-        public UnityEngine.Tilemaps.Tile @tile
+        public UnityEngine.Tilemaps.TileBase @tile
         {
-            get => Tiny.GetProperty<UnityEngine.Tilemaps.Tile>(nameof(@tile));
+            get => Tiny.GetProperty<UnityEngine.Tilemaps.TileBase>(nameof(@tile));
             set => Tiny.AssignIfDifferent(nameof(@tile), value);
+        }
+
+        public UnityEngine.Sprite @bakedSprite
+        {
+            get => Tiny.GetProperty<UnityEngine.Sprite>(nameof(@bakedSprite));
+            set => Tiny.AssignIfDifferent(nameof(@bakedSprite), value);
+        }
+
+        public UnityEngine.Color @bakedColor
+        {
+            get => Tiny.GetProperty<UnityEngine.Color>(nameof(@bakedColor));
+            set => Tiny.AssignIfDifferent(nameof(@bakedColor), value);
+        }
+
+        public UnityEngine.Tilemaps.Tile.ColliderType @bakedColliderType
+        {
+            get => Tiny.GetProperty<UnityEngine.Tilemaps.Tile.ColliderType>(nameof(@bakedColliderType));
+            set => Tiny.AssignIfDifferent(nameof(@bakedColliderType), value);
         }
 
         #endregion // Properties
@@ -44,6 +62,9 @@ namespace Unity.Tiny.Runtime.Tilemap2D
         {
             @position = other.@position;
             @tile = other.@tile;
+            @bakedSprite = other.@bakedSprite;
+            @bakedColor = other.@bakedColor;
+            @bakedColliderType = other.@bakedColliderType;
         }
     }
 }

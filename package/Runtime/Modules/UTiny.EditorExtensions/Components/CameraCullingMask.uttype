@@ -11,7 +11,9 @@
         "Name": "mask",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "7e2d7c3693d8764fe86725ff7c93f7a8", "Name": "CameraCullingMask" },

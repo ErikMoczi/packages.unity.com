@@ -242,7 +242,6 @@ namespace Unity.Tiny.Test
             var entityRef = (TinyEntity.Reference) entity;
             
             var testCompInstance = entity.AddComponent(compTypeRef);
-            testCompInstance.Refresh();
 
             var obj = new TinyObject(registry, (TinyType.Reference) testStructType)
             {
@@ -370,7 +369,6 @@ namespace Unity.Tiny.Test
             var testField = componentType.CreateField("TestField", (TinyType.Reference) TinyType.Int32);
             var entity = registry.CreateEntity(TinyId.New(), "TestEntity");
             var component = entity.AddComponent((TinyType.Reference) componentType);
-            component.Refresh();
             
             // Update to get the initial state; flush changes
             caretaker.Update();
@@ -447,8 +445,6 @@ namespace Unity.Tiny.Test
                 
                     // if (i < kCount)
                     {
-                        transform.Refresh(null, true);
-                    
                         var position = transform["Position"] as TinyObject;
                         position["X"] = i * 2f;
                     }

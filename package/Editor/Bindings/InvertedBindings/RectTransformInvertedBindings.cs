@@ -33,7 +33,6 @@ namespace Unity.Tiny
 
         public static void SyncRectTransform(RectTransform t, [NotNull] TinyObject tiny)
         {
-            tiny.Refresh();
             tiny.AssignIfDifferent("anchorMin", t.anchorMin);
             tiny.AssignIfDifferent("anchorMax", t.anchorMax);
             tiny.AssignIfDifferent("anchoredPosition", t.anchoredPosition);

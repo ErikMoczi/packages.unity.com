@@ -11,19 +11,25 @@
         "Name": "guid",
         "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "103b8db598dba39ce00e9d34f9b8a580",
         "Name": "fileId",
         "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "a5f50a6e5134ae10f787bdaf8ecf122c",
         "Name": "type",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "5502517b113468fcb7ff6946633c3a25", "Name": "AssetReferenceAudioClip" },

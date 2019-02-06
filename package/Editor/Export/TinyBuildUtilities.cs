@@ -14,50 +14,39 @@ namespace Unity.Tiny
 {
     internal static class TinyBuildUtilities
     {
-        #region Fields
-
-        public const string ScriptAssembliesDirectory = "ScriptAssemblies";
-        public const string TypeScriptOutputFile = "tsc-emit.js";
-        public const string TypeScriptOutputMetaFile = "tsc-meta.json";
-        private const string s_TSConfigName = "tsconfig.json";
-
-        #endregion
-
         #region BindGem
-        public static void RunBindGem(TinyBuildOptions options)
+        public static bool RunBindGem(TinyBuildOptions options)
         {
-            var exportFolder = options.BuildFolder;
-            var idlFile = new FileInfo(Path.Combine(exportFolder.FullName, "generated.cs"));
-            TinyIDLGenerator.GenerateIDL(options, idlFile);
+            var artifactFolder = options.GetArtifactFolder("bindings");
+            var artifactFile = options.GetArtifactFile("bindings", "generated.cs");
+            if (!TinyIDLGenerator.GenerateIDL(options, artifactFile))
+            {
+                return false;
+            }
 
             var bindGem = new FileInfo(Path.Combine(TinyRuntimeInstaller.GetBindgemDirectory(), "bindgem.exe"));
-            var exeName = StringExtensions.DoubleQuoted(bindGem.FullName);
+            var exeName = $"mono {bindGem.FullName.DoubleQuoted()}";
+            var bindReferences = TinyRuntimeInstaller.GetRuntimeDefsAssemblyPath(options).FullName.DoubleQuoted();
+            var devFlag = options.Configuration != TinyBuildConfiguration.Release ? "-d" : "";
 
-            // always call bindgem with mono for consistency
-            exeName = "mono " + exeName;
-
-            // reference the core runtime file
-            var bindReferences = $"-r \"{TinyRuntimeInstaller.GetRuntimeDefsAssemblyPath(options).FullName}\"";
-
-            RunInShell(
-                    $"{exeName} -j {bindReferences} {(options.Configuration != TinyBuildConfiguration.Release ? "-d" : "")} -o bind-generated {idlFile.Name}",
-                    new ShellProcessArgs()
-                    {
-                        WorkingDirectory = exportFolder,
-                        ExtraPaths = TinyPreferences.MonoDirectory.AsEnumerable()
-                    });
+            return RunInShell($"{exeName} -j -r {bindReferences} {devFlag} -o bind-generated {artifactFile.Name}",
+                new ShellProcessArgs()
+                {
+                    WorkingDirectory = artifactFolder,
+                    ExtraPaths = TinyPreferences.MonoDirectory.AsEnumerable()
+                });
         }
         #endregion
 
         #region TypeScript
-        public static void RegenerateTSDefinitionFiles(TinyBuildOptions options)
+        public static bool RegenerateTSDefinitionFiles(TinyBuildOptions options)
         {
             var definitionFile = new StringBuilder();
 
             var indent = "    ";
 
             definitionFile.Append(File.ReadAllText(Path.GetFullPath(TinyConstants.PackagePath + "/RuntimeExtensions/bindings.d.ts")));
-            definitionFile.AppendLine($"declare var {TinyHtml5Builder.KGlobalAssetsName}: Object;");
+            definitionFile.AppendLine($"declare var {TinyHTML5Builder.k_GlobalAssetsName}: Object;");
 
             var modules = options.Project.Module.Dereference(options.Registry).EnumerateDependencies().Where(m => m.IsRuntimeIncluded == false);
             foreach (var module in modules)
@@ -146,7 +135,7 @@ namespace Unity.Tiny
             definitionFile.AppendLine($"{indent}}}");
             definitionFile.AppendLine($"}}");
 
-            definitionFile.AppendLine($"declare let {TinyHtml5Builder.KEntityGroupNamespace}: ut.EntityGroups;");
+            definitionFile.AppendLine($"declare let {TinyHTML5Builder.k_EntityGroupNamespace}: ut.EntityGroups;");
 
 
             definitionFile.AppendLine($"declare namespace ut.Core2D.layers{{");
@@ -156,15 +145,13 @@ namespace Unity.Tiny
                 definitionFile.AppendLine($"{indent}{indent}static _wrap(w: number, e: number): {layer.Replace(" ", "")};");
                 definitionFile.AppendLine($"{indent}{indent}static readonly cid: number;");
                 definitionFile.AppendLine($"{indent}}}");
-
             }
             definitionFile.AppendLine($"}}");
 
-
-            var buildFolder = options.BuildFolder.FullName;
-
-            Directory.CreateDirectory(buildFolder);
-            File.WriteAllText(Path.Combine(buildFolder, "bind-generated.d.ts"), definitionFile.ToString());
+            var outputFolder = TinyScriptUtility.GetOutputFolder(options);
+            outputFolder.Create();
+            File.WriteAllText(Path.Combine(outputFolder.FullName, "bind-generated.d.ts"), definitionFile.ToString());
+            return true;
         }
 
         private static void WriteComponentInterface(StringBuilder definitionFile, string indent, TinyType type)
@@ -297,20 +284,15 @@ namespace Unity.Tiny
 
         public static FileInfo RegenerateTsConfig(TinyBuildOptions options)
         {
-            var buildFolder = options.BuildFolder.FullName;
-
-            const string typescriptRelativeRoot = "";
-
+            var outputFolder = TinyScriptUtility.GetOutputFolder(options);
+            var outputFile = TinyScriptUtility.GetTypeScriptOutputFile(options);
             var module = options.Project.Module.Dereference(options.Registry);
-
             var configGen = new TinyTypeScriptConfigGenerator
             {
                 compileOnSave = true,
                 compilerOptions = new TinyTypeScriptConfigGenerator.TinyTypeScriptCompilerOptions
                 {
-                    outFile = Path
-                        .Combine(typescriptRelativeRoot, buildFolder, ScriptAssembliesDirectory, TypeScriptOutputFile)
-                        .ToForwardSlash(),
+                    outFile = outputFile.FullName.ToForwardSlash(),
                     target = "ES5",
                     sourceMap = true,
                     experimentalDecorators = true,
@@ -320,8 +302,8 @@ namespace Unity.Tiny
 
             var runtimePath = TinyRuntimeInstaller.GetRuntimeDistDirectory();
             var runtimeVariantDts = TinyRuntimeInstaller.GetJsRuntimeVariant(options) + ".d.ts";
-            configGen.files.Add(Path.Combine(typescriptRelativeRoot, buildFolder, "bind-generated.d.ts").ToForwardSlash());
-            configGen.files.Add(Path.Combine(typescriptRelativeRoot, runtimePath, "runtimedll", runtimeVariantDts).ToForwardSlash());
+            configGen.files.Add(Path.Combine(outputFolder.FullName, "bind-generated.d.ts").ToForwardSlash());
+            configGen.files.Add(Path.Combine(runtimePath, "runtimedll", runtimeVariantDts).ToForwardSlash());
 
             foreach (var m in module.EnumerateDependencies())
             {
@@ -333,7 +315,7 @@ namespace Unity.Tiny
             var customTsConfigDir = module.GetDirectoryPath();
             if (false == string.IsNullOrEmpty(customTsConfigDir))
             {
-                if (File.Exists(Path.Combine(customTsConfigDir, s_TSConfigName)))
+                if (File.Exists(Path.Combine(customTsConfigDir, TinyScriptUtility.TypeScriptConfigFile)))
                 {
                     Debug.LogWarning(
                         $"{TinyConstants.ApplicationName}: Using tsconfig.json in your projects will cause wrong autocomplete for typescript, use tsconfig.override.json for overriding purposes.");
@@ -354,7 +336,7 @@ namespace Unity.Tiny
 
             RemapPackagePaths(generatedTsConfig);
             var json = JsonSerializer.Serialize(generatedTsConfig);
-            var tsconfigFile = new FileInfo(s_TSConfigName);
+            var tsconfigFile = new FileInfo(TinyScriptUtility.TypeScriptConfigFile);
             File.WriteAllText(tsconfigFile.FullName, json);
 
             return tsconfigFile;
@@ -420,7 +402,10 @@ namespace Unity.Tiny
 
         public static bool CompileScripts()
         {
-            return CompileScripts(TinyBuildPipeline.WorkspaceBuildOptions);
+            using (new TinyEditorUtility.ProgressBarScope($"{TinyConstants.ApplicationName} Build", "Compiling Scripts..."))
+            {
+                return CompileScripts(TinyBuildPipeline.WorkspaceBuildOptions);
+            }
         }
 
         public static bool CompileScripts(TinyBuildOptions buildOptions)

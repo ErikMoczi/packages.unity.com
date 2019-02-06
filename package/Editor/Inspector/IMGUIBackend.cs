@@ -30,12 +30,6 @@ namespace Unity.Tiny
             var entity = viewer.Entity.Ref.Dereference(viewer.Entity.Registry);
             return new Wrapper<TinyEntity>(entity);
         }
-
-        public static Wrapper<TinyObject> Make(TinyTypeViewer viewer)
-        {
-            var type = viewer.Type.DefaultValue as TinyObject;
-            return new Wrapper<TinyObject>(type);
-        }
     }
 
     internal class Wrapper<T> : IPropertyContainer
@@ -112,9 +106,6 @@ namespace Unity.Tiny
                         break;
                     case TinyConfigurationViewer config:
                         v.SetTargets(Targets.OfType<TinyConfigurationViewer>().Select(Wrapper.Make).ToList());
-                        break;
-                    case TinyTypeViewer type:
-                        v.SetTargets(Targets.OfType<TinyTypeViewer>().Select(Wrapper.Make).ToList());
                         break;
                     default:
                         v.SetTargets(Targets.Select(Wrapper.Make).ToList());

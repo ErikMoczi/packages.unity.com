@@ -110,9 +110,9 @@ namespace Unity.Tiny
         [TinyCachable] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<Sprite>(TinyType.SpriteEntity.Ref);
     }
 
-    internal class TileConverter : BuiltinTypeConverter<Tile>
+    internal class TileConverter : BuiltinTypeConverter<TileBase>
     {
-        [TinyCachable] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<Tile>(TinyType.TileEntity.Ref);
+        [TinyCachable] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<TileBase>(TinyType.TileEntity.Ref);
     }
 
     internal class TilemapConverter : BuiltinTypeConverter<Tilemap>

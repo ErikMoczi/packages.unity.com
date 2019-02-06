@@ -58,10 +58,8 @@ namespace Unity.Tiny.Test
             };
 
             // Assign a type to it
-            @object.Type = (TinyType.Reference) m_TestStruct;
-            
             // Dynamic values should be promoted to field values
-            @object.Refresh();
+            @object.Type = (TinyType.Reference) m_TestStruct;
             
             Assert.AreEqual("Test", @object["Foo"]);
             Assert.AreEqual(10, @object["Bar"]);
@@ -126,7 +124,6 @@ namespace Unity.Tiny.Test
             };
 
             @object.Type = (TinyType.Reference) m_TestComponent;
-            @object.Refresh();
             
             Assert.AreEqual("Test", (@object["TestStructField"] as TinyObject)?["Foo"]);
             Assert.AreEqual(0, (@object["TestStructField"] as TinyObject)?["Bar"]);
@@ -170,7 +167,6 @@ namespace Unity.Tiny.Test
             };
 
             @object.Type = (TinyType.Reference) m_TestStructWithList;
-            @object.Refresh();
             
             Debug.Log(@object.ToString());
         }

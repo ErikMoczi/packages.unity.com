@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 
 namespace Unity.Tiny
@@ -36,6 +35,72 @@ namespace Unity.Tiny
             }
         }
 
+        /// <summary>
+        /// Utility class to use whenever tools binaries need to be overwritten.
+        /// Upon new scope, running tools instances will be killed.
+        /// Upon scope dispose, necessary tools will be restarted.
+        /// </summary>
+        private class OverwriteToolsScope : IDisposable
+        {
+            private bool m_WSServerWasListening;
+            private bool m_HTTPServerWasListening;
+
+            public OverwriteToolsScope()
+            {
+                // Gracefully close WebSocketServer
+                if (WebSocketServer.Instance != null && WebSocketServer.Instance.Listening)
+                {
+                    m_WSServerWasListening = true;
+                    WebSocketServer.Instance.Close();
+                }
+
+                // Gracefully close HTTPServer
+                if (HTTPServer.Instance != null && HTTPServer.Instance.Listening)
+                {
+                    m_HTTPServerWasListening = true;
+                    HTTPServer.Instance.Close();
+                }
+
+                // Kill remaining tools
+                var processes = Process.GetProcessesByName(TinyShell.ToolsManagerNativeName());
+                foreach (var process in processes)
+                {
+                    process.Kill();
+                }
+            }
+
+            public void Dispose()
+            {
+                // Restore WebSocketServer if it was listening
+                if (WebSocketServer.Instance != null && m_WSServerWasListening)
+                {
+                    var project = TinyEditorApplication.Project;
+                    if (project != null)
+                    {
+                        WebSocketServer.Instance.Listen(project.Settings.LocalWSServerPort);
+                    }
+                    else
+                    {
+                        WebSocketServer.Instance.Listen(TinyProjectSettings.DefaultLocalWSServerPort);
+                    }
+                }
+
+                // Restore HTTPServer if it was listening
+                if (HTTPServer.Instance != null && m_HTTPServerWasListening)
+                {
+                    var project = TinyEditorApplication.Project;
+                    if (project != null)
+                    {
+                        HTTPServer.Instance.Listen(project.Settings.LocalHTTPServerPort);
+                    }
+                    else
+                    {
+                        HTTPServer.Instance.Listen(TinyProjectSettings.DefaultLocalHTTPServerPort);
+                    }
+                }
+            }
+        }
+
 #if UNITY_TINY_INTERNAL
 
         private const string k_AutoBuildPrefKey = "TINY_INTERNAL_AUTO_BUILD_RUNTIME";
@@ -50,23 +115,23 @@ namespace Unity.Tiny
         private enum BuildRuntimeFlags
         {
             None = 0,
-            
+
             Generic = 1,
-            
+
             Docs = 2, // DEPRECATED - Runtime API docs are now derived from the distributed package
-            
+
             Html5Debug = 4,
             Html5Development = 8,
             Html5Release = 16,
             Html5 = Html5Debug | Html5Development | Html5Release,
-            
+
             Clean = 32,
-            
+
             Distribution = Clean | Html5
         }
 
         private const string k_ToggleAutoBuildMenuItem = "Tiny/INTERNAL/Build Runtime/Build On Domain Reload";
-        
+
         [MenuItem(k_ToggleAutoBuildMenuItem)]
         internal static void ToggleBuildOnDomainReload()
         {
@@ -74,32 +139,32 @@ namespace Unity.Tiny
             AutoBuildEnabled = enabled;
             Menu.SetChecked(k_ToggleAutoBuildMenuItem, enabled);
         }
-        
+
         [MenuItem("Tiny/INTERNAL/Build Runtime/HTML5 Incremental")]
         internal static void BuildDevRuntimeHtml5()
         {
             // used by CI - do not rename this method
             BuildRuntime(BuildRuntimeFlags.Html5);
         }
-        
+
         [MenuItem("Tiny/INTERNAL/Build Runtime/HTML5 Incremental - Development Only")]
         internal static void BuildDevRuntimeHtml5DevOnly()
         {
             BuildRuntime(BuildRuntimeFlags.Html5Development);
         }
-    
+
         [MenuItem("Tiny/INTERNAL/Build Runtime/For Distribution")]
         internal static void BuildRuntimeDistribution()
         {
             BuildRuntime(BuildRuntimeFlags.Distribution);
         }
-        
+
         [MenuItem("Tiny/INTERNAL/Build Runtime/Package Only")]
         private static void BuildDevRuntimePackage()
         {
             BuildRuntime(BuildRuntimeFlags.Generic);
         }
-        
+
         private static void BuildRuntime(BuildRuntimeFlags buildFlags)
         {
             // gather build targets
@@ -107,7 +172,7 @@ namespace Unity.Tiny
 
             var isHtml5 = (buildFlags & BuildRuntimeFlags.Html5) != 0;
             var isClean = (buildFlags & BuildRuntimeFlags.Clean) != 0;
-            
+
             if (isHtml5 || buildFlags.HasFlag(BuildRuntimeFlags.Generic))
             {
                 beeTargets.Add("runtimepackage-generic");
@@ -135,7 +200,7 @@ namespace Unity.Tiny
 
             if (beeTargets.Count == 0)
             {
-                Debug.Log("No build targets selected.");
+                UnityEngine.Debug.Log("No build targets selected.");
                 return;
             }
 
@@ -152,9 +217,9 @@ namespace Unity.Tiny
             using (var progress = new TinyEditorUtility.ProgressBarScope("Building Runtime...", "..."))
             {
 #if UNITY_EDITOR_WIN
-                    var beeProgram = "bee.exe";
+                var beeProgram = "bee.exe";
 #else
-                    var beeProgram = "mono bee.exe";
+                var beeProgram = "mono bee.exe";
 #endif
 
                 for (var i = 0; i < beeTargets.Count; ++i)
@@ -209,20 +274,20 @@ namespace Unity.Tiny
                 {
                     TinyBuildUtilities.CopyDirectory(buildFolder + "asmjs-release/runtime", distFolder + "html5/release", purge: true);
                 }
-                
+
                 if (isHtml5)
                 {
                     TinyBuildUtilities.CopyDirectory(buildFolder + "RuntimePackage/Tools", distFolder + "bindgem", purge: true);
                     TinyBuildUtilities.CopyDirectory(buildFolder + "runtimedll", distFolder + "runtimedll", purge: true);
-                    
+
                     foreach (var file in new DirectoryInfo(distFolder + "runtimedll").GetFiles("*.pdb", SearchOption.TopDirectoryOnly))
                     {
                         file.Delete();
                     }
-                    
+
                     var dataDefs = new DirectoryInfo(distFolder + "datadefinitions");
                     TinyBuildUtilities.CopyDirectory(buildFolder + "RuntimePackage/DataDefinitions", distFolder + "datadefinitions", purge: true);
-                    
+
                     dataDefs.Refresh();
                     foreach (var file in dataDefs.GetFiles("*.pdb", SearchOption.TopDirectoryOnly))
                     {
@@ -236,14 +301,14 @@ namespace Unity.Tiny
 
                 var runtimeRev = distFolder + "runtime-rev.txt";
                 var projectRoot = new DirectoryInfo(".");
-                
+
                 TinyShell.RunInShell($"git show --format=\"%%H\" --no-patch > {runtimeRev}", new ShellProcessArgs()
                 {
                     WorkingDirectory = projectRoot,
                     ThrowOnError = true
                 });
             }
-            
+
             BuildTools(clean: isClean);
         }
 
@@ -261,50 +326,47 @@ namespace Unity.Tiny
 
         private static void BuildTools(bool clean)
         {
-            if (TinyEditorApplication.Project != null)
+            using (new OverwriteToolsScope())
             {
-                Debug.LogError("Please close project first.");
-                return;
-            }
+                var rootDir = new DirectoryInfo(".");
+                var toolsDir = new DirectoryInfo("./Tools/");
+                var toolsInstallDir = new DirectoryInfo("./Tiny/Tools/");
 
-            var rootDir = new DirectoryInfo(".");
-            var toolsDir = new DirectoryInfo("./Tools/");
-            var toolsInstallDir = new DirectoryInfo("./Tiny/Tools/");
-
-            if (clean)
-            {
-                foreach (var dir in Directory.EnumerateDirectories(toolsDir.FullName, "node_modules", SearchOption.AllDirectories))
+                if (clean)
                 {
-                    Directory.Delete(dir, true);
+                    foreach (var dir in Directory.EnumerateDirectories(toolsDir.FullName, "node_modules", SearchOption.AllDirectories))
+                    {
+                        Directory.Delete(dir, true);
+                    }
+                    foreach (var file in Directory.EnumerateFiles(toolsDir.FullName, "package-lock.json", SearchOption.AllDirectories))
+                    {
+                        File.Delete(file);
+                    }
+                    TinyBuildUtilities.PurgeDirectory(toolsInstallDir);
                 }
-                foreach (var file in Directory.EnumerateFiles(toolsDir.FullName, "package-lock.json", SearchOption.AllDirectories))
-                {
-                    File.Delete(file);
-                }
-                TinyBuildUtilities.PurgeDirectory(toolsInstallDir);
-            }
 
-            var extraPaths = new string[]
-            {
-                TinyPreferences.MonoDirectory
-            };
-            using (var progress = new TinyEditorUtility.ProgressBarScope("Building Tools...", "Packaging node tools into native executables, please wait!"))
-            {
+                var extraPaths = new string[]
+                {
+                    TinyPreferences.MonoDirectory
+                };
+                using (var progress = new TinyEditorUtility.ProgressBarScope("Building Tools...", "Packaging node tools into native executables, please wait!"))
+                {
 #if UNITY_EDITOR_WIN
-                var program = "bee.exe";
+                    var program = "bee.exe";
 #else
-                var program = "mono bee.exe";
+                    var program = "mono bee.exe";
 #endif
-                var output = TinyShell.RunInShell($"{program}", new ShellProcessArgs()
-                {
-                    WorkingDirectory = rootDir,
-                    ExtraPaths = extraPaths,
-                    ThrowOnError = false,
-                    MaxIdleTimeInMilliseconds = 10 * 1000 // 10min
-                });
-                if (!output.Succeeded)
-                {
-                    throw new Exception($"Failed to build tools:\n{output.FullOutput}");
+                    var output = TinyShell.RunInShell($"{program}", new ShellProcessArgs()
+                    {
+                        WorkingDirectory = rootDir,
+                        ExtraPaths = extraPaths,
+                        ThrowOnError = false,
+                        MaxIdleTimeInMilliseconds = 10 * 1000 // 10min
+                    });
+                    if (!output.Succeeded)
+                    {
+                        throw new Exception($"Failed to build tools:\n{output.FullOutput}");
+                    }
                 }
             }
         }
@@ -313,6 +375,7 @@ namespace Unity.Tiny
 
         private static void Install(bool force, bool silent)
         {
+            using (new OverwriteToolsScope())
             using (var progress = new TinyEditorUtility.ProgressBarScope())
             {
                 var installLocation = new DirectoryInfo("Tiny");
@@ -324,7 +387,7 @@ namespace Unity.Tiny
                 {
                     if (!silent)
                     {
-                        Debug.Log("Tiny: Runtime is already up to date");
+                        UnityEngine.Debug.Log("Tiny: Runtime is already up to date");
                     }
                     return;
                 }
@@ -333,7 +396,7 @@ namespace Unity.Tiny
                 {
                     if (!silent)
                     {
-                        Debug.LogError($"Tiny: could not find {sourcePackage.FullName}");
+                        UnityEngine.Debug.LogError($"Tiny: could not find {sourcePackage.FullName}");
                     }
                     return;
                 }
@@ -366,7 +429,7 @@ namespace Unity.Tiny
                     });
 #endif
 
-                Debug.Log($"Installed {TinyConstants.ApplicationName} runtime at: {installLocation.FullName}");
+                UnityEngine.Debug.Log($"Installed {TinyConstants.ApplicationName} runtime at: {installLocation.FullName}");
             }
         }
 
@@ -432,11 +495,21 @@ namespace Unity.Tiny
 
         internal static string GetRuntimeDirectory(TinyPlatform platform, TinyBuildConfiguration configuration)
         {
+            if (platform == TinyPlatform.PlayableAd)
+            {
+                platform = TinyPlatform.Html5;
+            }
+
             return Path.Combine(GetRuntimeDistDirectory(), $"{platform.ToString().ToLower()}", $"{configuration.ToString().ToLower()}");
         }
 
         private static string GetRuntimeDataDefinitionDirectory(TinyPlatform platform)
         {
+            if (platform == TinyPlatform.PlayableAd)
+            {
+                platform = TinyPlatform.Html5;
+            }
+
             return Path.Combine(GetRuntimeDistDirectory(), "datadefinitions");
         }
 
@@ -465,9 +538,9 @@ namespace Unity.Tiny
         {
             return options.Configuration == TinyBuildConfiguration.Release || IncludesModule(options.Project, k_BuiltInPhysicsModule) ? RuntimeVariantFull : RuntimeVariantStripped;
         }
-    } 
+    }
 
-    #if !UNITY_TINY_INTERNAL
+#if !UNITY_TINY_INTERNAL
     internal class TinyAssetPostProcessor : AssetPostprocessor
     {
         private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
@@ -478,5 +551,5 @@ namespace Unity.Tiny
             }
         }
     }
-    #endif
+#endif
 }

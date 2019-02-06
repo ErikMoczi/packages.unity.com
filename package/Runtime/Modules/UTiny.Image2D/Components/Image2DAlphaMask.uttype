@@ -11,7 +11,9 @@
         "Name": "threshold",
         "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "4df7a6b68049e269b30ffe2a5a6aed74", "Name": "Image2DAlphaMask" }

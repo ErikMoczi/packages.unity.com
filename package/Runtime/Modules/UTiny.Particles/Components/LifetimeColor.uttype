@@ -11,7 +11,9 @@
         "Name": "curve",
         "FieldType": { "Id": "9a741db252864c027362942ab5c07953", "Name": "GradientEntity" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "79f839cbe194578f85eb58c8c7b53e89", "Name": "LifetimeColor" }

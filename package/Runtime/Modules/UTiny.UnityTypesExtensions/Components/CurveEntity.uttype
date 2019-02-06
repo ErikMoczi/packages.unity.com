@@ -11,19 +11,25 @@
         "Name": "keys",
         "FieldType": { "Id": "5b6ff13fbf23066d1d6b6515f1fedfbd", "Name": "KeyFrame" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "ef9cb9c796446d00149f0caef522207f",
         "Name": "postWrapMode",
         "FieldType": { "Id": "440cf56acc9270b677b8a90e4477735d", "Name": "WrapMode" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "062283a20bb4976064eac5d2f214dd77",
         "Name": "preWrapMode",
         "FieldType": { "Id": "440cf56acc9270b677b8a90e4477735d", "Name": "WrapMode" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "280b143c739160ffb69b3cf552f375bb", "Name": "CurveEntity" }

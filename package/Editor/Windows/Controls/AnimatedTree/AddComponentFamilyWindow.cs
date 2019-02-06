@@ -144,7 +144,6 @@ namespace Unity.Tiny
             foreach (var entity in Entities)
             {
                 var component = entity.GetOrAddComponent(typeRef);
-                component.Refresh();
                 requirements.AddRequiredComponent(entity, typeRef);
             }
 

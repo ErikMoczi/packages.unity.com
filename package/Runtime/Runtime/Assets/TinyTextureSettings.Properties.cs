@@ -62,7 +62,7 @@ namespace Unity.Tiny
             InitializePropertyBag();
         }
 
-        private TextureFormatType m_FormatType;
+        private TextureFormatType m_FormatType = TextureFormatType.JPG;
         private int m_JpgCompressionQuality = 75;
         private int m_WebPCompressionQuality = 60;
 

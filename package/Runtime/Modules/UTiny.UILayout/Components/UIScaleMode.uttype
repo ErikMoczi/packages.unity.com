@@ -12,13 +12,17 @@
         "Name": "ConstantPixelSize",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "9d7c7416dafcd189680613e618163ec5",
         "Name": "ScaleWithScreenSize",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "0accc10de1131b44701da611a92a0f65", "Name": "UIScaleMode" },

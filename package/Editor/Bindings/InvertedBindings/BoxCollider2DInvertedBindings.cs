@@ -26,7 +26,6 @@ namespace Unity.Tiny
 
         private static void SyncBoxCollider2D(BoxCollider2D box, [NotNull] TinyObject collider)
         {
-            collider.Refresh();
             collider.AssignIfDifferent("size", box.size);
             collider.AssignIfDifferent("pivot", -new Vector2(box.offset.x / box.size.x - 0.5f, box.offset.y / box.size.y - 0.5f));
         }

@@ -11,19 +11,25 @@
         "Name": "all",
         "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "8456bec669e9ad57d7cc30d63c1b9ab9",
         "Name": "any",
         "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "06e76a4a8949657685638cc02aa80a8c",
         "Name": "sub",
         "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "c52dd3de4e384fad13dc296d624e2448", "Name": "EntityMask" }

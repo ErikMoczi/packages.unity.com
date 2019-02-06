@@ -10,9 +10,9 @@ namespace Unity.Tiny
     {
         private TinyType Type;
         private TinyField Field;
-        private event Action<TinyField> OnCreateField;
+        private event Action<TinyField> OnChanged;
 
-        public static bool Show(Rect rect, IRegistry registry, TinyType type, TinyField field = null, Action<TinyField> onCreateField = null)
+        public static bool Show(Rect rect, IRegistry registry, TinyType type, TinyField field = null, Action<TinyField> onChanged = null)
         {
             var window = GetWindow();
             if (null == window)
@@ -21,7 +21,7 @@ namespace Unity.Tiny
             }
             window.Type = type;
             window.Field = field;
-            window.OnCreateField = onCreateField;
+            window.OnChanged = onChanged;
             return Show(rect, registry, true);
         }
 
@@ -47,7 +47,6 @@ namespace Unity.Tiny
             if (null == Field)
             {
                 Field = Type.CreateField(TinyId.New(), TinyUtility.GetUniqueName(Type.Fields, "NewField"), value.Ref, false);
-                OnCreateField?.Invoke(Field);
             }
             else
             {
@@ -59,6 +58,7 @@ namespace Unity.Tiny
                 // Default to int field
                 Field.FieldType = TinyType.Int32.Ref;
             }
+            OnChanged?.Invoke(Field);
         }
 
         protected override string TreeName()

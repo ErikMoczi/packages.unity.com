@@ -11,19 +11,25 @@
         "Name": "guid",
         "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "81f23649a4e9591b1efdab773444f585",
         "Name": "fileId",
         "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "42d1ce3470fd9b5439740930794447bf",
         "Name": "type",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "02dce641a01d7d6e266747d52d336bc5", "Name": "AssetReferenceTMP_FontAsset" },

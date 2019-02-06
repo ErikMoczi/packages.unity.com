@@ -27,9 +27,17 @@ namespace Unity.Tiny
                 };
             }
         }
+
+        public event Action<HTTPServer> OnBeforeReloadOrOpen;
+
         public override Uri URL => new UriBuilder("http", LocalIP, Port).Uri;
 
         public Uri LocalURL => Listening ? new UriBuilder("http", "localhost", Port).Uri : new Uri(Path.Combine(ContentDir, "index.html"));
+        public string BuildTimeStamp
+        {
+            get => EditorPrefs.GetString($"Unity.Tiny.{Name}.BuildTimeStamp", null);
+            set => EditorPrefs.SetString($"Unity.Tiny.{Name}.BuildTimeStamp", value);
+        }
         private string ContentDir { get; set; }
 
         [TinyInitializeOnLoad(200)]
@@ -38,7 +46,10 @@ namespace Unity.Tiny
             Instance = new HTTPServer();
             TinyEditorApplication.OnCloseProject += (project, context) =>
             {
-                Instance.Close();
+                if (!context.Usage.HasFlag(ContextUsage.LiveLink))
+                {
+                    Instance.Close();
+                }
             };
         }
 
@@ -53,6 +64,7 @@ namespace Unity.Tiny
 
             // Start new httpserver
             ContentDir = contentDir;
+            BuildTimeStamp = DateTime.Now.ToString("d MMM yyyy HH:mm:ss");
             if (base.Listen(port))
             {
                 UnityEngine.Debug.Log($"{TinyConstants.ApplicationName} project content hosted at {URL.AbsoluteUri}");
@@ -66,12 +78,16 @@ namespace Unity.Tiny
                 return;
             }
 
-            using (var progress = new TinyEditorUtility.ProgressBarScope())
+            var options = TinyBuildPipeline.WorkspaceBuildOptions;
+            var title = $"{TinyConstants.ApplicationName} Preview {options.Platform.ToString()} {options.Configuration.ToString()}";
+            using (new TinyEditorUtility.ProgressBarScope(title, "Starting local HTTP server..."))
             {
-                progress.Update($"{TinyConstants.ApplicationName} Preview", "Starting local HTTP server...");
-
                 // Get hosted URL from content directory
                 Host(contentDir, port);
+
+                if(OnBeforeReloadOrOpen != null) {
+                    OnBeforeReloadOrOpen(this);
+                }
 
                 // Reload or open content URL
                 if (WebSocketServer.Instance.HasClients)

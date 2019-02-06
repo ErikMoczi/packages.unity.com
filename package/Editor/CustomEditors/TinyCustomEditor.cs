@@ -20,7 +20,8 @@ namespace Unity.Tiny
             var visitor = context.Visitor;
             
             var registry = tiny.Registry;
-            var field = tiny.Type.Dereference(registry).FindFieldByName(name);
+            var type = tiny.Type.Dereference(registry);
+            var field = type.FindFieldByName(name);
             var fieldType = field.FieldType.Dereference(registry);
             var isArray = field.Array;
             
@@ -126,12 +127,17 @@ namespace Unity.Tiny
                     }
                     else if (fieldType == TinyType.TileEntity)
                     {
-                        visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, Tile>(
+                        visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, TileBase>(
                             tiny.Properties, name);
+                    }
+                    else if (fieldType == TinyType.TilemapEntity)
+                    {
+                        visitor.VisitValueClassProperty<TinyObject.PropertiesContainer, Tilemap>(
+                           tiny.Properties, name);
                     }
                     else
                     {
-                        throw new ArgumentOutOfRangeException();
+                        Debug.LogWarning($"{TinyConstants.ApplicationName}: No drawers for field `{field.Name}` of type `{fieldType.Name}` on component `{type.Name}`");
                     }
 
                     break;

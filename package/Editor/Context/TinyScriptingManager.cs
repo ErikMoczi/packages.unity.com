@@ -48,24 +48,22 @@ namespace Unity.Tiny
             Metadata = new ScriptMetadata();
         }
 
-        public bool CompileScripts(TinyBuildOptions buildOptions)
+        public bool CompileScripts(TinyBuildOptions options)
         {
-            using (new TinyEditorUtility.ProgressBarScope(TinyConstants.ApplicationName, "Compiling scripts..."))
-            {
-                TinyBuildUtilities.RegenerateTSDefinitionFiles(buildOptions);
-                var tsconfig = TinyBuildUtilities.RegenerateTsConfig(buildOptions);
-                var tsmeta = new FileInfo(TinyScriptUtility.MakeTsOutMetaPath(buildOptions.BuildFolder));
-                var metadata = TinyBuildUtilities.CompileTypeScript(tsconfig, tsmeta);
-                if (metadata == null)
-                {
-                    return false;
-                }
+            TinyBuildUtilities.RegenerateTSDefinitionFiles(options);
 
-                var context = buildOptions.Context;
-                var manager = context.GetManager<IScriptingManager>();
-                var mainModule = buildOptions.Project.Module.Dereference(buildOptions.Registry);
-                return manager.Apply(metadata, context, mainModule);
+            var tsconfig = TinyBuildUtilities.RegenerateTsConfig(options);
+            var tsmeta = TinyScriptUtility.GetTypeScriptOutputMetaFile(options);
+            var metadata = TinyBuildUtilities.CompileTypeScript(tsconfig, tsmeta);
+            if (metadata == null)
+            {
+                return false;
             }
+
+            var context = options.Context;
+            var manager = context.GetManager<IScriptingManager>();
+            var mainModule = options.Project.Module.Dereference(options.Registry);
+            return manager.Apply(metadata, context, mainModule);
         }
 
         public bool Apply(ScriptMetadata metadata, TinyContext context, TinyModule mainModule)
@@ -96,7 +94,7 @@ namespace Unity.Tiny
         public void Refresh()
         {
             Assert.IsNotNull(TinyEditorApplication.EditorContext);
-            CompileScripts(TinyBuildPipeline.WorkspaceBuildOptions);
+            TinyBuildUtilities.CompileScripts();
         }
     }
 

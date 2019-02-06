@@ -146,12 +146,10 @@ namespace Unity.Tiny
                     // Copy component data
                     foreach (var sourceComponent in sourceEntity.Components)
                     {
-                        sourceComponent.Refresh();
                         var typeRef = sourceComponent.Type;
 
                         // There might be some automatic bindings that will add the component, so check if it is already present.
                         var targetComponent = targetEntity.GetOrAddComponent(typeRef);
-                        targetComponent.Refresh();
                         targetComponent.CopyFrom(sourceComponent);
                     }
                     
@@ -182,12 +180,10 @@ namespace Unity.Tiny
                     // Copy component data
                     foreach (var sourceComponent in sourceEntity.Components)
                     {
-                        sourceComponent.Refresh();
                         var typeRef = sourceComponent.Type;
 
                         // There might be some automatic bindings that will add the component, so check if it is already present.
                         var targetComponent = targetEntity.GetOrAddComponent(typeRef);
-                        targetComponent.Refresh();
                         targetComponent.CopyFrom(sourceComponent);
                     }
                     

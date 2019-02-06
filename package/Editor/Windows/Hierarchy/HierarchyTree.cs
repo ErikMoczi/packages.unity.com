@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using Unity.Tiny.Runtime.Text;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.Assertions;
-using StringComparison = System.StringComparison;
 using DropOnItemAction = System.Action<Unity.Tiny.HierarchyTreeItemBase, System.Collections.Generic.List<Unity.Tiny.ISceneGraphNode>>;
 using DropBetweenAction = System.Action<Unity.Tiny.HierarchyTreeItemBase, System.Collections.Generic.List<Unity.Tiny.ISceneGraphNode>, int>;
 using Object = UnityEngine.Object;
@@ -271,8 +270,8 @@ namespace Unity.Tiny
                     // This is the root instance, we can safely delete
                     continue;
                 }
-                
-                EditorUtility.DisplayDialog("Cannot restructure Prefab instance", "Children of a Prefab instance cannot be deleted or moved.", "Close");
+
+                EditorGUIUtilityBridge.DisplayDialog("Cannot restructure Prefab instance", "Children of a Prefab instance cannot be deleted or moved.", "Close");
                 return;
             }
 
@@ -549,7 +548,7 @@ namespace Unity.Tiny
             // Users should NOT be able to manipulate the hierarchy of a prefab instance
             if (IsPrefabRestructure(args, nodes))
             {
-                EditorUtility.DisplayDialog("Cannot restructure Prefab instance", "Children of a Prefab instance cannot be deleted or moved.", "Close");
+                EditorGUIUtilityBridge.DisplayDialog("Cannot restructure Prefab instance", "Children of a Prefab instance cannot be deleted or moved.", "Close");
                 return DragAndDropVisualMode.Rejected;
             }
 
@@ -961,13 +960,13 @@ namespace Unity.Tiny
             // Detect prefab nesting 
             if (group.PrefabInstances.Count > 0)
             {
-                EditorUtility.DisplayDialog("Prefab nesting is not supported yet", "You are trying to instantiate a Prefab that already contains PrefabInstances", "Close");
+                EditorGUIUtilityBridge.DisplayDialog("Prefab nesting is not supported yet", "You are trying to instantiate a Prefab that already contains PrefabInstances", "Close");
                 return DragAndDropVisualMode.Rejected;
             }
 
             if (Registry.FindAllByType<TinyPrefabInstance>().Any(i => i.PrefabEntityGroup.Equals(targetGroup.Ref)))
             {
-                EditorUtility.DisplayDialog("Prefab nesting is not supported yet", "You are trying to instantiate a Prefab in a group that is already being used as a Prefab", "Close");
+                EditorGUIUtilityBridge.DisplayDialog("Prefab nesting is not supported yet", "You are trying to instantiate a Prefab in a group that is already being used as a Prefab", "Close");
                 return DragAndDropVisualMode.Rejected;
             }
 
@@ -1096,7 +1095,6 @@ namespace Unity.Tiny
             entity.Name = animationClip.name;
 
             var animationClipPlayer = entity.GetOrAddComponent(TypeRefs.Animation.AnimationClipPlayer);
-            animationClipPlayer.Refresh();
             animationClipPlayer["animationClip"] = animationClip;
 
             TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.SceneGraph);
@@ -1108,9 +1106,12 @@ namespace Unity.Tiny
             var entity = entityRef.Dereference(m_Context.Registry);
             entity.Name = font.name;
 
-            var renderer = entity.GetOrAddComponent(TypeRefs.TextJS.TextRenderer);
-            renderer["text"] = "Sample Text";
-            renderer["font"] = font;
+            var renderer = entity.AddComponent<TinyText2DRenderer>();
+            renderer.text = "Sample Text";
+            var tinyFont = entity.AddComponent<TinyText2DStyleBitmapFont>();
+            tinyFont.font = font;
+            var fontStyle = entity.AddComponent<TinyText2DStyle>();
+            fontStyle.size = 15;
 
             TinyEventDispatcher<ChangeSource>.Dispatch(ChangeSource.SceneGraph);
             return true;

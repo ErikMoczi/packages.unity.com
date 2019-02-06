@@ -4,12 +4,29 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2019-01-25
+* Added optimization improvements for large projects
+
+### [Tilemaps]
+* Added support for exporting scripted tiles
+
+### [Live-Link]
+* Added a button to minimize/maximize the Connections Information Overlay at the bottom left of the Game view
+* Added information about when the currently served project's content build was made to the Connections Information Overlay
+* Connections Information Overlay are now visible as soon as local HTTP server is running, regardless if Play Mode is enabled or not
+
+### [Editor]
+* Added dialog to indicate source should not be the default texture format export setting
+* Fixed inability to reference assets from unity_builtin_extra
+* Fixed duplication of entity in unloaded EntityGroup after undo action
+* Fixed a state where EntityGroup is loaded and causes a null reference
+* Fixed building a standalone build with Tiny package
+
 ## [0.13.4] - 2018-12-13
-* Bug fixes and performance improvements 
-* Enhancements to the bitmap fonts rendering on canvas
-* Fix typescript Vector2/3/etc. aliases and declarations 
-* Improve the WebGL rendering initializations and deinitialization 
-* Fix Physics Velocity components to allow setting velocity properly
+* Enhanced bitmap fonts rendering on canvas
+* Fixed typescript Vector2/3/etc. aliases and declarations
+* Improved the WebGL rendering initializations and deinitialization
+* Fixed Physics Velocity components to allow setting velocity properly
 
 ## [0.13.2] - 2018-12-04
 * Tiny Mode is now in open beta!
@@ -17,7 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### [Samples]
 * Removed and renamed some samples
-  
+
 ### [Hierarchy]
 * Added search by component functionality
 
@@ -66,7 +83,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.11.2-preview] - 2018-10-29
 * Please use the latest Unity 2018.3.0b7 and above
-  
+
 ### Samples
 * Fixed Galaxy Raiders startup bug
 * Removed fireworks sample
@@ -84,7 +101,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.11.0-preview] - 2018-10-25
 * Unity 2018.2.0b7 and above must be used
-* Data Access Layer was removed. 
+* Data Access Layer was removed.
 * Behaviours were slightly changed. This may break functionality. See below.
 
 ### Editor
@@ -108,7 +125,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Scripting
 * Cleaned up BehaviourFilter and reworked template
 * Renamed OnEnable to OnEntityEnable (applies to related methods)
-  
+
 ### Samples
 * Compressed files in Audio sample
 * Fixed flappy sound bug
@@ -157,14 +174,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Updated scripting documents
 * World is now immutable (read-only) during iteration
 * Audio API now uses AudioSourceStart and AudioSourceStop components to start/stop sounds
-  
+
 ### Samples
 * Flappy sample now uses its own gravity system and has configuration files
 * All samples updated with DAL usage
 
 ### Runtime
 * Completely refactored runtime to include archetype ECS changes
-* Increased performance and quality of life Added Entity Command Buffer 
+* Increased performance and quality of life Added Entity Command Buffer
 
 
 ## [0.9.0-preview] - 2018-09-14
@@ -181,7 +198,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Build Report has been relocated to the Settings window
 * Project can now be built from the inspected project asset file
 * Loaded project name is now displayed in the Hierarchy window
-* Added Component groups to bundle similar components in the inspector 
+* Added Component groups to bundle similar components in the inspector
 * Selecting certain objects will ping and locate the corresponding asset in the Project window
 * Removed the Tiny Editor window
 * Removed Tiny Hierarchy and Inspector windows, you may now use normal Hierarchy and Inspector windows
@@ -204,7 +221,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Component fields can now be hidden in the inspector
 * Tilemaps are now supported
 * Sprite Atlases are now supported
-  
+
 ### Samples
 * Added a new tile map sample, DungeonZ
 * Edited all systems in Flappy to use a user defined system file
@@ -249,7 +266,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Improved project load times
 * Updated HitBox2D documentation and added warnings to the component
 * deltaTime is now clamped between 0.00001 and 1.0 second
-  
+
 ### Fixed
 * Fixed undo on new project bug
 * Fixed auto-complete not referring to the correct method name
@@ -265,7 +282,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.7.0-preview] - 2018-07-26
 
 ### Known Issues
-> Warning: This release changes how your projects are saved to disk. Make sure to backup your projects before upgrading to this release, and let us know if you experience any issue opening or saving your projects. 
+> Warning: This release changes how your projects are saved to disk. Make sure to backup your projects before upgrading to this release, and let us know if you experience any issue opening or saving your projects.
 
 > Attention: You must reimport all assets after this update. Right-click the project window and click "Reimport All"
 * Auto-complete incorrectly converts the first character of field names to lowercase. A fix is due in the next release.

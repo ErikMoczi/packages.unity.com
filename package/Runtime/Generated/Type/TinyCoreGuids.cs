@@ -91,7 +91,7 @@ namespace Unity.Tiny
             public const string AssetReferenceSprite = "1e0590432ee8352acd7622770a2ca37d";
             public const string AssetReferenceSpriteAtlas = "4236cd8d8bb4346f3cfa21b247cda664";
             public const string AssetReferenceTexture2D = "7f929fa05f11dd8dbfcce285d5094f37";
-            public const string AssetReferenceTile = "ac0c7c900d3aef33623160d9180182e8";
+            public const string AssetReferenceTileBase = "0a4375899de1287484abc26b4202bd6d";
             public const string AssetReferenceTMP_FontAsset = "02dce641a01d7d6e266747d52d336bc5";
             public const string CameraCullingMask = "7e2d7c3693d8764fe86725ff7c93f7a8";
             public const string EntityLayer = "09e72db86387b48e184be0f9d847d0e8";

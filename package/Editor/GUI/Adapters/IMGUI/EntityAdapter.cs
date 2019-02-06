@@ -94,8 +94,6 @@ namespace Unity.Tiny
                 return true;
             }
 
-            type.Refresh();
-
             // Make sure the type is included in the project.
             var editorContext = TinyEditorApplication.EditorContext;
             var mainModuleRef = editorContext.Project.Module;

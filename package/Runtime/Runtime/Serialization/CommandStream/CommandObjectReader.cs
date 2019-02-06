@@ -97,7 +97,6 @@ namespace Unity.Tiny.Serialization.CommandStream
                 var type = ReadTypeReferenceValue(reader);
 
                 var component = entity.AddComponent(type);
-                component.Refresh();
 
                 // Read Name
                 ReadPropertyName(reader);

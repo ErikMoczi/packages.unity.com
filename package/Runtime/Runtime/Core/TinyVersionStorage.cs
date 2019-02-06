@@ -50,8 +50,14 @@ namespace Unity.Tiny
             {
                 return;
             }
-            
-            // Assert.IsTrue(container is IRegistryObject, $"{UTinyConstants.ApplicationName}: VersionStorage.IncrementVersion should only be called with a IRegistryObject container. Actual type is { container.GetType() }");
+
+            // Early exit if property is not versioned
+            if (property is ITinyValueProperty p && !p.IsVersioned)
+            {
+                return;
+            }
+
+            // Assert.IsTrue(container is IRegistryObject, $"{TinyConstants.ApplicationName}: VersionStorage.IncrementVersion should only be called with a IRegistryObject container. Actual type is {container.GetType()}");
 
             if (m_ChangeSet.Add(container))
             {

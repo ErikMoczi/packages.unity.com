@@ -11,13 +11,17 @@
         "Name": "start",
         "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "45fd191444cf4f12013163e1c5476b1f",
         "Name": "end",
         "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "cf71ec39754e13f67bb9fcca3f1ac035", "Name": "TweenVector3" }

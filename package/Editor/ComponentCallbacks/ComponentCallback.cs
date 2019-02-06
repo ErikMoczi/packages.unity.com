@@ -19,8 +19,6 @@ namespace Unity.Tiny
                 return;
             }
 
-            component.Refresh();
-
             switch (callbackType)
             {
                 case ComponentCallbackType.OnAddComponent:

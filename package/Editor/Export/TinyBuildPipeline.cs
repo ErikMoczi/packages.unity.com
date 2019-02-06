@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
@@ -16,9 +17,10 @@ namespace Unity.Tiny
         /// Generic Web platform.
         /// Works in browsers and Web views.
         /// </summary>
-        Html5
+        Html5,
+        PlayableAd
     }
-    
+
     /// <summary>
     /// Target build configuration.
     /// </summary>
@@ -32,7 +34,7 @@ namespace Unity.Tiny
         /// Do not use Debug builds to profile your game.
         /// </remarks>
         Debug,
-        
+
         /// <summary>
         /// Optimized with partial debugging information and checks.
         /// </summary>
@@ -41,7 +43,7 @@ namespace Unity.Tiny
         /// enough information to debug most common issues.
         /// </remarks>
         Development,
-        
+
         /// <summary>
         /// Optimized with no debugging information or checks.
         /// </summary>
@@ -50,10 +52,89 @@ namespace Unity.Tiny
         /// </remarks>
         Release
     }
-    
+
+    /// <summary>
+    /// Build context used throughout the build pipeline.
+    /// </summary>
+    internal class TinyBuildContext
+    {
+        private readonly TinyBuildReport m_BuildReport = new TinyBuildReport(TinyBuildReport.ProjectNode);
+
+        internal TinyBuildContext(TinyBuildOptions options, List<ITinyBuildStep> buildSteps)
+        {
+            Options = options;
+            BuildSteps = buildSteps;
+        }
+
+        /// <summary>
+        /// Build options.
+        /// </summary>
+        public TinyBuildOptions Options { get; }
+
+        /// <summary>
+        /// Build steps.
+        /// </summary>
+        public IReadOnlyList<ITinyBuildStep> BuildSteps { get; }
+
+        /// <summary>
+        /// Build report.
+        /// </summary>
+        internal TinyBuildReport.TreeNode BuildReport => m_BuildReport.Root;
+
+        /// <summary>
+        /// Get an artifact directory combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified artifact directory.</returns>
+        public DirectoryInfo GetArtifactFolder(params string[] paths) => Options.GetArtifactFolder(paths);
+
+        /// <summary>
+        /// Get an artifact file combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified artifact file.</returns>
+        public FileInfo GetArtifactFile(params string[] paths) => Options.GetArtifactFile(paths);
+
+        /// <summary>
+        /// Get a build directory combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified build directory.</returns>
+        public DirectoryInfo GetBuildFolder(params string[] paths) => Options.GetBuildFolder(paths);
+
+        /// <summary>
+        /// Get a build file combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified build file.</returns>
+        public FileInfo GetBuildFile(params string[] paths) => Options.GetBuildFile(paths);
+    }
+
+    internal interface ITinyBuildStep
+    {
+        /// <summary>
+        /// Name of the build step. Also used as the progress info when running build steps.
+        /// </summary>
+        string Name { get; }
+
+        /// <summary>
+        /// Get whether or not the build step is enabled in the build.
+        /// </summary>
+        /// <param name="context">The build context.</param>
+        /// <returns>Whether or not the build step is enabled.</returns>
+        bool Enabled(TinyBuildContext context);
+
+        /// <summary>
+        /// Execute the build step.
+        /// </summary>
+        /// <param name="context">The build context.</param>
+        /// <returns>Whether or not the build step succeeded.</returns>
+        bool Run(TinyBuildContext context);
+    }
+
     internal interface ITinyBuilder
     {
-        void Build(TinyBuildOptions options, TinyBuildResults results);
+        ITinyBuildStep[] GetBuildSteps();
     }
 
     /// <summary>
@@ -65,7 +146,7 @@ namespace Unity.Tiny
         /// Context for the build.
         /// </summary>
         internal TinyContext Context { get; set; }
-        
+
         /// <summary>
         /// Project to build, part of the given <see cref="Context"/>.
         /// </summary>
@@ -85,64 +166,118 @@ namespace Unity.Tiny
         /// Target build configuration.
         /// </summary>
         public TinyBuildConfiguration Configuration { get; set; } = TinyBuildConfiguration.Development;
-        
+
         /// <summary>
         /// Whether or not the generated build should automatically try to connect to the Unity Profiler over network.
         /// This option is not taken into account in <see cref="TinyBuildConfiguration.Release"/> builds.
         /// </summary>
         public bool AutoConnectProfiler { get; set; }
-        
+
         /// <summary>
-        /// The root build output directory, defaults to "TinyExport" in the Unity project directory.
-        /// Note that sub directories will be created under this directory to reflect the selected <see cref="Project"/>,
-        /// <see cref="Platform"/>, and <see cref="Configuration"/>.
+        /// Registry for the build.
         /// </summary>
-        public DirectoryInfo ExportFolder { get; set; } = new DirectoryInfo("TinyExport");
-        
         internal IRegistry Registry => Context.Registry;
 
         /// <summary>
-        /// Computes and returns the final build directory.
+        /// The root export directory path name, defaults to "TinyExport" in the Unity project directory.
         /// </summary>
-        public DirectoryInfo BuildFolder => new DirectoryInfo(Path.Combine(
-            ExportFolder.FullName,
-            Project.Name,
-            Platform.ToString().ToLower(),
-            Configuration.ToString().ToLower()));
+        public string ExportPath { get; set; } = new DirectoryInfo("TinyExport").FullName;
+
+        /// <summary>
+        /// The project root output directory path name.
+        /// It combines <see cref="ExportPath"/>, <see cref="TinyProject.Name"/>, <see cref="TinyPlatform"/> and <see cref="TinyBuildConfiguration"/>.
+        /// The artifacts and build directories are nested under this directory.
+        /// </summary>
+        internal string OutputPath => Path.Combine(ExportPath, Project.Name, Platform.ToString().ToLower(), Configuration.ToString().ToLower());
+
+        /// <summary>
+        /// The project artifacts directory path name. This directory is used as a staging location for the build.
+        /// To get a fully qualified artifact directory or file, use <see cref="GetArtifactFolder"/> or <see cref="GetArtifactFile"/> respectively.
+        /// </summary>
+        internal string ArtifactPath => Path.Combine(OutputPath, "artifacts");
+
+        /// <summary>
+        /// The project build directory path name. This directory will contain the final binaries for the build.
+        /// To get a fully qualified build directory or file, use <see cref="GetBuildFolder"/> or <see cref="GetBuildFile"/> respectively.
+        /// </summary>
+        internal string BuildPath => Path.Combine(OutputPath, "build");
+
+        /// <summary>
+        /// Get an artifact directory combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified artifact directory.</returns>
+        public DirectoryInfo GetArtifactFolder(params string[] paths)
+        {
+            var path = paths.Any() ? paths.Aggregate((c, n) => Path.Combine(c, n)) : string.Empty;
+            return new DirectoryInfo(Path.Combine(ArtifactPath, path));
+        }
+
+        /// <summary>
+        /// Get an artifact file combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified artifact file.</returns>
+        public FileInfo GetArtifactFile(params string[] paths)
+        {
+            var path = paths.Any() ? paths.Aggregate((c, n) => Path.Combine(c, n)) : string.Empty;
+            return new FileInfo(Path.Combine(ArtifactPath, path));
+        }
+
+        /// <summary>
+        /// Get a build directory combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified build directory.</returns>
+        public DirectoryInfo GetBuildFolder(params string[] paths)
+        {
+            var path = paths.Any() ? paths.Aggregate((c, n) => Path.Combine(c, n)) : string.Empty;
+            return new DirectoryInfo(Path.Combine(BuildPath, path));
+        }
+
+        /// <summary>
+        /// Get a build file combining the array of <paramref name="paths"/>.
+        /// </summary>
+        /// <param name="paths">An array of parts of the path.</param>
+        /// <returns>Fully qualified build file.</returns>
+        public FileInfo GetBuildFile(params string[] paths)
+        {
+            var path = paths.Any() ? paths.Aggregate((c, n) => Path.Combine(c, n)) : string.Empty;
+            return new FileInfo(Path.Combine(BuildPath, path));
+        }
     }
 
     /// <summary>
     /// Object created by the <see cref="TinyBuildPipeline"/> and populated during a build.
     /// </summary>
-    public class TinyBuildResults
+    public class TinyBuildResult
     {
-        #region Fields
-
-        private readonly TinyBuildReport m_BuildReport = new TinyBuildReport(TinyBuildReport.ProjectNode);
-
-        #endregion
-
-        #region Properties
-        
         /// <summary>
         /// Whether or not the build succeeded.
         /// </summary>
-        public bool Success { get; set; }
+        public bool Success { get; }
 
         /// <summary>
-        /// Where build artifacts are located.
+        /// Duration of the entire build process.
         /// </summary>
-        public DirectoryInfo OutputFolder { get; set; }
+        public TimeSpan Duration { get; }
 
         /// <summary>
-        /// Where the build binaries are located.
+        /// Where the final build binaries are located.
         /// This folder contains the files you need to deploy after a successful build.
         /// </summary>
-        public DirectoryInfo BinaryFolder { get; set; }
+        public string BuildFolder { get; }
 
-        internal TinyBuildReport.TreeNode BuildReport => m_BuildReport.Root;
+        internal TinyBuildReport.TreeNode BuildReport { get; }
 
-        #endregion
+        internal TinyBuildResult(bool success, TimeSpan duration, TinyBuildOptions options, TinyBuildReport.TreeNode buildReport)
+        {
+            Success = success;
+            Duration = duration;
+            BuildFolder = options.GetBuildFolder().FullName;
+            BuildReport = buildReport;
+            BuildReport.Update();
+        }
     }
 
     /// <summary>
@@ -172,7 +307,7 @@ namespace Unity.Tiny
         {
         }
     }
-    
+
     /// <summary>
     /// Add this attribute on a static method to execute it at the end of a Tiny build.
     /// </summary>
@@ -200,6 +335,38 @@ namespace Unity.Tiny
         {
         }
     }
+
+    #region Build Steps
+
+    internal class BuildStepCompileScripts : ITinyBuildStep
+    {
+        public string Name => "Compiling Scripts";
+        public bool Enabled(TinyBuildContext context) => true;
+        public bool Run(TinyBuildContext context) => TinyBuildUtilities.CompileScripts(context.Options);
+    }
+
+    internal class BuildStepValidateProject : ITinyBuildStep
+    {
+        public string Name => "Validating Project";
+        public bool Enabled(TinyBuildContext context) => true;
+        public bool Run(TinyBuildContext context) => TinyProjectValidation.Validate(context.Options.Project);
+    }
+
+    internal class BuildStepGenerateBindings : ITinyBuildStep
+    {
+        public string Name => "Generating Bindings";
+        public bool Enabled(TinyBuildContext context) => true;
+        public bool Run(TinyBuildContext context) => TinyBuildUtilities.RunBindGem(context.Options);
+    }
+
+    internal class BuildStepRegenerateTSDefinitionFiles : ITinyBuildStep
+    {
+        public string Name => "Regenerating TypeScript Definition Files";
+        public bool Enabled(TinyBuildContext context) => true;
+        public bool Run(TinyBuildContext context) => TinyBuildUtilities.RegenerateTSDefinitionFiles(context.Options);
+    }
+
+    #endregion
 
     /// <summary>
     /// Utility to build Tiny projects.
@@ -229,7 +396,7 @@ namespace Unity.Tiny
         /// Builds the <see cref="TinyProject"/> currently loaded in the Editor and launches the output program.
         /// </summary>
         /// <returns>The build results.</returns>
-        public static TinyBuildResults BuildAndLaunch()
+        public static TinyBuildResult BuildAndLaunch()
         {
             if (EditorApplication.isCompiling)
             {
@@ -240,18 +407,18 @@ namespace Unity.Tiny
             {
                 var workspace = TinyEditorApplication.EditorContext.Workspace;
                 var options = WorkspaceBuildOptions;
-                var results = Build(options);
+                var buildResult = Build(options);
 
-                if (results.Success && workspace.Preview)
+                if (buildResult.Success && workspace.Preview)
                 {
-                    HTTPServer.Instance.ReloadOrOpen(results.BinaryFolder.FullName, options.Project.Settings.LocalHTTPServerPort);
+                    HTTPServer.Instance.ReloadOrOpen(buildResult.BuildFolder, options.Project.Settings.LocalHTTPServerPort);
                 }
                 else if (EditorApplication.isPlayingOrWillChangePlaymode)
                 {
                     // Don't enter playmode if build failed or preview is not enabled
                     EditorApplication.isPlaying = false;
                 }
-                return results;
+                return buildResult;
             }
         }
 
@@ -284,107 +451,131 @@ namespace Unity.Tiny
         /// <param name="options">Build input.</param>
         /// <returns>Build results.</returns>
         /// <exception cref="ArgumentException">If the input <see cref="options"/> are invalid.</exception>
-        public static TinyBuildResults Build(TinyBuildOptions options)
+        public static TinyBuildResult Build(TinyBuildOptions options)
         {
-            if (options?.Project == null || options.ExportFolder == null)
+            if (options?.Project == null)
             {
-                throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid build options provided",
-                    nameof(options));
+                throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid build options provided", nameof(options));
             }
 
-            var buildStart = DateTime.Now;
-            
-            var results = new TinyBuildResults();
-            ITinyBuilder builder;
-
-            switch (options.Platform)
+            try
             {
-                case TinyPlatform.Html5:
-                    builder = new TinyHtml5Builder();
-                    break;
-                default:
-                    throw new ArgumentException($"{TinyConstants.ApplicationName}: build platform not supported", nameof(options));
+                // Platform builder
+                ITinyBuilder builder = null;
+                switch (options.Platform)
+                {
+                    case TinyPlatform.Html5:
+                        builder = new TinyHTML5Builder();
+                        break;
+                    case TinyPlatform.PlayableAd:
+                        builder = new PlayableAdHTML5Builder();
+                        break;
+                    default:
+                        throw new NotImplementedException(options.Platform.ToString());
+                }
+
+                // Common build steps
+                var buildSteps = new List<ITinyBuildStep>()
+                {
+                    new BuildStepCompileScripts(),
+                    new BuildStepValidateProject(),
+                    new BuildStepGenerateBindings(),
+                    new BuildStepRegenerateTSDefinitionFiles()
+                };
+
+                // Clean-up legacy build folders structure
+                var rootOutputFolder = new DirectoryInfo(options.OutputPath);
+                if (rootOutputFolder.Exists)
+                {
+                    var legacyScriptFolder = new DirectoryInfo(Path.Combine(options.OutputPath, "ScriptAssemblies"));
+                    var legacyBindingsFile = new FileInfo(Path.Combine(options.OutputPath, "bind-generated.cs"));
+                    var legacyBuildReportFile = new FileInfo(Path.Combine(options.OutputPath, "build-report.json"));
+                    if (legacyScriptFolder.Exists || legacyBindingsFile.Exists || legacyBuildReportFile.Exists)
+                    {
+                        rootOutputFolder.Delete(true);
+                    }
+                }
+
+                // Clean-up build folder (we preserve artifacts folder)
+                if (options.GetBuildFolder().Exists)
+                {
+                    options.GetBuildFolder().Delete(true);
+                }
+
+                // Create all build folders
+                options.GetArtifactFolder().Create();
+                options.GetBuildFolder().Create();
+
+                // Platform specific build steps
+                buildSteps.AddRange(builder.GetBuildSteps());
+
+                var context = new TinyBuildContext(options, buildSteps);
+                var title = $"{TinyConstants.ApplicationName} Build {options.Platform.ToString()} {options.Configuration.ToString()}";
+                using (var progress = new TinyEditorUtility.ProgressBarScope(title))
+                {
+                    // Run pre-build handlers
+                    CallPreBuildHandlers(progress, options);
+
+                    // Run build steps
+                    var buildResult = RunBuildSteps(progress, context);
+                    TinyEditorAnalytics.SendBuildEvent(options.Project, buildResult);
+
+                    // Run post-build handlers
+                    CallPostBuildHandlers(progress, options, buildResult);
+                    return buildResult;
+                }
             }
-
-            using (var progress = new TinyEditorUtility.ProgressBarScope(TinyConstants.ApplicationName + " Build", 
-                "Build started for " + options.Platform))
+            catch (Exception ex)
             {
-                try
-                {
-                    CallPreBuildHandlers(options, progress);
-                    
-                    var destFolder = options.ExportFolder;
-                    destFolder.Create();
-
-                    // BUILD = <DEST>/PLATFORM/CONFIG
-                    var buildFolder = options.BuildFolder;
-                    results.OutputFolder = buildFolder;
-
-                    // read the last tsc build from disc before the purge
-                    var lastBuild = TinyScriptUtility.ReadLastBuild(results.OutputFolder);
-                    
-                    TinyBuildUtilities.PurgeDirectory(buildFolder);
-                    buildFolder.Create();
-
-                    // assign the binary folder to the output folder by default
-                    // builders can re-target this as needed
-                    results.BinaryFolder = buildFolder;
-
-                    // write the last build back to disc before the compilation
-                    // if the build input did not change, compilation will be a no-op
-                    // otherwise, it'll be overwritten
-                    TinyScriptUtility.WriteLastBuild(results.OutputFolder, lastBuild);
-
-                    if (false == TinyBuildUtilities.CompileScripts(options))
-                    {
-                        return results;
-                    }
-
-                    if (false == TinyProjectValidation.Validate(options.Project))
-                    {
-                        return results;
-                    }
-
-                    progress.Update("Generating bindings");
-                    TinyBuildUtilities.RunBindGem(options);
-                    TinyBuildUtilities.RegenerateTSDefinitionFiles(options);
-
-                    // @TODO Perform a full refresh before building
-
-                    builder.Build(options, results);
-
-                    results.BuildReport.Update();
-
-                    var buildDuration = DateTime.Now - buildStart;
-                    Debug.Log(
-                        $"{TinyConstants.ApplicationName} project generated in {GetTimeSpanShortString(buildDuration)} at {results.BinaryFolder.FullName}");
-
-                    TinyEditorAnalytics.SendBuildEvent(options.Project, results, buildDuration);
-                    results.Success = true;
-                    
-                    CallPostBuildHandlers(options, progress, results);
-                    
-                    return results;
-                }
-                catch (Exception ex)
-                {
-                    TinyEditorAnalytics.SendException("BuildPipeline.Build", ex);
-                    throw;
-                }
-                finally
-                {
-                    TinyEditorUtility.RepaintAllWindows();
-                }
+                TinyEditorAnalytics.SendException("BuildPipeline.Build", ex);
+                throw;
+            }
+            finally
+            {
+                TinyEditorUtility.RepaintAllWindows();
             }
         }
 
-        private static void CallPreBuildHandlers(TinyBuildOptions options, TinyEditorUtility.ProgressBarScope progress)
+        private static TinyBuildResult RunBuildSteps(TinyEditorUtility.ProgressBarScope progress, TinyBuildContext context)
+        {
+            var startTime = DateTime.Now;
+            for (var i = 0; i < context.BuildSteps.Count; ++i)
+            {
+                var buildStep = context.BuildSteps[i];
+                if (!buildStep.Enabled(context))
+                {
+                    continue;
+                }
+
+                progress.Update($"{buildStep.Name}...", (float)i / context.BuildSteps.Count);
+                var buildStepStartTime = DateTime.Now;
+                try
+                {
+                    if (!buildStep.Run(context))
+                    {
+                        TinyEditorAnalytics.SendErrorEvent("TinyBuildPipeline.RunBuildSteps", $"Build step '{buildStep.Name}' failed.");
+                        return new TinyBuildResult(false, DateTime.Now - startTime, context.Options, context.BuildReport);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TinyEditorAnalytics.SendException($"TinyBuildPipeline.RunBuildSteps: {buildStep.Name}", ex);
+                    Debug.LogError($"Build step '{buildStep.Name}' failed with exception: {ex}");
+                    return new TinyBuildResult(false, DateTime.Now - startTime, context.Options, context.BuildReport);
+                }
+            }
+            var result = new TinyBuildResult(true, DateTime.Now - startTime, context.Options, context.BuildReport);
+            Debug.Log($"{TinyConstants.ApplicationName} project generated in {GetTimeSpanShortString(result.Duration)} at {context.GetBuildFolder().FullName}");
+            return result;
+        }
+
+        private static bool CallPreBuildHandlers(TinyEditorUtility.ProgressBarScope progress, TinyBuildOptions options)
         {
             foreach (var handler in TinyAttributeScanner.GetMethodAttributes<TinyPreprocessBuildAttribute>())
             {
                 var method = handler.Method;
                 var handlerName = $"{method.DeclaringType?.FullName}.{method.Name}";
-                progress.Update($"Pre-processing handler: {handlerName}");
+                progress.Update($"Pre-Build Handler: {handlerName}", 0f);
 
                 var parameters = method.GetParameters();
                 if (method.IsStatic &&
@@ -393,40 +584,42 @@ namespace Unity.Tiny
                     parameters[0].ParameterType == typeof(TinyBuildOptions)
                 )
                 {
-                    method.Invoke(null, new object[] {options});
+                    method.Invoke(null, new object[] { options });
                 }
                 else
                 {
-                    Debug.LogWarning(
-                        $"{method.DeclaringType?.FullName}.{method.Name}: {nameof(TinyPreprocessBuildAttribute)} can only be applied to static, non-generic methods with a single argument of type {nameof(TinyBuildOptions)}.");
+                    Debug.LogWarning($"{method.DeclaringType?.FullName}.{method.Name}: {nameof(TinyPreprocessBuildAttribute)} can " +
+                        $"only be applied to static, non-generic methods with a single argument of type {nameof(TinyBuildOptions)}.");
                 }
             }
+            return true;
         }
-        
-        private static void CallPostBuildHandlers(TinyBuildOptions options, TinyEditorUtility.ProgressBarScope progress, TinyBuildResults results)
+
+        private static bool CallPostBuildHandlers(TinyEditorUtility.ProgressBarScope progress, TinyBuildOptions options, TinyBuildResult buildResult)
         {
             foreach (var handler in TinyAttributeScanner.GetMethodAttributes<TinyPostprocessBuildAttribute>())
             {
                 var method = handler.Method;
                 var handlerName = $"{method.DeclaringType?.FullName}.{method.Name}";
-                progress.Update($"Post-processing handler: {handlerName}");
+                progress.Update($"Post-Build Handler: {handlerName}", 1f);
 
                 var parameters = method.GetParameters();
                 if (method.IsStatic &&
                     false == method.IsGenericMethod &&
                     parameters.Length == 2 &&
                     parameters[0].ParameterType == typeof(TinyBuildOptions) &&
-                    parameters[1].ParameterType == typeof(TinyBuildResults)
+                    parameters[1].ParameterType == typeof(TinyBuildResult)
                 )
                 {
-                    method.Invoke(null, new object[] {options, results});
+                    method.Invoke(null, new object[] { options, buildResult });
                 }
                 else
                 {
-                    Debug.LogWarning(
-                        $"{handlerName}: {nameof(TinyPostprocessBuildAttribute)} can only be applied to static, non-generic methods with two arguments of types {nameof(TinyBuildOptions)} and {nameof(TinyBuildResults)}, respectively.");
+                    Debug.LogWarning($"{handlerName}: {nameof(TinyPostprocessBuildAttribute)} can only be applied to static, non-generic " +
+                        $"methods with two arguments of types {nameof(TinyBuildOptions)} and {nameof(TinyBuildResult)}, respectively.");
                 }
             }
+            return true;
         }
 
         private static string GetTimeSpanShortString(TimeSpan s)

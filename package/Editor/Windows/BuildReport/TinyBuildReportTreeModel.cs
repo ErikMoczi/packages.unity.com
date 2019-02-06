@@ -25,11 +25,10 @@ namespace Unity.Tiny
             m_IdCounter = 0;
 
             var buildOptions = TinyBuildPipeline.WorkspaceBuildOptions;
-            var buildDir = buildOptions.BuildFolder.FullName;
-            var jsonFile = new FileInfo(Path.Combine(buildDir, "build-report.json"));
-            if (jsonFile.Exists)
+            var artifactFile = buildOptions.GetArtifactFile("build-report.json");
+            if (artifactFile.Exists)
             {
-                var json = File.ReadAllText(jsonFile.FullName);
+                var json = File.ReadAllText(artifactFile.FullName);
                 return TinyBuildReport.FromJson(json);
             }
 

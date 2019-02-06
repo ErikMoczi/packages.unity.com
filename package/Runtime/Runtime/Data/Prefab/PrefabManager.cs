@@ -122,12 +122,13 @@ namespace Unity.Tiny
         {
             m_Caretaker = context.Caretaker;
             m_Caretaker.OnWillGenerateMemento += HandleWillGenerateMemento;
-
-            EditorApplication.update += Update;
         }
 
         public override void Load()
         {
+#if UNITY_EDITOR
+            EditorApplication.update += Update;
+#endif            
             m_BindingsManager = Context.GetManager<IBindingsManager>();
             
             var undo = Context.GetManager<IUndoManager>();
@@ -157,7 +158,15 @@ namespace Unity.Tiny
             
             base.Load();
         }
-        
+
+        public override void Unload()
+        {
+#if UNITY_EDITOR
+            EditorApplication.update -= Update;
+#endif    
+            base.Unload();
+        }
+
         private void Update()
         {
             if (m_PrefabInstanceChangeQueue.Count <= 0)
@@ -388,7 +397,6 @@ namespace Unity.Tiny
             foreach (var component in entity.Components)
             {
                 var componentBaseline = entityBaseline.GetOrAddComponent(component.Type);
-                componentBaseline.Refresh();
                 PropertyContainer.Transfer(component, componentBaseline);
             }
         }
@@ -539,7 +547,6 @@ namespace Unity.Tiny
                     foreach (var component in instance.Components)
                     {
                         var componentBaseline = baseline.GetOrAddComponent(component.Type);
-                        componentBaseline.Refresh();
                         PropertyContainer.Transfer(component, componentBaseline);
                     }
                 }
@@ -871,7 +878,6 @@ namespace Unity.Tiny
             foreach (var component in instance.Components)
             {
                 var componentBaseline = baseline.AddComponent(component.Type);
-                componentBaseline.Refresh();
                 PropertyContainer.Transfer(component, componentBaseline);
             }
         }

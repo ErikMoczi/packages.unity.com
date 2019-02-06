@@ -11,7 +11,9 @@
         "Name": "curve",
         "FieldType": { "Id": "691cc0faec1fbaaa056088bba092a0d3", "Name": "Curve3Entity" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "8e728c1655262fe61666df6d06df2ade", "Name": "LifetimeVelocity" }

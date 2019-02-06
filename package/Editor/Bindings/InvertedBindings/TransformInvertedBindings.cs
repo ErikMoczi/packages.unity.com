@@ -75,7 +75,6 @@ namespace Unity.Tiny
 
 		private static void SyncTransformNode(Transform t, [NotNull] TinyObject tiny)
 		{
-			tiny.Refresh();
 			if (t.parent)
 			{
 				tiny.AssignIfDifferent("parent", t.parent.GetComponent<TinyEntityView>()?.EntityRef ?? TinyEntity.Reference.None);
@@ -88,19 +87,16 @@ namespace Unity.Tiny
 
 		private static void SyncTransformLocalPosition(Transform t, [NotNull] TinyObject tiny)
 		{
-			tiny.Refresh();
 			tiny.AssignIfDifferent("position", t.localPosition);
 		}
 
 		private static void SyncTransformLocalRotation(Transform t, [NotNull] TinyObject tiny)
 		{
-			tiny.Refresh();
 			tiny.AssignIfDifferent("rotation", t.localRotation);
 		}
 
 		private static void SyncTransformLocalScale(Transform t, [NotNull] TinyObject tiny)
 		{
-			tiny.Refresh();
 			tiny.AssignIfDifferent("scale", t.localScale);
 		}
 

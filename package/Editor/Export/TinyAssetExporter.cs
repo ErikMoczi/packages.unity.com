@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.Tiny.Runtime.Audio;
-using Unity.Tiny.Runtime.Core2D;
 using Unity.Tiny.Runtime.Tilemap2D;
 using UnityEditor;
 using UnityEditor.U2D;
@@ -35,33 +34,93 @@ namespace Unity.Tiny
     /// </summary>
     internal static class AssetIterator
     {
-        private static readonly Dictionary<Object, TinyAssetInfo> s_Assets = new Dictionary<Object, TinyAssetInfo>();
-        private static readonly Dictionary<Texture2D, float> s_TexturePixelsPerUnit = new Dictionary<Texture2D, float>();
-
-        public static TinyAssetInfo GetAssetInfo(Object @object)
+        internal class Context
         {
-            TinyAssetInfo assetInfo = null;
-            s_Assets.TryGetValue(@object, out assetInfo);
-            return assetInfo;
-        }
+            public readonly Dictionary<Object, TinyAssetInfo> Assets = new Dictionary<Object, TinyAssetInfo>();
+            public readonly Dictionary<Texture2D, float> TexturesPixelsPerUnit = new Dictionary<Texture2D, float>();
+            public readonly Dictionary<TinyTile, TinyEntity> ScriptedTileToEntityMap = new Dictionary<TinyTile, TinyEntity>();
+            public readonly Dictionary<TinyTileData, TinyEntity> TileDataToEntityMap = new Dictionary<TinyTileData, TinyEntity>();
 
-        public static float GetTexturePixelsPerUnit(Texture2D texture)
-        {
-            if (!s_TexturePixelsPerUnit.TryGetValue(texture, out var pixelsPerUnit))
+            public TinyModule Module { get; }
+            public bool Export { get; }
+            public TinyEntityGroup EntityGroup { get; }
+
+            public Context(TinyModule module, bool export, TinyEntityGroup entityGroup)
             {
-                pixelsPerUnit = 1;
+                Module = module;
+                Export = export;
+                EntityGroup = entityGroup;
             }
-            return pixelsPerUnit;
+
+            public TinyAssetInfo GetAssetInfo(Object @object)
+            {
+                TinyAssetInfo assetInfo = null;
+                Assets.TryGetValue(@object, out assetInfo);
+                return assetInfo;
+            }
+
+            public TinyAssetInfo GetOrAddAssetInfo(Object @object, string name)
+            {
+                // First check if asset info exist
+                TinyAssetInfo assetInfo = null;
+                if (Assets.TryGetValue(@object, out assetInfo))
+                {
+                    return assetInfo;
+                }
+
+                // Create new asset info
+                assetInfo = new TinyAssetInfo(@object, name);
+
+                // Set asset info parent
+                Object parentObject = null;
+                if (AssetDatabase.IsSubAsset(@object)) {
+                    var path = AssetDatabase.GetAssetPath(@object);
+                    parentObject = AssetDatabase.LoadMainAssetAtPath(path);
+                } 
+                else 
+                {
+                    //For built in assets. Will treat sprite texture as sprite parent asset
+                    if (@object is Sprite) 
+                    {
+                        parentObject = (@object as Sprite).texture;
+                    }
+                }
+
+                if (parentObject != null) 
+                {
+                    var parentAssetInfo = GetOrAddAssetInfo(parentObject, parentObject.name);
+                    if (parentAssetInfo != null) 
+                    {
+                        assetInfo.Parent = parentAssetInfo;
+                    }
+                }
+
+                Assets.Add(@object, assetInfo);
+                return assetInfo;
+            }
         }
 
-        public static IEnumerable<TinyAssetInfo> EnumerateAllAssets(TinyModule module, bool export)
+        public static IEnumerable<TinyAssetInfo> EnumerateRootAssets(TinyModule module, bool export = false)
         {
-            s_Assets.Clear();
-            s_TexturePixelsPerUnit.Clear();
+            var context = new Context(module, export, entityGroup: null);
+            EnumerateAllAssets(context);
+            return context.Assets.Values.Where(asset => asset.Parent == null);
+        }
 
-            foreach (var m in module.EnumerateDependencies())
+        internal static void EnumerateAllAssets(Context context)
+        {
+            EnumerateModuleAssets(context);
+            EnumerateUnityEngineAssets(context);
+            if (context.Export)
             {
-                // Enumerate explicit references
+                EnumerateExportAssets(context);
+            }
+        }
+
+        private static void EnumerateModuleAssets(Context context)
+        {
+            foreach (var m in context.Module.EnumerateDependencies())
+            {
                 foreach (var asset in m.Assets)
                 {
                     if (!asset.Object || null == asset.Object)
@@ -69,27 +128,29 @@ namespace Unity.Tiny
                         continue;
                     }
 
-                    var assetInfo = GetOrAddAssetInfo(asset.Object, asset.Name);
+                    var assetInfo = context.GetOrAddAssetInfo(asset.Object, asset.Name);
                     if (assetInfo != null)
                     {
-                        assetInfo.AddExplicitReference((TinyModule.Reference)module);
+                        assetInfo.AddExplicitReference((TinyModule.Reference)context.Module);
                     }
                 }
             }
+        }
 
-            // Enumerate implicit assets references
-            foreach (var entity in module.EnumerateDependencies().Entities())
+        private static void EnumerateUnityEngineAssets(Context context)
+        {
+            foreach (var entity in context.Module.EnumerateDependencies().Entities())
             {
                 foreach (var component in entity.Components)
                 {
                     foreach (var @object in EnumerateUnityEngineObjects(component))
                     {
-                        if (!@object || null == @object || string.IsNullOrEmpty(AssetDatabase.GetAssetPath(@object)))
+                        if (!@object || null == @object)
                         {
                             continue;
                         }
 
-                        var assetInfo = GetOrAddAssetInfo(@object, @object.name);
+                        var assetInfo = context.GetOrAddAssetInfo(@object, @object.name);
                         if (assetInfo != null)
                         {
                             assetInfo.AddImplicitReference((TinyEntity.Reference)entity);
@@ -97,108 +158,8 @@ namespace Unity.Tiny
                     }
                 }
             }
-
-            // Generate export assets
-            if (export)
-            {
-                // TEMPORARY PATCH: Unity mono stacktrace will crash when a sprite is found in more than one
-                // SpriteAtlas. Abort export if this is the case to prevent a crash when packing sprite atlases until
-                // this is fixed in Unity.
-                {
-                    var spriteCache = new Dictionary<Sprite, SpriteAtlas>();
-                    var spriteAtlases = AssetDatabase.FindAssets("t:SpriteAtlas")
-                        .Select(a => AssetDatabase.GUIDToAssetPath(a))
-                        .Select(a => AssetDatabase.LoadAssetAtPath<SpriteAtlas>(a));
-                    foreach (var spriteAtlas in spriteAtlases)
-                    {
-                        var packedSprites = TinyEditorBridge.GetAtlasPackedSprites(spriteAtlas);
-                        foreach (var packedSprite in packedSprites)
-                        {
-                            if (spriteCache.TryGetValue(packedSprite, out var packingSpriteAtlas))
-                            {
-                                throw new InvalidOperationException(
-                                    $"Sprite {packedSprite.name} found in more than one SpriteAtlas:\n" +
-                                    $"Found in: {AssetDatabase.GetAssetPath(packingSpriteAtlas)}\n" +
-                                    $"Found in: {AssetDatabase.GetAssetPath(spriteAtlas)}\n" +
-                                    $"This is not supported yet, aborting export.");
-                            }
-                            else
-                            {
-                                spriteCache.Add(packedSprite, spriteAtlas);
-                            }
-                        }
-                    }
-                }
-
-                // Make sure all sprite atlases are packed before proceeding
-                TinyEditorBridge.PackAllSpriteAtlases();
-
-                // BUG: packing sprite atlases clears the progress bar
-                TinyEditorUtility.ProgressBarScope.Restore();
-
-                // Gather all sprite atlas referenced by sprites
-                var sprites = s_Assets.Keys.OfType<Sprite>().Distinct().ToList();
-                var usedSpriteTextures = new HashSet<Texture2D>();
-                var usedSpriteAtlases = new HashSet<SpriteAtlas>();
-                foreach (var sprite in sprites)
-                {
-                    var texture = sprite.texture;
-                    var spriteAtlas = TinyEditorBridge.GetSpriteActiveAtlas(sprite);
-                    var spriteAtlasTexture = TinyEditorBridge.GetSpriteActiveAtlasTexture(sprite);
-                    if (spriteAtlas != null && spriteAtlasTexture != null)
-                    {
-                        texture = spriteAtlasTexture;
-                        usedSpriteAtlases.Add(spriteAtlas);
-                    }
-                    if (texture != null)
-                    {
-                        usedSpriteTextures.Add(texture);
-                        if (!s_TexturePixelsPerUnit.Keys.Contains(texture))
-                        {
-                            s_TexturePixelsPerUnit.Add(texture, sprite.pixelsPerUnit);
-                        }
-                    }
-                }
-
-                // Generate sprite atlas assets
-                foreach (var spriteAtlas in usedSpriteAtlases)
-                {
-                    GetOrAddAssetInfo(spriteAtlas, spriteAtlas.name);
-                    var atlasSprites = TinyEditorBridge.GetAtlasPackedSprites(spriteAtlas);
-                    foreach (var atlasSprite in atlasSprites)
-                    {
-                        GetOrAddAssetInfo(atlasSprite, atlasSprite.name);
-                    }
-                }
-
-                // Generate sprite texture assets
-                foreach (var spriteTexture in usedSpriteTextures)
-                {
-                    GetOrAddAssetInfo(spriteTexture, spriteTexture.name);
-                }
-
-                // Remove sprite textures that are no longer referenced by sprites
-                var spriteTextures = sprites.Select(s => s.texture).NotNull().Distinct().ToList();
-                foreach (var spriteTexture in spriteTextures)
-                {
-                    if (!usedSpriteTextures.Contains(spriteTexture))
-                    {
-                        s_Assets.Remove(spriteTexture);
-                    }
-                }
-            }
-
-            return s_Assets.Values;
         }
 
-        public static IEnumerable<TinyAssetInfo> EnumerateRootAssets(TinyModule module, bool export = false)
-        {
-            return EnumerateAllAssets(module, export).Where(asset => asset.Parent == null);
-        }
-
-        /// <summary>
-        /// @TODO Move to filtering API
-        /// </summary>
         private static IEnumerable<Object> EnumerateUnityEngineObjects(TinyObject @object)
         {
             return @object.EnumerateProperties().SelectMany(property => Filter(property.Value));
@@ -229,46 +190,227 @@ namespace Unity.Tiny
             }
         }
 
-        private static TinyAssetInfo GetOrAddAssetInfo(Object @object, string name)
+        private static void EnumerateExportAssets(Context context)
         {
-            // First check if asset info exist
-            TinyAssetInfo assetInfo = null;
-            if (s_Assets.TryGetValue(@object, out assetInfo))
-            {
-                return assetInfo;
-            }
+            EnumerateTilemapsAssets(context);
 
-            // Create new asset info
-            assetInfo = new TinyAssetInfo(@object, name);
+            // Note: EnumerateSpriteAtlasAssets must be last
+            // because it can remove unused texture references
+            EnumerateSpriteAtlasAssets(context);
+        }
 
-            // If its a tile, add its sprite
-            if (@object is Tile)
+        private static void EnumerateTilemapsAssets(Context context)
+        {
+            foreach (var entity in context.Module.EnumerateDependencies().Entities())
             {
-                var tile = (Tile)@object;
-                var sprite = tile.sprite;
-                GetOrAddAssetInfo(sprite, sprite.name);
-            }
-
-            // Set asset info parent
-            if (AssetDatabase.IsSubAsset(@object))
-            {
-                var path = AssetDatabase.GetAssetPath(@object);
-                var parentObject = AssetDatabase.LoadMainAssetAtPath(path);
-                var parentAssetInfo = GetOrAddAssetInfo(parentObject, parentObject.name);
-                if (parentAssetInfo != null)
+                foreach (var component in entity.Components)
                 {
-                    assetInfo.Parent = parentAssetInfo;
+                    if (component.Type.Id == TypeRefs.Tilemap2D.Tilemap.Id)
+                    {
+                        EnumerateTilemapsAssets(context, entity, new TinyTilemap(component));
+                    }
+                }
+            }
+        }
+
+        private static void EnumerateTilemapsAssets(Context context, TinyEntity tilemapEntity, TinyTilemap tinyTilemap)
+        {
+            // Retrive tiles sprites assets
+            var sprites = new HashSet<Sprite>();
+            foreach (TinyObject obj in tinyTilemap.tiles)
+            {
+                var tinyTileData = new TinyTileData(obj);
+                if (tinyTileData.tile == null)
+                {
+                    continue;
+                }
+
+                var tileBase = tinyTileData.tile;
+                var tile = tileBase as Tile;
+                if (tile != null)
+                {
+                    sprites.Add(tile.sprite);
+                }
+                else
+                {
+                    if (tinyTileData.bakedSprite == null)
+                    {
+                        continue;
+                    }
+                    sprites.Add(tinyTileData.bakedSprite);
+
+                    // Generate scripted tile entity
+                    if (context.EntityGroup == null)
+                    {
+                        continue;
+                    }
+
+                    var uniqueTile = new TinyTile(context.EntityGroup.Registry);
+                    uniqueTile.sprite = tinyTileData.bakedSprite;
+                    uniqueTile.color = tinyTileData.bakedColor;
+                    uniqueTile.colliderType = tinyTileData.bakedColliderType;
+                    if (!context.ScriptedTileToEntityMap.TryGetValue(uniqueTile, out var entity))
+                    {
+                        var name = $"{TinyAssetEntityGroupGenerator.GetAssetEntityPath(tileBase)}{uniqueTile.sprite.name}";
+                        var count = context.ScriptedTileToEntityMap.Keys.Where(t => t.sprite == uniqueTile.sprite).Count();
+                        if (count > 0)
+                        {
+                            name += $" {count}";
+                        }
+                        entity = context.EntityGroup.Registry.CreateEntity(TinyId.New(), name);
+
+                        var tinyTile = entity.AddComponent<TinyTile>();
+                        tinyTile.CopyFrom(uniqueTile);
+
+                        TinyAssetEntityGroupGenerator.AddAssetReferenceComponent(entity, tileBase);
+                        context.ScriptedTileToEntityMap.Add(tinyTile, entity);
+                        context.EntityGroup.AddEntityReference(entity.Ref);
+                    }
+                    context.TileDataToEntityMap.Add(tinyTileData, entity);
                 }
             }
 
-            s_Assets.Add(@object, assetInfo);
-            return assetInfo;
+            // Export tiles sprites assets
+            foreach (var sprite in sprites)
+            {
+                context.GetOrAddAssetInfo(sprite, sprite.name);
+            }
+        }
+
+        private static void EnumerateSpriteAtlasAssets(Context context)
+        {
+            // TEMPORARY PATCH: Unity mono stacktrace will crash when a sprite is found in more than one
+            // SpriteAtlas. Abort export if this is the case to prevent a crash when packing sprite atlases until
+            // this is fixed in Unity.
+            {
+                var spriteCache = new Dictionary<Sprite, SpriteAtlas>();
+                var spriteAtlases = AssetDatabase.FindAssets("t:SpriteAtlas")
+                    .Select(a => AssetDatabase.GUIDToAssetPath(a))
+                    .Select(a => AssetDatabase.LoadAssetAtPath<SpriteAtlas>(a));
+                foreach (var spriteAtlas in spriteAtlases)
+                {
+                    var packedSprites = TinyEditorBridge.GetAtlasPackedSprites(spriteAtlas);
+                    foreach (var packedSprite in packedSprites)
+                    {
+                        if (spriteCache.TryGetValue(packedSprite, out var packingSpriteAtlas))
+                        {
+                            throw new InvalidOperationException(
+                                $"Sprite {packedSprite.name} found in more than one SpriteAtlas:\n" +
+                                $"Found in: {AssetDatabase.GetAssetPath(packingSpriteAtlas)}\n" +
+                                $"Found in: {AssetDatabase.GetAssetPath(spriteAtlas)}\n" +
+                                $"This is not supported yet, aborting export.");
+                        }
+                        else
+                        {
+                            spriteCache.Add(packedSprite, spriteAtlas);
+                        }
+                    }
+                }
+            }
+
+            // Make sure all sprite atlases are packed before proceeding
+            TinyEditorBridge.PackAllSpriteAtlases();
+
+            // BUG: packing sprite atlases clears the progress bar
+            TinyEditorUtility.ProgressBarScope.Restore();
+
+            // Gather all sprite atlas and textures referenced by sprites
+            var sprites = context.Assets.Keys.OfType<Sprite>().ToArray();
+            var usedSpriteTextures = new HashSet<Texture2D>();
+            var usedSpriteAtlases = new HashSet<SpriteAtlas>();
+            foreach (var sprite in sprites)
+            {
+                var texture = sprite.texture;
+                var spriteAtlas = TinyEditorBridge.GetSpriteActiveAtlas(sprite);
+                var spriteAtlasTexture = TinyEditorBridge.GetSpriteActiveAtlasTexture(sprite);
+                if (spriteAtlas != null && spriteAtlasTexture != null)
+                {
+                    texture = spriteAtlasTexture;
+                    usedSpriteAtlases.Add(spriteAtlas);
+                }
+                if (texture != null)
+                {
+                    usedSpriteTextures.Add(texture);
+                    if (!context.TexturesPixelsPerUnit.Keys.Contains(texture))
+                    {
+                        context.TexturesPixelsPerUnit.Add(texture, sprite.pixelsPerUnit);
+                    }
+                }
+            }
+
+            // Generate sprite atlas assets
+            foreach (var spriteAtlas in usedSpriteAtlases)
+            {
+                context.GetOrAddAssetInfo(spriteAtlas, spriteAtlas.name);
+                var atlasSprites = TinyEditorBridge.GetAtlasPackedSprites(spriteAtlas);
+                foreach (var atlasSprite in atlasSprites)
+                {
+                    context.GetOrAddAssetInfo(atlasSprite, atlasSprite.name);
+                }
+            }
+
+            // Generate sprite texture assets
+            foreach (var spriteTexture in usedSpriteTextures)
+            {
+                context.GetOrAddAssetInfo(spriteTexture, spriteTexture.name);
+            }
+
+            // Remove sprite textures that are no longer referenced by sprites
+            // Note: cannot re-use 'sprites' array because GetOrAddAssetInfo might have added new sprites
+            var spriteTextures = context.Assets.Keys.OfType<Sprite>().Select(s => s.texture).NotNull().Distinct().ToArray();
+            foreach (var spriteTexture in spriteTextures)
+            {
+                if (!usedSpriteTextures.Contains(spriteTexture))
+                {
+                    context.Assets.Remove(spriteTexture);
+                }
+            }
         }
     }
 
-    internal static class TinyAssetEntityGroupGenerator
+    internal class TinyAssetEntityGroupGenerator
     {
-        public static Dictionary<Object, TinyEntity> ObjectToEntityMap = new Dictionary<Object, TinyEntity>();
+        public static AssetIterator.Context Context { get; private set; }
+        public static Dictionary<Object, TinyEntity> ObjectToEntityMap { get; private set; }
+
+        private struct EntityExporterInfo
+        {
+            public IRegistry Registry;
+            public TinyProject Project;
+            public TinyEntityGroup Group;
+
+            public TinyAssetInfo AssetInfo;
+            public string PathName;
+
+            public TinyEntity CreateEntity()
+            {
+                var entity = Registry.CreateEntity(TinyId.New(), PathName);
+                Group.AddEntityReference(entity.Ref);
+                return entity;
+            }
+        }
+
+        public static void Generate(IRegistry registry, TinyProject project, TinyEntityGroup entityGroup)
+        {
+            var module = project.Module.Dereference(project.Registry);
+
+            // Enumerate all assets for export
+            Context = new AssetIterator.Context(module, export: true, entityGroup);
+            AssetIterator.EnumerateAllAssets(Context);
+
+            // Generate entities
+            ObjectToEntityMap = new Dictionary<Object, TinyEntity>();
+            var info = new EntityExporterInfo
+            {
+                Group = entityGroup,
+                Project = project,
+                Registry = registry
+            };
+            foreach (var asset in Context.Assets.Values)
+            {
+                GetOrCreateEntityForAsset(info, asset);
+            }
+        }
 
         public static string GetAssetEntityPath(Object obj)
         {
@@ -279,7 +421,7 @@ namespace Unity.Tiny
 
             if (obj is Sprite)
             {
-                var atlas = TinyEditorBridge.GetSpriteActiveAtlas((Sprite) obj);
+                var atlas = TinyEditorBridge.GetSpriteActiveAtlas((Sprite)obj);
                 if (atlas != null)
                 {
                     return $"assets/sprites/{atlas.name}/";
@@ -293,7 +435,7 @@ namespace Unity.Tiny
                 return "assets/atlases/";
             }
 
-            if (obj is Tile)
+            if (obj is TileBase)
             {
                 return "assets/tiles/";
             }
@@ -316,22 +458,7 @@ namespace Unity.Tiny
             return string.Empty;
         }
 
-        public static void Generate(IRegistry registry, TinyProject project, TinyEntityGroup entityGroup)
-        {
-            ObjectToEntityMap.Clear();
-
-            // Enumerate all assets for export
-            var assets = AssetIterator.EnumerateAllAssets(project.Module.Dereference(project.Registry), export: true);
-
-            // Generate entities
-            foreach (var asset in assets)
-            {
-                GetOrCreateEntityForAsset(registry, project, entityGroup, asset);
-            }
-        }
-
-        private static TinyEntity GetOrCreateEntityForAsset(IRegistry registry, TinyProject project,
-            TinyEntityGroup entityGroup, TinyAssetInfo assetInfo)
+        private static TinyEntity GetOrCreateEntityForAsset(EntityExporterInfo info, TinyAssetInfo assetInfo)
         {
             var @object = assetInfo.Object;
 
@@ -341,69 +468,47 @@ namespace Unity.Tiny
                 return entity;
             }
 
-            var entityPathName = $"{GetAssetEntityPath(@object)}{assetInfo.Name}";
+            info.AssetInfo = assetInfo;
+            info.PathName = $"{GetAssetEntityPath(@object)}{assetInfo.Name}";
 
-            var baseInfo = new EntityExporterInfo
+            if (@object is Texture2D texture)
             {
-                AssetInfo = assetInfo,
-                Group = entityGroup,
-                PathName = entityPathName,
-                Project = project,
-                Registry = registry,
-            };
-
-            if (@object is Texture2D t)
-            {
-                ExportEntity(baseInfo, t);
+                entity = ExportEntity(info, texture);
             }
-            else if (@object is Sprite s)
+            else if (@object is Sprite sprite)
             {
-                ExportEntity(baseInfo, s);
+                entity = ExportEntity(info, sprite);
             }
             else if (@object is SpriteAtlas atlas)
             {
-                ExportEntity(baseInfo, atlas);
+                entity = ExportEntity(info, atlas);
             }
-            else if (@object is Tile tile)
+            else if (@object is TileBase tile)
             {
-                ExportEntity(baseInfo, tile);
+                entity = ExportEntity(info, tile);
             }
             else if (@object is AudioClip audio)
             {
-                ExportEntity(baseInfo, audio);
+                entity = ExportEntity(info, audio);
             }
             else if (@object is AnimationClip animationClip)
             {
-                ExportEntity(baseInfo, animationClip);
+                entity = ExportEntity(info, animationClip);
             }
             else if (@object is TMPro.TMP_FontAsset font)
             {
-                ExportEntity(baseInfo, font);
+                entity = ExportEntity(info, font);
             }
 
-            foreach (var child in assetInfo.Children)
+            if (entity != null)
             {
-                GetOrCreateEntityForAsset(registry, project, entityGroup, child);
+                foreach (var child in assetInfo.Children)
+                {
+                    GetOrCreateEntityForAsset(info, child);
+                }
             }
 
             return entity;
-        }
-
-        private struct EntityExporterInfo
-        {
-            public string PathName;
-            public IRegistry Registry;
-            public TinyAssetInfo AssetInfo;
-            public TinyProject Project;
-            public TinyEntityGroup Group;
-
-            public TinyEntity CreateEntity()
-            {
-                var entity = Registry.CreateEntity(TinyId.New(), PathName);
-                Group.AddEntityReference(entity.Ref);
-                return entity;
-
-            }
         }
 
         private static TinyEntity ExportEntity(EntityExporterInfo info, Texture2D texture)
@@ -421,7 +526,11 @@ namespace Unity.Tiny
 
             var image2D = entity.AddComponent<Runtime.Core2D.TinyImage2D>();
             image2D.disableSmoothing = texture.filterMode == FilterMode.Point;
-            image2D.pixelsToWorldUnits = 1.0f / AssetIterator.GetTexturePixelsPerUnit(texture);
+            if (!Context.TexturesPixelsPerUnit.TryGetValue(texture, out var pixelsPerUnit))
+            {
+                pixelsPerUnit = 1f;
+            }
+            image2D.pixelsToWorldUnits = 1f / pixelsPerUnit;
 
             AddAssetReferenceComponent(entity, texture);
             ObjectToEntityMap.Add(texture, entity);
@@ -495,7 +604,6 @@ namespace Unity.Tiny
             var entity = info.CreateEntity();
 
             var settings = spriteAtlas.GetPackingSettings();
-
             if (settings.enableRotation)
             {
                 Debug.LogError($"{TinyConstants.ApplicationName}: SpriteAtlas.enableRotation is not supported!");
@@ -503,8 +611,7 @@ namespace Unity.Tiny
 
             if (settings.enableTightPacking)
             {
-                Debug.LogError(
-                    $"{TinyConstants.ApplicationName}: SpriteAtlas.enableTightPacking is not supported!");
+                Debug.LogError($"{TinyConstants.ApplicationName}: SpriteAtlas.enableTightPacking is not supported!");
             }
 
             var atlas = entity.AddComponent(TypeRefs.Core2D.SpriteAtlas);
@@ -514,31 +621,36 @@ namespace Unity.Tiny
             var sprites = TinyEditorBridge.GetAtlasPackedSprites(spriteAtlas);
             foreach (var sprite in sprites)
             {
-                var spriteAssetInfo = AssetIterator.GetAssetInfo(sprite);
+                var spriteAssetInfo = Context.GetAssetInfo(sprite);
                 if (spriteAssetInfo != null)
                 {
-                    var spriteEntity = GetOrCreateEntityForAsset(info.Registry, info.Project, info.Group, spriteAssetInfo);
+                    var spriteEntity = GetOrCreateEntityForAsset(info, spriteAssetInfo);
                     spriteList.Add((TinyEntity.Reference)spriteEntity);
                 }
             }
 
-			AddAssetReferenceComponent(entity, spriteAtlas);
+            AddAssetReferenceComponent(entity, spriteAtlas);
             ObjectToEntityMap.Add(spriteAtlas, entity);
             return entity;
         }
 
-        private static TinyEntity ExportEntity(EntityExporterInfo info, Tile tile)
+        private static TinyEntity ExportEntity(EntityExporterInfo info, TileBase tileBase)
         {
-            var entity = info.CreateEntity();
+            if (tileBase is Tile)
+            {
+                var entity = info.CreateEntity();
+                var tinyTile = entity.AddComponent<TinyTile>();
 
-            var tinyTile = entity.AddComponent<TinyTile>();
-            tinyTile.color = tile.color;
-            tinyTile.sprite = tile.sprite;
-            tinyTile.colliderType = tile.colliderType;
+                var tile = (Tile)tileBase;
+                tinyTile.color = tile.color;
+                tinyTile.sprite = tile.sprite;
+                tinyTile.colliderType = tile.colliderType;
 
-            AddAssetReferenceComponent(entity, tile);
-            ObjectToEntityMap.Add(tile, entity);
-            return entity;
+                AddAssetReferenceComponent(entity, tileBase);
+                ObjectToEntityMap.Add(tileBase, entity);
+                return entity;
+            }
+            return null;
         }
 
         private static TinyEntity ExportEntity(EntityExporterInfo info, AudioClip audioClip)
@@ -567,7 +679,7 @@ namespace Unity.Tiny
             return entity;
         }
 
-        private static void AddAssetReferenceComponent<TValue>(TinyEntity entity, TValue @object)
+        internal static void AddAssetReferenceComponent<TValue>(TinyEntity entity, TValue @object)
             where TValue : Object
         {
             var objHandle = UnityObjectSerializer.ToObjectHandle(@object);
@@ -601,18 +713,18 @@ namespace Unity.Tiny
             {
                 var ci = kvp.Value;
                 var tinyCI = new Runtime.Text.TinyCharacterInfo(entity.Registry);
-                tinyCI.value = (uint) ci.id;
-                
+                tinyCI.value = (uint)ci.id;
+
                 tinyCI.advance = ci.xAdvance;
-                
+
                 tinyCI.bearingX = ci.xOffset;
                 tinyCI.bearingY = ci.yOffset;
                 tinyCI.width = ci.width;
                 tinyCI.height = ci.height;
 
-                
+
                 var min = new Vector2(ci.x / font.atlas.width, (font.atlas.height - ci.y - ci.height) / font.atlas.height);
-                var off = new Vector2(ci.width/ font.atlas.width, ci.height/ font.atlas.height);
+                var off = new Vector2(ci.width / font.atlas.width, ci.height / font.atlas.height);
                 tinyCI.characterRegion = new Rect(min.x, min.y, off.x, off.y);
                 data.Add(tinyCI.Tiny);
             }
@@ -622,7 +734,7 @@ namespace Unity.Tiny
             return entity;
         }
     }
-    
+
     internal static class TinyAssetExporter
     {
         public static string GetAssetName(TinyProject project, Object @object)
@@ -658,8 +770,8 @@ namespace Unity.Tiny
             // Skip asset types that should not be exported
             if (assetInfo.Object is SpriteAtlas ||
                 assetInfo.Object is Tilemap ||
-                assetInfo.Object is Tile ||
-				TinyScriptUtility.EndsWithTinyScriptExtension(assetInfo.AssetPath))
+                assetInfo.Object is TileBase ||
+                TinyScriptUtility.EndsWithTinyScriptExtension(assetInfo.AssetPath))
             {
                 return null;
             }
@@ -766,7 +878,7 @@ namespace Unity.Tiny
 
                 output.Add(new FileInfo(dstFile));
             }
-            
+
             internal static void ExportFontAtlas(string path, string name, Texture2D texture, ICollection<FileInfo> output)
             {
                 var outputTexture = CopyAlphaTexture(texture, TextureFormat.RGBA32);
@@ -779,7 +891,7 @@ namespace Unity.Tiny
                 }
 
                 output.Add(new FileInfo(dstFile));
-            }            
+            }
 
             private static void ExportJpg(string path, string name, Texture2D texture, int quality, ICollection<FileInfo> output)
             {
@@ -991,7 +1103,7 @@ namespace Unity.Tiny
 
                 // Create a new readable Texture2D to copy the pixels to it
                 var result = new Texture2D(texture.width, texture.height, format, false);
-                
+
                 // Copy the pixels from the RenderTexture to the new Texture
                 result.ReadPixels(new Rect(0, 0, tmp.width, tmp.height), 0, 0);
                 result.Apply();
@@ -1004,7 +1116,7 @@ namespace Unity.Tiny
 
                 return result;
             }
-            
+
             private static Texture2D CopyAlphaTexture(Texture2D texture, TextureFormat format)
             {
                 // Create a temporary RenderTexture of the same size as the texture
@@ -1026,7 +1138,7 @@ namespace Unity.Tiny
 
                 // Create a new readable Texture2D to copy the pixels to it
                 var result = new Texture2D(texture.width, texture.height, format, false);
-                
+
                 // Copy the pixels from the RenderTexture to the new Texture
                 result.ReadPixels(new Rect(0, 0, tmp.width, tmp.height), 0, 0);
                 result.Apply();
@@ -1070,10 +1182,6 @@ namespace Unity.Tiny
             public static void Export(string path, string name, TMPro.TMP_FontAsset font, ICollection<FileInfo> output)
             {
                 TextureExporter.ExportFontAtlas(path, name, font.atlas, output);
-                
-                
-                
-                
                 if (IncludedByTargetPlatform(font))
                 {
                     return;

@@ -106,10 +106,19 @@ namespace Unity.Tiny.Runtime.Tilemap2D
 
         private void CompressBounds(Tilemap tilemap)
         {
+            // Remember the last tilemap bounds
+            var lastBounds = tilemap.cellBounds;
+
             // Modifying Tilemap tiles causes a tilemap sync event, so temporarily deactivate the tilemap sync
             SyncTilemapActive = false;
             tilemap.CompressBounds();
             SyncTilemapActive = true;
+
+            // Check if tilemap bounds changed
+            if (tilemap.cellBounds == lastBounds)
+            {
+                return;
+            }
 
             // Rebuild TinyTileData array from the Tilemap
             tiles.Clear();
@@ -120,16 +129,23 @@ namespace Unity.Tiny.Runtime.Tilemap2D
                     continue;
                 }
 
-                var tile = tilemap.GetTile<Tile>(position);
+                var tile = tilemap.GetTile(position);
                 if (tile == null)
                 {
                     continue;
                 }
 
-                var tileData = new TinyTileData(Tiny.Registry);
-                tileData.position = new Vector2(position.x, position.y);
-                tileData.tile = tile;
-                tiles.Add(tileData.Tiny);
+                var tileData = TinyRuntimeBridge.GetTilemapTileData(tilemap, tile, position);
+                var tinyTileData = new TinyTileData(Tiny.Registry);
+                tinyTileData.position = new Vector2(position.x, position.y);
+                tinyTileData.tile = tile;
+                if (!(tile is Tile))
+                {
+                    tinyTileData.bakedSprite = tileData.sprite;
+                    tinyTileData.bakedColor = tileData.color;
+                    tinyTileData.bakedColliderType = tileData.colliderType;
+                }
+                tiles.Add(tinyTileData.Tiny);
             }
 
             // Rebuild tilemap tile data cache
@@ -168,12 +184,24 @@ namespace Unity.Tiny.Runtime.Tilemap2D
                 {
                     var tinyTileData = new TinyTileData((TinyObject)tinyTilemap.tiles[tinyTileDataIndex]);
                     tinyTileData.tile = syncTile.Tile;
+                    if (!(syncTile.Tile is Tile))
+                    {
+                        tinyTileData.bakedSprite = syncTile.BakedSprite;
+                        tinyTileData.bakedColor = syncTile.BakedColor;
+                        tinyTileData.bakedColliderType = syncTile.BakedColliderType;
+                    }
                 }
                 else
                 {
                     var tinyTileData = new TinyTileData(tinyTilemap.Tiny.Registry);
                     tinyTileData.position = syncTile.Position;
                     tinyTileData.tile = syncTile.Tile;
+                    if (!(syncTile.Tile is Tile))
+                    {
+                        tinyTileData.bakedSprite = syncTile.BakedSprite;
+                        tinyTileData.bakedColor = syncTile.BakedColor;
+                        tinyTileData.bakedColliderType = syncTile.BakedColliderType;
+                    }
                     tinyTilemap.tiles.Add(tinyTileData.Tiny);
                     cache.SetTileDataIndex(syncTile.Position, tinyTilemap.tiles.Count - 1);
                 }

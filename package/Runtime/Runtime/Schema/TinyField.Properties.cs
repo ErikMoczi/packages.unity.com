@@ -13,9 +13,12 @@ namespace Unity.Tiny
         public static ValueClassProperty<TinyField, TinyType.Reference> FieldTypeProperty { get; private set; }
         public static ValueClassProperty<TinyField, bool> ArrayProperty { get; private set; }
         public static ValueClassProperty<TinyField, TinyVisibility> VisibilityProperty { get; private set; }
+        public static ValueClassProperty<TinyField, bool> EditorOnlyProperty { get; private set; }
+        public static ValueClassProperty<TinyField, bool> VersionedProperty { get; private set; }
 
         private static ClassPropertyBag<TinyField> s_PropertyBag { get; set; }
 
+        /// <inheritdoc cref="Unity.Properties.IPropertyContainer.PropertyBag" />
         public IPropertyBag PropertyBag => s_PropertyBag;
 
         private static void InitializeProperties()
@@ -49,11 +52,20 @@ namespace Unity.Tiny
                 ,c => c.m_Visibility
                 ,(c, v) => c.m_Visibility = v
             );
+
+            EditorOnlyProperty = new ValueClassProperty<TinyField, bool>(
+                "EditorOnly"
+                ,c => c.m_EditorOnly
+                ,(c, v) => c.m_EditorOnly = v
+            );
+
+            VersionedProperty = new ValueClassProperty<TinyField, bool>(
+                "Versioned"
+                ,c => c.m_Versioned
+                ,(c, v) => c.m_Versioned = v
+            );
         }
 
-        /// <summary>
-        /// Implement this partial method to initialize custom properties
-        /// </summary>
         static partial void InitializeCustomProperties();
 
         private static void InitializePropertyBag()
@@ -64,7 +76,9 @@ namespace Unity.Tiny
                 DocumentationProperty,
                 FieldTypeProperty,
                 ArrayProperty,
-                VisibilityProperty
+                VisibilityProperty,
+                EditorOnlyProperty,
+                VersionedProperty
             );
         }
 
@@ -81,6 +95,8 @@ namespace Unity.Tiny
         private TinyType.Reference m_FieldType;
         private bool m_Array;
         private TinyVisibility m_Visibility;
+        private bool m_EditorOnly;
+        private bool m_Versioned = true;
 
         public TinyId Id
         {
@@ -118,6 +134,18 @@ namespace Unity.Tiny
             set { VisibilityProperty.SetValue(this, value); }
         }
 
+        public bool EditorOnly
+        {
+            get { return EditorOnlyProperty.GetValue(this); }
+            set { EditorOnlyProperty.SetValue(this, value); }
+        }
+
+        public bool Versioned
+        {
+            get { return VersionedProperty.GetValue(this); }
+            set { VersionedProperty.SetValue(this, value); }
+        }
+
 
         public partial struct Reference : IStructPropertyContainer<Reference>
         {
@@ -126,7 +154,9 @@ namespace Unity.Tiny
 
             private static StructPropertyBag<Reference> s_PropertyBag { get; set; }
 
+            /// <inheritdoc cref="Unity.Properties.IPropertyContainer.PropertyBag" />
             public IPropertyBag PropertyBag => s_PropertyBag;
+            /// <inheritdoc cref="Unity.Properties.IPropertyContainer.VersionStorage" />
             public IVersionStorage VersionStorage => null;
 
             private static void InitializeProperties()
@@ -144,9 +174,6 @@ namespace Unity.Tiny
                 );
             }
 
-            /// <summary>
-            /// Implement this partial method to initialize custom properties
-            /// </summary>
             static partial void InitializeCustomProperties();
 
             private static void InitializePropertyBag()
@@ -180,11 +207,22 @@ namespace Unity.Tiny
             }
 
 
+            /// <summary>
+            /// Pass this object as a reference to the given handler.
+            /// </summary>
+            /// <param name="byRef">Handler to invoke.</param>
+            /// <param name="context">Context argument passed to the handler.</param>
             public void MakeRef<TContext>(ByRef<Reference, TContext> byRef, TContext context)
             {
                 byRef(ref this, context);
             }
 
+            /// <summary>
+            /// Pass this object as a reference to the given handler, and return the result.
+            /// </summary>
+            /// <param name="byRef">Handler to invoke.</param>
+            /// <param name="context">Context argument passed to the handler.</param>
+            /// <returns>The handler's return value.</returns>
             public TReturn MakeRef<TContext, TReturn>(ByRef<Reference, TContext, TReturn> byRef, TContext context)
             {
                 return byRef(ref this, context);

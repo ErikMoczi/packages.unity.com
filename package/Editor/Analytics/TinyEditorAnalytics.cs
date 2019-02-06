@@ -310,12 +310,12 @@ namespace Unity.Tiny
             public string default_texture_format;
         }
 
-        public static void SendBuildEvent(TinyProject project, TinyBuildResults buildResults, TimeSpan duration)
+        public static void SendBuildEvent(TinyProject project, TinyBuildResult buildResult)
         {
-            if (project?.Settings == null || buildResults == null)
+            if (project?.Settings == null || buildResult == null)
                 return;
 
-            var buildReportRoot = buildResults.BuildReport.Root;
+            var buildReportRoot = buildResult.BuildReport.Root;
             var buildReportRuntime = buildReportRoot.GetChild(TinyBuildReport.RuntimeNode);
             var buildReportAssets = buildReportRoot.GetChild(TinyBuildReport.AssetsNode);
             var buildReportCode = buildReportRoot.GetChild(TinyBuildReport.CodeNode);
@@ -326,7 +326,7 @@ namespace Unity.Tiny
                 context = ContextInfo.Default,
                 project = ProjectInfo.Create(project),
                 
-                duration = duration.Ticks,
+                duration = buildResult.Duration.Ticks,
                 
                 total_bytes = buildReportRoot?.Item.CompressedSize ?? 0,
                 runtime_bytes = buildReportRuntime?.Item.CompressedSize ?? 0,

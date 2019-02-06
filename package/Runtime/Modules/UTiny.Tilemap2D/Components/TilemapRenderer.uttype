@@ -11,19 +11,25 @@
         "Name": "tilemap",
         "FieldType": { "Id": "fa36582cc6d14b179d858ce3744c9419", "Name": "TilemapEntity" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": false
     }, {
         "Id": "e232e1ae92b8c424958c24ddbbe26339",
         "Name": "color",
         "FieldType": { "Id": "2a90a1633d6dc16cd37cdfaca7b93cea", "Name": "Color" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "cf1231d5482a7a3ff92d5be8ab53adc0",
         "Name": "blending",
         "FieldType": { "Id": "78fe1548d31b94b79668981ae1d3279d", "Name": "BlendOp" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "e370f277f1ee85049c5156a2a1858b78", "Name": "TilemapRenderer" }

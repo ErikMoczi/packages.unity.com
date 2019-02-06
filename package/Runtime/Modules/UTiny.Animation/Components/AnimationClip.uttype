@@ -11,31 +11,41 @@
         "Name": "animationPlayerDescFloat",
         "FieldType": { "Id": "0918c3b86ffd241827750de60d6c0eed", "Name": "AnimationPlayerDescFloat" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "ac9fd7061b4aa83a761fe49b9dbf7a6e",
         "Name": "animationPlayerDescVector2",
         "FieldType": { "Id": "eda7479674093afc47e937fe249e16a4", "Name": "AnimationPlayerDescVector2" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "cb974f48f79d5560277422f3d9219555",
         "Name": "animationPlayerDescVector3",
         "FieldType": { "Id": "dd4e06515bfb16f3b1f3c3c5ae2528f7", "Name": "AnimationPlayerDescVector3" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "fa29ee19afcfcd37b1427da07174982a",
         "Name": "animationPlayerDescQuaternion",
         "FieldType": { "Id": "25bbb3d104b32f5e95c3bde67d45bb19", "Name": "AnimationPlayerDescQuaternion" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "330b1d62d1b116d1fcede5990ada35ee",
         "Name": "animationPlayerDescColor",
         "FieldType": { "Id": "bbab7c8035f42c1cab57660021eafa27", "Name": "AnimationPlayerDescColor" },
         "Array": true,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "b49d48ae37f4fdec8562c1395ad65b67", "Name": "AnimationClip" }

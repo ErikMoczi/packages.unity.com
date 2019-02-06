@@ -127,12 +127,6 @@ namespace Unity.Tiny
     }
 
     [UsedImplicitly]
-    internal class TextAnchorConverter : EnumTypeConverter<TextAnchor>
-    {
-        [TinyCachable, UsedImplicitly] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<TextAnchor>(TypeRefs.TextJS.TextAnchor);
-    }
-
-    [UsedImplicitly]
     internal class ScaleModeConverter : EnumTypeConverter<CanvasScaler.ScaleMode>
     {
         [TinyCachable, UsedImplicitly] public static void Register(ICacheManager cacheManager) => cacheManager.RegisterConverter<CanvasScaler.ScaleMode>(TypeRefs.UILayout.UIScaleMode);

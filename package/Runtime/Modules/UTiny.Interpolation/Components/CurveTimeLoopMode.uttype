@@ -11,7 +11,9 @@
         "Name": "loopMode",
         "FieldType": { "Id": "ea25cda1bca15e4c9fb023eca636eb06", "Name": "LoopMode" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "b8f3e501df83bb578f06523ce3943d76", "Name": "CurveTimeLoopMode" }

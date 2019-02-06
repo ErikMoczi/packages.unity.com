@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Properties;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Unity.Tiny
@@ -129,6 +131,9 @@ namespace Unity.Tiny
                        typeCode != TinyTypeCode.Configuration;
             }
         }
+        
+        // Stable type will not change after they have been refreshed once.
+        private bool LockRefresh { get; set; }
 
         public bool IsComponent => TypeCode == TinyTypeCode.Component;
         public bool IsStruct => TypeCode == TinyTypeCode.Struct;
@@ -175,13 +180,23 @@ namespace Unity.Tiny
                 return;
             }
 
+            if (LockRefresh)
+            {
+                return;
+            }
+
+            if (IsStableType)
+            {
+                LockRefresh = true;
+            }
+
             // Update each field, this will make sure its type is still up to date
             var fields = Fields;
             for (var i = 0; i < fields.Count; i++)
             {
                 fields[i].Refresh(Registry);
             }
-            
+
             if (m_DefaultValue.TypeCodeVersion != m_TypeCodeVersion)
             {
                 // Rebuild the default value property
@@ -208,7 +223,8 @@ namespace Unity.Tiny
                     m_PropertyBag.AddProperty(m_DefaultValueProperty);
                 }
             }
-            else if (!IsPrimitive && (m_DefaultValue.FieldsVersion != m_FieldsVersion || m_DefaultValue.ObjectVersion != m_DefaultValue.Object?.Version))
+            else if (!IsPrimitive && (m_DefaultValue.FieldsVersion != m_FieldsVersion ||
+                                      m_DefaultValue.ObjectVersion != m_DefaultValue.Object?.Version))
             {
                 m_DefaultValue.Object?.Refresh();
             }

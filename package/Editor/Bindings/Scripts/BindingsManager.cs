@@ -165,11 +165,6 @@ namespace Unity.Tiny
 
                 EntityToBindingConfiguration[entityRef] = configuration;
 
-                foreach (var component in entity.Components)
-                {
-                    component.Refresh();
-                }
-
                 foreach (var profile in configuration.Bindings)
                 {
                     profile.LoadBindings(entity);

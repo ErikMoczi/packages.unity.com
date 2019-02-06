@@ -241,7 +241,7 @@ namespace Unity.Tiny
 
                     return EditorGUIUtility.singleLineHeight * 2.0f;
                 }
-                else if (Value.Object is Sprite)
+                else
                 {
                     var settings = asset?.ExportSettings as TinyGenericAssetExportSettings;
                     if (null == settings)
@@ -251,8 +251,6 @@ namespace Unity.Tiny
 
                     return EditorGUIUtility.singleLineHeight * 2.0f;
                 }
-
-                return base.GetItemHeight(module);
             }
 
             public override void OnGUI(GUIArgs args)
@@ -326,8 +324,7 @@ namespace Unity.Tiny
                         EditorGUIUtility.labelWidth = oldLabelWidth;
                     }
                 }
-
-                else if (Value.Object is Sprite)
+                else
                 {
                     var settings = asset?.ExportSettings as TinyGenericAssetExportSettings;
                     if (null != settings)

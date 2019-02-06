@@ -212,7 +212,7 @@ namespace Unity.Tiny
         {
             TinyEditorApplication.OnLoadProject += (project, context) =>
             {
-                if (context.Usage != ContextUsage.LiveLink)
+                if (!context.Usage.HasFlag(ContextUsage.LiveLink))
                 {
                     context.GetManager<IEntityGroupManagerInternal>().InitialGroupLoading();
                 }

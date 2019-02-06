@@ -250,7 +250,7 @@ namespace Unity.Tiny
                 return SpriteEntity;
             }
 
-            if (typeof(UnityEngine.Tilemaps.Tile).IsAssignableFrom(type))
+            if (typeof(UnityEngine.Tilemaps.TileBase).IsAssignableFrom(type))
             {
                 return TileEntity;
             }
@@ -372,7 +372,7 @@ namespace Unity.Tiny
                     }
                     else if (type.Id == TileEntity.Id)
                     {
-                        return new List<UnityEngine.Tilemaps.Tile>();
+                        return new List<UnityEngine.Tilemaps.TileBase>();
                     }
                     else if (type.Id == TilemapEntity.Id)
                     {

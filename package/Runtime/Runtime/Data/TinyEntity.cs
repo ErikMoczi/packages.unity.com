@@ -110,7 +110,6 @@ namespace Unity.Tiny
         {
             var component = ComponentsProperty.AddNew(this);
             component.Type = type;
-            component.Refresh();
 
             // Implicitly support prefab instances
             if (null != m_Instance)

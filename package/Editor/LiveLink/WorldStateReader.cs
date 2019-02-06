@@ -203,7 +203,7 @@ namespace Unity.Tiny
             IWorldStateCustomTransfer<TinyEnum.Reference>,
             IWorldStateCustomTransfer<Texture2D>,
             IWorldStateCustomTransfer<Sprite>,
-            IWorldStateCustomTransfer<Tile>,
+            IWorldStateCustomTransfer<TileBase>,
             IWorldStateCustomTransfer<AudioClip>,
             IWorldStateCustomTransfer<Font>,
             IWorldStateCustomTransfer<AnimationClip>,
@@ -571,7 +571,7 @@ namespace Unity.Tiny
                 TransferRuntimeEntityToUnityEngineObject(container, context, value);
             }
 
-            public void TransferPropertyValue(IPropertyContainer container, VisitContext<Tile> context, object value)
+            public void TransferPropertyValue(IPropertyContainer container, VisitContext<TileBase> context, object value)
             {
                 TransferRuntimeEntityToUnityEngineObject(container, context, value);
             }

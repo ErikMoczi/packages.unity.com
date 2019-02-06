@@ -11,7 +11,9 @@
         "Name": "rect",
         "FieldType": { "Id": "f216da154c4054842adb590807e977ba", "Name": "Rect" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "821d318d8d12611a0128b1f68eed9489", "Name": "EmitterBoxSource" },

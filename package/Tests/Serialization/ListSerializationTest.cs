@@ -34,7 +34,6 @@ namespace Unity.Tiny.Test
 
             m_IntArrayEntity = m_Registry.CreateEntity(TinyId.New(), "TestEntity");
             var component = m_IntArrayEntity.AddComponent((TinyType.Reference) m_IntArrayComponentType);
-            component.Refresh();
             
             component["TestIntArrayField"] = new TinyList(m_Registry, (TinyType.Reference) TinyType.Int32)
             {
@@ -62,7 +61,6 @@ namespace Unity.Tiny.Test
             
             m_StructArrayEntity = m_Registry.CreateEntity(TinyId.New(), "TestEntity2");
             var component2 = m_StructArrayEntity.AddComponent((TinyType.Reference) m_StructArrayComponentType);
-            component2.Refresh();
             component2["TestStructArrayField"] = new TinyList(m_Registry, (TinyType.Reference) m_StructType)
             {
                 new TinyObject(m_Registry,  (TinyType.Reference) m_StructType)

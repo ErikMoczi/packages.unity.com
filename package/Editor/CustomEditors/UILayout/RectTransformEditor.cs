@@ -100,7 +100,6 @@ namespace Unity.Tiny
         {
             var registry = tinyContext.Registry;
             Shadow = new TinyObject(registry, TypeRefs.UILayout.RectTransform);
-            Shadow.Refresh();
         }
 
         #region ComponentEditor

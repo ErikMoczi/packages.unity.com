@@ -155,9 +155,9 @@ namespace Unity.Tiny
                 return AddChild(new TreeNode(this, new Item(file, obj)));
             }
 
-            public void Update()
+            public bool Update()
             {
-                UpdateRecursive(this);
+                return UpdateRecursive(this);
             }
 
             public static string ToJson(TreeNode node)
@@ -207,7 +207,7 @@ namespace Unity.Tiny
                 }
             }
 
-            private static void UpdateRecursive(TreeNode node)
+            private static bool UpdateRecursive(TreeNode node)
             {
                 // Compute children values
                 long childrenSize = 0, childrenCompressedSize = 0;
@@ -247,6 +247,8 @@ namespace Unity.Tiny
                         }
                     }
                 }
+
+                return true;
             }
         }
 

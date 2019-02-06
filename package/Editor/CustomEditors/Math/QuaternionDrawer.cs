@@ -24,7 +24,6 @@ namespace Unity.Tiny
 
             //For the rotation, we will offer Euler angles to the user.
             var tinyEuler = GetEulerAnglesObject(tinyObject, ref context);
-            tinyEuler.Refresh();
 
             if (Screen.width < 400)
             {

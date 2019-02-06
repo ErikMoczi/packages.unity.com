@@ -15,6 +15,8 @@ namespace Unity.Tiny
     {
         bool IsOverridden(IPropertyContainer container);
         bool IsDynamic { get; }
+        bool IsEditorOnly { get; }
+        bool IsVersioned { get; }
     }
 
     internal sealed partial class TinyObject
@@ -40,6 +42,8 @@ namespace Unity.Tiny
             {
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => true;
+                public bool IsEditorOnly => false;
+                public bool IsVersioned => true;
 
                 public DynamicProperty(string name) : base(name, null, null)
                 {
@@ -67,6 +71,8 @@ namespace Unity.Tiny
             {
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => true;
+                public bool IsEditorOnly => false;
+                public bool IsVersioned => true;
 
                 public ContainerDynamicProperty(string name) : base(name, null, null)
                 {
@@ -94,6 +100,8 @@ namespace Unity.Tiny
             {
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => true;
+                public bool IsEditorOnly => false;
+                public bool IsVersioned => true;
 
                 public MutableContainerDynamicProperty(string name) : base(name, null, null, null)
                 {
@@ -120,6 +128,8 @@ namespace Unity.Tiny
             {
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => true;
+                public bool IsEditorOnly => false;
+                public bool IsVersioned => true;
 
                 public ObjectDynamicProperty(string name) : base(name, null, null)
                 {
@@ -147,6 +157,8 @@ namespace Unity.Tiny
             {
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => true;
+                public bool IsEditorOnly => false;
+                public bool IsVersioned => true;
 
                 public ListDynamicProperty(string name) : base(name, null, null)
                 {
@@ -292,10 +304,14 @@ namespace Unity.Tiny
                 public int Index { get; set; }
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => false;
+                public bool IsEditorOnly { get; }
+                public bool IsVersioned { get; }
 
-                public FieldProperty(int index, string name) : base(name, null, null)
+                public FieldProperty(int index, string name, bool editorOnly, bool versioned) : base(name, null, null)
                 {
                     Index = index;
+                    IsEditorOnly = editorOnly;
+                    IsVersioned = versioned;
                 }
 
                 public override TValue GetValue(PropertiesContainer container)
@@ -329,11 +345,15 @@ namespace Unity.Tiny
                 public int Index { get; set; }
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => false;
+                public bool IsEditorOnly { get; }
+                public bool IsVersioned { get; }
 
-                public ContainerFieldProperty(int index, string name)
+                public ContainerFieldProperty(int index, string name, bool editorOnly, bool versioned)
                     : base(name, null, null)
                 {
                     Index = index;
+                    IsEditorOnly = editorOnly;
+                    IsVersioned = versioned;
                 }
 
                 public override TValue GetValue(PropertiesContainer container)
@@ -372,11 +392,15 @@ namespace Unity.Tiny
                 public int Index { get; set; }
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => false;
+                public bool IsEditorOnly { get; }
+                public bool IsVersioned { get; }
 
-                public StructValueFieldProperty(int index, string name)
+                public StructValueFieldProperty(int index, string name, bool editorOnly, bool versioned)
                     : base(name, null, null, MakeRef)
                 {
                     Index = index;
+                    IsEditorOnly = editorOnly;
+                    IsVersioned = versioned;
                 }
 
                 public override TValue GetValue(PropertiesContainer container)
@@ -438,11 +462,15 @@ namespace Unity.Tiny
                 public int Index { get; set; }
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => false;
+                public bool IsEditorOnly { get; }
+                public bool IsVersioned { get; }
 
-                public ObjectFieldProperty(int index, string name)
+                public ObjectFieldProperty(int index, string name, bool editorOnly, bool versioned)
                     : base(name, null, null)
                 {
                     Index = index;
+                    IsEditorOnly = editorOnly;
+                    IsVersioned = versioned;
                 }
 
                 public override TinyObject GetValue(PropertiesContainer container)
@@ -486,11 +514,15 @@ namespace Unity.Tiny
                 public int Index { get; set; }
                 public override bool IsReadOnly => false;
                 public bool IsDynamic => false;
+                public bool IsEditorOnly { get; }
+                public bool IsVersioned { get; }
 
-                public ListFieldProperty(int index, string name)
+                public ListFieldProperty(int index, string name, bool editorOnly, bool versioned)
                     : base(name, null, null)
                 {
                     Index = index;
+                    IsEditorOnly = editorOnly;
+                    IsVersioned = versioned;
                 }
 
                 public override TinyList GetValue(PropertiesContainer container)
@@ -524,14 +556,14 @@ namespace Unity.Tiny
                 }
             }
 
-            private static IProperty CreateFieldProperty(TinyId fieldId, int index, string name, TinyType type, bool array)
+            private static IProperty CreateFieldProperty(TinyId fieldId, int index, string name, TinyType type, bool array, bool editorOnly, bool versioned)
             {
                 IProperty property;
                 s_FieldPropertyCache.TryGetValue(fieldId, out property);
 
                 if (array)
                 {
-                    property = property is ListFieldProperty && property.Name.Equals(name) ? property : new ListFieldProperty(index, name);
+                    property = property is ListFieldProperty && property.Name.Equals(name) ? property : new ListFieldProperty(index, name, editorOnly, versioned);
                 }
                 else
                 {
@@ -542,62 +574,62 @@ namespace Unity.Tiny
                         case TinyTypeCode.Int8:
                             property = property is FieldProperty<sbyte> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<sbyte>(index, name);
+                                : new FieldProperty<sbyte>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Int16:
                             property = property is FieldProperty<short> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<short>(index, name);
+                                : new FieldProperty<short>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Int32:
                             property = property is FieldProperty<int> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<int>(index, name);
+                                : new FieldProperty<int>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Int64:
                             property = property is FieldProperty<long> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<long>(index, name);
+                                : new FieldProperty<long>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.UInt8:
                             property = property is FieldProperty<byte> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<byte>(index, name);
+                                : new FieldProperty<byte>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.UInt16:
                             property = property is FieldProperty<ushort> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<ushort>(index, name);
+                                : new FieldProperty<ushort>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.UInt32:
                             property = property is FieldProperty<uint> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<uint>(index, name);
+                                : new FieldProperty<uint>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.UInt64:
                             property = property is FieldProperty<ulong> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<ulong>(index, name);
+                                : new FieldProperty<ulong>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Float32:
                             property = property is FieldProperty<float> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<float>(index, name);
+                                : new FieldProperty<float>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Float64:
                             property = property is FieldProperty<double> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<double>(index, name);
+                                : new FieldProperty<double>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Boolean:
                             property = property is FieldProperty<bool> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<bool>(index, name);
+                                : new FieldProperty<bool>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.String:
                             property = property is FieldProperty<string> && property.Name.Equals(name)
                                 ? property
-                                : new FieldProperty<string>(index, name);
+                                : new FieldProperty<string>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Configuration:
                         case TinyTypeCode.Component:
@@ -605,60 +637,60 @@ namespace Unity.Tiny
                         case TinyTypeCode.Struct:
                             property = property is ObjectFieldProperty && property.Name.Equals(name)
                                 ? property
-                                : new ObjectFieldProperty(index, name);
+                                : new ObjectFieldProperty(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.Enum:
                             property =
                                 property is StructValueFieldProperty<TinyEnum.Reference> &&
                                 property.Name.Equals(name)
                                     ? property
-                                    : new StructValueFieldProperty<TinyEnum.Reference>(index, name);
+                                    : new StructValueFieldProperty<TinyEnum.Reference>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.EntityReference:
                             property = property is StructValueFieldProperty<TinyEntity.Reference> && property.Name.Equals(name)
                                 ? property
-                                : new StructValueFieldProperty<TinyEntity.Reference>(index, name);
+                                : new StructValueFieldProperty<TinyEntity.Reference>(index, name, editorOnly, versioned);
                             break;
                         case TinyTypeCode.UnityObject:
                             if (type.Id == TinyType.Texture2DEntity.Id)
                             {
                                 property = property is FieldProperty<Texture2D> && property.Name.Equals(name)
                                     ? property
-                                    : new FieldProperty<Texture2D>(index, name);
+                                    : new FieldProperty<Texture2D>(index, name, editorOnly, versioned);
                             }
                             else if (type.Id == TinyType.SpriteEntity.Id)
                             {
                                 property = property is FieldProperty<Sprite> && property.Name.Equals(name)
                                     ? property
-                                    : new FieldProperty<Sprite>(index, name);
+                                    : new FieldProperty<Sprite>(index, name, editorOnly, versioned);
                             }
                             else if (type.Id == TinyType.TileEntity.Id)
                             {
-                                property = property is FieldProperty<Tile> && property.Name.Equals(name) ? property : new FieldProperty<Tile>(index, name);
+                                property = property is FieldProperty<TileBase> && property.Name.Equals(name) ? property : new FieldProperty<TileBase>(index, name, editorOnly, versioned);
                             }
                             else if (type.Id == TinyType.TilemapEntity.Id)
                             {
-                                property = property is FieldProperty<Tilemap> && property.Name.Equals(name) ? property : new FieldProperty<Tilemap>(index, name);
+                                property = property is FieldProperty<Tilemap> && property.Name.Equals(name) ? property : new FieldProperty<Tilemap>(index, name, editorOnly, versioned);
                             }
                             else if (type.Id == TinyType.AudioClipEntity.Id)
                             {
-                                property = property is FieldProperty<AudioClip> && property.Name.Equals(name) ? property : new FieldProperty<AudioClip>(index, name);
+                                property = property is FieldProperty<AudioClip> && property.Name.Equals(name) ? property : new FieldProperty<AudioClip>(index, name, editorOnly, versioned);
                             }
                             else if (type.Id == TinyType.AnimationClipEntity.Id)
                             {
-                                property = property is FieldProperty<AnimationClip> && property.Name.Equals(name) ? property : new FieldProperty<AnimationClip>(index, name);
+                                property = property is FieldProperty<AnimationClip> && property.Name.Equals(name) ? property : new FieldProperty<AnimationClip>(index, name, editorOnly, versioned);
                             }
                             else if (type.Id == TinyType.FontEntity.Id)
                             {
                                 property = property is FieldProperty<TMPro.TMP_FontAsset> && property.Name.Equals(name)
                                     ? property
-                                    : new FieldProperty<TMPro.TMP_FontAsset>(index, name);
+                                    : new FieldProperty<TMPro.TMP_FontAsset>(index, name, editorOnly, versioned);
                             }
                             else
                             {
                                 property = property is FieldProperty<Object> && property.Name.Equals(name)
                                     ? property
-                                    : new FieldProperty<Object>(index, name);
+                                    : new FieldProperty<Object>(index, name, editorOnly, versioned);
                             }
 
                             break;
@@ -760,8 +792,13 @@ namespace Unity.Tiny
                     // Incurs a dictionary lookup
                     var property = m_PropertyBag.FindProperty(key);
 
-                    // Must asset to avoid undefined behaviour
-                    Assert.IsNotNull(property, $"Property '{key}' does not exist on object");
+                    // This null check is intentional so that we don't allocate the error string every time we call the indexer.
+                    if (null == property)
+                    {
+                        // Must assert to avoid undefined behaviour
+                        Assert.IsNotNull(property, GetPropertyKeyNotFoundErrorString(key));
+                    }
+
                     var container = (IPropertyContainer) this;
 
                     // This works well since the implementation details are abstracted
@@ -949,7 +986,7 @@ namespace Unity.Tiny
                         (fieldValue.Value as TinyList).Name = fieldName;
                     }
 
-                    m_PropertyBag.AddProperty(CreateFieldProperty(field.Id, i, fieldName, fieldType, field.Array));
+                    m_PropertyBag.AddProperty(CreateFieldProperty(field.Id, i, fieldName, fieldType, field.Array, field.EditorOnly, field.Versioned));
 
                     IncrementVersion(null, this);
                 }
@@ -1144,6 +1181,12 @@ namespace Unity.Tiny
             public void IncrementVersion<TContainer>(IProperty property, TContainer container)
                 where TContainer : IPropertyContainer
             {
+                // Early exit if property is not versioned
+                if (property is ITinyValueProperty p && !p.IsVersioned)
+                {
+                    return;
+                }
+
                 if (property is IFieldProperty fieldProperty)
                 {
                     // One of our direct properties has Overridden
@@ -1166,6 +1209,12 @@ namespace Unity.Tiny
                 // Propagate version change up the tree
                 var c = (IPropertyContainer) m_Object;
                 m_Object.VersionStorage.IncrementVersion(s_PropertiesProperty, c);
+            }
+            
+            // This method exists only to lazily compute the error string, when needed.
+            private static string GetPropertyKeyNotFoundErrorString(string key)
+            {
+                return $"Property '{key}' does not exist on object";
             }
         }
     }

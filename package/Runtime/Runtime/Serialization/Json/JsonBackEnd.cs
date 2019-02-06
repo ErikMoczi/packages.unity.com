@@ -153,7 +153,7 @@ namespace Unity.Tiny.Serialization.Json
             ICustomVisit<TextAsset>,
             ICustomVisit<Texture2D>,
             ICustomVisit<Sprite>,
-            ICustomVisit<Tile>,
+            ICustomVisit<TileBase>,
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
@@ -328,7 +328,7 @@ namespace Unity.Tiny.Serialization.Json
                 VisitObject(value);
             }
 
-            void ICustomVisit<Tile>.CustomVisit(Tile value)
+            void ICustomVisit<TileBase>.CustomVisit(TileBase value)
             {
                 VisitObject(value);
             }

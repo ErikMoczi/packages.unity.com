@@ -119,8 +119,20 @@ namespace Unity.Tiny
 
         private bool ShouldIncludeType(TinyType type)
         {
-            var typeRef = (TinyType.Reference)type;
-            return MainDependencies.Deref(Registry).Any(m => m.Types.Contains(typeRef));
+            var reference = type.Ref;
+            foreach (var moduleRef in MainDependencies)
+            {
+                var module = moduleRef.Dereference(Registry);
+                foreach (var typeRef in module.Types)
+                {
+                    if (typeRef.Equals(reference))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private bool ShouldIncludeEntityGroup(TinyEntityGroup group)
@@ -149,6 +161,10 @@ namespace Unity.Tiny
                 else if (assetItem.Value.Object is AnimationClip)
                 {
                     PopulateMenu<TinyAnimationClipSettings>(assetItem, menu);
+                }
+                else
+                {
+                    PopulateMenu<TinyGenericAssetExportSettings>(assetItem, menu);
                 }
 
                 if (assetItem.Value.ExplicitReferences.Contains(TinyEditorApplication.Module.Ref))

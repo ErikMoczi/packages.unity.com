@@ -7,6 +7,7 @@ using Unity.Properties.Serialization;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using Unity.Tiny.Runtime.EditorExtensions;
+using Unity.Tiny.Runtime.Tilemap2D;
 
 namespace Unity.Tiny
 {
@@ -279,8 +280,8 @@ namespace Unity.Tiny
             var begin = Writer.Length;
 
             Module = TinyUtility.GetModules(entityGroup).FirstOrDefault();
-            Writer.Line($"{TinyHtml5Builder.KEntityGroupNamespace}.{Module.Namespace}.{entityGroup.Name}.name = {EscapeJsString(entityGroup.Name)};");
-            Writer.WriteRaw($"{TinyHtml5Builder.KEntityGroupNamespace}.{Module.Namespace}.{entityGroup.Name}.load = ");
+            Writer.Line($"{TinyHTML5Builder.k_EntityGroupNamespace}.{Module.Namespace}.{entityGroup.Name}.name = {EscapeJsString(entityGroup.Name)};");
+            Writer.WriteRaw($"{TinyHTML5Builder.k_EntityGroupNamespace}.{Module.Namespace}.{entityGroup.Name}.load = ");
             WriteEntityGroupSetupFunction(Writer, Project, entityGroup, Options);
 
             Report.AddChild(entityGroup.Name, System.Text.Encoding.ASCII.GetBytes(Writer.Substring(begin)));
@@ -478,7 +479,7 @@ namespace Unity.Tiny
             ICustomVisit<string>,
             ICustomVisit<Texture2D>,
             ICustomVisit<Sprite>,
-            ICustomVisit<Tile>,
+            ICustomVisit<TileBase>,
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
@@ -497,6 +498,15 @@ namespace Unity.Tiny
             {
                 base.VisitSetup(ref container, ref context);
                 m_Container = container;
+            }
+
+            public override bool ExcludeVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            {
+                if (context.Property is ITinyValueProperty p && p.IsEditorOnly)
+                {
+                    return true;
+                }
+                return base.ExcludeVisit(container, context);
             }
 
             protected override bool ExcludeVisit<TValue>(TValue value)
@@ -694,9 +704,16 @@ namespace Unity.Tiny
                 VisitObjectEntity(value);
             }
 
-            void ICustomVisit<Tile>.CustomVisit(Tile value)
+            void ICustomVisit<TileBase>.CustomVisit(TileBase value)
             {
-                VisitObjectEntity(value);
+                if (value is Tile)
+                {
+                    VisitObjectEntity(value);
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
 
             void ICustomVisit<Tilemap>.CustomVisit(Tilemap value)
@@ -753,7 +770,7 @@ namespace Unity.Tiny
             ICustomVisit<string>,
             ICustomVisit<Texture2D>,
             ICustomVisit<Sprite>,
-            ICustomVisit<Tile>,
+            ICustomVisit<TileBase>,
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
@@ -761,6 +778,16 @@ namespace Unity.Tiny
         {
             public VisitorContext VisitorContext { private get; set; }
             public string Path { private get; set; }
+            public TinyObject Struct { private get; set; }
+
+            public override bool ExcludeVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            {
+                if (context.Property is ITinyValueProperty p && p.IsEditorOnly)
+                {
+                    return true;
+                }
+                return base.ExcludeVisit(container, context);
+            }
 
             protected override bool ExcludeVisit<TValue>(TValue value)
             {
@@ -779,7 +806,7 @@ namespace Unity.Tiny
 
             void ICustomVisit<TinyObject>.CustomVisit(TinyObject value)
             {
-                value.Properties.Visit(new StructVisitor { VisitorContext = VisitorContext, Path = $"{Path}.{Property.Name}" });
+                value.Properties.Visit(new StructVisitor { VisitorContext = VisitorContext, Path = $"{Path}.{Property.Name}", Struct = value });
             }
 
             bool IExcludeVisit<TinyList>.ExcludeVisit(TinyList value)
@@ -872,9 +899,27 @@ namespace Unity.Tiny
                 VisitObjectEntity(value);
             }
 
-            void ICustomVisit<Tile>.CustomVisit(Tile value)
+            void ICustomVisit<TileBase>.CustomVisit(TileBase value)
             {
-                VisitObjectEntity(value);
+                if (value is Tile)
+                {
+                    VisitObjectEntity(value);
+                }
+                else
+                {
+                    var tinyTileData = new TinyTileData(Struct);
+                    if (TinyAssetEntityGroupGenerator.Context.TileDataToEntityMap.TryGetValue(tinyTileData, out var entity))
+                    {
+                        if (VisitorContext.EntityIndexMap.TryGetValue(entity.Ref, out var entityIndex))
+                        {
+                            VisitorContext.Writer.Line($"{Path}.{Property.Name} = e{entityIndex};");
+                        }
+                        else
+                        {
+                            VisitorContext.Writer.Line($"{Path}.{Property.Name} = ut.EntityLookupCache.getByName(world, '{entity.Name}');");
+                        }
+                    }
+                }
             }
 
             void ICustomVisit<Tilemap>.CustomVisit(Tilemap value)
@@ -934,7 +979,7 @@ namespace Unity.Tiny
             ICustomVisit<string>,
             ICustomVisit<Texture2D>,
             ICustomVisit<Sprite>,
-            ICustomVisit<Tile>,
+            ICustomVisit<TileBase>,
             ICustomVisit<Tilemap>,
             ICustomVisit<AudioClip>,
             ICustomVisit<AnimationClip>,
@@ -942,6 +987,15 @@ namespace Unity.Tiny
         {
             public VisitorContext VisitorContext { private get; set; }
             public string Path { private get; set; }
+
+            public override bool ExcludeVisit<TContainer, TValue>(TContainer container, VisitContext<TValue> context)
+            {
+                if (context.Property is ITinyValueProperty p && p.IsEditorOnly)
+                {
+                    return true;
+                }
+                return base.ExcludeVisit(container, context);
+            }
 
             protected override bool ExcludeVisit<TValue>(TValue value)
             {
@@ -982,7 +1036,7 @@ namespace Unity.Tiny
                 {
                     var index = VisitorContext.StructIndexMap.GetOrAddValue(value);
                     VisitorContext.Writer.Line($"var s{index} = new {TinyScriptUtility.GetJsTypeName(type)}();");
-                    value.Properties.Visit(new StructVisitor { VisitorContext = VisitorContext, Path = $"s{index}" });
+                    value.Properties.Visit(new StructVisitor { VisitorContext = VisitorContext, Path = $"s{index}", Struct = value });
                     VisitorContext.Writer.Line($"{Path}[{ListIndex}] = s{index};");
                 }
             }
@@ -1129,9 +1183,16 @@ namespace Unity.Tiny
                 VisitObjectEntity(value);
             }
 
-            void ICustomVisit<Tile>.CustomVisit(Tile value)
+            void ICustomVisit<TileBase>.CustomVisit(TileBase value)
             {
-                VisitObjectEntity(value);
+                if (value is Tile)
+                {
+                    VisitObjectEntity(value);
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
 
             void ICustomVisit<Tilemap>.CustomVisit(Tilemap value)

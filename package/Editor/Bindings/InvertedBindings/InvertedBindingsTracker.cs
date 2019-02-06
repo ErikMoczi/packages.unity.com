@@ -118,7 +118,7 @@ namespace Unity.Tiny
                     t.gameObject.AddComponent<TinyEntityView>();
                     if (t.root == t)
                     {
-                        EditorUtility.DisplayDialog($"{TinyConstants.ApplicationName}",
+                        EditorGUIUtilityBridge.DisplayDialog($"{TinyConstants.ApplicationName}",
                             $"Dragging prefabs are not currently supported in {TinyConstants.ApplicationName}", "OK");
                     }
                 }
@@ -145,7 +145,7 @@ namespace Unity.Tiny
                             var creator = InvertedBindingsHelper.GetInvertedBindings(cType);
                             if (null == creator)
                             {
-                                EditorUtility.DisplayDialog($"{TinyConstants.ApplicationName}",
+                                EditorGUIUtilityBridge.DisplayDialog($"{TinyConstants.ApplicationName}",
                                     $"Component {cType.Name} is not currently supported in {TinyConstants.ApplicationName}",
                                     "OK");
                                 invertedBindings.Clear();

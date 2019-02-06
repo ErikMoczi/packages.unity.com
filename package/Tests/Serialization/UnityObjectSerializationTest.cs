@@ -35,7 +35,6 @@ namespace Unity.Tiny.Test
 
             m_Entity = m_Registry.CreateEntity(TinyId.New(), "TestEntity");
             var component = m_Entity.AddComponent((TinyType.Reference) m_ComponentType);
-            component.Refresh();
             
             // Create some asset on disc
             File.WriteAllBytes(Application.dataPath + "/TestTexture.png", new Texture2D(32, 32).EncodeToPNG());

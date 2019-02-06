@@ -356,9 +356,7 @@ namespace Unity.Tiny
             var entityGroupRef = (TinyEntityGroup.Reference) entityGroup;
             var cameraEntity = registry.CreateEntity(TinyId.New(), "Camera");
             var transform = cameraEntity.AddComponent(TypeRefs.Core2D.TransformNode);
-            transform.Refresh();
             var camera = cameraEntity.AddComponent(TypeRefs.Core2D.Camera2D);
-            camera.Refresh();
             camera["clearFlags"] = new TinyEnum.Reference(TypeRefs.Core2D.CameraClearFlags.Dereference(registry), 1);
             camera.AssignPropertyFrom("backgroundColor", Color.black);
             camera["depth"] = -1.0f;
@@ -932,7 +930,7 @@ namespace Unity.Tiny
                 // Regenerate the TypeScript definition files whenever something changes related to modules and layers
                 context.Caretaker.OnGenerateMemento += OnTypeScriptDefinitionChanged;
             }
-            
+
             TinyBuildUtilities.CompileScripts();
         }
 
@@ -1024,11 +1022,16 @@ namespace Unity.Tiny
                 // @HACK Until we move settings exclusively to configuration components
                 if (component.Type.Equals(TypeRefs.Core2D.DisplayInfo))
                 {
-                    component.Refresh();
                     component.AssignIfDifferent("width", settings.CanvasWidth);
                     component.AssignIfDifferent("height", settings.CanvasHeight);
                     component.AssignIfDifferent("autoSizeToFrame", settings.CanvasAutoResize);
                     component.AssignIfDifferent("renderMode", settings.RenderMode);
+                }
+
+                if (component.Type.Equals(TypeRefs.PlayableAd.PlayableAdInfo))
+                {
+                    component.AssignIfDifferent("googlePlayStoreUrl", settings.GooglePlayStoreUrl);
+                    component.AssignIfDifferent("appStoreUrl", settings.AppStoreUrl);
                 }
             }
         }

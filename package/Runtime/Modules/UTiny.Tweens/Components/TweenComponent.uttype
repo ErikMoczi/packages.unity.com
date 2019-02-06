@@ -11,43 +11,57 @@
         "Name": "target",
         "FieldType": { "Id": "5a182d9d039d4dfd8fa96132d05f9ee7", "Name": "EntityReference" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "5cfd720d389840bca65cedae3379d871",
         "Name": "offset",
         "FieldType": { "Id": "1da58c8ba95a4c85a2b5920bd0663f70", "Name": "UInt32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "d7be69847c854fee25060ba8ac4b8789",
         "Name": "duration",
         "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "27d34697c9aa91420bba054055803c4f",
         "Name": "func",
         "FieldType": { "Id": "a0abdfa0125a70d08cef584f283024b1", "Name": "TweenFunc" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "9872678d7ddc1fed7f92c29526f1d4d3",
         "Name": "loop",
         "FieldType": { "Id": "ea25cda1bca15e4c9fb023eca636eb06", "Name": "LoopMode" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "db76960da8f8fa8e45cf56515a9a7e34",
         "Name": "destroyWhenDone",
         "FieldType": { "Id": "2b477f505af74487b7092b5617d88d3f", "Name": "Boolean" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "1baad0d8dedbb62707cf301462c6d7ed",
         "Name": "t",
         "FieldType": { "Id": "67325dccf2f047c19c7ef4a045354e67", "Name": "Float32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "42abdada0c6e61ba944dd27d73f6b491", "Name": "TweenComponent" }

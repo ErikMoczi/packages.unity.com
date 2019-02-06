@@ -24,7 +24,7 @@ namespace Unity.Tiny
                     var folderCache = context.Visitor.FolderCache;
                     if (!folderCache.TryGetValue(tinyObject, out showProperties))
                     {
-                        showProperties = true;
+                        showProperties = !context.IsListItem;
                     }
 
                     showProperties = folderCache[tinyObject] = EditorGUILayout.Foldout(showProperties, context.Label, true);

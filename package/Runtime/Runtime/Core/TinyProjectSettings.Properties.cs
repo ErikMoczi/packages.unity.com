@@ -74,6 +74,14 @@ namespace Unity.Tiny
         /// <see cref="TinyProjectSettings.SymbolsInReleaseBuild" /> property.
         /// </summary>
         public static ValueClassProperty<TinyProjectSettings, bool> SymbolsInReleaseBuildProperty { get; private set; }
+        /// <summary>
+        /// <see cref="TinyProjectSettings.GooglePlayStoreUrl" /> property.
+        /// </summary>
+        public static ValueClassProperty<TinyProjectSettings, string> GooglePlayStoreUrlProperty { get; private set; }
+        /// <summary>
+        /// <see cref="TinyProjectSettings.AppStoreUrl" /> property.
+        /// </summary>
+        public static ValueClassProperty<TinyProjectSettings, string> AppStoreUrlProperty { get; private set; }
 
         private static ClassPropertyBag<TinyProjectSettings> s_PropertyBag { get; set; }
 
@@ -147,6 +155,18 @@ namespace Unity.Tiny
                 ,c => c.m_SymbolsInReleaseBuild
                 ,(c, v) => c.m_SymbolsInReleaseBuild = v
             );
+
+            GooglePlayStoreUrlProperty = new ValueClassProperty<TinyProjectSettings, string>(
+                "GooglePlayStoreUrl"
+                ,c => c.m_GooglePlayStoreUrl
+                ,(c, v) => c.m_GooglePlayStoreUrl = v
+            );
+
+            AppStoreUrlProperty = new ValueClassProperty<TinyProjectSettings, string>(
+                "AppStoreUrl"
+                ,c => c.m_AppStoreUrl
+                ,(c, v) => c.m_AppStoreUrl = v
+            );
         }
 
         static partial void InitializeCustomProperties();
@@ -170,7 +190,9 @@ namespace Unity.Tiny
                 RunBabelProperty,
                 MinifyJavaScriptProperty,
                 LinkToSourceProperty,
-                SymbolsInReleaseBuildProperty
+                SymbolsInReleaseBuildProperty,
+                GooglePlayStoreUrlProperty,
+                AppStoreUrlProperty
             );
         }
 
@@ -198,6 +220,8 @@ namespace Unity.Tiny
         private bool m_MinifyJavaScript = true;
         private bool m_LinkToSource = true;
         private bool m_SymbolsInReleaseBuild = false;
+        private string m_GooglePlayStoreUrl;
+        private string m_AppStoreUrl;
 
         /// <summary>
         /// Rendered output width, in pixels.
@@ -350,6 +374,24 @@ namespace Unity.Tiny
         {
             get { return SymbolsInReleaseBuildProperty.GetValue(this); }
             set { SymbolsInReleaseBuildProperty.SetValue(this, value); }
+        }
+
+        /// <summary>
+        /// Determines the Google Play store URL of the advertised product on the Android platform.
+        /// </summary>
+        public string GooglePlayStoreUrl
+        {
+            get { return GooglePlayStoreUrlProperty.GetValue(this); }
+            set { GooglePlayStoreUrlProperty.SetValue(this, value); }
+        }
+
+        /// <summary>
+        /// Determines the Apple App store URL of the advertised product on the iOS platform.
+        /// </summary>
+        public string AppStoreUrl
+        {
+            get { return AppStoreUrlProperty.GetValue(this); }
+            set { AppStoreUrlProperty.SetValue(this, value); }
         }
     }
 }

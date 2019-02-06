@@ -36,11 +36,11 @@ namespace Unity.Tiny
         {
             return null;
         }
-        
+
         /// <summary>
         /// Reads a file and extracts all registry object ids
         /// 
-        /// @TODO Can we find an elegeant and generic solution for this problem?
+        /// @TODO Can we find an elegant and generic solution for this problem?
         ///       We are trying to efficiently extract the `Id` property from all top-level objects
         /// </summary>
         /// <returns></returns>
@@ -51,8 +51,12 @@ namespace Unity.Tiny
             jsonStreamReader.SkipWhiteSpace();
             var c = jsonStreamReader.ReadChar(); // '['
             
-            Assert.IsTrue(c == '[', $"UTScriptableObject.GetRegistryObjectIds expected '[' but found '{StringUtility.Escape(c)}' as the first character of the stream. Line=[1]");
-            
+            // This check is intentional so that we don't allocate the string every time this method is called.
+            if (c == '[')
+            {
+                Assert.IsTrue(c == '[', GetUnexpectedCharacterErrorString(c));
+            }
+
             var fileInfo = new JsonObjectFileInfo();
 
             var result = new List<string>();
@@ -165,6 +169,13 @@ namespace Unity.Tiny
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+        
+        // This method exists only to lazily compute the error string, when needed.
+        private static string GetUnexpectedCharacterErrorString(char c)
+        {
+            return
+                $"{nameof(TinyScriptedImporter<T>)}.{nameof(GetRegistryObjectIds)} expected '[' but found '{StringUtility.Escape(c)}' as the first character of the stream. Line=[1]";
         }
     }
 }

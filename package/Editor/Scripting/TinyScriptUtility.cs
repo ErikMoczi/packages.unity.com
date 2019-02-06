@@ -15,6 +15,9 @@ namespace Unity.Tiny
     /// </summary>
     internal static class TinyScriptUtility
     {
+        internal static string ScriptAssembliesDirectory => "scripts";
+        internal static string TypeScriptConfigFile => "tsconfig.json";
+
         private static readonly HashSet<string> s_CSharpReservedKeywords = new HashSet<string>
         {
             "abstract",
@@ -102,59 +105,22 @@ namespace Unity.Tiny
         {
             return s_CSharpReservedKeywords.Contains(name);
         }
-        
-        public struct BuildArtifacts
-        {
-            public byte[] JsOutput;
-            public byte[] MetaOutput;
-        }
-        
-        public static BuildArtifacts ReadLastBuild(DirectoryInfo outputFolder)
-        {
-            var artifacts = new BuildArtifacts();
-            var lastCompilationPath = MakeTsOutPath(outputFolder);
-            if (File.Exists(lastCompilationPath))
-            {
-                artifacts.JsOutput = File.ReadAllBytes(lastCompilationPath);
-            }
-            lastCompilationPath = MakeTsOutMetaPath(outputFolder);
-            if (File.Exists(lastCompilationPath))
-            {
-                artifacts.MetaOutput = File.ReadAllBytes(lastCompilationPath);
-            }
 
-            return artifacts;
-        }
-        
-        public static void WriteLastBuild(DirectoryInfo outputFolder, BuildArtifacts lastBuild)
+        public static DirectoryInfo GetOutputFolder(TinyBuildOptions options)
         {
-            var buildFile = new FileInfo(MakeTsOutPath(outputFolder));
-            buildFile.Directory?.Create();
+            return options.GetArtifactFolder(ScriptAssembliesDirectory);
+        }
 
-            if (null != lastBuild.JsOutput)
-            {
-                File.WriteAllBytes(buildFile.FullName, lastBuild.JsOutput);
-            }
-            
-            buildFile = new FileInfo(MakeTsOutMetaPath(outputFolder));
-            buildFile.Directory?.Create();
-            
-            if (null != lastBuild.MetaOutput)
-            {
-                File.WriteAllBytes(buildFile.FullName, lastBuild.MetaOutput);
-            }
-        }
-        
-        public static string MakeTsOutPath(DirectoryInfo outputFolder)
+        public static FileInfo GetTypeScriptOutputFile(TinyBuildOptions options)
         {
-            return Path.Combine(outputFolder.FullName, TinyBuildUtilities.ScriptAssembliesDirectory, TinyBuildUtilities.TypeScriptOutputFile);
+            return options.GetArtifactFile(ScriptAssembliesDirectory, "tsc-emit.js");
         }
         
-        public static string MakeTsOutMetaPath(DirectoryInfo outputFolder)
+        public static FileInfo GetTypeScriptOutputMetaFile(TinyBuildOptions options)
         {
-            return Path.Combine(outputFolder.FullName, TinyBuildUtilities.ScriptAssembliesDirectory, TinyBuildUtilities.TypeScriptOutputMetaFile);
+            return options.GetArtifactFile(ScriptAssembliesDirectory, "tsc-meta.json");
         }
-        
+       
         /// <inheritdoc />
         /// <summary>
         /// Postproccessor to detect imports and refresh the implicit scripts

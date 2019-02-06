@@ -11,19 +11,25 @@
         "Name": "guid",
         "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "f997530de8fe83f924b016055ffbe02a",
         "Name": "fileId",
         "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }, {
         "Id": "771252f5e5969c537855d96e2312228d",
         "Name": "type",
         "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "7f929fa05f11dd8dbfcce285d5094f37", "Name": "AssetReferenceTexture2D" },

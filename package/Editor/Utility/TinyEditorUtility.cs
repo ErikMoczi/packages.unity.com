@@ -128,15 +128,19 @@ namespace Unity.Tiny
                 ++s_Depth;
             }
             
-            public ProgressBarScope(string title, string info, float progress = 0.0f)
+            public ProgressBarScope(string title, string info = null, float progress = float.MinValue)
             {
                 ++s_Depth;
                 m_Title = title;
                 Display(title, info, progress);
             }
             
-            private static void Display(string title, string info, float progress = 0.0f)
+            private static void Display(string title, string info, float progress)
             {
+                title = title != null ? title : s_LastTitle != null ? s_LastTitle : string.Empty;
+                info = info != null ? info : s_LastInfo != null ? s_LastInfo : string.Empty;
+                progress = progress != float.MinValue ? progress : s_LastProgress != float.MinValue ? s_LastProgress : 0f;
+
                 EditorUtility.DisplayProgressBar(title, info, progress);
                 
                 s_LastTitle = title;
@@ -144,12 +148,12 @@ namespace Unity.Tiny
                 s_LastProgress = progress;
             }
 
-            public void Update(string info, float progress = 0.0f)
+            public void Update(string info, float progress = float.MinValue)
             {
                 Display(m_Title, info, progress);
             }
             
-            public void Update(string title, string info, float progress = 0.0f)
+            public void Update(string title, string info, float progress = float.MinValue)
             {
                 m_Title = title;
                 Display(m_Title, info, progress);

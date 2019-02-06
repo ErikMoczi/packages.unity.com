@@ -64,7 +64,6 @@ namespace Unity.Tiny
         #region Project Settings
 
         private static TinyContext s_Context;
-        private static Vector2 m_PreviousCanvasSize = -Vector2.one;
 
         [TinyInitializeOnLoad]
         private static void ResetState()
@@ -117,6 +116,7 @@ namespace Unity.Tiny
 
                 DrawLiveLinkSettings(project, workspace, isRelease);
                 DrawBuildSettings(project, workspace, isRelease);
+                DrawPlayableAdSettings(project, workspace, isRelease);
 
                 GUILayout.Space(5);
                 EditorGUILayout.BeginHorizontal();
@@ -190,31 +190,57 @@ namespace Unity.Tiny
                     "Include full symbols in release build (this will increase runtime size, only enable for profiling and testing.)"),
                 project.Settings.SymbolsInReleaseBuild);
 
+            using (new EditorGUI.DisabledScope(!isRelease || workspace.Platform == TinyPlatform.PlayableAd))
+            {
+                var single = new GUIContent("Single File Output",
+                    "Embed JavaScript code in index.html. Release builds only.");
+                
+                if (workspace.Platform != TinyPlatform.PlayableAd)
+                {
+                    if (isRelease)
+                    {
+                        project.Settings.SingleFileHtml = EditorGUILayout.Toggle(single, project.Settings.SingleFileHtml);
+                    }
+                    else
+                    {
+                        EditorGUILayout.Toggle(single, false);
+                    }
+                }
+                else
+                {
+                    EditorGUILayout.Toggle(single, false);
+                }
+            }
+            
             using (new EditorGUI.DisabledScope(!isRelease))
             {
                 var minify = new GUIContent("Minify JavaScript", "Minify JavaScript game code. Release builds only.");
-                var single = new GUIContent("Single File Output",
-                    "Embed JavaScript code in index.html. Release builds only.");
+
                 if (isRelease)
                 {
-                    project.Settings.MinifyJavaScript =
-                        EditorGUILayout.Toggle(minify, project.Settings.MinifyJavaScript);
-                    project.Settings.SingleFileHtml = EditorGUILayout.Toggle(single, project.Settings.SingleFileHtml);
+                    project.Settings.MinifyJavaScript = EditorGUILayout.Toggle(minify, project.Settings.MinifyJavaScript);
                 }
                 else
                 {
                     EditorGUILayout.Toggle(minify, false);
-                    EditorGUILayout.Toggle(single, false);
                 }
             }
 
-            using (new EditorGUI.DisabledScope(isRelease))
+            using (new EditorGUI.DisabledScope(isRelease || workspace.Platform == TinyPlatform.PlayableAd))
             {
                 var link = new GUIContent("Link To Source",
                     "Link code files directly from your Unity project - no export required. Debug or Development builds only.");
-                if (!isRelease)
+                
+                if (workspace.Platform != TinyPlatform.PlayableAd)
                 {
-                    project.Settings.LinkToSource = EditorGUILayout.Toggle(link, project.Settings.LinkToSource);
+                    if (isRelease)
+                    {
+                        project.Settings.LinkToSource = EditorGUILayout.Toggle(link, project.Settings.LinkToSource);
+                    }
+                    else
+                    {
+                        EditorGUILayout.Toggle(link, false);
+                    }
                 }
                 else
                 {
@@ -249,6 +275,21 @@ namespace Unity.Tiny
                 {
                     EditorGUILayout.Toggle(profiler, false);
                 }
+            }
+        }
+
+        private static void DrawPlayableAdSettings(TinyProject project, TinyEditorWorkspace workspace, bool isRelease)
+        {
+            if (workspace.Platform == TinyPlatform.PlayableAd)
+            {
+                --EditorGUI.indentLevel;
+                EditorGUILayout.Space();
+                GUILayout.Label("Store URLs", TinyStyles.SettingsSection);
+                EditorGUILayout.Space();
+                ++EditorGUI.indentLevel;
+
+                project.Settings.GooglePlayStoreUrl = EditorGUILayout.DelayedTextField("Google Play Store Url", project.Settings.GooglePlayStoreUrl);
+                project.Settings.AppStoreUrl = EditorGUILayout.DelayedTextField("App Store Url", project.Settings.AppStoreUrl);
             }
         }
 

@@ -11,7 +11,9 @@
         "Name": "position",
         "FieldType": { "Id": "f139194553e8ae4a3250c5527d6de169", "Name": "Vector3" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "70449d66178e0d9f66795c24f0fbbdfc", "Name": "TransformLocalPosition" }

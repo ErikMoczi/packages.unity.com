@@ -280,9 +280,9 @@ namespace Unity.Tiny
                         return CreateSimpleListProperty<Sprite>();
                     }
 
-                    if (typeof(Tile).IsAssignableFrom(type))
+                    if (typeof(TileBase).IsAssignableFrom(type))
                     {
-                        return CreateSimpleListProperty<Tile>();
+                        return CreateSimpleListProperty<TileBase>();
                     }
 
                     if (typeof(Tilemap).IsAssignableFrom(type))
@@ -371,7 +371,7 @@ namespace Unity.Tiny
                     }
                     else if (type.Id == TinyType.TileEntity.Id)
                     {
-                        return CreateSimpleListProperty<Tile>();
+                        return CreateSimpleListProperty<TileBase>();
                     }
                     else if (type.Id == TinyType.TilemapEntity.Id)
                     {

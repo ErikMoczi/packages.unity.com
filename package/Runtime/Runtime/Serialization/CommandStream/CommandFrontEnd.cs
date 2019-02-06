@@ -208,7 +208,8 @@ namespace Unity.Tiny.Serialization.CommandStream
                     foreach (var entityRef in group.Entities)
                     {
                         var entity = entityRef.Dereference(registry);
-                        if (null != entity)
+                        
+                        if (null != entity && null == entity.EntityGroup)
                         {
                             entity.EntityGroup = group;
                         }

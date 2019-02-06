@@ -316,11 +316,11 @@ namespace Unity.Tiny
                 return;
             }
 
-            foreach (var type in Registry.FindAllByType<Tiny.TinyType>())
+            foreach (var obj in Registry.FindAllByType<IRegistryObject>())
             {
-                type.Refresh();
+                obj.Refresh();
             }
-
+            
             foreach (var entity in Registry.FindAllByType<Tiny.TinyEntity>())
             {
                 foreach (var component in entity.Components)
@@ -337,7 +337,7 @@ namespace Unity.Tiny
                 return;
             }
 
-            RefreshAll();
+            //RefreshAll();
 
             m_FrameChanges.Clear();
             
@@ -412,6 +412,8 @@ namespace Unity.Tiny
             
             foreach(var originator in originators)
             {
+                m_Caretaker.SetBaselineVersion(originator.Id, originator.Version);
+                
                 using (Serialization.SerializationContext.Scope(Serialization.SerializationContext.UndoRedo))
                 {
                     Baseline.RemoveWhere(c => c.Id == originator.Id);

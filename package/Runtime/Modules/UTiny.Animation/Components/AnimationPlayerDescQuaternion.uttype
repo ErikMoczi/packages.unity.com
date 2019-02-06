@@ -11,7 +11,9 @@
         "Name": "desc",
         "FieldType": { "Id": "cce48c26c62d56691b4daa1112d2b0c5", "Name": "AnimationPlayerDesc" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "25bbb3d104b32f5e95c3bde67d45bb19", "Name": "AnimationPlayerDescQuaternion" }

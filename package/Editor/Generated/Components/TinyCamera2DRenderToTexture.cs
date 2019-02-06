@@ -46,12 +46,6 @@ namespace Unity.Tiny.Runtime.Core2D
             set => Tiny.AssignIfDifferent(nameof(@height), value);
         }
 
-        public bool @freeze
-        {
-            get => Tiny.GetProperty<bool>(nameof(@freeze));
-            set => Tiny.AssignIfDifferent(nameof(@freeze), value);
-        }
-
         public Unity.Tiny.TinyEntity.Reference @target
         {
             get => Tiny.GetProperty<Unity.Tiny.TinyEntity.Reference>(nameof(@target));
@@ -64,7 +58,6 @@ namespace Unity.Tiny.Runtime.Core2D
         {
             @width = other.@width;
             @height = other.@height;
-            @freeze = other.@freeze;
             @target = other.@target;
         }
     }

@@ -44,12 +44,19 @@ namespace Unity.Tiny
         {
             base.OnEnable();
             LoadState();
+            TinyEditorApplication.OnCloseProject += ResetMainTarget;
         }
 
         public sealed override void OnDisable()
         {
             base.OnDisable();
             SaveState();
+            TinyEditorApplication.OnCloseProject -= ResetMainTarget;
+        }
+
+        private void ResetMainTarget(TinyProject project, TinyContext context)
+        {
+            m_MainTarget = null;
         }
 
         protected string AssetName => Path.GetFileNameWithoutExtension(Importer.assetPath);

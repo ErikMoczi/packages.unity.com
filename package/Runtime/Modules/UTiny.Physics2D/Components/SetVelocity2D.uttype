@@ -11,7 +11,9 @@
         "Name": "velocity",
         "FieldType": { "Id": "3abb69286ddfc2d1c617a173c1eeb35d", "Name": "Vector2" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "7954f10492706c7007454a4a78203495", "Name": "SetVelocity2D" }

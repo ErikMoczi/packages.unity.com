@@ -1,0 +1,41 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "0a4375899de1287484abc26b4202bd6d",
+    "Name": "AssetReferenceTileBase",
+    "ExportFlags": 16,
+    "Unlisted": true,
+    "Visibility": 1,
+    "TypeCode": "Component",
+    "Fields": [{
+        "Id": "e061c1cb9ef9f67478490746580b94ca",
+        "Name": "guid",
+        "FieldType": { "Id": "1bff5adddd7c41de98d3329c7c641208", "Name": "String" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "8ae25377c823155acf3e0482d4a724b7",
+        "Name": "fileId",
+        "FieldType": { "Id": "37695933217a49f68ce15db33f63cdf9", "Name": "Int64" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "e8364777798eb9ec190b61f888a4b993",
+        "Name": "type",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "0a4375899de1287484abc26b4202bd6d", "Name": "AssetReferenceTileBase" },
+        "Properties": {
+            "fileId": 0,
+            "type": 0
+        }
+    }
+}]

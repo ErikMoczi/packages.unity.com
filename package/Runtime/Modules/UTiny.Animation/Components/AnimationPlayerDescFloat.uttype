@@ -11,7 +11,9 @@
         "Name": "desc",
         "FieldType": { "Id": "cce48c26c62d56691b4daa1112d2b0c5", "Name": "AnimationPlayerDesc" },
         "Array": false,
-        "Visibility": 0
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
     }],
     "DefaultValue": {
         "Type": { "Id": "0918c3b86ffd241827750de60d6c0eed", "Name": "AnimationPlayerDescFloat" }
