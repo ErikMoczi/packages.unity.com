@@ -4,6 +4,17 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2019-01-30
+
+### Changed
+- Enabled HoloLens `depthBufferSharingEnabled` by default.
+- LW version updated to 5.3.1
+
+## [1.4.2] - 2019-01-22
+
+### Changed
+- Removed unneeded manifest packages
+
 ## [1.4.1] - 2018-12-07
 
 ### Changed
