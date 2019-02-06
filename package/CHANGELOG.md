@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2019-01-02
+fixes standalone compile error / forward port of 1.3.2 fix
+
 ## [2.0.0] - 2019-01-02
 breaking changes to API to allow pose data queries to indiciate what data was actually valid. this fixes the bug where position was being set to identity if only rotation was provided by the input system.
 
@@ -18,6 +21,9 @@ public virtual PoseDataFlags GetPoseFromProvider(out Pose output)
 All pose providers in this package have been updated, as has the tracked pose driver code to correctly handle the returned bitflags. Any user derived users of this API will need to also update their code accordingly.
 
 New unit tests added for this case in the tracked pose driver
+
+## [1.3.2] - 2019-01-02
+fixes standalone compile error
 
 ## [1.3.1] - 2018-12-17
 merges 1.0.3 into mainline branch.
