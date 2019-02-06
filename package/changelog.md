@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.42
+
+- Fix a compilation error when implicit/explicit operators are used returning different type for the same input type
+
 ## 0.2.4-preview.41
 
 - Fix codegen issue with Interlocked.Decrement that was instead performing an increment
