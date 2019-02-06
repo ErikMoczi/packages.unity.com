@@ -1,8 +1,8 @@
 {
   "name": "com.unity.2d.common",
   "displayName": "2D Common",
-  "version": "1.0.11-preview.4",
-  "unity": "2018.3",
+  "version": "1.1.0-preview.1",
+  "unity": "2019.1",
   "description": "2D Common is a package that contains shared functionalities that are used by most of the other 2D packages.",
   "keywords": [
     "2d"
@@ -15,6 +15,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/2D/com.unity.2d.common.git",
-    "revision": "33cc6e43ea48d635922c284eebc5f04af50ea7fc"
+    "revision": "259866922626127fd2bb606a14c467775d65ddf1"
   }
 }

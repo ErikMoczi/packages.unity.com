@@ -2,11 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Experimental.UIElements;
 using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.Experimental.U2D.Common
@@ -49,11 +47,11 @@ namespace UnityEditor.Experimental.U2D.Common
                 name = "Container",
                 style =
                 {
-                    flex = new Flex(1),
+                    flexGrow = 1,
                     flexDirection = FlexDirection.Row
                 }
             };
-            this.GetRootVisualContainer().Add(visualContainer);
+            this.rootVisualElement.Add(visualContainer);
 
             var imgui = new IMGUIContainer(OnConfigGUI)
             {
@@ -72,7 +70,6 @@ namespace UnityEditor.Experimental.U2D.Common
                 style =
                 {
                     flexGrow = 1,
-                    flex = new Flex(1),
                 }
             };
             visualContainer.Add(m_PackArea);

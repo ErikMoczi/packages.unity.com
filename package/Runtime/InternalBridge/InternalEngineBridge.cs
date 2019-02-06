@@ -1,4 +1,5 @@
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
+using Unity.Collections;
 
 namespace UnityEngine.Experimental.U2D.Common
 {
@@ -7,6 +8,11 @@ namespace UnityEngine.Experimental.U2D.Common
         public static void SetLocalAABB(SpriteRenderer spriteRenderer, Bounds aabb)
         {
             spriteRenderer.SetLocalAABB(aabb);
+        }
+
+        public static void SetDeformableBuffer(SpriteRenderer spriteRenderer, NativeArray<Vector3> src)
+        {
+            spriteRenderer.SetDeformableBuffer(src);
         }
 
         public static Vector2 GUIUnclip(Vector2 v)
