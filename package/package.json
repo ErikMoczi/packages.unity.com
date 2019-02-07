@@ -1,7 +1,7 @@
 {
     "name": "com.unity.burst",
     "displayName": "Burst",
-    "version": "0.2.4-preview.43",
+    "version": "0.2.4-preview.44",
     "unity": "2018.2",
     "description": "Burst is a compiler, it translates from IL/.NET bytecode to highly optimized native code using LLVM.",
     "dependencies": {

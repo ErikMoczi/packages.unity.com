@@ -4,8 +4,11 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
-
+#endif
 namespace Unity.Burst.Editor
 {
     // To add a setting,

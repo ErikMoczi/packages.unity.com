@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4-preview.44
+
+- Fix incorrect conversions when performing subtraction with enums and floats
+- Fix compatability issue with future unity versions
+- Fix bug with ldfld bitcast on structs with explicit layouts
+- Guard against an issue resolving debug locations if the scope is global
+
 ## 0.2.4-preview.43
 
 - Add preliminary support for burst AOT settings in the player settings

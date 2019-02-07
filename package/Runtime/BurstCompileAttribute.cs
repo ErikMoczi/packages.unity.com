@@ -74,6 +74,7 @@ namespace Unity.Burst
         /// </remarks>
         public static readonly bool ForceSynchronousCompilation;
 
+#if !UNITY_ZEROPLAYER && !UNITY_CSHARP_TINY
         /// <summary>
         /// Static initializer based on command line arguments
         /// </summary>
@@ -94,5 +95,6 @@ namespace Unity.Burst
                 }
             }
         }
+#endif
     }
 }
