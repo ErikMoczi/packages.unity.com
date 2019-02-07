@@ -6,9 +6,7 @@ using UnityEditor.Build;
 using UnityEngine;
 #if UNITY_2019_1_OR_NEWER
 using UnityEngine.UIElements;
-#else
-using UnityEngine.Experimental.UIElements;
-#endif
+
 namespace Unity.Burst.Editor
 {
     // To add a setting,
@@ -164,3 +162,27 @@ namespace Unity.Burst.Editor
         }
     }
 }
+#else
+// Mirror old behaviour
+namespace Unity.Burst.Editor
+{
+    class BurstPlatformAotSettings
+    {
+        internal bool DisableOptimisations;
+        internal bool DisableSafetyChecks;
+        internal bool DisableBurstCompilation;
+
+        internal static BurstPlatformAotSettings GetOrCreateSettings(BuildTarget target)
+        {
+            BurstPlatformAotSettings settings = new BurstPlatformAotSettings();
+
+            settings.DisableOptimisations = false;
+            settings.DisableSafetyChecks=!BurstEditorOptions.EnableBurstSafetyChecks;
+            settings.DisableBurstCompilation=!BurstEditorOptions.EnableBurstCompilation;
+
+            return settings;
+        }
+    }
+}
+
+#endif

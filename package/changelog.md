@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.45
+
+- Disable Burst AOT settings support for unity versions before 2019.1
+
 ## 0.2.4-preview.44
 
 - Fix incorrect conversions when performing subtraction with enums and floats
