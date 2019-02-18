@@ -1,0 +1,10 @@
+{
+  "name": "com.unity.burst.experimental",
+  "displayName": "Burst",
+  "version": "0.1.0-preview.1",
+  "unity": "2018.2",
+  "description": "Burst experimental package depending on the burst package to provide experimental features. API is not stable",
+  "dependencies": {
+    "com.unity.burst": "0.2.4-preview.43"
+  }
+}
