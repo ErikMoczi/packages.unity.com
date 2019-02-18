@@ -28,3 +28,4 @@
 0.0.28-preview
 0.0.29-preview
 0.0.30-preview
+1.0.0-preview1
