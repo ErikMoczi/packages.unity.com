@@ -68,9 +68,40 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
                 _command = new EnumerableSetUpTearDownCommand(_command);
                 _command = new OuterUnityTestActionCommand(_command);
 
-                foreach (var testAction in ((IEnumerableTestMethodCommand)_command).ExecuteEnumerable(Context))
+                foreach (var workItemStep in ((IEnumerableTestMethodCommand)_command).ExecuteEnumerable(Context))
                 {
-                    yield return testAction;
+                    ResultedInDomainReload = false;
+
+                    if (workItemStep is IEditModeTestYieldInstruction)
+                    {
+                        var editModeTestYieldInstruction = (IEditModeTestYieldInstruction)workItemStep;
+                        yield return editModeTestYieldInstruction;
+                        var enumerator = editModeTestYieldInstruction.Perform();
+                        while (true)
+                        {
+                            bool moveNext;
+                            try
+                            {
+                                moveNext = enumerator.MoveNext();
+                            }
+                            catch (Exception e)
+                            {
+                                Context.CurrentResult.RecordException(e);
+                                break;
+                            }
+
+                            if (!moveNext)
+                            {
+                                break;
+                            }
+                            ResultedInDomainReload = editModeTestYieldInstruction.ExpectDomainReload;
+                            yield return null;
+                        }
+                    }
+                    else
+                    {
+                        yield return workItemStep;
+                    }
                 }
 
                 Result = Context.CurrentResult;

@@ -89,7 +89,6 @@ namespace UnityEditor.TestTools.TestRunner.GUI
         protected void RunTestsInPlayer(TestRunnerFilter filter)
         {
             var settings = PlaymodeTestsControllerSettings.CreateRunnerSettings(filter);
-            settings.originalScene = SceneManager.GetActiveScene().path;
             var testExecutor = new PlayerLauncher(settings, null, null);
             testExecutor.Run();
             GUIUtility.ExitGUI();

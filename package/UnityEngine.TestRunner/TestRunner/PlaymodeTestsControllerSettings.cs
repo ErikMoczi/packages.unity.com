@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools.TestRunner.GUI;
 
 namespace UnityEngine.TestTools.TestRunner
@@ -18,7 +19,7 @@ namespace UnityEngine.TestTools.TestRunner
             {
                 filter = filter,
                 sceneBased = false,
-                originalScene = null,
+                originalScene = SceneManager.GetActiveScene().path,
                 bootstrapScene = null
             };
             return settings;

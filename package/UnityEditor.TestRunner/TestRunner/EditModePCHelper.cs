@@ -4,7 +4,7 @@ using UnityEngine.TestTools;
 
 namespace UnityEditor.TestTools.TestRunner
 {
-    internal class EditModePcHelper : EnumerableSetUpTearDownCommand.PcHelper
+    internal class EditModePcHelper : TestCommandPcHelper
     {
         public override void SetEnumeratorPC(IEnumerator enumerator, int pc)
         {

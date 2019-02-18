@@ -85,6 +85,7 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
             TestCaseTimeout = other.TestCaseTimeout;
             UpstreamActions = new List<ITestAction>(other.UpstreamActions);
             SetUpTearDownState = other.SetUpTearDownState;
+            OuterUnityTestActionState = other.OuterUnityTestActionState;
 
             TestContext.CurrentTestExecutionContext = this;
 
@@ -103,7 +104,8 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
         public Randomizer RandomGenerator { get; private set; }
         public ValueFormatter CurrentValueFormatter { get; private set; }
         public bool IsSingleThreaded { get; set; }
-        public EnumerableSetUpTearDownCommandState SetUpTearDownState { get; set; }
+        public BeforeAfterTestCommandState SetUpTearDownState { get; set; }
+        public BeforeAfterTestCommandState OuterUnityTestActionState { get; set; }
 
         internal int AssertCount
         {

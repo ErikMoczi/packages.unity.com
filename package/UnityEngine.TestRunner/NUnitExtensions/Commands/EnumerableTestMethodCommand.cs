@@ -33,9 +33,11 @@ namespace UnityEngine.TestTools
                 yield return testEnumeraterYieldInstruction;
 
                 var enumerator = testEnumeraterYieldInstruction.Execute();
-                while (enumerator.MoveNext())
+
+                var executingEnumerator = ExecuteEnumerableAndRecordExceptions(enumerator, context);
+                while (executingEnumerator.MoveNext())
                 {
-                    yield return enumerator.Current;
+                    yield return executingEnumerator.Current;
                 }
             }
             else
@@ -43,6 +45,35 @@ namespace UnityEngine.TestTools
                 if (context.CurrentResult.ResultState != ResultState.Ignored)
                 {
                     context.CurrentResult.SetResult(ResultState.Success);
+                }
+            }
+        }
+
+        private static IEnumerator ExecuteEnumerableAndRecordExceptions(IEnumerator enumerator, ITestExecutionContext context)
+        {
+            while (true)
+            {
+                try
+                {
+                    if (!enumerator.MoveNext())
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    context.CurrentResult.RecordException(ex);
+                    break;
+                }
+
+                if (enumerator.Current is IEnumerator)
+                {
+                    var current = (IEnumerator)enumerator.Current;
+                    yield return ExecuteEnumerableAndRecordExceptions(current, context);
+                }
+                else
+                {
+                    yield return enumerator.Current;
                 }
             }
         }

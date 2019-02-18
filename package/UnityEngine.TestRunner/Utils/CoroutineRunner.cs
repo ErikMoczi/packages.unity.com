@@ -15,7 +15,7 @@ namespace UnityEngine.TestTools.Utils
         private Coroutine m_TimeOutCoroutine;
         private IEnumerator m_TestCoroutine;
 
-        internal const int k_DefaultTimeout = 1000 * 30;
+        internal const int k_DefaultTimeout = 1000 * 180;
 
         public CoroutineRunner(MonoBehaviour playmodeTestsController, UnityTestExecutionContext context)
         {
@@ -83,7 +83,7 @@ namespace UnityEngine.TestTools.Utils
 
         private IEnumerator StartTimer(IEnumerator coroutineToBeKilled, int timeout, Action onTimeout)
         {
-            yield return new WaitForSeconds(timeout / 1000f);
+            yield return new WaitForSecondsRealtime(timeout / 1000f);
             if (coroutineToBeKilled != null)
                 m_Controller.StopCoroutine(coroutineToBeKilled);
             if (onTimeout != null)

@@ -21,6 +21,8 @@ namespace UnityEngine.TestTools
 
         public IEnumerator Execute()
         {
+            m_Context.CurrentResult.SetResult(ResultState.Success);
+
             while (true)
             {
                 object current = null;
@@ -28,33 +30,20 @@ namespace UnityEngine.TestTools
                 {
                     if (!m_TestEnumerator.MoveNext())
                     {
-                        //If we set the result state in the runner
-                        if (m_Context.CurrentResult.ResultState != ResultState.Error &&
-                            m_Context.CurrentResult.ResultState != ResultState.Failure &&
-                            m_Context.CurrentResult.ResultState != ResultState.Ignored)
-                        {
-                            m_Context.CurrentResult.SetResult(ResultState.Success);
-                        }
-
                         yield break;
                     }
 
-                    if (m_Context.CurrentResult.ResultState == ResultState.Error ||
-                        m_Context.CurrentResult.ResultState == ResultState.Failure ||
-                        m_Context.CurrentResult.ResultState == ResultState.Ignored)
+                    if (!m_Context.CurrentResult.ResultState.Equals(ResultState.Success))
                     {
                         yield break;
                     }
 
                     current = m_TestEnumerator.Current;
                 }
-                catch (IgnoreException exception)
-                {
-                    m_Context.CurrentResult.SetResult(ResultState.Ignored, exception.Message);
-                }
                 catch (Exception exception)
                 {
                     m_Context.CurrentResult.RecordException(exception);
+                    yield break;
                 }
                 yield return current;
             }

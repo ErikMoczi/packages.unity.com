@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -8,16 +7,15 @@ using UnityEngine.TestRunner.NUnitExtensions.Runner;
 
 namespace UnityEngine.TestTools
 {
-    internal class OuterUnityTestActionCommand : DelegatingTestCommand, IEnumerableTestMethodCommand
+    internal class OuterUnityTestActionCommand : BeforeAfterTestCommandBase<IOuterUnityTestAction>
     {
-        public IOuterUnityTestAction[] OuterUnityTestActions { get; }
-
         public OuterUnityTestActionCommand(TestCommand innerCommand)
             : base(innerCommand)
         {
             if (Test.TypeInfo.Type != null)
             {
-                OuterUnityTestActions = GetUnityTestActionsFromMethod(Test.Method.MethodInfo);
+                BeforeActions = GetUnityTestActionsFromMethod(Test.Method.MethodInfo);
+                AfterActions = BeforeActions;
             }
         }
 
@@ -33,35 +31,19 @@ namespace UnityEngine.TestTools
             return actions.ToArray();
         }
 
-        public IEnumerable ExecuteEnumerable(ITestExecutionContext context)
+        protected override IEnumerator InvokeBefore(IOuterUnityTestAction action, Test test, UnityTestExecutionContext context)
         {
-            foreach (var testAction in OuterUnityTestActions)
-            {
-                yield return testAction.BeforeTest(Test);
-            }
-
-            if (innerCommand is IEnumerableTestMethodCommand)
-            {
-                var executeEnumerable = ((IEnumerableTestMethodCommand)innerCommand).ExecuteEnumerable(context);
-                foreach (var iterator in executeEnumerable)
-                {
-                    yield return iterator;
-                }
-            }
-            else
-            {
-                context.CurrentResult = innerCommand.Execute(context);
-            }
-
-            foreach (var testAction in OuterUnityTestActions)
-            {
-                yield return testAction.AfterTest(Test);
-            }
+            return action.BeforeTest(test);
         }
 
-        public override TestResult Execute(ITestExecutionContext context)
+        protected override IEnumerator InvokeAfter(IOuterUnityTestAction action, Test test, UnityTestExecutionContext context)
         {
-            throw new NotImplementedException("Use ExecuteEnumerable");
+            return action.AfterTest(test);
+        }
+
+        protected override BeforeAfterTestCommandState GetState(UnityTestExecutionContext context)
+        {
+            return context.OuterUnityTestActionState;
         }
     }
 }

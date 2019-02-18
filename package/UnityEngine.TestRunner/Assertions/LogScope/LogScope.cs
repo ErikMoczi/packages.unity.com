@@ -20,27 +20,21 @@ namespace UnityEngine.TestTools.Logging
         public string NUnitExceptionMessage { get; private set; }
 
         private bool m_NeedToProcessLogs;
-        private static LogScope s_CurrentScope;
+        private static List<LogScope> s_ActiveScopes = new List<LogScope>();
 
         internal static LogScope Current
         {
             get
             {
-                if (s_CurrentScope == null)
+                if (s_ActiveScopes.Count == 0)
                     throw new InvalidOperationException("No log scope is available");
-                return s_CurrentScope;
-            }
-            private set
-            {
-                if (s_CurrentScope != null)
-                    throw new InvalidOperationException("Log scope is already present");
-                s_CurrentScope = value;
+                return s_ActiveScopes[0];
             }
         }
 
         internal static bool HasCurrentLogScope()
         {
-            return s_CurrentScope != null;
+            return s_ActiveScopes.Count > 0;
         }
 
         public LogScope()
@@ -54,7 +48,8 @@ namespace UnityEngine.TestTools.Logging
 
         private void Activate()
         {
-            s_CurrentScope = this;
+            s_ActiveScopes.Insert(0, this);
+            RegisterScope(this);
             Application.logMessageReceivedThreaded -= AddLog;
             Application.logMessageReceivedThreaded += AddLog;
         }
@@ -62,7 +57,18 @@ namespace UnityEngine.TestTools.Logging
         private void Deactivate()
         {
             Application.logMessageReceivedThreaded -= AddLog;
-            s_CurrentScope = null;
+            s_ActiveScopes.Remove(this);
+            UnregisterScope(this);
+        }
+
+        private static void RegisterScope(LogScope logScope)
+        {
+            Application.logMessageReceivedThreaded += logScope.AddLog;
+        }
+
+        private static void UnregisterScope(LogScope logScope)
+        {
+            Application.logMessageReceivedThreaded -= logScope.AddLog;
         }
 
         public void AddLog(string message, string stacktrace, LogType type)

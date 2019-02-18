@@ -1,12 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using NUnit.Framework.Internal.Commands;
 using NUnit.Framework.Internal.Execution;
+using UnityEngine.TestTools.Logging;
+using UnityEngine.TestTools.TestRunner;
 
 namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 {
@@ -152,6 +155,7 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 
         private void PerformOneTimeSetUp()
         {
+            var logScope = new LogScope();
             try
             {
                 _setupCommand.Execute(Context);
@@ -163,6 +167,12 @@ namespace UnityEngine.TestRunner.NUnitExtensions.Runner
 
                 Result.RecordException(ex, FailureSite.SetUp);
             }
+
+            if (logScope.AnyFailingLogs())
+            {
+                Result.RecordException(new UnhandledLogMessageException(logScope.FailingLogs.First()));
+            }
+            logScope.Dispose();
         }
 
         private IEnumerable RunChildren()

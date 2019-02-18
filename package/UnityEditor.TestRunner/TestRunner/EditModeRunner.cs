@@ -78,7 +78,9 @@ namespace UnityEditor.TestTools.TestRunner
         private object m_CurrentYieldObject;
 
         [SerializeField]
-        private EnumerableSetUpTearDownCommandState m_SetUpTearDownState;
+        private BeforeAfterTestCommandState m_SetUpTearDownState;
+        [SerializeField]
+        private BeforeAfterTestCommandState m_OuterUnityTestActionState;
 
         internal IUnityTestAssemblyRunner m_Runner;
 
@@ -108,6 +110,7 @@ namespace UnityEditor.TestTools.TestRunner
             loadedTests.ParseForNameDuplicates();
             hideFlags |= HideFlags.DontSave;
             EnumerableSetUpTearDownCommand.ActivePcHelper = new EditModePcHelper();
+            OuterUnityTestActionCommand.ActivePcHelper = new EditModePcHelper();
         }
 
         public void OnEnable()
@@ -143,11 +146,19 @@ namespace UnityEditor.TestTools.TestRunner
         public void Run()
         {
             EditModeTestCallbacks.RestoringTestContext += OnRestoringTest;
+            var context = m_Runner.GetCurrentContext();
             if (m_SetUpTearDownState == null)
             {
-                m_SetUpTearDownState = CreateInstance<EnumerableSetUpTearDownCommandState>();
+                m_SetUpTearDownState = CreateInstance<BeforeAfterTestCommandState>();
             }
-            m_Runner.GetCurrentContext().SetUpTearDownState = m_SetUpTearDownState;
+            context.SetUpTearDownState = m_SetUpTearDownState;
+
+            if (m_OuterUnityTestActionState == null)
+            {
+                m_OuterUnityTestActionState = CreateInstance<BeforeAfterTestCommandState>();
+            }
+            context.OuterUnityTestActionState = m_OuterUnityTestActionState;
+
             m_CleanupVerifier.RegisterExistingFiles();
 
             if (!m_RunningTests)

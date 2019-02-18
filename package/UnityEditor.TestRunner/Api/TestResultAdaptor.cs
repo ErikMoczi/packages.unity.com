@@ -81,11 +81,6 @@ namespace UnityEditor.TestTools.TestRunner.Api
 
         private static TestStatus ParseTestStatus(NUnit.Framework.Interfaces.TestStatus testStatus)
         {
-            if (testStatus == NUnit.Framework.Interfaces.TestStatus.Inconclusive)
-            {
-                return TestStatus.Failed;
-            }
-
             return (TestStatus)Enum.Parse(typeof(TestStatus), testStatus.ToString());
         }
     }
