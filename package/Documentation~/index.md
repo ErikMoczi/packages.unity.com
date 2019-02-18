@@ -26,7 +26,7 @@ To install the Performance Testing Extension package
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "1.0.3-preview",
+        "com.unity.test-framework.performance": "1.0.4-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.vr": "1.0.0"
@@ -307,7 +307,7 @@ Unity alpha releases include a lot of changes and some of them can lead to break
 
 | Unity version             | Package version |
 | ------------------------- | --------------- |
-| 2019.2.0a1 - latest       | 1.0.3-preview   |
+| 2019.2.0a1 - latest       | 1.0.4-preview   |
 | 2019.1.0a10 - 2019.2.0a1  | 0.1.50-preview  |
 | 2019.1.0a01 - 2019.1.0a10 | 0.1.42-preview  |
 | Older versions            | 0.1.50-preview  |

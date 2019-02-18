@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.4] - 2019-2-18
+
+### remove unnecessary meta files
 
 ## [1.0.3] - 2019-2-18
 
