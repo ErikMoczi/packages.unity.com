@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2019-2-18
+
+### Updated Documentation to reflect breaking changes
+
 ## [1.0.0] - 2019-2-15
 
 ### Refactor attributes
