@@ -21,7 +21,7 @@ To install the Performance Testing Extension package
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "1.0.1-preview",
+        "com.unity.test-framework.performance": "1.0.2-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.vr": "1.0.0"
