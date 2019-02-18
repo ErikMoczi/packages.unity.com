@@ -26,13 +26,10 @@ To install the Performance Testing Extension package
 ``` json
 {
     "dependencies": {
-        "com.unity.test-framework.performance": "0.1.49-preview",
+        "com.unity.test-framework.performance": "1.0.0-preview",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.modules.unityanalytics": "1.0.0",
-        "com.unity.modules.vr": "1.0.0",
-        "com.unity.modules.physics": "1.0.0",
-        "com.unity.modules.xr": "1.0.0"
+        "com.unity.modules.vr": "1.0.0"
       },
       "testables": [
         "com.unity.test-framework.performance"
@@ -61,9 +58,11 @@ To install the Performance Testing Extension package
 ```
 
 ## Test Attributes
-**[PerformanceTest]** -  Non-yielding performance test. This type of performance test starts and ends within the same frame.
+**[Performance]** - Use this with  `Test` and `UnityTest` attributes. It will initialize necessary test setup for performance tests.
 
-**[PerformanceUnityTest]** - Yielding performance test. This is a good choice if you want to sample measurements across multiple frames.
+**[Test]** -  Non-yielding test. This type of test starts and ends within the same frame.
+
+**[UnityTest]** - Yielding test. This is a good choice if you want to sample measurements across multiple frames.
 
 **[Version(string version)]** - Performance tests should be versioned with every change. If not specified it will be assumed to be 1.
 
@@ -109,7 +108,7 @@ This will execute the provided method, sampling performance using the following 
 #### Example 1: Simple method measurement using default values
 
 ``` csharp
-[PerformanceTest]
+[Test, Performance]
 public void Test()
 {
     Measure.Method(() => { ... }).Run();
@@ -119,7 +118,7 @@ public void Test()
 #### Example 2: Customize Measure.Method properties
 
 ```
-[PerformanceTest]
+[Test, Performance]
 public void Test()
 {
     Measure.Method(() => { ... })
@@ -144,7 +143,7 @@ Records time per frame by default and provides additional properties/methods to 
 #### Example 1: Simple frame time measurement using default values of at least 7 frames and default WarmupCount (see description above).
 
 ``` csharp
-[PerformanceUnityTest]
+[UnityTest, Performance]
 public IEnumerator Test()
 {
     ...
@@ -158,7 +157,7 @@ public IEnumerator Test()
 If you’d like to sample profiler markers across multiple frames, and don’t have a need to record frametime, it is possible to disable the frame time measurement.
 
 ``` csharp
-[PerformanceUnityTest]
+[UnityTest, Performance]
 public IEnumerator Test()
 {
     ...
@@ -173,7 +172,7 @@ public IEnumerator Test()
 #### Example 3: Sample frame times in a scope
 
 ``` csharp
-[PerformanceUnityTest]
+[UnityTest, Performance]
 public IEnumerator Test()
 {
     using (Measure.Frames().Scope())
@@ -188,7 +187,7 @@ public IEnumerator Test()
 If you want more control, you can specify how many frames you want to measure.
 
 ``` csharp
-[PerformanceUnityTest]
+[UnityTest, Performance]
 public IEnumerator Test()
 {
     ...
@@ -207,7 +206,7 @@ Measures execution time for the scope as a single time, for both synchronous and
 #### Example 1: Measuring a scope; execution time is measured for everything in the using statement
 
 ``` csharp
-[PerformanceTest]
+[Test, Performance]
 public void Test()
 {
     using(Measure.Scope())
@@ -225,7 +224,7 @@ Used to record profiler markers. Profiler marker timings will be sampled within 
 #### Example 1: Measuring profiler markers in a scope
 
 ``` csharp
-[PerformanceTest]
+[Test, Performance]
 public void Test()
 {
     SampleGroupDefinition[] m_definitions =
@@ -251,7 +250,7 @@ When you want to record samples outside of frame time, method time, or profiler 
 #### Example 1: Use a custom measurement to capture total allocated memory
 
 ``` csharp
-[PerformanceTest]
+[Test, Performance]
 public void Test()
 {
     var definition = new SampleGroupDefinition("TotalAllocatedMemory", SampleUnit.Megabyte);
@@ -343,7 +342,7 @@ public class TestsWithPrebuildStep : IPrebuildSetup
 
 public class MyAmazingPerformanceTest
 {
-    [PerformanceTest]
+    [Test, Performance]
     [PrebuildSetup(typeof(TestsWithPrebuildStep))]
     public void Test()
     {
@@ -398,7 +397,7 @@ public static string GetScenePath(string name)
 #### Example 1: Measure execution time to serialize simple object to JSON
 
 ``` csharp
-    [PerformanceTest, Version("2")]
+    [Test, Performance, Version("2")]
     public void Serialize_SimpleObject()
     {
         var obj = new SimpleObject();
@@ -451,7 +450,7 @@ public static string GetScenePath(string name)
         new SampleGroupDefinition("Instantiate.Awake")
     };
 
-    [PerformanceTest]
+    [Test, Performance]
     public void Instantiate_CreateCubes()
     {
         using (Measure.ProfilerMarkers(m_definitions))
@@ -471,7 +470,7 @@ public static string GetScenePath(string name)
 #### Example 3: Scene measurements
 
 ``` csharp
-    [PerformanceUnityTest]
+    [UnityTest, Performance]
     public IEnumerator Rendering_SampleScene()
     {
         using(Measure.Scope(new SampleGroupDefinition("Setup.LoadScene")))
@@ -487,7 +486,7 @@ public static string GetScenePath(string name)
 #### Example 4: Custom measurement to capture total allocated and reserved memory
 
 ``` csharp
-    [PerformanceTest, Version("1")]
+    [Test, Performance, Version("1")]
     public void Measure_Empty()
     {
         var allocated = new SampleGroupDefinition("TotalAllocatedMemory", SampleUnit.Megabyte);

@@ -1,8 +1,12 @@
 # Changelog
 
+## [1.0.0] - 2019-2-15
+
+### Refactor attributes
+
 ## [0.1.50] - 2019-1-15
 
-### Change results paths to persistend data
+### Change results paths to persistent data
 
 ## [0.1.49] - 2018-12-4
 
