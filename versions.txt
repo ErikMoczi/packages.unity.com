@@ -32,3 +32,4 @@
 1.0.0-preview
 1.0.1-preview
 1.0.2-preview
+1.0.3-preview
