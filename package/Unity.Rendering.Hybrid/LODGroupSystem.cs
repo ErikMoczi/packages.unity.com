@@ -1,9 +1,11 @@
-﻿#if !USE_BATCH_RENDERER_GROUP
+﻿#if !UNITY_2019_1_OR_NEWER
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Unity.Rendering
@@ -19,14 +21,14 @@ namespace Unity.Rendering
 #pragma warning restore 649
         
         [BurstCompile]
-        struct LODGroupJob : IJobProcessComponentData<MeshLODGroupComponent, ActiveLODGroupMask>
+        struct LODGroupJob : IJobProcessComponentData<MeshLODGroupComponent, LocalToWorld, ActiveLODGroupMask>
         {
             public LODGroupExtensions.LODParams LODParams;
             [ReadOnly]
             [NativeDisableContainerSafetyRestriction]
             public ComponentDataFromEntity<ActiveLODGroupMask> HLODActiveMask;
             
-            unsafe public void Execute([ReadOnly]ref MeshLODGroupComponent lodGroup, ref ActiveLODGroupMask activeMask)
+            unsafe public void Execute([ReadOnly]ref MeshLODGroupComponent lodGroup, [ReadOnly]ref LocalToWorld localToWorld, ref ActiveLODGroupMask activeMask)
             {
                 if (lodGroup.ParentGroup != Entity.Null)
                 {
@@ -38,20 +40,20 @@ namespace Unity.Rendering
                     }
                 }
 
-                activeMask.LODMask = LODGroupExtensions.CalculateCurrentLODMask(lodGroup.LODDistances0, lodGroup.WorldReferencePoint, ref LODParams);
+                activeMask.LODMask = LODGroupExtensions.CalculateCurrentLODMask(lodGroup.LODDistances0, math.transform(localToWorld.Value, lodGroup.LocalReferencePoint), ref LODParams);
             }
         }
 
         //@TODO: Would be nice if I could specify additional filter without duplicating this code...
         [RequireComponentTag(typeof(HLODComponent))]
         [BurstCompile]
-        struct HLODGroupJob : IJobProcessComponentData<MeshLODGroupComponent, ActiveLODGroupMask>
+        struct HLODGroupJob : IJobProcessComponentData<MeshLODGroupComponent, LocalToWorld, ActiveLODGroupMask>
         {
             public LODGroupExtensions.LODParams LODParams;  
             
-            unsafe public void Execute([ReadOnly]ref MeshLODGroupComponent lodGroup, ref ActiveLODGroupMask activeMask)
+            unsafe public void Execute([ReadOnly]ref MeshLODGroupComponent lodGroup, [ReadOnly]ref LocalToWorld localToWorld, ref ActiveLODGroupMask activeMask)
             {
-                activeMask.LODMask = LODGroupExtensions.CalculateCurrentLODMask(lodGroup.LODDistances0, lodGroup.WorldReferencePoint, ref LODParams);
+                activeMask.LODMask = LODGroupExtensions.CalculateCurrentLODMask(lodGroup.LODDistances0, math.transform(localToWorld.Value, lodGroup.LocalReferencePoint), ref LODParams);
             }
         }
 

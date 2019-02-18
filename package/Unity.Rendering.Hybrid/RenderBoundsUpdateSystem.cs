@@ -13,12 +13,12 @@ namespace Unity.Rendering
     public class CreateMissingRenderBoundsFromMeshRenderer : ComponentSystem
     {
         ComponentGroup m_MissingRenderBounds;
-        
+
         protected override void OnCreateManager()
         {
-            m_MissingRenderBounds = GetComponentGroup(ComponentType.Subtractive<Frozen>(), ComponentType.Subtractive<RenderBounds>(), typeof(RenderMesh));
+            m_MissingRenderBounds = GetComponentGroup(ComponentType.Subtractive<Frozen>(), ComponentType.Subtractive<RenderBounds>(), ComponentType.Create<RenderMesh>());
         }
-        
+
         protected override void OnUpdate()
         {
             var sharedComponents = m_MissingRenderBounds.GetSharedComponentDataArray<RenderMesh>();
@@ -32,38 +32,29 @@ namespace Unity.Rendering
         }
     }
 
+    /// <summary>
+    /// Updates WorldRenderBounds for anything that has LocalToWorld and RenderBounds (and ensures WorldRenderBounds exists)
+    /// </summary>
     [UpdateAfter(typeof(CreateMissingRenderBoundsFromMeshRenderer))]
     [ExecuteAlways]
     public class RenderBoundsUpdateSystem : JobComponentSystem
     {
         ComponentGroup m_MissingWorldRenderBounds;
-        ComponentGroup m_MissingChunkWorldRenderBounds;
-
-        EntityArchetypeQuery m_Query;
+        ComponentGroup m_WorldRenderBounds;
 
         [BurstCompile]
         struct BoundsJob : IJobParallelFor
         {
             [DeallocateOnJobCompletion]
             public NativeArray<ArchetypeChunk> Chunks;
-            
+
             [ReadOnly] public ArchetypeChunkComponentType<RenderBounds> RendererBounds;
             [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld> LocalToWorld;
             public ArchetypeChunkComponentType<WorldRenderBounds> WorldRenderBounds;
-            public ArchetypeChunkComponentType<ChunkWorldRenderBounds> ChunkWorldRenderBounds;
 
             WorldRenderBounds Transform(LocalToWorld transform, RenderBounds localBounds)
             {
-                return new WorldRenderBounds { Value = AABB.Transform(transform.Value, localBounds.Value) }; 
-            }
-
-            ChunkWorldRenderBounds CombineBoundingVolume(NativeArray<WorldRenderBounds> instanceBounds)
-            {
-                var minMax = MinMaxAABB.Empty;
-                for (int i = 0; i < instanceBounds.Length; i++)
-                    minMax.Encapsulate(instanceBounds[i].Value);
-
-                return new ChunkWorldRenderBounds { Value = minMax };
+                return new WorldRenderBounds { Value = AABB.Transform(transform.Value, localBounds.Value) };
             }
 
             public void Execute(int index)
@@ -72,68 +63,48 @@ namespace Unity.Rendering
 
                 //@TODO: Delta change...
                 var worldBounds = chunk.GetNativeArray(WorldRenderBounds);
-                var chunkWorldMeshRendererBounds = chunk.GetNativeArray(ChunkWorldRenderBounds);
 
                 if (chunk.Has(RendererBounds))
                 {
                     var localBounds = chunk.GetNativeArray(RendererBounds);
-                    var localToWorld =  chunk.GetNativeArray(LocalToWorld);
+                    var localToWorld = chunk.GetNativeArray(LocalToWorld);
                     for (int i = 0; i != localBounds.Length; i++)
                         worldBounds[i] = Transform(localToWorld[i], localBounds[i]);
                 }
-
-                chunkWorldMeshRendererBounds[0] = CombineBoundingVolume(worldBounds);
             }
         }
 
         public void AllowFrozenHack()
         {
             m_MissingWorldRenderBounds = GetComponentGroup(typeof(RenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<WorldRenderBounds>());
-            m_MissingChunkWorldRenderBounds = GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<ChunkWorldRenderBounds>());
-        
+
             //@TODO: For controlling if system should update or not... Merge with m_Query once ComponentGroup is unified
-            GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld));
-        
-            m_Query = new EntityArchetypeQuery
-            {
-                All = new ComponentType[] { typeof(LocalToWorld), typeof(WorldRenderBounds), typeof(ChunkWorldRenderBounds) },
-                None = new ComponentType[] { },
-                Any = new ComponentType[0]
-            };
+            m_WorldRenderBounds = GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld));
         }
 
         protected override void OnCreateManager()
         {
             m_MissingWorldRenderBounds = GetComponentGroup(typeof(RenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<WorldRenderBounds>(), ComponentType.Subtractive<Frozen>());
-            m_MissingChunkWorldRenderBounds = GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<ChunkWorldRenderBounds>(), ComponentType.Subtractive<Frozen>());
-            
+
             //@TODO: For controlling if system should update or not... Merge with m_Query once ComponentGroup is unified
-            GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<Frozen>());
-            
-            m_Query = new EntityArchetypeQuery
-            {
-                All = new ComponentType[] { typeof(LocalToWorld), typeof(WorldRenderBounds), typeof(ChunkWorldRenderBounds) },
-                None = new ComponentType[] { typeof(Frozen) },
-                Any = new ComponentType[0]
-            };
+            m_WorldRenderBounds = GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<Frozen>());
+
         }
-      
+
         protected override JobHandle OnUpdate(JobHandle dependency)
         {
             EntityManager.AddComponent(m_MissingWorldRenderBounds, typeof(WorldRenderBounds));
-            EntityManager.AddComponent(m_MissingChunkWorldRenderBounds, typeof(ChunkWorldRenderBounds));
-            
+
             var boundsJob = new BoundsJob
             {
-                Chunks = EntityManager.CreateArchetypeChunkArray(m_Query, Allocator.TempJob),
+                Chunks = m_WorldRenderBounds.CreateArchetypeChunkArray(Allocator.TempJob),
                 RendererBounds = GetArchetypeChunkComponentType<RenderBounds>(true),
                 LocalToWorld = GetArchetypeChunkComponentType<LocalToWorld>(true),
                 WorldRenderBounds = GetArchetypeChunkComponentType<WorldRenderBounds>(),
-                ChunkWorldRenderBounds = GetArchetypeChunkComponentType<ChunkWorldRenderBounds>(),
             };
             return boundsJob.Schedule(boundsJob.Chunks.Length, 1, dependency);
         }
-        
+
 #if false
         public void DrawGizmos()
         {
@@ -157,8 +128,8 @@ namespace Unity.Rendering
                 Gizmos.DrawWireCube(localBounds[i].Value.Center, localBounds[i].Value.Size);
             }
         }
-        
-        //@TODO: We really need a system level gizmo callback.  
+
+        //@TODO: We really need a system level gizmo callback.
         [UnityEditor.DrawGizmo(UnityEditor.GizmoType.NonSelected)]
         public static void DrawGizmos(Light light, UnityEditor.GizmoType type)
         {
@@ -168,6 +139,6 @@ namespace Unity.Rendering
                 renderer.DrawGizmos();
             }
         }
-    #endif
+#endif
     }
 }

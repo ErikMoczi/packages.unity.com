@@ -16,7 +16,7 @@ namespace Unity.Rendering
         public float4    LODDistances0;
         public float4    LODDistances1;
 
-        public float3    WorldReferencePoint;
+        public float3    LocalReferencePoint;
     }
     
 

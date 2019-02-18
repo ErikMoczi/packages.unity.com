@@ -1,4 +1,4 @@
-﻿#if !USE_BATCH_RENDERER_GROUP
+﻿#if !UNITY_2019_1_OR_NEWER
 using System;
 using Unity.Burst;
 using Unity.Collections;
@@ -31,13 +31,14 @@ namespace Unity.Rendering
         private NativeArray<ArchetypeChunk> m_FrozenChunks;
         private NativeArray<ArchetypeChunk> m_DynamicChunks;
         private NativeArray<WorldRenderBounds> m_FrozenChunkBounds;
-        
+
         // Instance renderer takes only batches of 1023
         Matrix4x4[] m_MatricesArray = new Matrix4x4[1023];
         private NativeArray<float4> m_Planes;
-        
+
         ComponentGroup m_FrozenChunksQuery;
         ComponentGroup m_DynamicChunksQuery;
+        ComponentGroup m_MissingVisibleLocalToWorldQuery;
 
         static unsafe void CopyTo(NativeSlice<VisibleLocalToWorld> transforms, int count, Matrix4x4[] outMatrices, int offset)
         {
@@ -49,7 +50,7 @@ namespace Unity.Rendering
                 UnsafeUtility.MemCpy(resultMatrices + offset, sourceMatrices , UnsafeUtility.SizeOf<Matrix4x4>() * count);
             }
         }
-        
+
         protected override void OnCreateManager()
         {
             m_FrozenChunksQuery = GetComponentGroup(new EntityArchetypeQuery
@@ -64,8 +65,8 @@ namespace Unity.Rendering
                 None = new ComponentType[] {typeof(Frozen)},
                 All = new ComponentType[] {typeof(LocalToWorld), typeof(RenderMesh), typeof(VisibleLocalToWorld)}
             });
-            
-            GetComponentGroup(new EntityArchetypeQuery
+
+            m_MissingVisibleLocalToWorldQuery = GetComponentGroup(new EntityArchetypeQuery
             {
                 Any = Array.Empty<ComponentType>(),
                 None = new ComponentType[] { typeof(VisibleLocalToWorld) },
@@ -121,7 +122,7 @@ namespace Unity.Rendering
             }
 
         }
-        
+
         [BurstCompile]
         unsafe struct CullLODToVisible : IJobParallelFor
         {
@@ -141,11 +142,11 @@ namespace Unity.Rendering
                 var chunkVisibleLocalToWorld = chunk.GetNativeArray(VisibleLocalToWorldType);
                 return (float4x4*)chunkVisibleLocalToWorld.GetUnsafePtr();
             }
-            
+
             float4x4* GetLocalToWorldSourceBuffer(ArchetypeChunk chunk)
             {
                 var chunkLocalToWorld = chunk.GetNativeArray(LocalToWorldType);
-                
+
                 if (chunkLocalToWorld.Length > 0)
                     return (float4x4*) chunkLocalToWorld.GetUnsafeReadOnlyPtr();
                 else
@@ -200,7 +201,7 @@ namespace Unity.Rendering
                 var chunkBounds = chunk.GetNativeArray(WorldRenderBoundsType);
                 var hasMeshLODComponentType = chunkLODs.Length > 0;
                 var hasWorldRenderBounds = chunkBounds.Length > 0;
-                
+
                 float4x4* dstPtr = GetVisibleOutputBuffer(chunk);
                 float4x4* srcPtr = GetLocalToWorldSourceBuffer(chunk);
                 if (srcPtr == null)
@@ -248,7 +249,7 @@ namespace Unity.Rendering
                 // 11 (+WorldRenderBounds +MeshLODComponentType)
                 else
                 {
-                    
+
                     for (int i = 0; i < chunkEntityCount; i++)
                     {
                         var instanceLOD = chunkLODs[i];
@@ -276,16 +277,16 @@ namespace Unity.Rendering
                     VisiblePartial(index);
                     return;
                 }
-                
+
                 var chunk = Chunks[index];
-                
+
                 var hasWorldRenderBounds = chunk.Has(WorldRenderBoundsType);
                 if (!hasWorldRenderBounds)
                 {
                     VisibleIn(index);
                     return;
                 }
-                
+
                 var chunkBounds = ChunkBounds[index];
                 var chunkInsideResult = FrustumPlanes.Intersect(Planes, chunkBounds.Value);
                 if (chunkInsideResult == FrustumPlanes.IntersectResult.Out)
@@ -302,7 +303,7 @@ namespace Unity.Rendering
                 }
             }
         };
-        
+
         [BurstCompile]
         struct MapChunkRenderers : IJobParallelFor
         {
@@ -369,14 +370,14 @@ namespace Unity.Rendering
             }
 
         }
-        
+
         unsafe void UpdateFrozenInstanceRenderer()
         {
             if (m_FrozenChunks.Length == 0)
             {
                 return;
             }
-            
+
             Profiler.BeginSample("Gather Types");
             var localToWorldType = GetArchetypeChunkComponentType<LocalToWorld>(true);
             var visibleLocalToWorldType = GetArchetypeChunkComponentType<VisibleLocalToWorld>(false);
@@ -387,12 +388,12 @@ namespace Unity.Rendering
             var activeLODGroupMask = GetComponentDataFromEntity<ActiveLODGroupMask>(true);
 
             Profiler.EndSample();
-            
+
             Profiler.BeginSample("Allocate Temp Data");
             var chunkVisibleCount   = new NativeArray<int>(m_FrozenChunks.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             var packedChunkIndices  = new NativeArray<int>(m_FrozenChunks.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             Profiler.EndSample();
-                
+
             var cullLODToVisibleJob = new CullLODToVisible
             {
                 Chunks = m_FrozenChunks,
@@ -417,7 +418,7 @@ namespace Unity.Rendering
             };
             var packVisibleChunkIndicesJobHandle = packVisibleChunkIndicesJob.Schedule(cullLODToVisibleJobHandle);
             packVisibleChunkIndicesJobHandle.Complete();
-                
+
             Profiler.BeginSample("Process DrawMeshInstanced");
             var drawCount = 0;
             var lastRendererIndex = -1;
@@ -458,18 +459,18 @@ namespace Unity.Rendering
                 drawCount++;
             }
             Profiler.EndSample();
-            
+
             packedChunkIndices.Dispose();
             chunkVisibleCount.Dispose();
         }
-        
+
         unsafe void UpdateDynamicInstanceRenderer()
         {
             if (m_DynamicChunks.Length == 0)
             {
                 return;
             }
-            
+
             Profiler.BeginSample("Gather Types");
             var localToWorldType = GetArchetypeChunkComponentType<LocalToWorld>(true);
             var visibleLocalToWorldType = GetArchetypeChunkComponentType<VisibleLocalToWorld>(false);
@@ -479,12 +480,12 @@ namespace Unity.Rendering
             var meshLODComponentType = GetArchetypeChunkComponentType<MeshLODComponent>(true);
             var activeLODGroupMask = GetComponentDataFromEntity<ActiveLODGroupMask>(true);
             Profiler.EndSample();
-            
+
             Profiler.BeginSample("Allocate Temp Data");
             var chunkVisibleCount   = new NativeArray<int>(m_DynamicChunks.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             var packedChunkIndices  = new NativeArray<int>(m_DynamicChunks.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             Profiler.EndSample();
-                
+
             var cullLODToVisibleJob = new CullLODToVisible
             {
                 Chunks = m_DynamicChunks,
@@ -509,7 +510,7 @@ namespace Unity.Rendering
             };
             var packVisibleChunkIndicesJobHandle = packVisibleChunkIndicesJob.Schedule(cullLODToVisibleJobHandle);
             packVisibleChunkIndicesJobHandle.Complete();
-                
+
             Profiler.BeginSample("Process DrawMeshInstanced");
             var drawCount = 0;
             var lastRendererIndex = -1;
@@ -550,11 +551,11 @@ namespace Unity.Rendering
                 drawCount++;
             }
             Profiler.EndSample();
-            
+
             packedChunkIndices.Dispose();
             chunkVisibleCount.Dispose();
         }
-        
+
         void RenderBatch(int lastRendererIndex, int batchCount)
         {
             var renderer = EntityManager.GetSharedComponentData<RenderMesh>(lastRendererIndex);
@@ -579,7 +580,7 @@ namespace Unity.Rendering
                 }
             }
         }
-        
+
         void UpdateFrozenChunkCache()
         {
             var visibleLocalToWorldOrderVersion = EntityManager.GetComponentOrderVersion<VisibleLocalToWorld>();
@@ -587,7 +588,7 @@ namespace Unity.Rendering
             var staticChunksOrderVersion = math.min(visibleLocalToWorldOrderVersion, frozenOrderVersion);
             if (staticChunksOrderVersion == m_LastFrozenChunksOrderVersion)
                 return;
-            
+
             // Dispose
             if (m_FrozenChunks.IsCreated)
             {
@@ -597,11 +598,11 @@ namespace Unity.Rendering
             {
                 m_FrozenChunkBounds.Dispose();
             }
-            
+
             var sharedComponentCount = EntityManager.GetSharedComponentCount();
             var RenderMeshType = GetArchetypeChunkSharedComponentType<RenderMesh>();
             var WorldRenderBoundsType = GetArchetypeChunkComponentType<WorldRenderBounds>(true);
-            
+
             // Allocate temp data
             var chunkRendererMap = new NativeMultiHashMap<int, int>(100000, Allocator.TempJob);
             var foundArchetypes = new NativeList<EntityArchetype>(Allocator.TempJob);
@@ -609,10 +610,10 @@ namespace Unity.Rendering
             Profiler.BeginSample("CreateArchetypeChunkArray");
             var chunks = m_FrozenChunksQuery.CreateArchetypeChunkArray(Allocator.TempJob);
             Profiler.EndSample();
-            
+
             m_FrozenChunks = new NativeArray<ArchetypeChunk>(chunks.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             m_FrozenChunkBounds = new NativeArray<WorldRenderBounds>(chunks.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            
+
             var mapChunkRenderersJob = new MapChunkRenderers
             {
                 Chunks = chunks,
@@ -620,7 +621,7 @@ namespace Unity.Rendering
                 ChunkRendererMap = chunkRendererMap.ToConcurrent()
             };
             var mapChunkRenderersJobHandle = mapChunkRenderersJob.Schedule(chunks.Length, 64);
-            
+
             var gatherSortedChunksJob = new GatherSortedChunks
             {
                 ChunkRendererMap = chunkRendererMap,
@@ -629,7 +630,7 @@ namespace Unity.Rendering
                 Chunks = chunks
             };
             var gatherSortedChunksJobHandle = gatherSortedChunksJob.Schedule(mapChunkRenderersJobHandle);
-            
+
             var updateChangedChunkBoundsJob = new UpdateChunkBounds
             {
                 Chunks = m_FrozenChunks,
@@ -638,29 +639,29 @@ namespace Unity.Rendering
             };
             var updateChangedChunkBoundsJobHandle = updateChangedChunkBoundsJob.Schedule(chunks.Length, 64, gatherSortedChunksJobHandle);
             updateChangedChunkBoundsJobHandle.Complete();
-            
+
             foundArchetypes.Dispose();
             chunkRendererMap.Dispose();
             chunks.Dispose();
 
             m_LastFrozenChunksOrderVersion = staticChunksOrderVersion;
         }
-        
+
         void UpdateDynamicChunkCache()
         {
             var dynamicChunksOrderVersion = EntityManager.GetComponentOrderVersion<VisibleLocalToWorld>();
             if (dynamicChunksOrderVersion == m_LastDynamicChunksOrderVersion)
                 return;
-            
+
             // Dispose
             if (m_DynamicChunks.IsCreated)
             {
                 m_DynamicChunks.Dispose();
             }
-            
+
             var sharedComponentCount = EntityManager.GetSharedComponentCount();
             var RenderMeshType = GetArchetypeChunkSharedComponentType<RenderMesh>();
-            
+
             // Allocate temp data
             var chunkRendererMap = new NativeMultiHashMap<int, int>(100000, Allocator.TempJob);
             var foundArchetypes = new NativeList<EntityArchetype>(Allocator.TempJob);
@@ -668,9 +669,9 @@ namespace Unity.Rendering
             Profiler.BeginSample("CreateArchetypeChunkArray");
             var chunks = m_DynamicChunksQuery.CreateArchetypeChunkArray(Allocator.TempJob);
             Profiler.EndSample();
-            
+
             m_DynamicChunks = new NativeArray<ArchetypeChunk>(chunks.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            
+
             var mapChunkRenderersJob = new MapChunkRenderers
             {
                 Chunks = chunks,
@@ -678,7 +679,7 @@ namespace Unity.Rendering
                 ChunkRendererMap = chunkRendererMap.ToConcurrent()
             };
             var mapChunkRenderersJobHandle = mapChunkRenderersJob.Schedule(chunks.Length, 64);
-            
+
             var gatherSortedChunksJob = new GatherSortedChunks
             {
                 ChunkRendererMap = chunkRendererMap,
@@ -688,7 +689,7 @@ namespace Unity.Rendering
             };
             var gatherSortedChunksJobHandle = gatherSortedChunksJob.Schedule(mapChunkRenderersJobHandle);
             gatherSortedChunksJobHandle.Complete();
-            
+
             foundArchetypes.Dispose();
             chunkRendererMap.Dispose();
             chunks.Dispose();
@@ -701,17 +702,10 @@ namespace Unity.Rendering
             var localToWorldOrderVersion = EntityManager.GetComponentOrderVersion<LocalToWorld>();
             if (localToWorldOrderVersion == m_LastLocalToWorldOrderVersion)
                 return;
-            
+
             EntityCommandBuffer entityCommandBuffer = new EntityCommandBuffer(Allocator.Temp);
-            
-            var query = new EntityArchetypeQuery
-            {
-                Any = Array.Empty<ComponentType>(),
-                None = new ComponentType[] {typeof(VisibleLocalToWorld)},
-                All = new ComponentType[] {typeof(RenderMesh), typeof(LocalToWorld)}
-            };
             var entityType = GetArchetypeChunkEntityType();
-            var chunks = EntityManager.CreateArchetypeChunkArray(query, Allocator.TempJob);
+            var chunks = m_MissingVisibleLocalToWorldQuery.CreateArchetypeChunkArray(Allocator.TempJob);
             for (int i = 0; i < chunks.Length; i++)
             {
                 var chunk = chunks[i];
@@ -722,7 +716,7 @@ namespace Unity.Rendering
                     entityCommandBuffer.AddComponent(entity,default(VisibleLocalToWorld));
                 }
             }
-            
+
             entityCommandBuffer.Playback(EntityManager);
             entityCommandBuffer.Dispose();
             chunks.Dispose();
@@ -741,7 +735,7 @@ namespace Unity.Rendering
                 Profiler.BeginSample("UpdateFrozenChunkCache");
                 UpdateFrozenChunkCache();
                 Profiler.EndSample();
-                
+
                 Profiler.BeginSample("UpdateDynamicChunkCache");
                 UpdateDynamicChunkCache();
                 Profiler.EndSample();
@@ -749,7 +743,7 @@ namespace Unity.Rendering
                 Profiler.BeginSample("UpdateFrozenInstanceRenderer");
                 UpdateFrozenInstanceRenderer();
                 Profiler.EndSample();
-                
+
                 Profiler.BeginSample("UpdateDynamicInstanceRenderer");
                 UpdateDynamicInstanceRenderer();
                 Profiler.EndSample();

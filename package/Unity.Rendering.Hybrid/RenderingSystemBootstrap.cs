@@ -1,4 +1,4 @@
-﻿#if !USE_BATCH_RENDERER_GROUP
+﻿#if !UNITY_2019_1_OR_NEWER
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -14,6 +14,12 @@ namespace Unity.Rendering
             Camera.onPreCull += OnBeforeCull;
         }
 
+        protected override void OnDestroyManager()
+        {
+            RenderPipeline.beginCameraRendering -= OnBeforeCull;
+            Camera.onPreCull -= OnBeforeCull;
+        }
+        
         protected override void OnUpdate()
         {
         }

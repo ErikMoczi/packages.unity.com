@@ -8,6 +8,8 @@ using UnityEngine;
 
 namespace Unity.Rendering
 {
+    public struct PerInstanceCullingTag : IComponentData { }
+
     struct RootLodRequirement : IComponentData
     {
         public LodRequirement LOD;
@@ -19,10 +21,10 @@ namespace Unity.Rendering
         public float3 WorldReferencePosition;
         public float MinDist;
         public float MaxDist;
-        
-        public LodRequirement(MeshLODGroupComponent lodGroup, int lodMask)
+
+        public LodRequirement(MeshLODGroupComponent lodGroup, LocalToWorld localToWorld, int lodMask)
         {
-            var referencePoint = lodGroup.WorldReferencePoint;
+            var referencePoint = math.transform(localToWorld.Value, lodGroup.LocalReferencePoint);
             float minDist = 0.0f;
             float maxDist = 0.0f;
             if ((lodMask & 0x01) == 0x01)
@@ -71,7 +73,7 @@ namespace Unity.Rendering
             MaxDist = maxDist;
         }
     }
-    
+
     [UpdateAfter(typeof(RenderBoundsUpdateSystem))]
     [ExecuteAlways]
     public class LodRequirementsUpdateSystem : JobComponentSystem
@@ -79,7 +81,7 @@ namespace Unity.Rendering
         ComponentGroup m_MissingWorldMeshRenderBounds;
         ComponentGroup m_MissingChunkWorldMeshRenderBounds;
 
-        EntityArchetypeQuery m_Query;
+        ComponentGroup m_Group;
         ComponentGroup m_MissingRootLodRequirement;
         ComponentGroup m_MissingLodRequirement;
 
@@ -88,10 +90,13 @@ namespace Unity.Rendering
         {
             [DeallocateOnJobCompletion]
             public NativeArray<ArchetypeChunk> Chunks;
-            
+
             [ReadOnly] public ComponentDataFromEntity<MeshLODGroupComponent>    MeshLODGroupComponent;
 
             [ReadOnly] public ArchetypeChunkComponentType<MeshLODComponent>     MeshLODComponent;
+            [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld>         LocalToWorld;
+            [ReadOnly] public ComponentDataFromEntity<LocalToWorld>             LocalToWorldLookup;
+            
             public ArchetypeChunkComponentType<LodRequirement>                  LodRequirement;
             public ArchetypeChunkComponentType<RootLodRequirement>              RootLodRequirement;
 
@@ -104,6 +109,7 @@ namespace Unity.Rendering
                 var lodRequirement = chunk.GetNativeArray(LodRequirement);
                 var rootLodRequirement = chunk.GetNativeArray(RootLodRequirement);
                 var meshLods = chunk.GetNativeArray(MeshLODComponent);
+                var localToWorlds = chunk.GetNativeArray(LocalToWorld);
                 var instanceCount = chunk.Count;
 
 //                var requirementCount = 0;
@@ -114,6 +120,7 @@ namespace Unity.Rendering
                 for (int i = 0; i < instanceCount; i++)
                 {
                     var meshLod = meshLods[i];
+                    var localToWorld = localToWorlds[i];
                     var lodGroupEntity = meshLod.Group;
                     var lodMask = meshLod.LODMask;
                     var lodGroup = MeshLODGroupComponent[lodGroupEntity];
@@ -126,7 +133,7 @@ namespace Unity.Rendering
                         lastLodGroupMask = lodMask;
                     }
 */
-                    lodRequirement[i] = new LodRequirement(lodGroup, lodMask);
+                    lodRequirement[i] = new LodRequirement(lodGroup, localToWorld, lodMask);
                 }
 
                 var rootLodIndex = -1;
@@ -147,7 +154,7 @@ namespace Unity.Rendering
                         rootLodIndex++;
                         RootLodRequirement rootLod;
                         rootLod.InstanceCount = 1;
-                        
+
                         if (parentGroupEntity == Entity.Null)
                         {
                             rootLod.LOD.WorldReferencePosition = new float3(0, 0, 0);
@@ -157,9 +164,9 @@ namespace Unity.Rendering
                         else
                         {
                             var parentLodGroup = MeshLODGroupComponent[parentGroupEntity];
-                            rootLod.LOD = new LodRequirement(parentLodGroup, parentMask);
+                            rootLod.LOD = new LodRequirement(parentLodGroup, LocalToWorldLookup[parentGroupEntity], parentMask);
                             rootLod.InstanceCount = 1;
-                            
+
                             if (parentLodGroup.ParentGroup != Entity.Null)
                                 throw new System.NotImplementedException("Deep HLOD is not supported yet");
                         }
@@ -176,7 +183,7 @@ namespace Unity.Rendering
                     }
                 }
 
-/*                
+/*
                 var foundRootInstanceCount = 0;
                 for (int i = 0; i < rootLodIndex + 1; i++)
                 {
@@ -196,16 +203,7 @@ namespace Unity.Rendering
         {
             m_MissingLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<LodRequirement>());
             m_MissingRootLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<RootLodRequirement>());
-            
-            //@TODO: For controlling if system should update or not... Merge with m_Query once ComponentGroup is unified
-            GetComponentGroup(typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement));
-            
-            m_Query = new EntityArchetypeQuery
-            {
-                All = new ComponentType[] { typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement) },
-                None = new ComponentType[] {},
-                Any = new ComponentType[0]
-            };
+            m_Group = GetComponentGroup(typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement));
         }
 
 
@@ -213,28 +211,21 @@ namespace Unity.Rendering
         {
             m_MissingLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<LodRequirement>(), ComponentType.Subtractive<Frozen>());
             m_MissingRootLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<RootLodRequirement>(), ComponentType.Subtractive<Frozen>());
-        
-            //@TODO: For controlling if system should update or not... Merge with m_Query once ComponentGroup is unified
-            GetComponentGroup(typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement), ComponentType.Subtractive<Frozen>());
-        
-            m_Query = new EntityArchetypeQuery
-            {
-                All = new ComponentType[] { typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement) },
-                None = new ComponentType[] { typeof(Frozen) },
-                Any = new ComponentType[0]
-            };
+            m_Group = GetComponentGroup(typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement), ComponentType.Subtractive<Frozen>());
         }
-      
+
         protected override JobHandle OnUpdate(JobHandle dependency)
         {
             EntityManager.AddComponent(m_MissingLodRequirement, typeof(LodRequirement));
             EntityManager.AddComponent(m_MissingRootLodRequirement, typeof(RootLodRequirement));
-            
+
             var updateLodJob = new UpdateLodRequirementsJob
             {
-                Chunks = EntityManager.CreateArchetypeChunkArray(m_Query, Allocator.TempJob),
+                Chunks = m_Group.CreateArchetypeChunkArray(Allocator.TempJob),
                 MeshLODGroupComponent = GetComponentDataFromEntity<MeshLODGroupComponent>(true),
                 MeshLODComponent = GetArchetypeChunkComponentType<MeshLODComponent>(true),
+                LocalToWorld = GetArchetypeChunkComponentType<LocalToWorld>(true),
+                LocalToWorldLookup = GetComponentDataFromEntity<LocalToWorld>(true),
                 LodRequirement = GetArchetypeChunkComponentType<LodRequirement>(),
                 RootLodRequirement = GetArchetypeChunkComponentType<RootLodRequirement>(),
             };

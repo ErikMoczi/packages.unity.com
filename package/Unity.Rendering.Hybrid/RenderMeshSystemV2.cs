@@ -1,15 +1,12 @@
-﻿#if USE_BATCH_RENDERER_GROUP
+﻿#if UNITY_2019_1_OR_NEWER
 using System;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.Serialization;
 using Unity.Jobs;
-using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Profiling;
 
 namespace Unity.Rendering
@@ -28,72 +25,31 @@ namespace Unity.Rendering
             ChunkRenderer[chunkIndex] = sharedIndex;
         }
     }
-    
-    [BurstCompile]
-    struct GatherChunkSubScenes : IJobParallelFor
-    {
-        [ReadOnly] public NativeArray<ArchetypeChunk> Chunks;
-        [ReadOnly] public ArchetypeChunkSharedComponentType<SubsceneTag> SubsceneTagType;
-        public NativeArray<int> ChunkSubscene;
 
-        public void Execute(int chunkIndex)
-        {
-            var chunk = Chunks[chunkIndex];
-            var sharedIndex = chunk.GetSharedComponentIndex(SubsceneTagType);
-            ChunkSubscene[chunkIndex] = sharedIndex;
-        }
-    }
-
-    [BurstCompile]
-    struct FilterSubsceneChunks : IJob
-    {
-        [ReadOnly] public NativeArray<ArchetypeChunk> Chunks;
-        [ReadOnly] public ArchetypeChunkComponentType<ChunkWorldRenderBounds> ChunkWorldRenderBoundsType;
-        [ReadOnly] public ArchetypeChunkComponentType<WorldRenderBounds> WorldRenderBoundsType;
-        [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld> LocalToWorldType;
-        [ReadOnly] public ArchetypeChunkSharedComponentType<RenderMesh> RenderMeshType;
-        [ReadOnly] public ArchetypeChunkComponentType<Frozen> FrozenType;
-        
-        public NativeArray<ArchetypeChunk> SubsceneChunks;
-        public NativeArray<int> SubsceneChunkCount;
-
-        public void Execute()
-        {
-            int subsceneChunkCount = 0;
-            for (var j = 0; j < Chunks.Length; j++)
-            {
-                var chunk = Chunks[j];
-
-                if (chunk.Invalid())
-                    continue;
-
-                if (!chunk.Has(ChunkWorldRenderBoundsType))
-                    continue;
-
-                if (!chunk.Has(WorldRenderBoundsType))
-                    continue;
-
-                if (!chunk.Has(LocalToWorldType))
-                    continue;
-
-                if (!chunk.Has(RenderMeshType))
-                    continue;
-
-                if (!chunk.Has(FrozenType))
-                    continue;
-
-                SubsceneChunks[subsceneChunkCount] = chunk;
-                subsceneChunkCount++;
-            }
-
-            SubsceneChunkCount[0] = subsceneChunkCount;
-        }
-    }
 
     struct SubSceneTagOrderVersion
     {
-        public SubsceneTag Scene;
+        public FrozenRenderSceneTag Scene;
         public int Version;
+    }
+
+    public unsafe struct CullingStats
+    {
+        public const int kChunkTotal = 0;
+        public const int kChunkCountAnyLod = 1;
+        public const int kChunkCountInstancesProcessed = 2;
+        public const int kChunkCountFullyIn = 3;
+        public const int kInstanceTests = 4;
+        public const int kLodTotal = 5;
+        public const int kLodNoRequirements = 6;
+        public const int kLodChanged = 7;
+        public const int kLodChunksTested = 8;
+        public const int kCountRootLodsSelected = 9;
+        public const int kCountRootLodsFailed = 10;
+        public const int kCount = 11;
+        public fixed int Stats[kCount];
+        public float CameraMoveDistance;
+        public fixed int CacheLinePadding[15 - kCount];
     }
 
     /// <summary>
@@ -109,42 +65,46 @@ namespace Unity.Rendering
 
         ComponentGroup m_FrozenGroup;
         ComponentGroup m_DynamicGroup;
-        ComponentGroup m_SubsceneLoadedGroup;
 
         ComponentGroup m_CullingJobDependencyGroup;
         InstancedRenderMeshBatchGroup m_InstancedRenderMeshBatchGroup;
 
-        NativeHashMap<SubsceneTag, int> m_SubsceneTagVersion;
+        NativeHashMap<FrozenRenderSceneTag, int> m_SubsceneTagVersion;
         NativeList<SubSceneTagOrderVersion> m_LastKnownSubsceneTagVersion;
 
+        #if UNITY_EDITOR
+        EditorRenderData m_DefaultEditorRenderData = new EditorRenderData { SceneCullingMask = UnityEditor.SceneManagement.EditorSceneManager.DefaultSceneCullingMask | (1UL << 59)};
+        #else
+        EditorRenderData m_DefaultEditorRenderData = new EditorRenderData { SceneCullingMask = ~0UL };
+        #endif
+        
         protected override void OnCreateManager()
         {
+            //@TODO: Support SetFilter with EntityArchetypeQuery syntax
+            /*
             m_FrozenGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 Any = Array.Empty<ComponentType>(),
                 None = Array.Empty<ComponentType>(),
                 All = new ComponentType[]
-                    {typeof(ChunkWorldRenderBounds), typeof(WorldRenderBounds), typeof(LocalToWorld), typeof(RenderMesh), typeof(Frozen), typeof(MeshLODComponent), typeof(SubsceneTag)}
+                    {typeof(ChunkWorldRenderBounds), typeof(WorldRenderBounds), typeof(LocalToWorld), typeof(RenderMesh), typeof(FrozenRenderSceneTag)}
             });
+            */
+            m_FrozenGroup = GetComponentGroup(typeof(ChunkWorldRenderBounds), typeof(WorldRenderBounds), typeof(LocalToWorld), typeof(RenderMesh), typeof(FrozenRenderSceneTag));
+            
             m_DynamicGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 Any = Array.Empty<ComponentType>(),
-                None = new ComponentType[] { typeof(Frozen) },
+                None = new ComponentType[] { typeof(FrozenRenderSceneTag) },
                 All = new ComponentType[]
                     {typeof(WorldRenderBounds), typeof(LocalToWorld), typeof(RenderMesh)  }
-            });
-            m_SubsceneLoadedGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                Any = Array.Empty<ComponentType>(),
-                None = Array.Empty<ComponentType>(),
-                All = new ComponentType[] {typeof(SubsceneLoadedTag)}
             });
 
             // This component group must include all types that are being used by the culling job
             m_CullingJobDependencyGroup = GetComponentGroup(typeof(RootLodRequirement), typeof(LodRequirement), typeof(WorldRenderBounds));
 
             m_InstancedRenderMeshBatchGroup = new InstancedRenderMeshBatchGroup(EntityManager, this, m_CullingJobDependencyGroup);
-            m_SubsceneTagVersion = new NativeHashMap<SubsceneTag, int>(1000,Allocator.Persistent);
+            m_SubsceneTagVersion = new NativeHashMap<FrozenRenderSceneTag, int>(1000,Allocator.Persistent);
             m_LastKnownSubsceneTagVersion = new NativeList<SubSceneTagOrderVersion>(Allocator.Persistent);
         }
 
@@ -156,10 +116,11 @@ namespace Unity.Rendering
             m_LastKnownSubsceneTagVersion.Dispose();
         }
 
-        public void CacheMeshBatchRendererGroup(SubsceneTag tag, NativeArray<ArchetypeChunk> chunks, int chunkCount)
+        public void CacheMeshBatchRendererGroup(FrozenRenderSceneTag tag, NativeArray<ArchetypeChunk> chunks, int chunkCount)
         {
             var RenderMeshType = GetArchetypeChunkSharedComponentType<RenderMesh>();
             var meshInstanceFlippedTagType = GetArchetypeChunkComponentType<RenderMeshFlippedWindingTag>();
+            var editorRenderDataType = GetArchetypeChunkSharedComponentType<EditorRenderData>();
 
             Profiler.BeginSample("Sort Shared Renderers");
             var chunkRenderer = new NativeArray<int>(chunkCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -194,6 +155,12 @@ namespace Unity.Rendering
                         var chunkIndex = sortedChunkIndices[sortedChunkIndex];
                         var chunk = chunks[chunkIndex];
                         var rendererSharedComponentIndex = chunk.GetSharedComponentIndex(RenderMeshType);
+
+                        var editorRenderDataIndex = chunk.GetSharedComponentIndex(editorRenderDataType);
+                        var editorRenderData = m_DefaultEditorRenderData;
+                        if (editorRenderDataIndex != -1)
+                            editorRenderData = EntityManager.GetSharedComponentData<EditorRenderData>(editorRenderDataIndex);
+                        
                         var remainingEntitySlots = 1023;
                         var flippedWinding = chunk.Has(meshInstanceFlippedTagType);
                         int instanceCount = chunk.Count;
@@ -217,13 +184,18 @@ namespace Unity.Rendering
                             if (nextFlippedWinding != flippedWinding)
                                 break;
 
+#if UNITY_EDITOR
+                            if (editorRenderDataIndex != nextChunk.GetSharedComponentIndex(editorRenderDataType))
+                                break;
+#endif
+                            
                             remainingEntitySlots -= nextChunk.Count;
                             instanceCount += nextChunk.Count;
                             batchChunkCount++;
                             sortedChunkIndex++;
                         }
 
-                        m_InstancedRenderMeshBatchGroup.AddBatch(tag, rendererSharedComponentIndex, instanceCount, chunks, sortedChunkIndices, startSortedIndex, batchChunkCount, flippedWinding );
+                        m_InstancedRenderMeshBatchGroup.AddBatch(tag, rendererSharedComponentIndex, instanceCount, chunks, sortedChunkIndices, startSortedIndex, batchChunkCount, flippedWinding, editorRenderData);
                     }
                 }
             }
@@ -236,8 +208,7 @@ namespace Unity.Rendering
 
         void UpdateFrozenRenderBatches()
         {
-            var frozenOrderVersion = EntityManager.GetComponentOrderVersion<Frozen>();
-            var staticChunksOrderVersion = frozenOrderVersion;
+            var staticChunksOrderVersion = EntityManager.GetComponentOrderVersion<FrozenRenderSceneTag>();
             if (staticChunksOrderVersion == m_LastFrozenChunksOrderVersion)
                 return;
 
@@ -255,22 +226,15 @@ namespace Unity.Rendering
                     Profiler.EndSample();
                 }
             }
-            
-            m_LastKnownSubsceneTagVersion.Clear();
-            
-            var subsceneLoadedChunks = m_SubsceneLoadedGroup.CreateArchetypeChunkArray(Allocator.TempJob);
-            var subsceneTagType = GetArchetypeChunkSharedComponentType<SubsceneTag>();
-            var chunkWorldRenderBoundsType = GetArchetypeChunkComponentType<ChunkWorldRenderBounds>();
-            var worldRenderBoundsType = GetArchetypeChunkComponentType<WorldRenderBounds>();
-            var localToWorldType = GetArchetypeChunkComponentType<LocalToWorld>();
-            var RenderMeshType = GetArchetypeChunkSharedComponentType<RenderMesh>();
-            var frozenType = GetArchetypeChunkComponentType<Frozen>();
 
-            for (var i = 0; i < subsceneLoadedChunks.Length; i++)
+            m_LastKnownSubsceneTagVersion.Clear();
+
+            var loadedSceneTags = new List<FrozenRenderSceneTag>();
+            EntityManager.GetAllUniqueSharedComponentData(loadedSceneTags);
+
+            for (var i = 0; i < loadedSceneTags.Count; i++)
             {
-                var subsceneTypesChunk = subsceneLoadedChunks[i];
-                var subsceneTagSharedComoonentIndex = subsceneTypesChunk.GetSharedComponentIndex(subsceneTagType);
-                var subsceneTag = EntityManager.GetSharedComponentData<SubsceneTag>(subsceneTagSharedComoonentIndex);
+                var subsceneTag = loadedSceneTags[i];
                 int subsceneTagVersion = EntityManager.GetSharedComponentOrderVersion(subsceneTag);
 
                 m_LastKnownSubsceneTagVersion.Add(new SubSceneTagOrderVersion
@@ -279,47 +243,33 @@ namespace Unity.Rendering
                     Version = subsceneTagVersion
                 });
 
-                var alreadyTrackingSubscene = m_SubsceneTagVersion.TryGetValue(subsceneTag, out subsceneTagVersion);
+                var alreadyTrackingSubscene = m_SubsceneTagVersion.TryGetValue(subsceneTag, out var _);
                 if (alreadyTrackingSubscene)
                     continue;
 
-                var subsceneChunkTracker = World.GetOrCreateManager<SubsceneChunkTracker>();
-                var subsceneChunks = subsceneChunkTracker.Chunks[subsceneTag];
-                var filteredChunks = new NativeArray<ArchetypeChunk>(subsceneChunks.Length, Allocator.TempJob,
-                    NativeArrayOptions.UninitializedMemory);
-                var filteredChunkCount = new NativeArray<int>(1, Allocator.TempJob);
+                m_FrozenGroup.SetFilter(subsceneTag);
 
-                var filterSubsceneChunksJob = new FilterSubsceneChunks
-                {
-                    Chunks = subsceneChunks,
-                    SubsceneChunks = filteredChunks,
-                    SubsceneChunkCount = filteredChunkCount,
-                    ChunkWorldRenderBoundsType = chunkWorldRenderBoundsType,
-                    WorldRenderBoundsType = worldRenderBoundsType,
-                    LocalToWorldType = localToWorldType,
-                    RenderMeshType = RenderMeshType,
-                    FrozenType = frozenType
-                };
-                var filterSubsceneChunksJobHandle = filterSubsceneChunksJob.Schedule();
-                filterSubsceneChunksJobHandle.Complete();
+                //@TODO - revert to CreateArchetypeChunkArray once it supports filtering
+                //var filteredChunks = m_FrozenGroup.CreateArchetypeChunkArray(Allocator.TempJob);
+                var filteredChunks = m_FrozenGroup.GetAllMatchingChunks(Allocator.TempJob);
+
+                m_FrozenGroup.ResetFilter();
 
                 m_SubsceneTagVersion.TryAdd(subsceneTag, subsceneTagVersion);
 
                 Profiler.BeginSample("CacheMeshBatchRenderGroup");
-                CacheMeshBatchRendererGroup(subsceneTag, filteredChunks, filteredChunkCount[0]);
+                CacheMeshBatchRendererGroup(subsceneTag, filteredChunks, filteredChunks.Length);
                 Profiler.EndSample();
 
                 filteredChunks.Dispose();
-                filteredChunkCount.Dispose();
             }
-            subsceneLoadedChunks.Dispose();
 
             m_LastFrozenChunksOrderVersion = staticChunksOrderVersion;
         }
 
         void UpdateDynamicRenderBatches()
         {
-            m_InstancedRenderMeshBatchGroup.RemoveTag(new SubsceneTag());
+            m_InstancedRenderMeshBatchGroup.RemoveTag(new FrozenRenderSceneTag());
 
             Profiler.BeginSample("CreateArchetypeChunkArray");
             var chunks = m_DynamicGroup.CreateArchetypeChunkArray(Allocator.TempJob);
@@ -327,11 +277,12 @@ namespace Unity.Rendering
 
             if (chunks.Length > 0)
             {
-                CacheMeshBatchRendererGroup(new SubsceneTag(), chunks, chunks.Length);
+                CacheMeshBatchRendererGroup(new FrozenRenderSceneTag(), chunks, chunks.Length);
             }
             chunks.Dispose();
         }
 
+        
         protected override void OnUpdate()
         {
             m_InstancedRenderMeshBatchGroup.CompleteJobs();
@@ -345,6 +296,10 @@ namespace Unity.Rendering
             UpdateDynamicRenderBatches();
             Profiler.EndSample();
         }
+
+#if UNITY_EDITOR
+        public CullingStats ComputeCullingStats() { return m_InstancedRenderMeshBatchGroup.ComputeCullingStats(); }
+#endif
     }
 }
 #endif
