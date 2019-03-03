@@ -5,5 +5,12 @@
         "Editor"
     ],
     "excludePlatforms": [],
-    "allowUnsafeCode" : true
+    "allowUnsafeCode" : true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Mono.Cecil.dll",
+        "Mono.Cecil.Mdb.dll",
+        "Mono.Cecil.Pdb.dll",
+        "Mono.Cecil.Rocks.dll"
+    ]
 }

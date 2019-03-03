@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor.Compilation;
 using UnityEngine;
 using Assembly = System.Reflection.Assembly;
@@ -26,7 +27,6 @@ namespace UnityEditor.Networking
                 {
                     if (msg.type == CompilerMessageType.Error)
                     {
-                        Console.WriteLine("Compile error, aborting: " + msg.message);
                         return;
                     }
                 }
@@ -54,7 +54,7 @@ namespace UnityEditor.Networking
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             bool usesUnet = false;
             bool foundThisAssembly = false;
-            List<string> depenencyPaths = new List<string>();
+            HashSet<string> depenencyPaths = new HashSet<string>();
             foreach (var assembly in assemblies)
             {
                 // Find the assembly currently being compiled from domain assembly list and check if it's using unet
@@ -63,6 +63,8 @@ namespace UnityEditor.Networking
                     foundThisAssembly = true;
                     foreach (var dependency in assembly.GetReferencedAssemblies())
                     {
+                        // Since this assembly is already loaded in the domain this is a no-op and retuns the
+                        // already loaded assembly
                         var location = Assembly.Load(dependency).Location;
                         depenencyPaths.Add(Path.GetDirectoryName(location));
                         if (dependency.Name.Contains(k_HlapiRuntimeAssemblyName))
@@ -113,9 +115,9 @@ namespace UnityEditor.Networking
                 return;
             }
 
-            //Debug.Log("Package invoking weaver with " + unityEngine + " " + unetAssemblyPath + " " + outputDirectory + " " + assemblyPath + " " + assemblyResolver);
+            //Debug.Log("Package invoking weaver with " + unityEngine + " " + unetAssemblyPath + " " + outputDirectory + " " + assemblyPath);
 
-            Unity.UNetWeaver.Program.Process(unityEngine, unetAssemblyPath, outputDirectory, new[] { assemblyPath }, depenencyPaths.ToArray(), null, (value) => { Debug.LogWarning(value); }, (value) => { Debug.LogError(value); });
+            Unity.UNetWeaver.Program.Process(unityEngine, unetAssemblyPath, outputDirectory, new[] { assemblyPath }, depenencyPaths.ToArray(), (value) => { Debug.LogWarning(value); }, (value) => { Debug.LogError(value); });
         }
     }
 }

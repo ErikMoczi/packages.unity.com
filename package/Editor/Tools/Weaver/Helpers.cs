@@ -159,7 +159,7 @@ namespace Unity.UNetWeaver
 
         public static ReaderParameters ReaderParameters(string assemblyPath, IEnumerable<string> extraPaths, IAssemblyResolver assemblyResolver, string unityEngineDLLPath, string unityUNetDLLPath)
         {
-            var parameters = new ReaderParameters();
+            var parameters = new ReaderParameters() {ReadWrite = true};
             if (assemblyResolver == null)
                 assemblyResolver = new DefaultAssemblyResolver();
             var helper = new AddSearchDirectoryHelper(assemblyResolver);

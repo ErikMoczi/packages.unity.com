@@ -23,7 +23,7 @@ namespace Unity.UNetWeaver
 
     public class Program
     {
-        public static bool Process(string unityEngine, string unetDLL, string outputDirectory, string[] assemblies, string[] extraAssemblyPaths, IAssemblyResolver assemblyResolver, Action<string> printWarning, Action<string> printError)
+        public static bool Process(string unityEngine, string unetDLL, string outputDirectory, string[] assemblies, string[] extraAssemblyPaths, Action<string> printWarning, Action<string> printError)
         {
             CheckDLLPath(unityEngine);
             CheckDLLPath(unetDLL);
@@ -31,7 +31,7 @@ namespace Unity.UNetWeaver
             CheckAssemblies(assemblies);
             Log.WarningMethod = printWarning;
             Log.ErrorMethod = printError;
-            return Weaver.WeaveAssemblies(assemblies, extraAssemblyPaths, assemblyResolver, outputDirectory, unityEngine, unetDLL);
+            return Weaver.WeaveAssemblies(assemblies, extraAssemblyPaths, null, outputDirectory, unityEngine, unetDLL);
         }
 
         private static void CheckDLLPath(string path)

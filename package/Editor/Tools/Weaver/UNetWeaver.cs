@@ -1758,114 +1758,115 @@ namespace Unity.UNetWeaver
         static bool Weave(string assName, IEnumerable<string> dependencies, IAssemblyResolver assemblyResolver, string unityEngineDLLPath, string unityUNetDLLPath, string outputDir)
         {
             var readParams = Helpers.ReaderParameters(assName, dependencies, assemblyResolver, unityEngineDLLPath, unityUNetDLLPath);
-            scriptDef = AssemblyDefinition.ReadAssembly(assName, readParams);
 
-            SetupTargetTypes();
-            SetupReadFunctions();
-            SetupWriteFunctions();
-
-            ModuleDefinition moduleDefinition = scriptDef.MainModule;
-            Console.WriteLine("Script Module: {0}", moduleDefinition.Name);
-
-            // Process each NetworkBehaviour
-            bool didWork = false;
-
-            // We need to do 2 passes, because SyncListStructs might be referenced from other modules, so we must make sure we generate them first.
-            for (int pass = 0; pass < 2; pass++)
+            string pdbToDelete = null;
+            using (scriptDef = AssemblyDefinition.ReadAssembly(assName, readParams))
             {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                foreach (TypeDefinition td in moduleDefinition.Types)
+                SetupTargetTypes();
+                SetupReadFunctions();
+                SetupWriteFunctions();
+
+                ModuleDefinition moduleDefinition = scriptDef.MainModule;
+                Console.WriteLine("Script Module: {0}", moduleDefinition.Name);
+
+                // Process each NetworkBehaviour
+                bool didWork = false;
+
+                // We need to do 2 passes, because SyncListStructs might be referenced from other modules, so we must make sure we generate them first.
+                for (int pass = 0; pass < 2; pass++)
                 {
-                    if (td.IsClass && CanBeResolved(td.BaseType))
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+                    foreach (TypeDefinition td in moduleDefinition.Types)
                     {
-                        try
+                        if (td.IsClass && CanBeResolved(td.BaseType))
                         {
-                            if (pass == 0)
+                            try
                             {
-                                didWork |= CheckSyncListStruct(td);
+                                if (pass == 0)
+                                {
+                                    didWork |= CheckSyncListStruct(td);
+                                }
+                                else
+                                {
+                                    didWork |= CheckNetworkBehaviour(td);
+                                    didWork |= CheckMessageBase(td);
+                                }
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                didWork |= CheckNetworkBehaviour(td);
-                                didWork |= CheckMessageBase(td);
+                                if (scriptDef.MainModule.SymbolReader != null)
+                                    scriptDef.MainModule.SymbolReader.Dispose();
+                                fail = true;
+                                throw ex;
                             }
                         }
-                        catch (Exception ex)
+
+                        if (fail)
                         {
                             if (scriptDef.MainModule.SymbolReader != null)
                                 scriptDef.MainModule.SymbolReader.Dispose();
-                            fail = true;
-                            throw ex;
+                            return false;
                         }
                     }
 
-                    if (fail)
+                    watch.Stop();
+                    Console.WriteLine("Pass: " + pass + " took " + watch.ElapsedMilliseconds + " milliseconds");
+                }
+
+                if (didWork)
+                {
+                    // build replacementMethods hash to speed up code site scan
+                    foreach (var m in lists.replacedMethods)
                     {
+                        lists.replacementMethodNames.Add(m.FullName);
+                    }
+
+                    // this must be done for ALL code, not just NetworkBehaviours
+                    try
+                    {
+                        ProcessPropertySites();
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error("ProcessPropertySites exception: " + e);
                         if (scriptDef.MainModule.SymbolReader != null)
                             scriptDef.MainModule.SymbolReader.Dispose();
                         return false;
                     }
+
+
+                    if (fail)
+                    {
+                        //Log.Error("Failed phase II.");
+                        if (scriptDef.MainModule.SymbolReader != null)
+                            scriptDef.MainModule.SymbolReader.Dispose();
+                        return false;
+                    }
+
+                    //Console.WriteLine ("Output:" + dest);
+                    //Console.WriteLine ("Output:" + options.OutSymbolsFormat);
+
+                    var writeParams = Helpers.GetWriterParameters(readParams);
+
+                    // PdbWriterProvider uses ISymUnmanagedWriter2 COM interface but Mono can't invoke a method on it and crashes (actually it first throws the following exception and then crashes).
+                    // One solution would be to convert UNetWeaver to exe file and run it on .NET on Windows (I have tested that and it works).
+                    // However it's much more simple to just write mdb file.
+                    // System.NullReferenceException: Object reference not set to an instance of an object
+                    //   at(wrapper cominterop - invoke) Mono.Cecil.Pdb.ISymUnmanagedWriter2:DefineDocument(string, System.Guid &, System.Guid &, System.Guid &, Mono.Cecil.Pdb.ISymUnmanagedDocumentWriter &)
+                    //   at Mono.Cecil.Pdb.SymWriter.DefineDocument(System.String url, Guid language, Guid languageVendor, Guid documentType)[0x00000] in < filename unknown >:0
+                    if (writeParams.SymbolWriterProvider is PdbWriterProvider)
+                    {
+                        writeParams.SymbolWriterProvider = new MdbWriterProvider();
+                        // old pdb file is out of date so delete it. symbols will be stored in mdb
+                        pdbToDelete = Path.ChangeExtension(assName, ".pdb");
+                    }
+                    
+                    scriptDef.Write(writeParams);
                 }
-                watch.Stop();
-                Console.WriteLine("Pass: " + pass + " took " + watch.ElapsedMilliseconds + " milliseconds");
+                
+                if (scriptDef.MainModule.SymbolReader != null)
+                    scriptDef.MainModule.SymbolReader.Dispose();
             }
-
-            string pdbToDelete = null;
-
-            if (didWork)
-            {
-                // build replacementMethods hash to speed up code site scan
-                foreach (var m in lists.replacedMethods)
-                {
-                    lists.replacementMethodNames.Add(m.FullName);
-                }
-
-                // this must be done for ALL code, not just NetworkBehaviours
-                try
-                {
-                    ProcessPropertySites();
-                }
-                catch (Exception e)
-                {
-                    Log.Error("ProcessPropertySites exception: " + e);
-                    if (scriptDef.MainModule.SymbolReader != null)
-                        scriptDef.MainModule.SymbolReader.Dispose();
-                    return false;
-                }
-
-
-                if (fail)
-                {
-                    //Log.Error("Failed phase II.");
-                    if (scriptDef.MainModule.SymbolReader != null)
-                        scriptDef.MainModule.SymbolReader.Dispose();
-                    return false;
-                }
-
-                string dest = Helpers.DestinationFileFor(outputDir, assName);
-                //Console.WriteLine ("Output:" + dest);
-                //Console.WriteLine ("Output:" + options.OutSymbolsFormat);
-
-                var writeParams = Helpers.GetWriterParameters(readParams);
-
-                // PdbWriterProvider uses ISymUnmanagedWriter2 COM interface but Mono can't invoke a method on it and crashes (actually it first throws the following exception and then crashes).
-                // One solution would be to convert UNetWeaver to exe file and run it on .NET on Windows (I have tested that and it works).
-                // However it's much more simple to just write mdb file.
-                // System.NullReferenceException: Object reference not set to an instance of an object
-                //   at(wrapper cominterop - invoke) Mono.Cecil.Pdb.ISymUnmanagedWriter2:DefineDocument(string, System.Guid &, System.Guid &, System.Guid &, Mono.Cecil.Pdb.ISymUnmanagedDocumentWriter &)
-                //   at Mono.Cecil.Pdb.SymWriter.DefineDocument(System.String url, Guid language, Guid languageVendor, Guid documentType)[0x00000] in < filename unknown >:0
-                if (writeParams.SymbolWriterProvider is PdbWriterProvider)
-                {
-                    writeParams.SymbolWriterProvider = new MdbWriterProvider();
-                    // old pdb file is out of date so delete it. symbols will be stored in mdb
-                    pdbToDelete = Path.ChangeExtension(assName, ".pdb");
-                }
-
-                scriptDef.Write(dest, writeParams);
-            }
-
-            if (scriptDef.MainModule.SymbolReader != null)
-                scriptDef.MainModule.SymbolReader.Dispose();
 
             if (pdbToDelete != null)
                 File.Delete(pdbToDelete);
