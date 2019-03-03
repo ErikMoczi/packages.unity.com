@@ -1,7 +1,7 @@
 {
   "name": "com.unity.xr.oculus",
   "displayName": "Oculus",
-  "version": "0.0.3-preview",
+  "version": "0.0.4-preview",
   "unity": "2018.3",
   "description": "Provides rendering and input support for Oculus devices using the XRSDK.",
   "keywords": [
@@ -13,9 +13,9 @@
   ],
   "registry": "https://staging-packages.unity.com",
   "dependencies": {
-    "com.unity.xr.management": "0.1.0-preview.8"
+    "com.unity.xr.management": "0.2.0-preview.5"
   },
   "repository": {
-    "revision": "06b292e76508c8b01b4260f1ae54901db8c0977b"
+    "revision": "fe52f84acffaed880db14ca0300af8c027ce2baa"
   }
 }
