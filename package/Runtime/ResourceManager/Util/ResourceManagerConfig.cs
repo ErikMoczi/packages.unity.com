@@ -217,9 +217,20 @@ namespace UnityEngine.ResourceManagement.Util
             var elementType = t.GetElementType();
             if (elementType  == null)
                 return null;
-            var array = Array.CreateInstance(elementType, allAssets.Length);
-            for (int i = 0; i < allAssets.Length; i++)
-                array.SetValue(allAssets[i], i);
+            int length = 0;
+            foreach (var asset in allAssets)
+            {
+                if (asset.GetType() == elementType)
+                    length++;
+            }
+            var array = Array.CreateInstance(elementType, length);
+            int index = 0;
+            
+            foreach (var asset in allAssets)
+            {
+                if(asset.GetType() == elementType)
+                    array.SetValue(asset, index++);
+            }
             return array as TObject;
         }
 

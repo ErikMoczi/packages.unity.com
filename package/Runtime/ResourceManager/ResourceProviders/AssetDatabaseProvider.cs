@@ -52,7 +52,12 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
                 else
                 {
                     var mainType = AssetDatabase.GetMainAssetTypeAtPath(assetPath);
-                    SetResult(AssetDatabase.LoadAssetAtPath(assetPath, mainType) as TObject);
+                    if (mainType == typeof(Texture2D) && typeof(TObject) == typeof(Sprite))
+                    {
+                        SetResult(AssetDatabase.LoadAssetAtPath(assetPath, typeof(TObject)) as TObject);
+                    }
+                    else
+                        SetResult(AssetDatabase.LoadAssetAtPath(assetPath, mainType) as TObject);
                 }
                 OnComplete();
             }
@@ -67,6 +72,13 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
             if (!base.CanProvide<TObject>(location))
                 return false;
             var t = typeof(TObject);
+
+            if (t.IsArray)
+                t = t.GetElementType();
+            else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
+                t = t.GetGenericArguments()[0];
+            
+            
             return t == typeof(object) || typeof(Object).IsAssignableFrom(t);
         }
 

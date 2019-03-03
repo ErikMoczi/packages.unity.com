@@ -83,7 +83,7 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
                         bool loadingFromBundle = false;
                         if (op != null)
                         {
-                            var bundle = AssetBundleProvider.GetBundleFromDependencyOperation(Context as IResourceLocation, op);
+                            var bundle = AssetBundleProvider.LoadBundleFromDependecies(op.Result);
                             if (bundle != null)
                                 loadingFromBundle = true;
                         }

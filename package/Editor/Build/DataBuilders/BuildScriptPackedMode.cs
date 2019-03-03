@@ -299,27 +299,37 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                 var remoteBuildFolder = aaSettings.RemoteCatalogBuildPath.GetValue(aaSettings);
                 var remoteLoadFolder = aaSettings.RemoteCatalogLoadPath.GetValue(aaSettings);
 
-                var remoteJsonBuildPath = remoteBuildFolder + versionedFileName + ".json";
-                var remoteHashBuildPath = remoteBuildFolder + versionedFileName + ".hash";
+                if (string.IsNullOrEmpty(remoteBuildFolder) ||
+                    string.IsNullOrEmpty(remoteLoadFolder) ||
+                    remoteBuildFolder == AddressableAssetProfileSettings.undefinedEntryValue ||
+                    remoteLoadFolder == AddressableAssetProfileSettings.undefinedEntryValue)
+                {
+                    Addressables.LogError("Remote Build and/or Load paths are not set.  Cannot create remote catalog. '" + remoteBuildFolder + "', '" + remoteLoadFolder + "'");
+                }
+                else
+                {
+                    var remoteJsonBuildPath = remoteBuildFolder + versionedFileName + ".json";
+                    var remoteHashBuildPath = remoteBuildFolder + versionedFileName + ".hash";
 
-                WriteFile(remoteJsonBuildPath, jsonText);
-                WriteFile(remoteHashBuildPath, contentHash);
+                    WriteFile(remoteJsonBuildPath, jsonText);
+                    WriteFile(remoteHashBuildPath, contentHash);
 
-                dependencyHashes = new string[((int)ContentCatalogProvider.DependencyHashIndex.Count)];
-                dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Remote] = InitializationOperation.CatalogAddress + "RemoteHash";
-                dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Cache] = InitializationOperation.CatalogAddress + "CacheHash";
+                    dependencyHashes = new string[((int)ContentCatalogProvider.DependencyHashIndex.Count)];
+                    dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Remote] = InitializationOperation.CatalogAddress + "RemoteHash";
+                    dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Cache] = InitializationOperation.CatalogAddress + "CacheHash";
 
-                var remoteHashLoadPath = remoteLoadFolder + versionedFileName + ".hash";
-                locations.Add(new ResourceLocationData(
-                    new[] {dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Remote]},
-                    remoteHashLoadPath,
-                    typeof(TextDataProvider) ));
+                    var remoteHashLoadPath = remoteLoadFolder + versionedFileName + ".hash";
+                    locations.Add(new ResourceLocationData(
+                        new[] { dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Remote] },
+                        remoteHashLoadPath,
+                        typeof(TextDataProvider)));
 
-                var cacheLoadPath = "{UnityEngine.Application.persistentDataPath}/com.unity.addressables" + versionedFileName + ".hash";
-                locations.Add(new ResourceLocationData(
-                    new[] {dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Cache]},
-                    cacheLoadPath,
-                    typeof(TextDataProvider) ));
+                    var cacheLoadPath = "{UnityEngine.Application.persistentDataPath}/com.unity.addressables" + versionedFileName + ".hash";
+                    locations.Add(new ResourceLocationData(
+                        new[] { dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Cache] },
+                        cacheLoadPath,
+                        typeof(TextDataProvider)));
+                }
             }
 
             locations.Add(new ResourceLocationData(

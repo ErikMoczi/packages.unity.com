@@ -16,25 +16,31 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
            where TObject : class
         {
             AssetBundleRequest m_RequestOperation;
-            public InternalProviderOperation<TObject> Start(IResourceLocation location, IList<object> deps)
+            public IAsyncOperation<TObject> Start(IResourceLocation location, IList<object> deps)
             {
                 m_Result = null;
                 m_RequestOperation = null;
-                AssetBundle bundle = deps[0] as AssetBundle;
-                Debug.Assert(bundle != null);
-                var t = typeof(TObject);
-                if (t.IsArray)
-                    m_RequestOperation = bundle.LoadAssetWithSubAssetsAsync(location.InternalId, t.GetElementType());
-                else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
-                    m_RequestOperation = bundle.LoadAssetWithSubAssetsAsync(location.InternalId, t.GetGenericArguments()[0]);
+                var bundle = AssetBundleProvider.LoadBundleFromDependecies(deps);
+                if (bundle == null)
+                {
+                    m_Error = new Exception("Unable to load dependent bundle from location " + location);
+                    DelayedActionManager.AddAction((Action<AsyncOperation>)OnComplete, 0, null);
+                }
                 else
-                    m_RequestOperation = bundle.LoadAssetAsync<TObject>(location.InternalId);
+                {
+                    var t = typeof(TObject);
+                    if (t.IsArray)
+                        m_RequestOperation = bundle.LoadAssetWithSubAssetsAsync(location.InternalId, t.GetElementType());
+                    else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
+                        m_RequestOperation = bundle.LoadAssetWithSubAssetsAsync(location.InternalId, t.GetGenericArguments()[0]);
+                    else
+                        m_RequestOperation = bundle.LoadAssetAsync<TObject>(location.InternalId);
 
-                if (m_RequestOperation.isDone)
-                    DelayedActionManager.AddAction((Action<AsyncOperation>)OnComplete, 0, m_RequestOperation);
-                else
-                    m_RequestOperation.completed += OnComplete;
-
+                    if (m_RequestOperation.isDone)
+                        DelayedActionManager.AddAction((Action<AsyncOperation>)OnComplete, 0, m_RequestOperation);
+                    else
+                        m_RequestOperation.completed += OnComplete;
+                }
                 return base.Start(location);
             }
 

@@ -104,25 +104,27 @@ namespace UnityEditor.AddressableAssets.Build
         {
             cachedAssetState = null;
 
-            var state = new CachedAssetState();
-            if (!GetAssetState(asset, out state.asset))
+            AssetState assetState;
+            if (!GetAssetState(asset, out assetState))
                 return false;
 
             var visited = new HashSet<GUID>();
-            var assetStates = new List<AssetState>();
+            visited.Add(asset);
+            var dependencyStates = new List<AssetState>();
             foreach (var dependency in dependencies)
             {
-                if (visited.Contains(dependency))
+                if (!visited.Add(dependency))
                     continue;
-                visited.Add(dependency);
 
-                AssetState assetState;
-                if (!GetAssetState(asset, out assetState))
+                AssetState dependencyState;
+                if (!GetAssetState(dependency, out dependencyState))
                     continue;
-                assetStates.Add(assetState);
+                dependencyStates.Add(dependencyState);
             }
-            state.dependencies = assetStates.ToArray();
-            cachedAssetState = state;
+
+            cachedAssetState = new CachedAssetState();
+            cachedAssetState.asset = assetState;
+            cachedAssetState.dependencies = dependencyStates.ToArray();
             return true;
         }
 

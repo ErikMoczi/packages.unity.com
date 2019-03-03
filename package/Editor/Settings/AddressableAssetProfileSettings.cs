@@ -290,6 +290,7 @@ namespace UnityEditor.AddressableAssets.Settings
         }
 
         internal const string customEntryString = "<custom>";
+        internal const string undefinedEntryValue = "<undefined>";
 
         internal ProfileIdData GetProfileDataById(string id)
         {

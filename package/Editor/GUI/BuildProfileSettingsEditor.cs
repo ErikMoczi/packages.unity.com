@@ -34,7 +34,7 @@ namespace UnityEditor.AddressableAssets.GUI
                 if (displayNames[newIndex] == AddressableAssetProfileSettings.customEntryString)
                 {
                     custom = true;
-                    result = "<undefined>";
+                    result = AddressableAssetProfileSettings.undefinedEntryValue;
                 }
                 else
                 {
@@ -97,7 +97,7 @@ namespace UnityEditor.AddressableAssets.GUI
                 if (displayNames[newIndex] == AddressableAssetProfileSettings.customEntryString)
                 {
                     custom = true;
-                    result = "<undefined>";
+                    result = AddressableAssetProfileSettings.undefinedEntryValue;
                 }
                 else
                 {
