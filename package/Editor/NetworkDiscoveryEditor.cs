@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 namespace UnityEditor
 {
     [CustomEditor(typeof(NetworkDiscovery), true)]
@@ -129,4 +130,5 @@ namespace UnityEditor
         }
     }
 }
+#pragma warning restore 618
 #endif

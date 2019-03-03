@@ -4,7 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
-
+#pragma warning disable 618
 public class SettingNetworkStartPositionWorks
 {
     public static Vector3 startpos = new Vector3(1.4f, 6.3f, 6.23f);
@@ -55,3 +55,4 @@ public class SettingNetworkStartPositionWorks
         Object.Destroy(nmObject);
     }
 }
+#pragma warning restore 618

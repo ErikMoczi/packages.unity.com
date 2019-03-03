@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class SpawnObjectOnServerOnly : SpawningTestBase
 {
     GameObject obj;
@@ -27,3 +28,4 @@ public class SpawnObjectOnServerOnly : SpawningTestBase
         NetworkServer.Destroy(obj);
     }
 }
+#pragma warning restore 618

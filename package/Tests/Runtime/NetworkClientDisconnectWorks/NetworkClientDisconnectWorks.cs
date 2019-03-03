@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NetworkClientDisconnectWorks
 {
     int kListenPort = 7073;
@@ -78,3 +79,4 @@ public class NetworkClientDisconnectWorks
         myClient.Connect("127.0.0.1", kListenPort);
     }
 }
+#pragma warning restore 618

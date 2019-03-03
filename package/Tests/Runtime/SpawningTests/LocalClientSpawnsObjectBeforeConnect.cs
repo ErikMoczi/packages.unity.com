@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class LocalClientSpawnsObjectBeforeConnect : SpawningTestBase
 {
     bool isDone;
@@ -42,3 +43,4 @@ public class LocalClientSpawnsObjectBeforeConnect : SpawningTestBase
         isDone = true;
     }
 }
+#pragma warning restore 618

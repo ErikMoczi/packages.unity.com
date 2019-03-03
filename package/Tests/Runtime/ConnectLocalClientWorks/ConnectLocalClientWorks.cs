@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class ConnectLocalClientWorks
 {
     const int kMsgTest = 555;
@@ -102,3 +103,4 @@ public class ConnectLocalClientWorks
         isTestDone = true;
     }
 }
+#pragma warning restore 618

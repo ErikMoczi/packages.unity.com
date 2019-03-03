@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
+#pragma warning disable 618
 public class PlayWithReadyState
 {
     public bool isDone = false;
@@ -212,3 +213,4 @@ public class PlayWithReadyState
         }
     }
 }
+#pragma warning restore 618

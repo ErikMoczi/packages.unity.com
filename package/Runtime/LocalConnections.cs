@@ -2,6 +2,7 @@ using System;
 
 #if ENABLE_UNET
 
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     // a server's connection TO a LocalClient.
@@ -123,4 +124,5 @@ namespace UnityEngine.Networking
         }
     }
 }
+#pragma warning restore 618
 #endif //ENABLE_UNET

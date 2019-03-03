@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityObject = UnityEngine.Object;
 
+#pragma warning disable 618
 namespace UnityEditor.Networking
 {
     [CustomPreview(typeof(GameObject))]
@@ -281,4 +282,5 @@ namespace UnityEditor.Networking
         }
     }
 }
+#pragma warning restore 618
 #endif //ENABLE_UNET

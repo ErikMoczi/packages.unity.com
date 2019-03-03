@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class ClientCanConnectAfterFailure
 {
     int kListenPort = 7073;
@@ -100,3 +101,4 @@ public class ClientCanConnectAfterFailure
         isTestDone = true;
     }
 }
+#pragma warning restore 618

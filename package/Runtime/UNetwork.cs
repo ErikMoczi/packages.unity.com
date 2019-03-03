@@ -1,5 +1,6 @@
 using System;
 
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     // Handles network messages on client and server
@@ -382,7 +383,6 @@ namespace UnityEngine.Networking
 #if UNITY_EDITOR
     class Profiler
     {
-#pragma warning disable CS0618
         internal static void IncrementStatOutgoing(short msgType)
         {
             IncrementStatOutgoing(msgType, "msg");
@@ -423,7 +423,7 @@ namespace UnityEngine.Networking
         {
             UnityEditor.NetworkDetailStats.NewProfilerTick(Time.time);
         }
-#pragma warning restore
     }
 #endif
 }
+#pragma warning disable 618

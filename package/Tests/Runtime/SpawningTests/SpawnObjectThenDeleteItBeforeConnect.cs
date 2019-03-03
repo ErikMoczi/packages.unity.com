@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class SpawnObjectThenDeleteItBeforeConnect : SpawningTestBase
 {
     bool isDone = false;
@@ -43,3 +44,4 @@ public class SpawnObjectThenDeleteItBeforeConnect : SpawningTestBase
         isDone = true;
     }
 }
+#pragma warning restore 618

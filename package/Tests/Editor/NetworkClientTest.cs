@@ -3,12 +3,12 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
+#pragma warning disable 618
 [TestFixture]
 public class NetworkClientTest
 {
     private NetworkClient m_Client;
     private static string s_LatestLogMessage;
-    private int m_ReceivedMessages;
 
     static void HandleLog(string logString, string stackTrace, LogType type)
     {
@@ -19,7 +19,6 @@ public class NetworkClientTest
     public void Setup()
     {
         Application.logMessageReceived += HandleLog;
-        m_ReceivedMessages = 0;
     }
 
     [TearDown]
@@ -36,3 +35,4 @@ public class NetworkClientTest
         Assert.AreEqual(null, s_LatestLogMessage);
     }
 }
+#pragma warning restore 618

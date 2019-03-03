@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class GetCurrentRTTCallDoesntCrashWhenUseWebSockets
 {
     [UnityTest]
@@ -42,3 +43,4 @@ public class GetCurrentRTTCallDoesntCrashWhenUseWebSockets
         Object.Destroy(nmObject);
     }
 }
+#pragma warning restore 618

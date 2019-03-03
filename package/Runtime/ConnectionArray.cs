@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     // This has a list of real connections
@@ -123,4 +124,5 @@ namespace UnityEngine.Networking
         }
     }
 }
+#pragma warning restore 618
 #endif //ENABLE_UNET

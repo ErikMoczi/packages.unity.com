@@ -1,6 +1,7 @@
 #if ENABLE_UNET
 using System.Collections.Generic;
 
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     sealed class LocalClient : NetworkClient
@@ -171,4 +172,5 @@ namespace UnityEngine.Networking
         }
     }
 }
+#pragma warning restore 618
 #endif //ENABLE_UNET

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NetworkObserversObjectsWork : SpawningTestBase
 {
     private GameObject observerFar, observerClose;
@@ -65,3 +66,4 @@ public class NetworkObserversObjectsWork : SpawningTestBase
         isDone = true;
     }
 }
+#pragma warning restore 618

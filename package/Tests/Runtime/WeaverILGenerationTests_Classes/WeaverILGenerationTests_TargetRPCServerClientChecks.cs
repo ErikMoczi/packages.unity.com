@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class WeaverILGenerationTests_TargetRPCServerClientChecks : NetworkBehaviour
 {
     [TargetRpc]
@@ -15,3 +16,4 @@ public class WeaverILGenerationTests_TargetRPCServerClientChecks : NetworkBehavi
     {
     }
 }
+#pragma warning restore 618

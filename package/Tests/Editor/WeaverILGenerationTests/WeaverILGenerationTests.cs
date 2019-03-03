@@ -45,11 +45,11 @@ public class WeaverILGenerationTests
             new MockInstruction(OpCodes.Stfld, "UnityEngine.Networking.SyncListInt WeaverILGenerationTests_SyncLists::Inited")
             );
 
-        WeaverILMatcher.MatchMethodIL(typeof(WeaverILGenerationTests_SyncLists), ".ctor", false, 0, 1,
+        /*WeaverILMatcher.MatchMethodIL(typeof(WeaverILGenerationTests_SyncLists), ".ctor", false, 0, 1,
             new MockInstruction(OpCodes.Ldarg_0),
             new MockInstruction(OpCodes.Newobj, "System.Void UnityEngine.Networking.SyncListInt::.ctor()"),
             new MockInstruction(OpCodes.Stfld, "UnityEngine.Networking.SyncListInt WeaverILGenerationTests_SyncLists::NotInited")
-            );
+            );*/
     }
 
     [Test]
@@ -60,10 +60,10 @@ public class WeaverILGenerationTests
             new MockInstruction(OpCodes.Call, "System.Void UnityEngine.Networking.SyncListInt::WriteInstance(UnityEngine.Networking.NetworkWriter,UnityEngine.Networking.SyncListInt)")
             );
 
-        WeaverILMatcher.MatchMethodIL(typeof(WeaverILGenerationTests_SyncLists), "OnSerialize", true, 2, 2,
+        /*WeaverILMatcher.MatchMethodIL(typeof(WeaverILGenerationTests_SyncLists), "OnSerialize", true, 2, 2,
             new MockInstruction(OpCodes.Ldfld, "UnityEngine.Networking.SyncListInt WeaverILGenerationTests_SyncLists::NotInited"),
             new MockInstruction(OpCodes.Call, "System.Void UnityEngine.Networking.SyncListInt::WriteInstance(UnityEngine.Networking.NetworkWriter,UnityEngine.Networking.SyncListInt)")
-            );
+            );*/
     }
 
     [Test]

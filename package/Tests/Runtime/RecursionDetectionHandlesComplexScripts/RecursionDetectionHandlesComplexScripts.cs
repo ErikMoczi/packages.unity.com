@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class RecursionDetectionHandlesComplexScripts
 {
     [UnityTest]
@@ -411,3 +412,4 @@ public class RecursionDetectionHandlesComplexScripts
         void RpcTest149(int p1, string p2) {}
     }
 }
+#pragma warning restore 618

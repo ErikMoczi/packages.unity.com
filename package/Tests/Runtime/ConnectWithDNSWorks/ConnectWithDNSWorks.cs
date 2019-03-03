@@ -4,7 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
-
+#pragma warning disable 618
 public class ConnectWithDNSWorks
 {
     int kListenPort = 7073;
@@ -79,3 +79,4 @@ public class ConnectWithDNSWorks
         steps += 1;
     }
 }
+#pragma warning restore 618

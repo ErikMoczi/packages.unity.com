@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
+#pragma warning disable 618
 public class TwoInstancesOfServerSimpleWorkInOneProcess
 {
     NetworkServerSimple server1;
@@ -95,3 +96,4 @@ public class TwoInstancesOfServerSimpleWorkInOneProcess
         actualMsgCount += 1;
     }
 }
+#pragma warning restore 618

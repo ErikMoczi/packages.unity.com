@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 [TestFixture]
 public class NetworkReaderWriter_BasicTypesTest
 {
@@ -229,3 +230,4 @@ public class NetworkReaderWriter_BasicTypesTest
         Assert.AreEqual(string.Empty, reader.ReadString(), "Writer and Reader have different values for 'string' type");
     }
 }
+#pragma warning restore 618

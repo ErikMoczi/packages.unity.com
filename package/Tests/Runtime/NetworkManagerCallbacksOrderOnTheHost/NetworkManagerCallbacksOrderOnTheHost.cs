@@ -5,6 +5,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NetworkManagerCallbacksOrderOnTheHost
 {
     public static List<string> resultListOfCallbacks = new List<string>()
@@ -56,3 +57,4 @@ public class NetworkManagerCallbacksOrderOnTheHost
         Object.Destroy(nmObject);
     }
 }
+#pragma warning restore 618

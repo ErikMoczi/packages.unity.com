@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityObject = UnityEngine.Object;
 
+#pragma warning disable 618
 namespace UnityEditor
 {
     [CustomEditor(typeof(NetworkLobbyManager), true)]
@@ -252,4 +253,5 @@ namespace UnityEditor
         }
     }
 }
+#pragma warning restore 618
 #endif // ENABLE_UNET

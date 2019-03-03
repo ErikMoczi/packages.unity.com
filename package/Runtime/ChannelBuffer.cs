@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     class ChannelBuffer : IDisposable
@@ -398,4 +399,5 @@ namespace UnityEngine.Networking
         }
     }
 }
+#pragma warning restore 618
 #endif //ENABLE_UNET

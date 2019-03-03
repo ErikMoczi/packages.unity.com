@@ -4,7 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
-
+#pragma warning disable 618
 public class MessageTypes
 {
     public const short CSHelloMsgType = MsgType.Highest + 1;
@@ -85,3 +85,4 @@ public class SCUpdateMessage : MessageBase
         writer.FinishMessage();
     }
 }
+#pragma warning restore 618

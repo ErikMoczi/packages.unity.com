@@ -18,11 +18,33 @@ If you want to contribute patches back, please keep it under the unmodified MIT 
 
 or
 
-* Add the package to your project manifest.json file, located in the Packages folder. Under dependencies add the line _"com.unity.multiplayer-hlapi": "0.2.0"_ to the list of packages. A specific version needs to be chosen.
+* Add the package to your project manifest.json file, located in the Packages folder. Under dependencies add the line _"com.unity.multiplayer-hlapi": "0.2.6-preview"_ to the list of packages. A specific version needs to be chosen.
 
 or
 
 * Clone this repository into the Packages folder.
+
+### Running tests ###
+
+When the package files are directly included in the Packages folder of the projects (or somewhere in the Assets folder), the tests will appear and can be executed. 
+
+When including the package via the manifest.json file the `testable` field needs to be added:
+
+```
+{
+  "dependencies": {
+    "com.unity.multiplayer-hlapi": "0.2.6-preview",
+    ... more stuff...
+  },
+  "testables": [
+    "com.unity.multiplayer-hlapi"
+  ]
+}
+```
+
+where there referenced package number should be the latest or whatever version is being tested.
+
+When the package is included for the first time, it will be compiled, and some of the test will fail to run since the weaver has not had a chance to run yet. Triggering a recompile should fix that, for example by reimporting some script or triggering a build.
 
 ### Will you be taking pull requests? ###
 We'll consider all incoming pull requests that we get. It's likely we'll take bug fixes this way but anything else will be handled on a case by case basis. Changes will not be applied directly to this repository but to an internal package repository which will be periodically synchronized with this one.

@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System.Collections;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NetworkManagerWorksWithNullScenesTest
 {
     [UnityTest]
@@ -34,3 +35,4 @@ public class NetworkManagerWorksWithNullScenesTest
         Object.Destroy(networkManagerObj);
     }
 }
+#pragma warning restore 618

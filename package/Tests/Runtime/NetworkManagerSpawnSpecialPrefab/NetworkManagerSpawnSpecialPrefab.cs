@@ -7,6 +7,7 @@ using UnityEngine.Networking;
 using UnityEngine.TestTools;
 using UnityEngine.Windows;
 
+#pragma warning disable 618
 class NetworkManagerSpawnSpecialPrefab : IPrebuildSetup
 {
     public void Setup()
@@ -83,3 +84,4 @@ class NetworkManagerSpawnSpecialPrefab : IPrebuildSetup
         }
     }
 }
+#pragma warning restore 618

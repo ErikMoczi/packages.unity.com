@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NetworkDiscoveryWorks
 {
     const string testData = "TESTING";
@@ -57,3 +58,4 @@ public class NetworkDiscoveryWorks
         Object.Destroy(clientDiscovery);
     }
 }
+#pragma warning restore 618

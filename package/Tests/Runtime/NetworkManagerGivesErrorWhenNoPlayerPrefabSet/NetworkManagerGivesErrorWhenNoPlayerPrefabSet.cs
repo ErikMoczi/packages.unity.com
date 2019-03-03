@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NetworkManagerGivesErrorWhenNoPlayerPrefabSet
 {
     public class CustomNetworkManagerGivesErrorWhenNoPlayerPrefabSet : NetworkManager
@@ -46,3 +47,4 @@ public class NetworkManagerGivesErrorWhenNoPlayerPrefabSet
         Object.Destroy(nmObject);
     }
 }
+#pragma warning restore 618

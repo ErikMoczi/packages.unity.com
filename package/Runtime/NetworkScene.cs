@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     // This is an internal class to allow the client and server to share scene-related functionality.
@@ -284,4 +285,5 @@ namespace UnityEngine.Networking
         }
     }
 }
+#pragma warning restore 618
 #endif //ENABLE_UNET

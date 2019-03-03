@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking.NetworkSystem;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class ReadyStateBehavesCorrectly
 {
     int kListenPort = 7073;
@@ -104,3 +105,4 @@ public class ReadyStateBehavesCorrectly
         }
     }
 }
+#pragma warning restore 618

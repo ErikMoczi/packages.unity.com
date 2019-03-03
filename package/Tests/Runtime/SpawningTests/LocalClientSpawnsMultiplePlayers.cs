@@ -5,6 +5,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class LocalClientSpawnsMultiplePlayers : SpawningTestBase
 {
     const int kPlayerCount = 2;
@@ -58,3 +59,4 @@ public class LocalClientSpawnsMultiplePlayers : SpawningTestBase
         }
     }
 }
+#pragma warning restore 618

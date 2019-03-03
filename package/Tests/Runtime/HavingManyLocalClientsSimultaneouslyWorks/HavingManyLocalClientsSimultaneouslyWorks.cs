@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking.NetworkSystem;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class HavingManyLocalClientsSimultaneouslyWorks
 {
     int kListenPort = 7073;
@@ -92,3 +93,4 @@ public class HavingManyLocalClientsSimultaneouslyWorks
         Assert.Fail("Error: " + msg.errorCode);
     }
 }
+#pragma warning restore 618

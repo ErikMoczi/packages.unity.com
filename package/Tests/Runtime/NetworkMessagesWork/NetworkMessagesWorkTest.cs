@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Networking;
 
-
+#pragma warning disable 618
 public class NetworkMessagesWorkTest
 {
     string m_ip = "127.0.0.1";
@@ -92,3 +92,4 @@ public class NetworkMessagesWorkTest
         isDone = true;
     }
 }
+#pragma warning restore 618

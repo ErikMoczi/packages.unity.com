@@ -1,6 +1,8 @@
 using UnityEngine;
 using NUnit.Framework;
 using UnityEngine.Networking;
+
+#pragma warning disable 618
 public class PlayerWithAuthority : NetworkBehaviour
 {
     GameObject spawned;
@@ -42,3 +44,4 @@ public class PlayerWithAuthority : NetworkBehaviour
         spawned.GetComponent<NetworkIdentity>().RemoveClientAuthority(connectionToClient);
     }
 }
+#pragma warning restore 618

@@ -1,5 +1,6 @@
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class UnetPlayerWithGetCurrentRTTCallScript : NetworkBehaviour
 {
     public bool isDone;
@@ -15,3 +16,4 @@ public class UnetPlayerWithGetCurrentRTTCallScript : NetworkBehaviour
         }
     }
 }
+#pragma warning restore 618

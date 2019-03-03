@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class CustomNetworkManagerWithCallbacks : NetworkManager
 {
     public List<string> actualListOfCallbacks = new List<string>();
@@ -66,3 +67,4 @@ public class CustomNetworkManagerWithCallbacks : NetworkManager
         isStopHostPartDone = true;
     }
 }
+#pragma warning restore 618

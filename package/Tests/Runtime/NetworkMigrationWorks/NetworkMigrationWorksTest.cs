@@ -6,6 +6,7 @@ using UnityEngine.TestTools;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 
+#pragma warning disable 618
 public class NetworkMigrationWorksTest
 {
     private GameObject netManagerObj;
@@ -65,3 +66,4 @@ public class NetworkMigrationWorksTest
         networkMigrManager.SendPeerInfo();
     }
 }
+#pragma warning restore 618

@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class ChannelBufferHandlesOverflow
 {
     int kListenPort = 7073;
@@ -84,3 +85,4 @@ public class ChannelBufferHandlesOverflow
         isTestDone = true;
     }
 }
+#pragma warning restore 618

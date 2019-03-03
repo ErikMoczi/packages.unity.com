@@ -1,5 +1,6 @@
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class SpawningBase_SpawnableObjectScript : NetworkBehaviour
 {
     public override void OnStartServer()
@@ -17,3 +18,4 @@ public class SpawningBase_SpawnableObjectScript : NetworkBehaviour
         SpawningTestBase.IncrementDestroyClient();
     }
 }
+#pragma warning restore 618

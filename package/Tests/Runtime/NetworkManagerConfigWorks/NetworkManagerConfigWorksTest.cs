@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Networking;
 
-
+#pragma warning disable 618
 public class NetworkManagerConfigWorksTest
 {
     NetworkManager netManager;
@@ -84,3 +84,4 @@ public class NetworkManagerConfigWorksTest
         netManager.StopServer();
     }
 }
+#pragma warning restore 618

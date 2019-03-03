@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NoAuthSpawnableObject : NetworkBehaviour
 {
     // this object is spawned without client Authority, then set
@@ -20,3 +21,4 @@ public class NoAuthSpawnableObject : NetworkBehaviour
         AuthorityOnSpawnedObjectsIsCorrect.isTestDone = true;
     }
 }
+#pragma warning restore 618

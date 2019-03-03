@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class PlayerCallbacksOrderOnTheHostScript : NetworkBehaviour
 {
     public List<string> actualListOfCallbacks = new List<string>();
@@ -43,3 +44,4 @@ public class PlayerCallbacksOrderOnTheHostScript : NetworkBehaviour
         isDone = true;
     }
 }
+#pragma warning restore 618

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.6-preview] - 2019-02-13
+
+### Changed
+- Got rid of all warnings generated when the package is built, so it's CI/automation friendly
+- Readme updated
+
 ## [0.2.5-preview] - 2019-01-29
 
 ### Changed

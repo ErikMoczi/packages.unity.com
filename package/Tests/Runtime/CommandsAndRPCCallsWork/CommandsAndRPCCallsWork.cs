@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
+#pragma warning disable 618
 public class CommandsAndRPCCallsWork
 {
     int kListenPort = 7073;
@@ -221,3 +222,4 @@ public class CommandsAndRPCCallsWork
         }
     }
 }
+#pragma warning restore 618

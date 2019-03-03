@@ -1,6 +1,7 @@
 #if ENABLE_UNET
 using System;
 
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     // This is used by the ChannelBuffer when buffering traffic.
@@ -76,4 +77,5 @@ namespace UnityEngine.Networking
         bool m_IsReliable;
     }
 }
+#pragma warning restore 618
 #endif //ENABLE_UNET

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class NetworkBehaviourCallbacksOrderOnTheHost
 {
     public static List<string> expectedListOfCallbacks = new List<string>()
@@ -50,3 +51,4 @@ public class NetworkBehaviourCallbacksOrderOnTheHost
         Object.Destroy(nmObject);
     }
 }
+#pragma warning restore 618

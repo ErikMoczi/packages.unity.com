@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class WeaverILGenerationTests_SyncLists_Base : NetworkBehaviour
 {
     void Awake()
@@ -15,6 +16,10 @@ public class WeaverILGenerationTests_SyncLists : WeaverILGenerationTests_SyncLis
 {
     public SyncListInt Inited = new SyncListInt();
 
-    [SyncVar]
-    public SyncListInt NotInited;
+	// This can't be enabled by default as it will issue a warning from the weaver at compile time. This 
+	// warning will appear in all projects including the package and can mess with CI or automation which checks for output
+	// in the editor log.
+    //[SyncVar]
+    //public SyncListInt NotInited;
 }
+#pragma warning restore 618

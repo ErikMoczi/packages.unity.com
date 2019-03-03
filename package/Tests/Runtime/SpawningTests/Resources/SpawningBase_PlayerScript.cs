@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class SpawningBase_PlayerScript : NetworkBehaviour
 {
     [SyncVar]
@@ -23,3 +24,4 @@ public class SpawningBase_PlayerScript : NetworkBehaviour
         SpawningTestBase.IncrementStartClient();
     }
 }
+#pragma warning restore 618

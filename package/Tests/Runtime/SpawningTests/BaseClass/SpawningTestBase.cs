@@ -2,6 +2,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class SpawningTestBase : MonoBehaviour
 {
     // CreateNamedPrefab - simply use prefabs in Resources folder
@@ -149,3 +150,4 @@ public class SpawningTestBase : MonoBehaviour
     {
     }
 }
+#pragma warning restore 618

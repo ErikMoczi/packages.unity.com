@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-
+#pragma warning disable 618
 namespace UnityEngine.Networking
 {
     /// <summary>
@@ -813,3 +813,4 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 }
+#pragma warning restore 618

@@ -4,6 +4,7 @@ using UnityEngine.TestTools;
 using UnityEngine;
 using UnityEngine.Networking;
 
+#pragma warning disable 618
 public class SpawnObjectAfterConnect : SpawningTestBase
 {
     bool isDone;
@@ -44,3 +45,4 @@ public class SpawnObjectAfterConnect : SpawningTestBase
         isDone = true;
     }
 }
+#pragma warning restore 618
