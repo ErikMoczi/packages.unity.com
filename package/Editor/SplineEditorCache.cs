@@ -18,8 +18,10 @@ namespace UnityEditor.U2D
         Dictionary<int, Vector3> m_RightTangentsBroken = new Dictionary<int, Vector3>();
         Dictionary<int, Vector3> m_LeftTangentsContinous = new Dictionary<int, Vector3>();
         Dictionary<int, Vector3> m_RightTangentsContinous = new Dictionary<int, Vector3>();
-        
+
+        SpriteShapeAnalytics m_Analytics = null;
         static SplineEditorCache m_Instance;
+
         public static SplineEditorCache instance
         {
             get
@@ -34,6 +36,24 @@ namespace UnityEditor.U2D
                 }
 
                 return m_Instance;
+            }
+        }
+
+        internal SpriteShapeAnalyticsEvents events
+        {
+            get
+            {
+                return analytics.events;
+            }
+        }
+
+        internal SpriteShapeAnalytics analytics
+        {
+            get
+            {
+                if (m_Analytics == null)
+                    m_Analytics = new SpriteShapeAnalytics(new SpriteShapeUnityAnalyticsStorage());
+                return m_Analytics;
             }
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor;
+using UnityEngine.Experimental.U2D;
 
 namespace UnityEditor.U2D
 {
@@ -22,6 +23,7 @@ namespace UnityEditor.U2D
             ProjectWindowUtil.CreateAsset(spriteShape, "New SpriteShapeProfile.asset");
             Selection.activeObject = spriteShape;
 
+            SplineEditorCache.instance.events.spriteShapeEvent.Invoke(spriteShape);
             return spriteShape;
         }
 
@@ -34,6 +36,7 @@ namespace UnityEditor.U2D
             if (shape != null)
                 objName = shape.name;
             gameObject.name = GameObjectUtility.GetUniqueNameForSibling(gameObject.transform.parent, objName);
+            SplineEditorCache.instance.events.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
             return spriteShapeController;
         }
 
@@ -60,6 +63,7 @@ namespace UnityEditor.U2D
             Undo.RegisterCreatedObjectUndo(gameObject, Contents.createSpriteShapeString);
             Selection.activeGameObject = gameObject;
             spriteShapeController.spline.Clear();
+            SplineEditorCache.instance.events.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
             return spriteShapeController;
         }
 
