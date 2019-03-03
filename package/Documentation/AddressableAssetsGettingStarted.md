@@ -63,6 +63,11 @@ or
     }
 ```
 
+#### Sub-Assets and Components
+Sub-assets and components are special cases worth looking at for asset loading.  
+* Components - you cannot load a game object via it's component.  Neither `LoadAsset<MyScript>` nor `Instantiate<MyScript>` will work.  You must load/instantiate the GameObject and then get your component off of it.
+* Sub-Assets - Loading of sub-assets is supported, but via special syntax.  Examples of sub-assets would be sprites in a sprite sheet, or animation clips in an FBX. The syntax here would be: `Addressables.LoadAsset<IList<Sprite>>("MySpriteSheetAddress");`
+
 ### Using the AssetReference Class
 
 The *AssetReference* class provides a mechanism to access Assets without the need to know string (or other) addresses.
@@ -94,9 +99,11 @@ or
 
 ### Downloading in Advance
 
-Calling the `Addressables.PreloadDependencies()` method loads the dependencies for the address or label that you pass in. Typically, this is the asset bundle.
+Calling the `Addressables.DownloadDependencies()` method loads the dependencies for the address or label that you pass in. Typically, this is the asset bundle.
 
 The `IAsyncOperation` object returned by this call includes a `PercentComplete` attribute that you can use to monitor progress of downloads. You can use the percent complete to display a progress bar and have the app wait until the content has loaded.
+
+If you wish to ask the user for consent prior to downloading, you can use `Addressables.GetDownloadSize()`.  This will tell you how much data needs to be downloaded to support a given address or label.  This does take into account any previously downloaded bundles that are still in Unity's asset bundle cache.
 
 While it can be advantageous to download assets for your app in advance, there are instances where you might choose not do so. For example:
 

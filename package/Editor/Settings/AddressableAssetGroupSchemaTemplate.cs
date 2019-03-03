@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.ResourceManagement;
+using UnityEngine.ResourceManagement.Util;
 using UnityEngine.Serialization;
 
-namespace UnityEditor.AddressableAssets
+namespace UnityEditor.AddressableAssets.Settings
 {
     /// <summary>
     /// Contains a set of schemas used by the GUI to create predefined asset groups.

@@ -35,29 +35,35 @@ The following table shows segment of the development cycle in which a particular
 Virtual| x | x | x Asset Bundle Layout | x In Editor only |  |
 | Packed|   |   | x Asset Bundles  | x | x |
 
+## Analisys and Debugging
+
+By default, Addressables logging will only show warnings and errors.  You can enable versbose logging by adding the ADDRESSABLES_LOG_ALL compiler flag to the player settings.  Exceptions can also be disabled by unchecking the "Log Runtime Exceptions" option in the AddressableAssetSettings object inspector.  The ResourceManager.ExceptionHandler property can be set with your own exception handler if desired, but this should be done after the Addressables runtime has finished initialization.
+
 ## Initialization objects
 
 You can attach objects to the Addressable Assets settings and pass them to the initialization process at run time. The `CacheInitializationSettings` object is used to control the Unity's Caching API at runtime. To create your own initialization object, you can create a `ScriptableObject` that implements the `IObjectInitializationDataProvider` interface. It is the editor component of the system and is responsible for creating the `ObjectInitializationData` that is serialized with the run time data.
 
 ## Content update workflow
 
-The recommended approach to content updates is to structure your game data into two groups: static content that you expect never to update and dynamic content that you expect to update. In this content structure, static content ships with the Player (or download soon after install) and resides in a single or a few large bundles. Dynamic content resides online and should be in smaller bundles to minimize the amount of data needed for each update. One of the goals of the Addressables system is to make this structure easy to work with and modify without having to change scripts. Sometimes you find yourself in a situation that requires changes to the "never update" content but you do not want to publish a full player build. 
+The recommended approach to content updates is to structure your game data into two categories: static content that you expect never to update and dynamic content that you expect to update. In this content structure, static content ships with the Player (or download soon after install) and resides in a single or a few large bundles. Dynamic content resides online and should be in smaller bundles to minimize the amount of data needed for each update. One of the goals of the Addressables system is to make this structure easy to work with and modify without having to change scripts. Sometimes you find yourself in a situation that requires changes to the "never update" content but you do not want to publish a full player build. 
 
 ### How it works
 
-When you build a Player, you generate a unique Player content version string. The version string, along with hash information for each asset that is in a group marked as `StaticContent`, is stored in the *addressables_content_state.bin* file. The *addressables_content_state.bin* file contains hash and dependency information for every `StaticContent` asset group in the Addressables system. You should store this file where you can easily retrieve it.
+Addressables uses what we refer to as a "content catalog" to map an address to a specific "where and how" to load.  In order to provide your app with the ability to modify that mapping, your original app must be aware of an online copy of this catalog.  To set that up, enable *Build Remote Catalog* on the main AddressableAssetSettings object.  With that enabled, a copy of the catalog will be built-to and loaded-from the specified paths.  This load path cannot change once your app has shipped.  The content update process creates a new version of the catalog (with the same file name) to overwrite the file at the previously specified load path.
 
-Typically, `StaticContent` groups are built in the streaming assets folder, but can include remote groups that are large. The Player uses the unique content version string to identify the correct remote content catalog to load at startup. Each Player build looks for a different remote catalog. If a content only update is desired, the Addressables system can use the generated hash data of any previous Player build to determine which addressable assets need to move to a new group to support the update.
+When you build a Player, a unique Player content version string is generated. This version is used to identify which content catalog each player should load.  Thus a given server can contain catalogs of multiple versions of your app without conflict.  The version string, along with hash information for each asset that is in a group marked as `StaticContent`, is stored in the *addressables_content_state.bin* file. By default, this file is stored in the same folder as your AddressableAssetSettings.asset file.  
+
+The *addressables_content_state.bin* file contains hash and dependency information for every `StaticContent` asset group in the Addressables system. All groups buliding to the streaming assets folder should be marked as `StaticContent`, though remote groups that are large may also benefit from this designation.  During the **Prepare for Content Update** step, this hash information is used to determine if any `StaticContent` groups contain changed asses, and thus need those assets moved elsewhere.
 
 ### Prepare for Content Update
-When you build the Player, you can generate the new asset groups you need to properly update published content. To generate the the asset groups:
+If you have modified assets in any `StaticContent` groups, you need to run **Prepare for Content Update**.  This will take any modified asset out of the static groups, and move them to a new group.  To generate the new asset groups:
 
 1. In the Editor, on the menu bar, click **Window**.
 1. Click **Asset Management**, then select **Addressable Assets**.
 1. In the Addressable Assets window, on the menu bar, click **Build**, then select **Prepare for Content Update**.
-1. In the **Build Data File** dialog, select the build folder of a Player build.
+1. In the **Build Data File** dialog, select the *addressables_content_state.bin* file which is probably in *Assets/AddressableAssetsData*.
 
-This data is used to determine which assets or dependencies have been modified since the player was built. These assets are moved to a new group in preparation of the content update build.
+This data is used to determine which assets or dependencies have been modified since the player was built. These assets are moved to a new group in preparation of the content update build.  Note that this step will do nothing if all your changes are confined to the non-Static groups.  
 
 ### Build for Content Update
 
@@ -77,11 +83,86 @@ Asset bundles that do not contain updated content are written using the same fil
 
 Asset bundles for `StaticContent` groups are also built, but they do not need to be uploaded to the content hosting location as they are not referenced by any Addressable asset entries.
 
+### Examples
+Let's say I've built my player with awareness the following groups:
+```
+Local_Static
+- AssetA
+- AssetB
+- AssetC
+-----------------------
+Remote_Static
+- AssetL
+- AssetM
+- AssetN
+-----------------------
+Remote_NonStatic
+- AssetX
+- AssetY
+- AssetZ
+```
+Now, I've shipped this.  So there are players out in the world that have Local_Static on their devices, and potentially have either or both of the Remote bundles cached locally.  Next I modified one asset from each group (A, L, X) and run "Prepare For Content Update".  
+**Before running Prepare** we recommend branching your version control system.  Prepare rearranges your groups in a way suited for updating content.  It is recommended that you branch so that next time you ship a new player, you can return to your preferred content arrangement.
+The results _in my local Addressable Settings_ are:
+```
+Local_Static
+- AssetB
+- AssetC
+-----------------------
+Remote_Static
+- AssetM
+- AssetN
+-----------------------
+Remote_NonStatic
+- AssetX
+- AssetY
+- AssetZ
+-----------------------
+content_update_group (non-static)
+- AssetA
+- AssetL
+```
+Note that Prepare actually edits the groups that are Static (can't be edited).  This may seem counter intuitive.  The key, is that I build the above layout, but discard the build results for any _Static groups.  As such, I end up with the following from my player's perspective:
+```
+Local_Static   <-- already on device, as we can't change that
+- AssetA       <-- this version of AssetA is no longer referenced. It's stuck on their device as dead data.
+- AssetB
+- AssetC
+-----------------------
+Remote_Static  <-- This bundle is unchanged.  If it is not already cached on device,
+                   it will be downloaded when M or N is requested
+- AssetL       <-- this version of AssetL is no longer referenced. It's stuck in this bundle as dead data.
+- AssetM
+- AssetN
+-----------------------
+Remote_NonStatic (old) <-- this could be deleted from the server, but if not will never be re-downloaded.  
+                            If cached, it will leave the cache eventually (in-progress feature to 
+                            immediately remove automatically)
+- AssetX     <-- old version
+- AssetY
+- AssetZ
+-----------------------
+Remote_NonStatic (new) <-- new version distinguished on server by hash.   
+- AssetX     <-- new version
+- AssetY
+- AssetZ
+-----------------------
+content_update_group 
+- AssetA
+- AssetL
+```
+Here are the implications of the above:
+1. Local: Any changed local assets will remain unused on the user's device forever.  
+2. Remote_NonStatic: If the user already cached a non-static bundle, they will require re-download of even the unchanged assets (AssetY and AssetZ). If they have not cached the bundles, then this is the ideal scenario (only downloading new_Remote_NonStatic)
+3. Remote_Static: If the user has already cached the static remote bundle, then they only need to download the updated asset (AssetL, via content_update_group).  This is the ideal in this case.  If the user has not cached the group, then they will download both the new AssetL via content_update_group and the now-dead AssetL via un-touched Remote_Static.  Regardless of initial cache state, at some point the user will have the dead AssetL on their device, cached indefinitely despite not being accessed. 
+
+Which setup is better for your remote content depends on your specific scenario.
+
 ## Analyzing your data
-To analyze your data configuration for potential problems, open the Addressables Window, and click the **Analyze** button on the top bar of that window.  This will open a sub-pane within the Addressables window.  From there you can click "Run Tests" to execute the analyze rules in the project.  After runing a test, if there are any potential problems, you can manually alter your groups and rerun, or click "Fix All" to have the system automatically do it. 
+To analyze your data configuration for potential problems, open the Addressables Window, and click the **Analyze** button on the top bar of that window.  This will open a sub-pane within the Addressables window.  From there you can click "Run Tests" to execute the analyze rules in the project.  After running a test, if there are any potential problems, you can manually alter your groups and rerun, or click "Fix All" to have the system automatically do it. 
 
 ### Check Duplicate Bundle Dependencies
-The only rule currently present checks for potentially duplicated assets.  It does so by scanning all groups with BundledAssetGroupSchemas, and spies on the planned asset bundle layout.  This requires essencially triggering a full build, so this check is time consuming and performance intensive.  
+The only rule currently present checks for potentially duplicated assets.  It does so by scanning all groups with BundledAssetGroupSchemas, and spies on the planned asset bundle layout.  This requires essentially triggering a full build, so this check is time consuming and performance intensive.  
 
 Duplicated assets are caused by assets in different bundles sharing dependencies.  An example would be marking two prefabs that share a material as addressable in different groups.  That material (and any of its dependencies) will be pulled into the bundles with each prefab.  To prevent this, the material has to be marked as addressable, either with one of the prefabs, or in its own space.  Doing so will put the material and its dependencies in a separate bundle.  
 

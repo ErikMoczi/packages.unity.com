@@ -2,5 +2,6 @@
     * [Addressable Assets overview](AddressableAssetsOverview)
     * [Getting Started with Addressable Assets](AddressableAssetsGettingStarted)
     * [Addressable Assets development cycle](AddressableAssetsDevelopmentCycle)
-    * [Hosting Services](AddressableAssetsHostingServices.md)
+    * [Hosting Services](AddressableAssetsHostingServices)
     * [Migration Guide](AddressableAssetsMigrationGuide)
+    * [Memory Management](MemoryManagement)
