@@ -453,10 +453,10 @@ namespace Unity.UNetWeaver
 
             // create new reader for this type
             MethodDefinition readerFunc = new MethodDefinition(functionName,
-                    MethodAttributes.Public |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    variable);
+                MethodAttributes.Public |
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                variable);
 
             readerFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, scriptDef.MainModule.ImportReference(NetworkReaderType)));
 
@@ -536,10 +536,10 @@ namespace Unity.UNetWeaver
 
             // create new writer for this type
             MethodDefinition writerFunc = new MethodDefinition(functionName,
-                    MethodAttributes.Public |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    voidType);
+                MethodAttributes.Public |
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                voidType);
 
             writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, scriptDef.MainModule.ImportReference(NetworkWriterType)));
             writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, scriptDef.MainModule.ImportReference(variable)));
@@ -624,10 +624,10 @@ namespace Unity.UNetWeaver
             }
             // create new writer for this type
             MethodDefinition writerFunc = new MethodDefinition(functionName,
-                    MethodAttributes.Public |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    voidType);
+                MethodAttributes.Public |
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                voidType);
 
             writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, scriptDef.MainModule.ImportReference(NetworkWriterType)));
             writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, scriptDef.MainModule.ImportReference(variable)));
@@ -642,14 +642,14 @@ namespace Unity.UNetWeaver
 
                 if (field.FieldType.Resolve().HasGenericParameters)
                 {
-                    Weaver.fail = true;
+                    fail = true;
                     Log.Error("WriteReadFunc for " + field.Name + " [" + field.FieldType + "/" + field.FieldType.FullName + "]. Cannot have generic parameters.");
                     return null;
                 }
 
                 if (field.FieldType.Resolve().IsInterface)
                 {
-                    Weaver.fail = true;
+                    fail = true;
                     Log.Error("WriteReadFunc for " + field.Name + " [" + field.FieldType + "/" + field.FieldType.FullName + "]. Cannot be an interface.");
                     return null;
                 }
@@ -697,10 +697,10 @@ namespace Unity.UNetWeaver
 
             // create new reader for this type
             MethodDefinition readerFunc = new MethodDefinition(functionName,
-                    MethodAttributes.Public |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    variable);
+                MethodAttributes.Public |
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                variable);
 
             // create local for return value
             readerFunc.Body.Variables.Add(new VariableDefinition(variable));
@@ -851,8 +851,8 @@ namespace Unity.UNetWeaver
             if (lists.generateContainerClass == null)
             {
                 lists.generateContainerClass = new TypeDefinition("Unity", "GeneratedNetworkCode",
-                        TypeAttributes.BeforeFieldInit | TypeAttributes.Class | TypeAttributes.AnsiClass | TypeAttributes.Public | TypeAttributes.AutoClass,
-                        objectType);
+                    TypeAttributes.BeforeFieldInit | TypeAttributes.Class | TypeAttributes.AnsiClass | TypeAttributes.Public | TypeAttributes.AutoClass,
+                    objectType);
 
                 const MethodAttributes methodAttributes = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
                 var method = new MethodDefinition(".ctor", methodAttributes, voidType);
@@ -1613,23 +1613,21 @@ namespace Unity.UNetWeaver
             return false;
         }
 
-        static public bool IsValidTypeToGenerate(TypeDefinition variable)
+        public static bool IsValidTypeToGenerate(TypeDefinition variable)
         {
             // a valid type is a simple class or struct. so we generate only code for types we dont know, and if they are not inside
             // this assembly it must mean that we are trying to serialize a variable outside our scope. and this will fail.
 
-            string assembly = Weaver.scriptDef.MainModule.Name;
-            if (variable.Module.Name != assembly)
-            {
-                Log.Error("parameter [" + variable.Name +
-                    "] is of the type [" +
-                    variable.FullName +
-                    "] is not a valid type, please make sure to use a valid type.");
-                Weaver.fail = true;
-                fail = true;
-                return false;
-            }
-            return true;
+            string assembly = scriptDef.MainModule.Name;
+            if (variable.Module.Name == assembly)
+                return true;
+
+            Log.Error("parameter [" + variable.Name +
+                "] is of the type [" +
+                variable.FullName +
+                "] is not a valid type, please make sure to use a valid type.");
+            fail = true;
+            return false;
         }
 
         static void CheckMonoBehaviour(TypeDefinition td)
@@ -1870,9 +1868,7 @@ namespace Unity.UNetWeaver
                 scriptDef.MainModule.SymbolReader.Dispose();
 
             if (pdbToDelete != null)
-            {
                 File.Delete(pdbToDelete);
-            }
 
             return true;
         }

@@ -70,8 +70,8 @@ namespace UnityEngine.Networking
             s_IsReady = false;
             s_IsSpawnFinished = false;
             s_ReconnectId = ReconnectIdInvalid;
-            NetworkTransport.Shutdown();
-            NetworkTransport.Init();
+            NetworkTransportHelper.Shutdown();
+            NetworkTransportHelper.Init();
         }
 
         internal static bool GetPlayerController(short playerControllerId, out PlayerController player)

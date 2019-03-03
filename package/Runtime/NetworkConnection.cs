@@ -180,7 +180,7 @@ namespace UnityEngine.Networking
                 return;
             }
             byte error;
-            NetworkTransport.Disconnect(hostId, connectionId, out error);
+            NetworkTransportHelper.Disconnect(hostId, connectionId, out error);
 
             RemoveObservers();
         }
@@ -406,8 +406,8 @@ namespace UnityEngine.Networking
                     var value = m_PacketStats[i];
                     value.count = 0;
                     value.bytes = 0;
-                    NetworkTransport.SetPacketStat(0, i, 0, 0);
-                    NetworkTransport.SetPacketStat(1, i, 0, 0);
+                    NetworkTransportHelper.SetPacketStat(0, i, 0, 0);
+                    NetworkTransportHelper.SetPacketStat(1, i, 0, 0);
                 }
             }
 #endif
@@ -579,7 +579,7 @@ namespace UnityEngine.Networking
 
         public virtual bool TransportSend(byte[] bytes, int numBytes, int channelId, out byte error)
         {
-            return NetworkTransport.Send(hostId, connectionId, channelId, bytes, numBytes, out error);
+            return NetworkTransportHelper.Send(hostId, connectionId, channelId, bytes, numBytes, out error);
         }
 
         internal void AddOwnedObject(NetworkIdentity obj)

@@ -275,7 +275,7 @@ namespace UnityEngine.Networking
                     NetworkID networkId;
                     NodeID node;
                     byte error2;
-                    NetworkTransport.GetConnectionInfo(NetworkServer.serverHostId, conn.connectionId, out address, out port, out networkId, out node, out error2);
+                    NetworkTransportHelper.GetConnectionInfo(NetworkServer.serverHostId, conn.connectionId, out address, out port, out networkId, out node, out error2);
 
                     peerInfo.connectionId = conn.connectionId;
                     peerInfo.port = port;
@@ -571,7 +571,7 @@ namespace UnityEngine.Networking
 
 
             byte error;
-            NetworkTransport.Disconnect(m_Client.hostId, m_Client.connection.connectionId, out error);
+            NetworkTransportHelper.Disconnect(m_Client.hostId, m_Client.connection.connectionId, out error);
 
             if (m_OldServerConnectionId != -1)
             {

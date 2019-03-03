@@ -89,7 +89,7 @@ namespace UnityEngine.Networking
 
         NetworkServer()
         {
-            NetworkTransport.Init();
+            NetworkTransportHelper.Init();
             if (LogFilter.logDev) { Debug.Log("NetworkServer Created version " + Version.Current); }
             m_RemoveList = new HashSet<NetworkInstanceId>();
             m_ExternalConnections = new HashSet<int>();
@@ -112,8 +112,9 @@ namespace UnityEngine.Networking
 #if UNITY_EDITOR
             Profiler.ResetAll();
 #endif
-            NetworkTransport.Shutdown();
-            NetworkTransport.Init();
+            NetworkTransportHelper.Shutdown();
+            NetworkTransportHelper.Init();
+
             s_Instance = null;
             s_Active = false;
         }

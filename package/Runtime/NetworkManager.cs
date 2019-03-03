@@ -298,7 +298,7 @@ namespace UnityEngine.Networking
 
             if (m_GlobalConfig != null)
             {
-                NetworkTransport.Init(m_GlobalConfig);
+                NetworkTransportHelper.Init(m_GlobalConfig);
             }
 
             // passing a config overrides setting the connectionConfig property
@@ -426,7 +426,7 @@ namespace UnityEngine.Networking
 
             if (m_GlobalConfig != null)
             {
-                NetworkTransport.Init(m_GlobalConfig);
+                NetworkTransportHelper.Init(m_GlobalConfig);
             }
 
             client = new NetworkClient();
@@ -512,7 +512,7 @@ namespace UnityEngine.Networking
         public virtual NetworkClient StartHost(ConnectionConfig config, int maxConnections)
         {
             OnStartHost();
-            if (StartServer(config, maxConnections))
+            if (StartServer(null, config, maxConnections))
             {
                 var client = ConnectLocalClient();
                 OnServerConnect(client.connection);
@@ -732,10 +732,9 @@ namespace UnityEngine.Networking
 
                 singleton.StopHost();
 
-                NetworkTransport.Shutdown();
+                NetworkTransportHelper.Shutdown();
             }
 #endif
-
             if (singleton == null)
                 return;
 

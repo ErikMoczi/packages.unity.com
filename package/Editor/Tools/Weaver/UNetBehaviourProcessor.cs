@@ -215,11 +215,11 @@ namespace Unity.UNetWeaver
             {
                 // make one!
                 cctor = new MethodDefinition(".cctor", MethodAttributes.Private |
-                        MethodAttributes.HideBySig |
-                        MethodAttributes.SpecialName |
-                        MethodAttributes.RTSpecialName |
-                        MethodAttributes.Static,
-                        Weaver.voidType);
+                    MethodAttributes.HideBySig |
+                    MethodAttributes.SpecialName |
+                    MethodAttributes.RTSpecialName |
+                    MethodAttributes.Static,
+                    Weaver.voidType);
             }
 
             // find instance constructor
@@ -502,9 +502,9 @@ namespace Unity.UNetWeaver
             }
 
             MethodDefinition serialize = new MethodDefinition("OnSerialize", MethodAttributes.Public |
-                    MethodAttributes.Virtual |
-                    MethodAttributes.HideBySig,
-                    Weaver.boolType);
+                MethodAttributes.Virtual |
+                MethodAttributes.HideBySig,
+                Weaver.boolType);
 
             serialize.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkWriterType)));
             serialize.Parameters.Add(new ParameterDefinition("forceAll", ParameterAttributes.None, Weaver.boolType));
@@ -732,9 +732,9 @@ namespace Unity.UNetWeaver
         void GenerateNetworkChannelSetting(int channel)
         {
             MethodDefinition meth = new MethodDefinition("GetNetworkChannel", MethodAttributes.Public |
-                    MethodAttributes.Virtual |
-                    MethodAttributes.HideBySig,
-                    Weaver.int32Type);
+                MethodAttributes.Virtual |
+                MethodAttributes.HideBySig,
+                Weaver.int32Type);
 
             ILProcessor worker = meth.Body.GetILProcessor();
 
@@ -746,9 +746,9 @@ namespace Unity.UNetWeaver
         void GenerateNetworkIntervalSetting(float interval)
         {
             MethodDefinition meth = new MethodDefinition("GetNetworkSendInterval", MethodAttributes.Public |
-                    MethodAttributes.Virtual |
-                    MethodAttributes.HideBySig,
-                    Weaver.singleType);
+                MethodAttributes.Virtual |
+                MethodAttributes.HideBySig,
+                Weaver.singleType);
 
             ILProcessor worker = meth.Body.GetILProcessor();
 
@@ -824,9 +824,9 @@ namespace Unity.UNetWeaver
                     if (preStartMethod == null)
                     {
                         preStartMethod = new MethodDefinition("PreStartClient", MethodAttributes.Public |
-                                MethodAttributes.Virtual |
-                                MethodAttributes.HideBySig,
-                                Weaver.voidType);
+                            MethodAttributes.Virtual |
+                            MethodAttributes.HideBySig,
+                            Weaver.voidType);
 
                         serWorker = preStartMethod.Body.GetILProcessor();
                     }
@@ -872,9 +872,9 @@ namespace Unity.UNetWeaver
             }
 
             MethodDefinition serialize = new MethodDefinition("OnDeserialize", MethodAttributes.Public |
-                    MethodAttributes.Virtual |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.Virtual |
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             serialize.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkReaderType)));
             serialize.Parameters.Add(new ParameterDefinition("initialState", ParameterAttributes.None, Weaver.boolType));
@@ -1085,9 +1085,9 @@ namespace Unity.UNetWeaver
         MethodDefinition ProcessCommandInvoke(MethodDefinition md)
         {
             MethodDefinition cmd = new MethodDefinition(k_CmdPrefix + md.Name, MethodAttributes.Family |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             ILProcessor cmdWorker = cmd.Body.GetILProcessor();
             Instruction label = cmdWorker.Create(OpCodes.Nop);
@@ -1147,8 +1147,8 @@ namespace Unity.UNetWeaver
         MethodDefinition ProcessCommandCall(MethodDefinition md, CustomAttribute ca)
         {
             MethodDefinition cmd = new MethodDefinition("Call" +  md.Name, MethodAttributes.Public |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             // add paramters
             foreach (ParameterDefinition pd in md.Parameters)
@@ -1194,8 +1194,8 @@ namespace Unity.UNetWeaver
 
             // create the command id constant
             FieldDefinition cmdConstant = new FieldDefinition("kCmd" + md.Name,
-                    FieldAttributes.Static | FieldAttributes.Private,
-                    Weaver.int32Type);
+                FieldAttributes.Static | FieldAttributes.Private,
+                Weaver.int32Type);
             m_td.Fields.Add(cmdConstant);
 
             // write command constant
@@ -1249,9 +1249,9 @@ namespace Unity.UNetWeaver
         MethodDefinition ProcessTargetRpcInvoke(MethodDefinition md)
         {
             MethodDefinition rpc = new MethodDefinition(k_RpcPrefix + md.Name, MethodAttributes.Family |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             ILProcessor rpcWorker = rpc.Body.GetILProcessor();
             Instruction label = rpcWorker.Create(OpCodes.Nop);
@@ -1280,9 +1280,9 @@ namespace Unity.UNetWeaver
         MethodDefinition ProcessRpcInvoke(MethodDefinition md)
         {
             MethodDefinition rpc = new MethodDefinition(k_RpcPrefix + md.Name, MethodAttributes.Family |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             ILProcessor rpcWorker = rpc.Body.GetILProcessor();
             Instruction label = rpcWorker.Create(OpCodes.Nop);
@@ -1308,8 +1308,8 @@ namespace Unity.UNetWeaver
         MethodDefinition ProcessTargetRpcCall(MethodDefinition md, CustomAttribute ca)
         {
             MethodDefinition rpc = new MethodDefinition("Call" +  md.Name, MethodAttributes.Public |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             // add paramters
             foreach (ParameterDefinition pd in md.Parameters)
@@ -1344,8 +1344,8 @@ namespace Unity.UNetWeaver
 
             // create the command id constant
             FieldDefinition rpcConstant = new FieldDefinition("kTargetRpc" + md.Name,
-                    FieldAttributes.Static | FieldAttributes.Private,
-                    Weaver.int32Type);
+                FieldAttributes.Static | FieldAttributes.Private,
+                Weaver.int32Type);
             m_td.Fields.Add(rpcConstant);
 
             // write command constant
@@ -1398,8 +1398,8 @@ namespace Unity.UNetWeaver
         MethodDefinition ProcessRpcCall(MethodDefinition md, CustomAttribute ca)
         {
             MethodDefinition rpc = new MethodDefinition("Call" +  md.Name, MethodAttributes.Public |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             // add paramters
             foreach (ParameterDefinition pd in md.Parameters)
@@ -1422,8 +1422,8 @@ namespace Unity.UNetWeaver
 
             // create the command id constant
             FieldDefinition rpcConstant = new FieldDefinition("kRpc" + md.Name,
-                    FieldAttributes.Static | FieldAttributes.Private,
-                    Weaver.int32Type);
+                FieldAttributes.Static | FieldAttributes.Private,
+                Weaver.int32Type);
             m_td.Fields.Add(rpcConstant);
 
             // write command constant
@@ -1801,9 +1801,9 @@ namespace Unity.UNetWeaver
             }
 
             MethodDefinition cmd = new MethodDefinition("InvokeSyncEvent" + ed.Name, MethodAttributes.Family |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             ILProcessor cmdWorker = cmd.Body.GetILProcessor();
             Instruction label1 = cmdWorker.Create(OpCodes.Nop);
@@ -1842,8 +1842,8 @@ namespace Unity.UNetWeaver
         {
             MethodReference invoke = Weaver.ResolveMethod(ed.EventType, "Invoke");
             MethodDefinition evt = new MethodDefinition("Call" +  ed.Name, MethodAttributes.Public |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
             // add paramters
             foreach (ParameterDefinition pd in invoke.Parameters)
             {
@@ -1865,8 +1865,8 @@ namespace Unity.UNetWeaver
 
             // create the command id constant
             FieldDefinition evtConstant = new FieldDefinition("kEvent" + ed.Name,
-                    FieldAttributes.Static | FieldAttributes.Private,
-                    Weaver.int32Type);
+                FieldAttributes.Static | FieldAttributes.Private,
+                Weaver.int32Type);
             m_td.Fields.Add(evtConstant);
 
             // write command constant
@@ -1959,10 +1959,10 @@ namespace Unity.UNetWeaver
         {
             //Create the get method
             MethodDefinition get = new MethodDefinition(
-                    "get_Network" + originalName, MethodAttributes.Public |
-                    MethodAttributes.SpecialName |
-                    MethodAttributes.HideBySig,
-                    fd.FieldType);
+                "get_Network" + originalName, MethodAttributes.Public |
+                MethodAttributes.SpecialName |
+                MethodAttributes.HideBySig,
+                fd.FieldType);
 
             ILProcessor getWorker = get.Body.GetILProcessor();
 
@@ -1981,9 +1981,9 @@ namespace Unity.UNetWeaver
         {
             //Create the set method
             MethodDefinition set = new MethodDefinition("set_Network" + originalName, MethodAttributes.Public |
-                    MethodAttributes.SpecialName |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.SpecialName |
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             ILProcessor setWorker = set.Body.GetILProcessor();
 
@@ -2069,8 +2069,8 @@ namespace Unity.UNetWeaver
             if (fd.FieldType.FullName == Weaver.gameObjectType.FullName)
             {
                 netFieldId = new FieldDefinition("___" + fd.Name + "NetId",
-                        FieldAttributes.Private,
-                        Weaver.NetworkInstanceIdType);
+                    FieldAttributes.Private,
+                    Weaver.NetworkInstanceIdType);
 
                 m_SyncVarNetIds.Add(netFieldId);
                 Weaver.lists.netIdFields.Add(netFieldId);
@@ -2109,9 +2109,9 @@ namespace Unity.UNetWeaver
         static MethodDefinition ProcessSyncListInvoke(FieldDefinition fd)
         {
             MethodDefinition cmd = new MethodDefinition("InvokeSyncList" + fd.Name, MethodAttributes.Family |
-                    MethodAttributes.Static |
-                    MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                MethodAttributes.Static |
+                MethodAttributes.HideBySig,
+                Weaver.voidType);
 
             ILProcessor syncList = cmd.Body.GetILProcessor();
             Instruction label = syncList.Create(OpCodes.Nop);
@@ -2210,9 +2210,9 @@ namespace Unity.UNetWeaver
                             fieldModuleName != Weaver.m_UnityAssemblyDefinition.MainModule.Name &&
                             fieldModuleName != Weaver.m_UNetAssemblyDefinition.MainModule.Name &&
                             fieldModuleName != Weaver.corLib.Name &&
-                            fieldModuleName != "System.Runtime.dll" && // this is only for Metro, built-in types are not in corlib on metro
-                            fieldModuleName != "netstandard.dll" // .NET Standard 2.0
-                            )
+                            fieldModuleName != "netstandard.dll" &&
+                            fieldModuleName != "System.Runtime.dll" // this is only for Metro, built-in types are not in corlib on metro
+                        )
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] from " + resolvedField.Module.ToString() + " cannot be a different module.");
                             Weaver.fail = true;

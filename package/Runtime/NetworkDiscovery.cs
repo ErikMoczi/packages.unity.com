@@ -179,9 +179,9 @@ namespace UnityEngine.Networking
                 return false;
             }
 
-            if (!NetworkTransport.IsStarted)
+            if (!NetworkTransportHelper.IsStarted)
             {
-                NetworkTransport.Init();
+                NetworkTransportHelper.Init();
             }
 
             if (m_UseNetworkManager && NetworkManager.singleton != null)
@@ -222,7 +222,7 @@ namespace UnityEngine.Networking
                 return false;
             }
 
-            m_HostId = NetworkTransport.AddHost(m_DefaultTopology, m_BroadcastPort);
+            m_HostId = NetworkTransportHelper.AddHost(m_DefaultTopology, m_BroadcastPort, null);
             if (m_HostId == -1)
             {
                 if (LogFilter.logError) { Debug.LogError("NetworkDiscovery StartAsClient - addHost failed"); }
@@ -230,7 +230,7 @@ namespace UnityEngine.Networking
             }
 
             byte error;
-            NetworkTransport.SetBroadcastCredentials(m_HostId, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, out error);
+            NetworkTransportHelper.SetBroadcastCredentials(m_HostId, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, out error);
 
             m_Running = true;
             m_IsClient = true;
@@ -247,7 +247,7 @@ namespace UnityEngine.Networking
                 return false;
             }
 
-            m_HostId = NetworkTransport.AddHost(m_DefaultTopology, 0);
+            m_HostId = NetworkTransportHelper.AddHost(m_DefaultTopology, 0, null);
             if (m_HostId == -1)
             {
                 if (LogFilter.logError) { Debug.LogError("NetworkDiscovery StartAsServer - addHost failed"); }
@@ -255,7 +255,7 @@ namespace UnityEngine.Networking
             }
 
             byte err;
-            if (!NetworkTransport.StartBroadcastDiscovery(m_HostId, m_BroadcastPort, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, m_MsgOutBuffer, m_MsgOutBuffer.Length, m_BroadcastInterval, out err))
+            if (!NetworkTransportHelper.StartBroadcastDiscovery(m_HostId, m_BroadcastPort, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, m_MsgOutBuffer, m_MsgOutBuffer.Length, m_BroadcastInterval, out err))
             {
                 if (LogFilter.logError) { Debug.LogError("NetworkDiscovery StartBroadcast failed err: " + err); }
                 return false;
@@ -283,10 +283,10 @@ namespace UnityEngine.Networking
             }
             if (m_IsServer)
             {
-                NetworkTransport.StopBroadcastDiscovery();
+                NetworkTransportHelper.StopBroadcastDiscovery();
             }
 
-            NetworkTransport.RemoveHost(m_HostId);
+            NetworkTransportHelper.RemoveHost(m_HostId);
             m_HostId = -1;
             m_Running = false;
             m_IsServer = false;
@@ -311,15 +311,15 @@ namespace UnityEngine.Networking
                 int channelId;
                 int receivedSize;
                 byte error;
-                networkEvent = NetworkTransport.ReceiveFromHost(m_HostId, out connectionId, out channelId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
+                networkEvent = NetworkTransportHelper.ReceiveFromHost(m_HostId, out connectionId, out channelId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
 
                 if (networkEvent == NetworkEventType.BroadcastEvent)
                 {
-                    NetworkTransport.GetBroadcastConnectionMessage(m_HostId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
+                    NetworkTransportHelper.GetBroadcastConnectionMessage(m_HostId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
 
                     string senderAddr;
                     int senderPort;
-                    NetworkTransport.GetBroadcastConnectionInfo(m_HostId, out senderAddr, out senderPort, out error);
+                    NetworkTransportHelper.GetBroadcastConnectionInfo(m_HostId, out senderAddr, out senderPort, out error);
 
                     var recv = new NetworkBroadcastResult();
                     recv.serverAddress = senderAddr;
@@ -337,13 +337,13 @@ namespace UnityEngine.Networking
         {
             if (m_IsServer && m_Running && m_HostId != -1)
             {
-                NetworkTransport.StopBroadcastDiscovery();
-                NetworkTransport.RemoveHost(m_HostId);
+                NetworkTransportHelper.StopBroadcastDiscovery();
+                NetworkTransportHelper.RemoveHost(m_HostId);
             }
 
             if (m_IsClient && m_Running && m_HostId != -1)
             {
-                NetworkTransport.RemoveHost(m_HostId);
+                NetworkTransportHelper.RemoveHost(m_HostId);
             }
         }
 
