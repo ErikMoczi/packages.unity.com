@@ -44,7 +44,7 @@ namespace Unity.XR.Oculus
 #endif
         }
 #if !UNITY_EDITOR
-		static OculusSettings s_Settings;
+		public static OculusSettings s_Settings;
 
 		public void Awake()
 		{
