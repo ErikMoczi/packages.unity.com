@@ -9,7 +9,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
   m_Script: {fileID: 11500000, guid: fcf7219bab7fe46a1ad266029b2fee19, type: 3}
   m_Name: Readme
   m_EditorClassIdentifier: 
@@ -48,11 +47,11 @@ MonoBehaviour:
     linkText: Post-processing
     url: https://github.com/Unity-Technologies/PostProcessing/wiki
   - heading: 
-    text: 'This project uses the new Package Manager to bring you the latest features
-     Unity has to offer. Open the Package Manager from Windows > Package Manager and 
-     make sure you're using the most recent version of Lightweight Render Pipeline.
-     To update packages, select your desired package from the list on the left, and 
-     click the Update to button in the bottom right corner.'
+    text: This project uses the new Package Manager to bring you the latest features
+      Unity has to offer. Open the Package Manager from Windows > Package Manager
+      and make sure you're using the most recent version of the Lightweight Render
+      Pipeline. To update packages, select your desired package from the list on the
+      left, and click the Update to button in the bottom right corner.
     linkText: 
     url: 
   loadedLayout: 1
