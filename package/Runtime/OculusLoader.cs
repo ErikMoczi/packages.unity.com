@@ -14,7 +14,7 @@ namespace Unity.XR.Oculus
 {
     public class OculusLoader : XRLoaderHelper
 #if UNITY_EDITOR
-    //, IXRLoaderPreInit
+    , IXRLoaderPreInit
 #endif
     {
         private static List<XRSessionSubsystemDescriptor> s_SessionSubsystemDescriptors = new List<XRSessionSubsystemDescriptor>();

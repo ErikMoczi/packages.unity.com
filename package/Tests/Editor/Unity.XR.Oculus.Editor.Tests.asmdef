@@ -1,0 +1,22 @@
+{
+    "name": "Unity.XR.Oculus.Editor.Tests",
+    "references": [
+        "UnityEngine.SpatialTracking",
+        "Unity.XR.Oculus.Editor",
+        "Unity.XR.Management",
+        "Unity.XR.Oculus"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
