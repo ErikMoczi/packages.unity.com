@@ -33,13 +33,13 @@ class MultiAimConstraintTests
         var head = data.rigData.hipsGO.transform.Find("Chest/Head");
         multiAim.data.constrainedObject = head;
 
-        List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);
+        List<WeightedTransform> sources = new List<WeightedTransform>(2);
         var src0GO = new GameObject("source0");
         var src1GO = new GameObject("source1");
         src0GO.transform.parent = multiAimGO.transform;
         src1GO.transform.parent = multiAimGO.transform;
-        sources.Add(new WeightedJobTransform(src0GO.transform, true, 0f));
-        sources.Add(new WeightedJobTransform(src1GO.transform, true, 0f));
+        sources.Add(new WeightedTransform(src0GO.transform, 0f));
+        sources.Add(new WeightedTransform(src1GO.transform, 0f));
         multiAim.data.sourceObjects = sources;
         multiAim.data.aimAxis = MultiAimConstraintData.Axis.Z;
 
@@ -71,17 +71,17 @@ class MultiAimConstraintTests
         Assert.Zero(sources[1].weight);
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
-        Assert.AreEqual(constrainedObject.transform.position, data.constrainedObjectRestTx.translation);
-        Assert.AreEqual(constrainedObject.transform.rotation, data.constrainedObjectRestTx.rotation);
+        Assert.AreEqual(constrainedObject.position, data.constrainedObjectRestTx.translation);
+        Assert.AreEqual(constrainedObject.rotation, data.constrainedObjectRestTx.rotation);
 
         // src0.w = 1, src1.w = 0
         sources[0].weight = 1f;
         constraint.data.MarkSourceWeightsDirty();
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
-        Vector3 currAim = constrainedObject.transform.rotation * Vector3.forward;
-        Vector3 src0Dir = (sources[0].transform.position - constrainedObject.transform.position).normalized;
-        Vector3 src1Dir = (sources[1].transform.position - constrainedObject.transform.position).normalized;
+        Vector3 currAim = constrainedObject.rotation * Vector3.forward;
+        Vector3 src0Dir = (sources[0].transform.position - constrainedObject.position).normalized;
+        Vector3 src1Dir = (sources[1].transform.position - constrainedObject.position).normalized;
         Assert.AreEqual(0f, Vector3.Angle(currAim, src0Dir), k_Epsilon);
         Assert.AreNotEqual(0f, Vector3.Angle(currAim, src1Dir));
 
@@ -91,9 +91,9 @@ class MultiAimConstraintTests
         constraint.data.MarkSourceWeightsDirty();
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
-        currAim = constrainedObject.transform.rotation * Vector3.forward;
-        src0Dir = (sources[0].transform.position - constrainedObject.transform.position).normalized;
-        src1Dir = (sources[1].transform.position - constrainedObject.transform.position).normalized;
+        currAim = constrainedObject.rotation * Vector3.forward;
+        src0Dir = (sources[0].transform.position - constrainedObject.position).normalized;
+        src1Dir = (sources[1].transform.position - constrainedObject.position).normalized;
         Assert.AreNotEqual(0f, Vector3.Angle(currAim, src0Dir));
         Assert.AreEqual(0f, Vector3.Angle(currAim, src1Dir), k_Epsilon);
     }
@@ -122,10 +122,10 @@ class MultiAimConstraintTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+            yield return null;
 
-            var currAim = constrainedObject.transform.rotation * Vector3.forward;
-            var src0Dir = (src0Pos - constrainedObject.transform.position).normalized;
+            var currAim = constrainedObject.rotation * Vector3.forward;
+            var src0Dir = (src0Pos - constrainedObject.position).normalized;
             var angleTest = Vector3.Angle(currAim, src0Dir);
 
             Assert.Less(angleTest, angle, "Angle between currAim and src0Dir should be smaller than last frame since constraint weight is greater.");

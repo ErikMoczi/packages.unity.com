@@ -32,8 +32,8 @@ class BlendConstraintTests
         var leftForeArm = data.rigData.hipsGO.transform.Find("Chest/LeftArm/LeftForeArm");
         var leftHand = leftForeArm.Find("LeftHand");
 
-        blendConstraint.data.sourceObjectA = new JobTransform(leftForeArm, true);
-        blendConstraint.data.sourceObjectB = new JobTransform(leftHand, true);
+        blendConstraint.data.sourceObjectA = leftForeArm;
+        blendConstraint.data.sourceObjectB = leftHand;
 
         var constrainedObject = new GameObject("constrainedBlendObj");
         constrainedObject.transform.parent = blendConstraintGO.transform;
@@ -60,32 +60,32 @@ class BlendConstraintTests
         var constrainedObj = constraint.data.constrainedObject;
 
         // Apply rotation on sourceB
-        srcObjB.transform.rotation *= Quaternion.AngleAxis(90, Vector3.right);
+        srcObjB.rotation *= Quaternion.AngleAxis(90, Vector3.right);
         yield return null;
 
         // SourceA has full influence
         constraint.data.positionWeight = 0f;
         constraint.data.rotationWeight = 0f;
-        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+        yield return null;
 
-        Assert.AreEqual(constrainedObj.transform.position, srcObjA.transform.position);
-        RotationsAreEqual(constrainedObj.transform.rotation, srcObjA.transform.rotation);
+        Assert.AreEqual(constrainedObj.position, srcObjA.position);
+        RotationsAreEqual(constrainedObj.rotation, srcObjA.rotation);
 
         // SourceB has full influence
         constraint.data.positionWeight = 1f;
         constraint.data.rotationWeight = 1f;
-        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+        yield return null;
 
-        Assert.AreEqual(constrainedObj.transform.position, srcObjB.transform.position);
-        RotationsAreEqual(constrainedObj.transform.rotation, srcObjB.transform.rotation);
+        Assert.AreEqual(constrainedObj.position, srcObjB.position);
+        RotationsAreEqual(constrainedObj.rotation, srcObjB.rotation);
 
         // Translation/Rotation blending between sources is disabled
         constraint.data.blendPosition = false;
         constraint.data.blendRotation = false;
-        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+        yield return null;
  
-        Assert.AreEqual(constrainedObj.transform.position, data.restPose.translation);
-        RotationsAreEqual(constrainedObj.transform.rotation, data.restPose.rotation);
+        Assert.AreEqual(constrainedObj.position, data.restPose.translation);
+        RotationsAreEqual(constrainedObj.rotation, data.restPose.rotation);
     }
 
     [UnityTest]
@@ -99,7 +99,7 @@ class BlendConstraintTests
         // SourceB has full influence
         constraint.data.positionWeight = 1f;
         constraint.data.rotationWeight = 1f;
-        srcObjB.transform.rotation *= Quaternion.AngleAxis(90, Vector3.right);
+        srcObjB.rotation *= Quaternion.AngleAxis(90, Vector3.right);
         yield return null;
 
         for (int i = 0; i <= 5; ++i)
@@ -107,12 +107,12 @@ class BlendConstraintTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+            yield return null;
 
-            var weightedPos = Vector3.Lerp(data.restPose.translation, srcObjB.transform.position, w);
-            var weightedRot = Quaternion.Lerp(data.restPose.rotation, srcObjB.transform.rotation, w);
-            Assert.AreEqual(constrainedObj.transform.position, weightedPos);
-            RotationsAreEqual(constrainedObj.transform.rotation, weightedRot);
+            var weightedPos = Vector3.Lerp(data.restPose.translation, srcObjB.position, w);
+            var weightedRot = Quaternion.Lerp(data.restPose.rotation, srcObjB.rotation, w);
+            Assert.AreEqual(constrainedObj.position, weightedPos);
+            RotationsAreEqual(constrainedObj.rotation, weightedRot);
         }
     }
 

@@ -2,7 +2,7 @@
 {
     using Experimental.Animations;
 
-    public struct OverrideTransformJob : IAnimationJob
+    public struct OverrideTransformJob : IWeightedAnimationJob
     {
         public enum Space
         {
@@ -11,8 +11,8 @@
             Pivot = 2
         }
 
-        public TransformHandle driven;
-        public TransformHandle source;
+        public ReadWriteTransformHandle driven;
+        public ReadOnlyTransformHandle source;
         public AffineTransform sourceInvLocalBindTx;
 
         public Quaternion sourceToWorldRot;
@@ -21,48 +21,73 @@
 
         public CacheIndex spaceIdx;
         public CacheIndex sourceToCurrSpaceRotIdx;
-        public CacheIndex positionIdx;
-        public CacheIndex rotationIdx;
-        public CacheIndex positionWeightIdx;
-        public CacheIndex rotationWeightIdx;
+
+        public Vector3Property position;
+        public Vector3Property rotation;
+        public FloatProperty positionWeight;
+        public FloatProperty rotationWeight;
 
         public AnimationJobCache cache;
+
+        public FloatProperty jobWeight { get; set; }
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
         public void ProcessAnimation(AnimationStream stream)
         {
-            float jobWeight = stream.GetInputWeight(0);
-            if (jobWeight > 0f)
+            float w = jobWeight.Get(stream);
+            if (w > 0f)
             {
                 AffineTransform overrideTx;
                 if (source.IsValid(stream))
                 {
-                    var sourceLocalTx = new AffineTransform(source.GetLocalPosition(stream), source.GetLocalRotation(stream));
+                    source.GetLocalTRS(stream, out Vector3 srcLPos, out Quaternion srcLRot, out _);
+                    var sourceLocalTx = new AffineTransform(srcLPos, srcLRot);
                     var sourceToSpaceRot = cache.Get<Quaternion>(sourceToCurrSpaceRotIdx);
                     overrideTx = Quaternion.Inverse(sourceToSpaceRot) * (sourceInvLocalBindTx * sourceLocalTx) * sourceToSpaceRot;
                 }
                 else
-                    overrideTx = new AffineTransform(cache.Get<Vector3>(positionIdx), Quaternion.Euler(cache.Get<Vector3>(rotationIdx)));
+                    overrideTx = new AffineTransform(position.Get(stream), Quaternion.Euler(rotation.Get(stream)));
 
                 Space overrideSpace = (Space)cache.GetRaw(spaceIdx);
-                var posW = cache.GetRaw(positionWeightIdx) * jobWeight;
-                var rotW = cache.GetRaw(rotationWeightIdx) * jobWeight;
+                var posW = positionWeight.Get(stream) * w;
+                var rotW = rotationWeight.Get(stream) * w;
                 switch (overrideSpace)
                 {
                     case Space.World:
-                        driven.SetPosition(stream, Vector3.Lerp(driven.GetPosition(stream), overrideTx.translation, posW));
-                        driven.SetRotation(stream, Quaternion.Lerp(driven.GetRotation(stream), overrideTx.rotation, rotW));
+                        {
+                            driven.GetGlobalTR(stream, out Vector3 drivenWPos, out Quaternion drivenWRot);
+                            driven.SetGlobalTR(
+                                stream,
+                                Vector3.Lerp(drivenWPos, overrideTx.translation, posW),
+                                Quaternion.Lerp(drivenWRot, overrideTx.rotation, rotW)
+                                );
+                        }
                         break;
                     case Space.Local:
-                        driven.SetLocalPosition(stream, Vector3.Lerp(driven.GetLocalPosition(stream), overrideTx.translation, posW));
-                        driven.SetLocalRotation(stream, Quaternion.Lerp(driven.GetLocalRotation(stream), overrideTx.rotation, rotW));
+                        {
+                            driven.GetLocalTRS(stream, out Vector3 drivenLPos, out Quaternion drivenLRot, out Vector3 drivenLScale);
+                            driven.SetLocalTRS(
+                                stream,
+                                Vector3.Lerp(drivenLPos, overrideTx.translation, posW),
+                                Quaternion.Lerp(drivenLRot, overrideTx.rotation, rotW),
+                                drivenLScale
+                                );
+                        }
                         break;
                     case Space.Pivot:
-                        var drivenLocalTx = new AffineTransform(driven.GetLocalPosition(stream), driven.GetLocalRotation(stream));
-                        overrideTx = drivenLocalTx * overrideTx;
-                        driven.SetLocalPosition(stream, Vector3.Lerp(drivenLocalTx.translation, overrideTx.translation, posW));
-                        driven.SetLocalRotation(stream, Quaternion.Lerp(drivenLocalTx.rotation, overrideTx.rotation, rotW));
+                        {
+                            driven.GetLocalTRS(stream, out Vector3 drivenLPos, out Quaternion drivenLRot, out Vector3 drivenLScale);
+                            var drivenLocalTx = new AffineTransform(drivenLPos, drivenLRot);
+                            overrideTx = drivenLocalTx * overrideTx;
+
+                            driven.SetLocalTRS(
+                                stream,
+                                Vector3.Lerp(drivenLocalTx.translation, overrideTx.translation, posW),
+                                Quaternion.Lerp(drivenLocalTx.rotation, overrideTx.rotation, rotW),
+                                drivenLScale
+                                );
+                        }
                         break;
                     default:
                         break;
@@ -92,34 +117,35 @@
     public interface IOverrideTransformData
     {
         Transform constrainedObject { get; }
-        Transform source { get; }
-        Vector3 position { get; }
-        Vector3 rotation { get; }
+        Transform sourceObject { get; }
         int space { get; }
-        float positionWeight { get; }
-        float rotationWeight { get; }
+
+        string positionWeightFloatProperty { get; }
+        string rotationWeightFloatProperty { get; }
+        string positionVector3Property { get; }
+        string rotationVector3Property { get; }
     }
 
     public class OverrideTransformJobBinder<T> : AnimationJobBinder<OverrideTransformJob, T>
         where T : struct, IAnimationJobData, IOverrideTransformData
     {
-        public override OverrideTransformJob Create(Animator animator, ref T data)
+        public override OverrideTransformJob Create(Animator animator, ref T data, Component component)
         {
             var job = new OverrideTransformJob();
             var cacheBuilder = new AnimationJobCacheBuilder();
 
-            job.driven = TransformHandle.Bind(animator, data.constrainedObject);
+            job.driven = ReadWriteTransformHandle.Bind(animator, data.constrainedObject);
 
-            if (data.source != null)
+            if (data.sourceObject != null)
             {
                 // Cache source to possible space rotation offsets (world, local and pivot)
                 // at bind time so we can switch dynamically between them at runtime.
 
-                job.source = TransformHandle.Bind(animator, data.source);
-                var sourceLocalTx = new AffineTransform(data.source.localPosition, data.source.localRotation);
+                job.source = ReadOnlyTransformHandle.Bind(animator, data.sourceObject);
+                var sourceLocalTx = new AffineTransform(data.sourceObject.localPosition, data.sourceObject.localRotation);
                 job.sourceInvLocalBindTx = sourceLocalTx.Inverse();
 
-                var sourceWorldTx = new AffineTransform(data.source.position, data.source.rotation);
+                var sourceWorldTx = new AffineTransform(data.sourceObject.position, data.sourceObject.rotation);
                 var drivenWorldTx = new AffineTransform(data.constrainedObject.position, data.constrainedObject.rotation);
                 job.sourceToWorldRot = sourceWorldTx.Inverse().rotation;
                 job.sourceToPivotRot = sourceWorldTx.InverseMul(drivenWorldTx).rotation;
@@ -142,10 +168,11 @@
             else
                 job.sourceToCurrSpaceRotIdx = cacheBuilder.Add(job.sourceToWorldRot);
 
-            job.positionIdx = cacheBuilder.Add(data.position);
-            job.rotationIdx = cacheBuilder.Add(data.rotation);
-            job.positionWeightIdx = cacheBuilder.Add(data.positionWeight);
-            job.rotationWeightIdx = cacheBuilder.Add(data.rotationWeight);
+            job.position = Vector3Property.Bind(animator, component, data.positionVector3Property);
+            job.rotation = Vector3Property.Bind(animator, component, data.rotationVector3Property);
+            job.positionWeight = FloatProperty.Bind(animator, component, data.positionWeightFloatProperty);
+            job.rotationWeight = FloatProperty.Bind(animator, component, data.rotationWeightFloatProperty);
+
             job.cache = cacheBuilder.Build();
 
             return job;
@@ -159,10 +186,6 @@
         public override void Update(OverrideTransformJob job, ref T data)
         {
             job.UpdateSpace(data.space);
-            job.cache.Set(data.position, job.positionIdx);
-            job.cache.Set(data.rotation, job.rotationIdx);
-            job.cache.SetRaw(data.positionWeight, job.positionWeightIdx);
-            job.cache.SetRaw(data.rotationWeight, job.rotationWeightIdx);
         }
     }
 }

@@ -44,12 +44,12 @@ class TwoBoneIKConstraintTests {
         var hintGO = new GameObject ("hint");
         hintGO.transform.parent = twoBoneIKGO.transform;
 
-        twoBoneIK.data.target = new JobTransform(targetGO.transform, true);
-        twoBoneIK.data.hint = new JobTransform(hintGO.transform, true);
+        twoBoneIK.data.target = targetGO.transform;
+        twoBoneIK.data.hint = hintGO.transform;
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
-        targetGO.transform.position = twoBoneIK.data.tip.transform.position;
+        targetGO.transform.position = twoBoneIK.data.tip.position;
 
         data.constraint = twoBoneIK;
 
@@ -63,9 +63,9 @@ class TwoBoneIKConstraintTests {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        var target = constraint.data.target.transform;
-        var tip = constraint.data.target.transform;
-        var root = constraint.data.root.transform;
+        var target = constraint.data.target;
+        var tip = constraint.data.target;
+        var root = constraint.data.root;
 
         for (int i = 0; i < 5; ++i)
         {
@@ -87,9 +87,9 @@ class TwoBoneIKConstraintTests {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        var target = constraint.data.target.transform;
-        var hint = constraint.data.hint.transform;
-        var mid = constraint.data.mid.transform;
+        var target = constraint.data.target;
+        var hint = constraint.data.hint;
+        var mid = constraint.data.mid;
 
         Vector3 midPos1 = mid.position;
 
@@ -97,28 +97,28 @@ class TwoBoneIKConstraintTests {
         target.position += new Vector3(0.2f, 0.0f, 0f);
 
         hint.position = mid.position + new Vector3(0f, 1f, 0f);
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Vector3 midPos2 = mid.position;
         Assert.Greater(midPos2.y, midPos1.y, String.Format("Expected mid2.y to be greater than mid1.y"));
         Assert.AreEqual(midPos1.z, midPos2.z, k_Epsilon, String.Format("Expected mid2.z to be {0}, but was {1}", midPos1.z, midPos2.z));
 
         hint.position = mid.position + new Vector3(0f, -1f, 0f);
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         midPos2 = mid.position;
         Assert.Less(midPos2.y, midPos1.y, String.Format("Expected mid2.y to be lower than mid1.y"));
         Assert.AreEqual(midPos1.z, midPos2.z, k_Epsilon, String.Format("Expected mid2.z to be {0}, but was {1}", midPos1.z, midPos2.z));
 
         hint.position = mid.position + new Vector3(0f, 0f, 1f);
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         midPos2 = mid.position;
         Assert.AreEqual(midPos1.y, midPos2.y, k_Epsilon, String.Format("Expected mid2.y to be {0}, but was {1}", midPos1.y, midPos2.y));
         Assert.Greater(midPos2.z, midPos1.z, String.Format("Expected mid2.y to be greater than mid1.y"));
 
         hint.position = mid.position + new Vector3(0f, 0f, -1f);
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         midPos2 = mid.position;
         Assert.AreEqual(midPos1.y, midPos2.y, k_Epsilon, String.Format("Expected mid2.y to be {0}, but was {1}", midPos1.y, midPos2.y));
@@ -131,13 +131,13 @@ class TwoBoneIKConstraintTests {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        var tip = constraint.data.tip.transform;
-        var target = constraint.data.target.transform;
+        var tip = constraint.data.tip;
+        var target = constraint.data.target;
 
         Vector3 tipPos1 = tip.position;
 
         target.position += new Vector3(0f, 0.5f, 0f);
-        yield return null;
+        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Vector3 tipPos2 = tip.position;
 
@@ -145,8 +145,8 @@ class TwoBoneIKConstraintTests {
         {
             float w = i / 5.0f;
 
-            data.constraint.weight = w;
-            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+            constraint.weight = w;
+            yield return null;
 
             Vector3 weightedTipPos = Vector3.Lerp(tipPos1, tipPos2, w);
             Vector3 tipPos = tip.position;

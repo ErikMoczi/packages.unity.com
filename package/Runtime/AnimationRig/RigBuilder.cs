@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace UnityEngine.Animations.Rigging
@@ -8,8 +8,8 @@ namespace UnityEngine.Animations.Rigging
     using Experimental.Animations;
 
     [RequireComponent(typeof(Animator))]
-    [AddComponentMenu("Animation Rigging/Setup/Rig Builder")]
-    public class RigBuilder : MonoBehaviour
+    [DisallowMultipleComponent, ExecuteInEditMode, AddComponentMenu("Animation Rigging/Setup/Rig Builder")]
+    public class RigBuilder : MonoBehaviour, IAnimationWindowPreview
     {
         [Serializable]
         public class RigLayer
@@ -54,19 +54,91 @@ namespace UnityEngine.Animations.Rigging
             public AnimationScriptPlayable[] playables;
         }
 
+        private class SyncSceneToStreamLayer
+        {
+            public bool Initialize(Animator animator, List<RigLayer> layers)
+            {
+                if (isInitialized)
+                    return true;
+
+                List<Rig> rigs = new List<Rig>(layers.Count);
+                m_RigIndices = new List<int>(layers.Count);
+                for (int i = 0; i < layers.Count; ++i)
+                {
+                    if (!layers[i].IsValid())
+                        continue;
+
+                    m_RigIndices.Add(i);
+                    rigs.Add(layers[i].rig);
+                }
+
+                m_Data = RigUtils.CreateSyncSceneToStreamData(animator, rigs.ToArray());
+                if (m_Data.IsValid())
+                {
+                    job = RigUtils.syncSceneToStreamBinder.Create(animator, m_Data);
+                }
+
+                return (isInitialized = true);
+            }
+
+            public void Update(List<RigLayer> layers)
+            {
+                if (!isInitialized || !m_Data.IsValid())
+                    return;
+
+                IRigSyncSceneToStreamData syncData = (IRigSyncSceneToStreamData)m_Data;
+                for (int i = 0, count = m_RigIndices.Count; i < count; ++i)
+                    syncData.rigStates[i] = layers[m_RigIndices[i]].active;
+
+                RigUtils.syncSceneToStreamBinder.Update(job, m_Data);
+            }
+
+            public void Destroy()
+            {
+                if (!isInitialized)
+                    return;
+
+                if (m_Data != null && m_Data.IsValid())
+                {
+                    RigUtils.syncSceneToStreamBinder.Destroy(job);
+                    m_Data = null;
+                }
+
+                isInitialized = false;
+            }
+
+            public bool IsValid() => job != null && m_Data != null;
+
+            public bool isInitialized { get; private set; }
+
+            public IAnimationJob job;
+
+            private IAnimationJobData m_Data;
+            private List<int> m_RigIndices;
+        }
+
         [SerializeField]
         private List<RigLayer> m_RigLayers;
         private List<LayerData> m_RigLayerData;
 
-        private IAnimationJob m_SyncSceneToStreamJob;
-        private IAnimationJobData m_SyncSceneToStreamJobData;
+        private List<LayerData> m_PreviewRigLayerData;
+        private SyncSceneToStreamLayer m_SyncSceneToStreamLayer;
 
         void OnEnable()
         {
-            Build();
+            // Build runtime data.
+            if (Application.isPlaying)
+                Build();
         }
 
         void OnDisable()
+        {
+            // Clear runtime data.
+            if (Application.isPlaying)
+                Clear();
+        }
+
+        void OnDestroy()
         {
             Clear();
         }
@@ -76,12 +148,12 @@ namespace UnityEngine.Animations.Rigging
             if (!graph.IsValid())
                 return;
 
-            foreach (var layer in layers)
+            syncSceneToStreamLayer.Update(layers);
+
+            for (int i = 0, count = layers.Count; i < count; ++i)
             {
-                if (layer.IsValid())
-                    layer.rig.UpdateConstraints(
-                        m_RigLayerData[layer.data].playables, layer.active
-                        );
+                if (layers[i].IsValid() && layers[i].active)
+                    layers[i].rig.UpdateConstraints();
             }
         }
 
@@ -99,10 +171,9 @@ namespace UnityEngine.Animations.Rigging
             // Create sync scene to stream layer
             var syncLayerOutput = AnimationPlayableOutput.Create(graph, "syncSceneToStreamOutput", animator);
             syncLayerOutput.SetAnimationStreamSource(AnimationStreamSource.PreviousInputs);
-            
+
             // Create all rig layers
             m_RigLayerData = new List<LayerData>(layers.Count);
-            List<JobTransform> allRigReferences = new List<JobTransform>();
             foreach (var layer in layers)
             {
                 if (!layer.Initialize(animator))
@@ -111,28 +182,20 @@ namespace UnityEngine.Animations.Rigging
                 LayerData data = new LayerData();
                 data.output = AnimationPlayableOutput.Create(graph, "rigOutput", animator);
                 data.output.SetAnimationStreamSource(AnimationStreamSource.PreviousInputs);
-                data.playables = BuildRigPlayables(graph, layer.rig, ref data.output);
+                data.playables = BuildRigPlayables(graph, layer.rig);
+
+                // Connect last rig playable to output
+                if (data.playables != null && data.playables.Length > 0)
+                    data.output.SetSourcePlayable(data.playables[data.playables.Length - 1]);
 
                 layer.data = m_RigLayerData.Count;
                 m_RigLayerData.Add(data);
-
-                // Gather all references used by rig
-                var references = RigUtils.GetAllConstraintReferences(animator, layer.rig.constraints);
-                if (references != null)
-                    allRigReferences.AddRange(references);
-
-                references = RigUtils.GetAllRigTransformReferences(layer.rig);
-                if (references != null)
-                    allRigReferences.AddRange(references);
             }
 
             // Create sync to stream job with all rig references
-            m_SyncSceneToStreamJobData = RigUtils.CreateSyncSceneToStreamData(allRigReferences.ToArray());
-            if (m_SyncSceneToStreamJobData.IsValid())
-            {
-                m_SyncSceneToStreamJob = RigUtils.syncSceneToStreamBinder.Create(animator, m_SyncSceneToStreamJobData);
-                syncLayerOutput.SetSourcePlayable(RigUtils.syncSceneToStreamBinder.CreatePlayable(graph, m_SyncSceneToStreamJob));
-            }
+            if (syncSceneToStreamLayer.Initialize(animator, layers) && syncSceneToStreamLayer.IsValid())
+                syncLayerOutput.SetSourcePlayable(RigUtils.syncSceneToStreamBinder.CreatePlayable(graph, syncSceneToStreamLayer.job));
+
             graph.Play();
 
             return true;
@@ -149,14 +212,13 @@ namespace UnityEngine.Animations.Rigging
             if (m_RigLayerData != null)
                 m_RigLayerData.Clear();
 
-            if (m_SyncSceneToStreamJobData != null && m_SyncSceneToStreamJobData.IsValid())
-            {
-                RigUtils.syncSceneToStreamBinder.Destroy(m_SyncSceneToStreamJob);
-                m_SyncSceneToStreamJobData = null;
-            }
+            if (m_PreviewRigLayerData != null)
+                m_PreviewRigLayerData.Clear();
+
+            syncSceneToStreamLayer.Destroy();
         }
 
-        AnimationScriptPlayable[] BuildRigPlayables(PlayableGraph graph, Rig rig, ref AnimationPlayableOutput output)
+        AnimationScriptPlayable[] BuildRigPlayables(PlayableGraph graph, Rig rig)
         {
             if (rig == null || rig.jobs == null || rig.jobs.Length == 0)
                 return null;
@@ -169,18 +231,84 @@ namespace UnityEngine.Animations.Rigging
                 playables[i] = binder.CreatePlayable(graph, rig.jobs[i]);
             }
 
-            // Set null input on first rig playable in order to use inputWeight
-            // to set job constraint weight
-            playables[0].AddInput(Playable.Null, 0, 1);
-
-            // Connect rest of rig playables serially
+            // Connect rig playables serially
             for (int i = 1; i < count; ++i)
                 playables[i].AddInput(playables[i - 1], 0, 1);
 
-            // Connect last rig playable to output
-            output.SetSourcePlayable(playables[playables.Length - 1]);
-
             return playables;
+        }
+
+        //
+        // IAnimationWindowPreview methods implementation
+        //
+
+        public void StartPreview()
+        {
+        }
+
+        public void StopPreview()
+        {
+            if (Application.isPlaying)
+                return;
+
+            Clear();
+        }
+
+        public void UpdatePreviewGraph(PlayableGraph graph)
+        {
+            if (!graph.IsValid())
+                return;
+
+            syncSceneToStreamLayer.Update(layers);
+
+            foreach (var layer in layers)
+            {
+                if (layer.IsValid() && layer.active)
+                    layer.rig.UpdateConstraints();
+            }
+        }
+
+        public Playable BuildPreviewGraph(PlayableGraph graph, Playable inputPlayable)
+        {
+            var animator = GetComponent<Animator>();
+            if (animator == null || layers.Count == 0)
+                return inputPlayable;
+
+            List<AnimationScriptPlayable> playables = new List<AnimationScriptPlayable>();
+
+            m_PreviewRigLayerData = new List<LayerData>(layers.Count);
+            foreach (var layer in layers)
+            {
+                if (!layer.Initialize(animator))
+                    continue;
+
+                LayerData data = new LayerData();
+                data.playables = BuildRigPlayables(graph, layer.rig);
+                if (data.playables == null)
+                    continue;
+
+                layer.data = m_PreviewRigLayerData.Count;
+                m_PreviewRigLayerData.Add(data);
+            }
+
+            // Create sync to stream job with all rig references
+            if (syncSceneToStreamLayer.Initialize(animator, layers) && syncSceneToStreamLayer.IsValid())
+            {
+                var syncSceneToStreamPlayable = RigUtils.syncSceneToStreamBinder.CreatePlayable(graph, syncSceneToStreamLayer.job);
+                syncSceneToStreamPlayable.AddInput(inputPlayable, 0, 1);
+                inputPlayable = syncSceneToStreamPlayable;
+            }
+
+            foreach(var layerData in m_PreviewRigLayerData)
+            {
+                if (layerData.playables == null || layerData.playables.Length == 0)
+                    continue;
+
+                layerData.playables[0].AddInput(inputPlayable, 0, 1);
+                inputPlayable = layerData.playables[layerData.playables.Length - 1];
+            }
+
+            return inputPlayable;
         }
 
         public List<RigLayer> layers
@@ -194,6 +322,19 @@ namespace UnityEngine.Animations.Rigging
             }
 
             set => m_RigLayers = value;
+        }
+
+        private SyncSceneToStreamLayer syncSceneToStreamLayer
+        {
+            get
+            {
+                if (m_SyncSceneToStreamLayer == null)
+                    m_SyncSceneToStreamLayer = new SyncSceneToStreamLayer();
+
+                return m_SyncSceneToStreamLayer;
+            }
+
+            set => m_SyncSceneToStreamLayer = value;
         }
 
         public PlayableGraph graph { get; private set; }

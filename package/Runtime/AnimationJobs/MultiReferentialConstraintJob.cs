@@ -4,38 +4,44 @@ namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
-    public struct MultiReferentialConstraintJob : IAnimationJob
+    public struct MultiReferentialConstraintJob : IWeightedAnimationJob
     {
-        public CacheIndex driverIdx;
-        public NativeArray<TransformHandle> sources;
+        public IntProperty driver;
+        public NativeArray<ReadWriteTransformHandle> sources;
         public NativeArray<AffineTransform> sourceBindTx;
         public NativeArray<AffineTransform> offsetTx;
+        public int prevDriverIdx;
 
-        public AnimationJobCache cache;
-
+        public FloatProperty jobWeight { get; set; }
+    
         public void ProcessRootMotion(AnimationStream stream) { }
 
         public void ProcessAnimation(AnimationStream stream)
         {
-            float jobWeight = stream.GetInputWeight(0);
-            if (jobWeight > 0f)
+            float w = jobWeight.Get(stream);
+            if (w > 0f)
             {
-                int driver = (int)cache.GetRaw(driverIdx);
-                var driverTx = new AffineTransform(
-                    sources[driver].GetPosition(stream),
-                    sources[driver].GetRotation(stream)
-                    );
+                var driverIdx = driver.Get(stream);
+                if (driverIdx != prevDriverIdx)
+                    UpdateOffsets(driverIdx);
+
+                sources[driverIdx].GetGlobalTR(stream, out Vector3 driverWPos, out Quaternion driverWRot);
+                var driverTx = new AffineTransform(driverWPos, driverWRot);
 
                 int offset = 0;
                 for (int i = 0; i < sources.Length; ++i)
                 {
-                    if (i == driver)
+                    if (i == driverIdx)
                         continue;
 
                     var tx = driverTx * offsetTx[offset];
-                    sources[i].SetPosition(stream, Vector3.Lerp(sources[i].GetPosition(stream), tx.translation, jobWeight));
-                    sources[i].SetRotation(stream, Quaternion.Lerp(sources[i].GetRotation(stream), tx.rotation, jobWeight));
+
+                    var src = sources[i];
+                    src.GetGlobalTR(stream, out Vector3 srcWPos, out Quaternion srcWRot);
+                    src.SetGlobalTR(stream, Vector3.Lerp(srcWPos, tx.translation, w), Quaternion.Lerp(srcWRot, tx.rotation, w));
                     offset++;
+
+                    sources[i] = src;
                 }
             }
             else
@@ -45,10 +51,11 @@ namespace UnityEngine.Animations.Rigging
             }
         }
 
-        public void UpdateOffsets()
+        public void UpdateOffsets(int driver)
         {
+            driver = Mathf.Clamp(driver, 0, sources.Length - 1);
+
             int offset = 0;
-            int driver = (int)cache.GetRaw(driverIdx);
             var invDriverTx = sourceBindTx[driver].Inverse();
             for (int i = 0; i < sourceBindTx.Length; ++i)
             {
@@ -58,37 +65,38 @@ namespace UnityEngine.Animations.Rigging
                 offsetTx[offset] = invDriverTx * sourceBindTx[i];
                 offset++;
             }
+
+            prevDriverIdx = driver;
         }
     }
 
     public interface IMultiReferentialConstraintData
     {
-        int driver { get; }
+        int driverValue { get; }
+        string driverIntProperty { get; }
         Transform[] sourceObjects { get; }
     }
 
     public class MultiReferentialConstraintJobBinder<T> : AnimationJobBinder<MultiReferentialConstraintJob, T>
         where T : struct, IAnimationJobData, IMultiReferentialConstraintData
     {
-        public override MultiReferentialConstraintJob Create(Animator animator, ref T data)
+        public override MultiReferentialConstraintJob Create(Animator animator, ref T data, Component component)
         {
             var job = new MultiReferentialConstraintJob();
-            var cacheBuilder = new AnimationJobCacheBuilder();
-
-            job.driverIdx = cacheBuilder.Add(data.driver);
 
             var sources = data.sourceObjects;
-            job.sources = new NativeArray<TransformHandle>(sources.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.driver = IntProperty.Bind(animator, component, data.driverIntProperty);
+            job.sources = new NativeArray<ReadWriteTransformHandle>(sources.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             job.sourceBindTx = new NativeArray<AffineTransform>(sources.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             job.offsetTx = new NativeArray<AffineTransform>(sources.Length - 1, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
             for (int i = 0; i < sources.Length; ++i)
             {
-                job.sources[i] = TransformHandle.Bind(animator, sources[i].transform);
+                job.sources[i] = ReadWriteTransformHandle.Bind(animator, sources[i].transform);
                 job.sourceBindTx[i] = new AffineTransform(sources[i].position, sources[i].rotation);
             }
-            job.cache = cacheBuilder.Build();
-            job.UpdateOffsets();
+            
+            job.UpdateOffsets(data.driverValue);
 
             return job;
         }
@@ -98,16 +106,6 @@ namespace UnityEngine.Animations.Rigging
             job.sources.Dispose();
             job.sourceBindTx.Dispose();
             job.offsetTx.Dispose();
-            job.cache.Dispose();
-        }
-
-        public override void Update(MultiReferentialConstraintJob job, ref T data)
-        {
-            if (data.driver != (int)job.cache.GetRaw(job.driverIdx))
-            {
-                job.cache.SetRaw(data.driver, job.driverIdx);
-                job.UpdateOffsets();
-            }
         }
     }
 }

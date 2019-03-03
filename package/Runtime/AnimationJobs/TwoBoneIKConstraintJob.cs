@@ -2,37 +2,36 @@
 {
     using Experimental.Animations;
 
-    public struct TwoBoneIKConstraintJob : IAnimationJob
+    public struct TwoBoneIKConstraintJob : IWeightedAnimationJob
     {
-        public TransformHandle root;
-        public TransformHandle mid;
-        public TransformHandle tip;
+        public ReadWriteTransformHandle root;
+        public ReadWriteTransformHandle mid;
+        public ReadWriteTransformHandle tip;
 
-        public TransformHandle hint;
-        public CacheIndex hintWeightIdx;
-
-        public TransformHandle target;
-        public CacheIndex targetPositionWeightIdx;
-        public CacheIndex targetRotationWeightIdx;
+        public ReadOnlyTransformHandle hint;
+        public ReadOnlyTransformHandle target;
 
         public AffineTransform targetOffset;
-
         public Vector2 linkLengths;
 
-        public AnimationJobCache cache;
+        public FloatProperty targetPositionWeight;
+        public FloatProperty targetRotationWeight;
+        public FloatProperty hintWeight;
+
+        public FloatProperty jobWeight { get; set; }
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
         public void ProcessAnimation(AnimationStream stream)
         {
-            float jobWeight = stream.GetInputWeight(0);
-            if (jobWeight > 0f)
+            float w = jobWeight.Get(stream); 
+            if (w > 0f)
             {
                 AnimationRuntimeUtils.SolveTwoBoneIK(
                     stream, root, mid, tip, target, hint,
-                    cache.GetRaw(targetPositionWeightIdx) * jobWeight,
-                    cache.GetRaw(targetRotationWeightIdx) * jobWeight,
-                    cache.GetRaw(hintWeightIdx) * jobWeight,
+                    targetPositionWeight.Get(stream) * w,
+                    targetRotationWeight.Get(stream) * w,
+                    hintWeight.Get(stream) * w,
                     linkLengths,
                     targetOffset
                     );
@@ -54,29 +53,28 @@
         Transform target { get; }
         Transform hint { get; }
 
-        float targetPositionWeight { get; }
-        float targetRotationWeight { get; }
-        float hintWeight { get; }
-
         bool maintainTargetPositionOffset { get; }
         bool maintainTargetRotationOffset { get; }
+
+        string targetPositionWeightFloatProperty { get; }
+        string targetRotationWeightFloatProperty { get; }
+        string hintWeightFloatProperty { get; }
     }
 
     public class TwoBoneIKConstraintJobBinder<T> : AnimationJobBinder<TwoBoneIKConstraintJob, T>
         where T : struct, IAnimationJobData, ITwoBoneIKConstraintData
     {
-        public override TwoBoneIKConstraintJob Create(Animator animator, ref T data)
+        public override TwoBoneIKConstraintJob Create(Animator animator, ref T data, Component component)
         {
             var job = new TwoBoneIKConstraintJob();
-            var cacheBuilder = new AnimationJobCacheBuilder();
 
-            job.root = TransformHandle.Bind(animator, data.root);
-            job.mid = TransformHandle.Bind(animator, data.mid);
-            job.tip = TransformHandle.Bind(animator, data.tip);
-            job.target = TransformHandle.Bind(animator, data.target);
+            job.root = ReadWriteTransformHandle.Bind(animator, data.root);
+            job.mid = ReadWriteTransformHandle.Bind(animator, data.mid);
+            job.tip = ReadWriteTransformHandle.Bind(animator, data.tip);
+            job.target = ReadOnlyTransformHandle.Bind(animator, data.target);
 
             if (data.hint != null)
-                job.hint = TransformHandle.Bind(animator, data.hint);
+                job.hint = ReadOnlyTransformHandle.Bind(animator, data.hint);
 
             job.targetOffset = AffineTransform.identity;
             if (data.maintainTargetPositionOffset)
@@ -86,25 +84,16 @@
 
             job.linkLengths[0] = Vector3.Distance(data.root.position, data.mid.position);
             job.linkLengths[1] = Vector3.Distance(data.mid.position, data.tip.position);
-        
-            job.targetPositionWeightIdx = cacheBuilder.Add(data.targetPositionWeight);
-            job.targetRotationWeightIdx = cacheBuilder.Add(data.targetRotationWeight);
-            job.hintWeightIdx = cacheBuilder.Add(data.hintWeight);
-            job.cache = cacheBuilder.Build();
+
+            job.targetPositionWeight = FloatProperty.Bind(animator, component, data.targetPositionWeightFloatProperty);
+            job.targetRotationWeight = FloatProperty.Bind(animator, component, data.targetRotationWeightFloatProperty);
+            job.hintWeight = FloatProperty.Bind(animator, component, data.hintWeightFloatProperty);
 
             return job;
         }
 
         public override void Destroy(TwoBoneIKConstraintJob job)
         {
-            job.cache.Dispose();
-        }
-
-        public override void Update(TwoBoneIKConstraintJob job, ref T data)
-        {
-            job.cache.SetRaw(data.targetPositionWeight, job.targetPositionWeightIdx);
-            job.cache.SetRaw(data.targetRotationWeight, job.targetRotationWeightIdx);
-            job.cache.SetRaw(data.hintWeight, job.hintWeightIdx);
         }
     }
 }

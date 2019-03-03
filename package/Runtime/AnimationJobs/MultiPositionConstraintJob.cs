@@ -4,15 +4,15 @@ namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
-    public struct MultiPositionConstraintJob : IAnimationJob
+    public struct MultiPositionConstraintJob : IWeightedAnimationJob
     {
         const float k_Epsilon = 1e-5f;
 
-        public TransformHandle driven;
-        public TransformHandle drivenParent;
-        public CacheIndex drivenOffsetIdx;
-
-        public NativeArray<TransformHandle> sources;
+        public ReadWriteTransformHandle driven;
+        public ReadOnlyTransformHandle drivenParent;
+        public Vector3Property drivenOffset;
+ 
+        public NativeArray<ReadOnlyTransformHandle> sources;
         public NativeArray<Vector3> sourceOffsets;
         public CacheIndex sourceWeightStartIdx;
 
@@ -20,12 +20,14 @@ namespace UnityEngine.Animations.Rigging
 
         public AnimationJobCache cache;
 
+        public FloatProperty jobWeight { get; set; }
+
         public void ProcessRootMotion(AnimationStream stream) { }
 
         public void ProcessAnimation(AnimationStream stream)
         {
-            float jobWeight = stream.GetInputWeight(0);
-            if (jobWeight > 0f)
+            float w = jobWeight.Get(stream);
+            if (w > 0f)
             {
                 float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeightStartIdx, sources.Length);
                 if (sumWeights < k_Epsilon)
@@ -41,13 +43,16 @@ namespace UnityEngine.Animations.Rigging
                     if (normalizedWeight < k_Epsilon)
                         continue;
 
-                    accumPos += (sources[i].GetPosition(stream) + sourceOffsets[i] - currentWPos) * normalizedWeight;
+                    var src = sources[i];
+                    accumPos += (src.GetPosition(stream) + sourceOffsets[i] - currentWPos) * normalizedWeight;
+                    sources[i] = src;
                 }
 
                 // Convert accumPos to local space
                 if (drivenParent.IsValid(stream))
                 {
-                    var parentTx = new AffineTransform(drivenParent.GetPosition(stream), drivenParent.GetRotation(stream));
+                    drivenParent.GetGlobalTR(stream, out Vector3 parentWPos, out Quaternion parentWRot);
+                    var parentTx = new AffineTransform(parentWPos, parentWRot);
                     accumPos = parentTx.InverseTransform(accumPos);
                 }
 
@@ -55,7 +60,7 @@ namespace UnityEngine.Animations.Rigging
                 if (Vector3.Dot(axesMask, axesMask) < 3f)
                     accumPos = AnimationRuntimeUtils.Lerp(currentLPos, accumPos, axesMask);
 
-                driven.SetLocalPosition(stream, Vector3.Lerp(currentLPos, accumPos + cache.Get<Vector3>(drivenOffsetIdx), jobWeight));
+                driven.SetLocalPosition(stream, Vector3.Lerp(currentLPos, accumPos + drivenOffset.Get(stream), w));
             }
             else
                 AnimationRuntimeUtils.PassThrough(stream, driven);
@@ -68,7 +73,8 @@ namespace UnityEngine.Animations.Rigging
         Transform[] sourceObjects { get; }
         float[] sourceWeights { get; }
         bool maintainOffset { get; }
-        Vector3 offset { get; }
+
+        string offsetVector3Property { get; }
 
         bool constrainedXAxis { get; }
         bool constrainedYAxis { get; }
@@ -78,25 +84,25 @@ namespace UnityEngine.Animations.Rigging
     public class MultiPositionConstraintJobBinder<T> : AnimationJobBinder<MultiPositionConstraintJob, T>
         where T : struct, IAnimationJobData, IMultiPositionConstraintData
     {
-        public override MultiPositionConstraintJob Create(Animator animator, ref T data)
+        public override MultiPositionConstraintJob Create(Animator animator, ref T data, Component component)
         {
             var job = new MultiPositionConstraintJob();
             var cacheBuilder = new AnimationJobCacheBuilder();
 
-            job.driven = TransformHandle.Bind(animator, data.constrainedObject);
-            job.drivenParent = TransformHandle.Bind(animator, data.constrainedObject.parent);
-            job.drivenOffsetIdx = cacheBuilder.Add(data.offset);
+            job.driven = ReadWriteTransformHandle.Bind(animator, data.constrainedObject);
+            job.drivenParent = ReadOnlyTransformHandle.Bind(animator, data.constrainedObject.parent);
+            job.drivenOffset = Vector3Property.Bind(animator, component, data.offsetVector3Property);
 
             var src = data.sourceObjects;
             var srcWeights = data.sourceWeights;
-            job.sources = new NativeArray<TransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.sources = new NativeArray<ReadOnlyTransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             job.sourceOffsets = new NativeArray<Vector3>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             job.sourceWeightStartIdx = cacheBuilder.AllocateChunk(src.Length);
 
             Vector3 drivenPos = data.constrainedObject.position;
             for (int i = 0; i < src.Length; ++i)
             {
-                job.sources[i] = TransformHandle.Bind(animator, src[i]);
+                job.sources[i] = ReadOnlyTransformHandle.Bind(animator, src[i]);
                 cacheBuilder.SetValue(job.sourceWeightStartIdx, i, srcWeights[i]);
                 job.sourceOffsets[i] = data.maintainOffset ? (drivenPos - src[i].position) : Vector3.zero;
             }
@@ -120,7 +126,6 @@ namespace UnityEngine.Animations.Rigging
 
         public override void Update(MultiPositionConstraintJob job, ref T data)
         {
-            job.cache.Set(data.offset, job.drivenOffsetIdx);
             job.cache.SetArray(data.sourceWeights, job.sourceWeightStartIdx);
         }
     }

@@ -5,7 +5,7 @@
 
     public interface IAnimationJobBinder
     {
-        IAnimationJob Create(Animator animator, IAnimationJobData data);
+        IAnimationJob Create(Animator animator, IAnimationJobData data, Component component = null);
         void Destroy(IAnimationJob job);
         void Update(IAnimationJob job, IAnimationJobData data);
         AnimationScriptPlayable CreatePlayable(PlayableGraph graph, IAnimationJob job);
@@ -15,17 +15,17 @@
         where TJob : struct, IAnimationJob
         where TData : struct, IAnimationJobData
     {
-        public abstract TJob Create(Animator animator, ref TData data);
+        public abstract TJob Create(Animator animator, ref TData data, Component component);
 
         public abstract void Destroy(TJob job);
 
         public virtual void Update(TJob job, ref TData data) {}
 
-        IAnimationJob IAnimationJobBinder.Create(Animator animator, IAnimationJobData data)
+        IAnimationJob IAnimationJobBinder.Create(Animator animator, IAnimationJobData data, Component component)
         {
             Debug.Assert(data is TData);
             TData tData = (TData)data;
-            return Create(animator, ref tData);
+            return Create(animator, ref tData, component);
         }
 
         void IAnimationJobBinder.Destroy(IAnimationJob job)

@@ -1,8 +1,8 @@
 {
   "name": "com.unity.animation.rigging",
   "displayName": "Animation Rigging",
-  "version": "0.1.4-preview",
-  "unity": "2019.1",
+  "version": "0.2.0-preview",
+  "unity": "2019.2",
   "description": "Animation Rigging toolkit using Unity's Animation C# Jobs",
   "keywords": [
     "Animation",
@@ -14,7 +14,7 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/animation/com.unity.animation.rigging.git",
-    "revision": "5913edde8fcfa78184cacc771c0d3660bcd6a046"
+    "revision": "62deb1b5c9ca6ec60949dc88e60de787a8cd4497"
   },
   "samples": [
     {

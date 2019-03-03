@@ -1,12 +1,12 @@
 ﻿namespace UnityEngine.Animations.Rigging
 {
-    using Playables;
     using Experimental.Animations;
 
-    [AddComponentMenu("Animation Rigging/Setup/Rig")]
+    [DisallowMultipleComponent, AddComponentMenu("Animation Rigging/Setup/Rig")]
     public class Rig : MonoBehaviour
     {
-        [Range(0f, 1f)] public float weight = 1f;
+        [SerializeField, Range(0f, 1f)]
+        protected float m_Weight = 1f;
 
         private IRigConstraint[] m_Constraints;
         private IAnimationJob[]  m_Jobs;
@@ -37,23 +37,18 @@
             isInitialized = false;
         }
 
-        public void UpdateConstraints(AnimationScriptPlayable[] playables, bool enabled)
+        public void UpdateConstraints()
         {
-            if (!isInitialized || playables == null || playables.Length != m_Constraints.Length)
+            if (!isInitialized)
                 return;
 
-            var w = weight * System.Convert.ToSingle(enabled);
-            for (int i = 0; i < m_Constraints.Length; ++i)
-            {
-                var constraintWeight = m_Constraints[i].weight * w;
-                playables[i].SetInputWeight(0, constraintWeight);
-
-                if (constraintWeight > 0f)
-                    m_Constraints[i].UpdateJob(m_Jobs[i]);
-            }
+            for (int i = 0, count = m_Constraints.Length; i < count; ++i)
+                m_Constraints[i].UpdateJob(m_Jobs[i]);
         }
 
         public bool isInitialized { get; private set; }
+
+        public float weight { get => m_Weight; set => m_Weight = Mathf.Clamp01(value); }
 
         public IRigConstraint[] constraints => isInitialized ? m_Constraints : null;
 

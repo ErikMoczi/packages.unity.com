@@ -37,7 +37,7 @@ class DampedTransformTests
         var dampedSourceGO = new GameObject ("source");
         dampedSourceGO.transform.parent = dampedTransformGO.transform;
 
-        dampedTransform.data.sourceObject = new JobTransform(dampedSourceGO.transform, true);
+        dampedTransform.data.sourceObject = dampedSourceGO.transform;
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
@@ -52,8 +52,8 @@ class DampedTransformTests
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        var constrainedTransform = constraint.data.constrainedObject.transform;
-        var sourceTransform = constraint.data.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject;
+        var sourceTransform = constraint.data.sourceObject;
 
         Vector3 constrainedPos1 = constrainedTransform.position;
 
@@ -95,10 +95,10 @@ class DampedTransformTests
         constraint.data.dampRotation = 1f;
 
         data.constraint.weight = 0f;
-        yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+        yield return null;
 
-        var constrainedTransform = constraint.data.constrainedObject.transform;
-        var sourceTransform = constraint.data.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject;
+        var sourceTransform = constraint.data.sourceObject;
 
         Vector3 constrainedPos1 = constrainedTransform.position;
 
@@ -112,7 +112,7 @@ class DampedTransformTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+            yield return null;
 
             Vector3 weightedConstrainedPos = Vector3.Lerp(constrainedPos1, constrainedPos2, w);
             Vector3 constrainedPos = constrainedTransform.position;

@@ -15,7 +15,7 @@ namespace UnityEditor.Animations.Rigging
                 return false;
             }
 
-            int index = System.Convert.ToInt32(selected[0] == Selection.activeTransform);
+            int index = Convert.ToInt32(selected[0] == Selection.activeTransform);
             source = selected[index];
             destination = selected[index ^ 1];
 

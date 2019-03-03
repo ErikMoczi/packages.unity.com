@@ -4,23 +4,25 @@ namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
-    public struct TwistCorrectionJob : IAnimationJob
+    public struct TwistCorrectionJob : IWeightedAnimationJob
     {
-        public TransformHandle source;
+        public ReadOnlyTransformHandle source;
         public Quaternion sourceInverseBindRotation;
         public Vector3 axisMask;
     
-        public NativeArray<TransformHandle> twistNodes;
+        public NativeArray<ReadWriteTransformHandle> twistNodes;
         public CacheIndex twistWeightStartIdx;
 
         public AnimationJobCache cache;
+
+        public FloatProperty jobWeight { get; set; }
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
         public void ProcessAnimation(AnimationStream stream)
         {
-            float jobWeight = stream.GetInputWeight(0);
-            if (jobWeight > 0f)
+            float w = jobWeight.Get(stream);
+            if (w > 0f)
             {
                 if (twistNodes.Length == 0)
                     return;
@@ -29,9 +31,9 @@ namespace UnityEngine.Animations.Rigging
                 Quaternion invTwistRot = Quaternion.Inverse(twistRot);
                 for (int i = 0; i < twistNodes.Length; ++i)
                 {
-                    float w = Mathf.Clamp(cache.GetRaw(twistWeightStartIdx, i), -1f, 1f);
-                    Quaternion rot = Quaternion.Lerp(Quaternion.identity, Mathf.Sign(w) < 0f ? invTwistRot : twistRot, Mathf.Abs(w));
-                    twistNodes[i].SetLocalRotation(stream, Quaternion.Lerp(twistNodes[i].GetLocalRotation(stream), rot, jobWeight));
+                    float twistWeight = Mathf.Clamp(cache.GetRaw(twistWeightStartIdx, i), -1f, 1f);
+                    Quaternion rot = Quaternion.Lerp(Quaternion.identity, Mathf.Sign(twistWeight) < 0f ? invTwistRot : twistRot, Mathf.Abs(twistWeight));
+                    twistNodes[i].SetLocalRotation(stream, Quaternion.Lerp(twistNodes[i].GetLocalRotation(stream), rot, w));
                 }
             }
             else
@@ -58,23 +60,23 @@ namespace UnityEngine.Animations.Rigging
     public class TwistCorrectionJobBinder<T> : AnimationJobBinder<TwistCorrectionJob, T>
         where T : struct, IAnimationJobData, ITwistCorrectionData
     {
-        public override TwistCorrectionJob Create(Animator animator, ref T data)
+        public override TwistCorrectionJob Create(Animator animator, ref T data, Component component)
         {
             var job = new TwistCorrectionJob();
             var cacheBuilder = new AnimationJobCacheBuilder();
 
-            job.source = TransformHandle.Bind(animator, data.source);
+            job.source = ReadOnlyTransformHandle.Bind(animator, data.source);
             job.sourceInverseBindRotation = Quaternion.Inverse(data.source.localRotation);
             job.axisMask = data.twistAxis;
 
             var twistNodes = data.twistNodes;
             var twistNodeWeights = data.twistNodeWeights;
-            job.twistNodes = new NativeArray<TransformHandle>(twistNodes.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            job.twistNodes = new NativeArray<ReadWriteTransformHandle>(twistNodes.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             job.twistWeightStartIdx = cacheBuilder.AllocateChunk(twistNodes.Length);
 
             for (int i = 0; i < twistNodes.Length; ++i)
             {
-                job.twistNodes[i] = TransformHandle.Bind(animator, twistNodes[i]);
+                job.twistNodes[i] = ReadWriteTransformHandle.Bind(animator, twistNodes[i]);
                 cacheBuilder.SetValue(job.twistWeightStartIdx, i, twistNodeWeights[i]);
             }
             job.cache = cacheBuilder.Build();

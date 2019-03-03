@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace UnityEngine.Animations.Rigging
 {
@@ -6,6 +8,19 @@ namespace UnityEngine.Animations.Rigging
 
     public static class RigUtils
     {
+        internal static readonly Dictionary<Type, PropertyDescriptor> s_SupportedPropertyTypeToDescriptor = new Dictionary<Type, PropertyDescriptor>
+        {
+            { typeof(float)      , new PropertyDescriptor{ size = 1, type = PropertyType.Float } },
+            { typeof(int)        , new PropertyDescriptor{ size = 1, type = PropertyType.Int   } },
+            { typeof(bool)       , new PropertyDescriptor{ size = 1, type = PropertyType.Bool  } },
+            { typeof(Vector2)    , new PropertyDescriptor{ size = 2, type = PropertyType.Float } },
+            { typeof(Vector3)    , new PropertyDescriptor{ size = 3, type = PropertyType.Float } },
+            { typeof(Vector4)    , new PropertyDescriptor{ size = 4, type = PropertyType.Float } },
+            { typeof(Quaternion) , new PropertyDescriptor{ size = 4, type = PropertyType.Float } },
+            { typeof(Vector3Int) , new PropertyDescriptor{ size = 1, type = PropertyType.Int   } },
+            { typeof(Vector3Bool), new PropertyDescriptor{ size = 3, type = PropertyType.Bool  } }
+        };
+
         public static IRigConstraint[] GetConstraints(Rig rig)
         {
             IRigConstraint[] constraints = rig.GetComponentsInChildren<IRigConstraint>();
@@ -22,63 +37,137 @@ namespace UnityEngine.Animations.Rigging
             return tmp.Count == 0 ? null : tmp.ToArray();
         }
 
-        public static JobTransform[] GetAllRigTransformReferences(Rig rig)
+        private static Transform[] GetSyncableRigTransforms(Rig rig)
         {
             RigTransform[] rigTransforms = rig.GetComponentsInChildren<RigTransform>();
             if (rigTransforms.Length == 0)
                 return null;
 
-            JobTransform[] jobTransforms = new JobTransform[rigTransforms.Length];
-            for (int i = 0; i < jobTransforms.Length; ++i)
-                jobTransforms[i] = new JobTransform(rigTransforms[i].transform, rigTransforms[i].syncFromScene);
+            Transform[] transforms = new Transform[rigTransforms.Length];
+            for (int i = 0; i < transforms.Length; ++i)
+                transforms[i] = rigTransforms[i].transform;
 
-            return jobTransforms;
+            return transforms;
         }
 
-        public static JobTransform[] GetAllConstraintReferences(Animator animator, IRigConstraint[] constraints)
+        private static bool ExtractTransformType(
+            Animator animator,
+            FieldInfo field,
+            ref IAnimationJobData data,
+            List<Transform> syncableTransforms
+            )
         {
-            if (constraints == null || constraints.Length == 0)
-                return null;
+            bool handled = true;
 
-            List<JobTransform> allReferences = new List<JobTransform>(constraints.Length);
-            foreach (var constraint in constraints)
+            Type fieldType = field.FieldType;
+            if (fieldType == typeof(Transform))
             {
-                var data = constraint.data;
-                if (!(data is IRigReferenceSync))
-                    continue;
-
-                var references = ((IRigReferenceSync)data).allReferences;
-                if (references == null)
-                    continue;
-
-                foreach (var reference in references)
-                {
-                    if (reference.transform.IsChildOf(animator.transform))
-                        allReferences.Add(reference);
-                }
+                var value = (Transform)field.GetValue(data);
+                if (value != null && value.IsChildOf(animator.transform))
+                    syncableTransforms.Add(value);
             }
+            else if (fieldType == typeof(WeightedTransform))
+            {
+                var value = ((WeightedTransform)field.GetValue(data)).transform;
+                if (value != null && value.IsChildOf(animator.transform))
+                    syncableTransforms.Add(value);
+            }
+            else if (fieldType == typeof(Transform[]) || fieldType == typeof(List<Transform>))
+            {
+                var list = (IEnumerable<Transform>)field.GetValue(data);
+                foreach (var element in list)
+                    if (element != null && element.IsChildOf(animator.transform))
+                        syncableTransforms.Add(element);
+            }
+            else if (fieldType == typeof(WeightedTransform[]) || fieldType == typeof(List<WeightedTransform>))
+            {
+                var list = (IEnumerable<WeightedTransform>)field.GetValue(data);
+                foreach (var element in list)
+                    if (element.transform != null && element.transform.IsChildOf(animator.transform))
+                        syncableTransforms.Add(element.transform);
+            }
+            else
+                handled = false;
 
-            return allReferences.Count == 0 ? null : allReferences.ToArray();
+            return handled;
         }
 
-        public static Dictionary<int, List<int>> BuildUniqueReferenceMap(JobTransform[] references)
+        private static bool ExtractPropertyType(
+            FieldInfo field,
+            ref IAnimationJobData data,
+            List<Property> syncableProperties
+            )
         {
-            if (references == null || references.Length == 0)
-                return null;
+            if (!s_SupportedPropertyTypeToDescriptor.TryGetValue(field.FieldType, out PropertyDescriptor descriptor))
+                return false;
 
-            Dictionary<int, List<int>> uniqueReferences = new Dictionary<int, List<int>>();
-            for (int i = 0; i < references.Length; ++i)
+            syncableProperties.Add(
+                new Property { name = PropertyUtils.ConstructConstraintDataPropertyName(field.Name), descriptor = descriptor }
+                );
+
+            return true;
+        }
+
+        private static void ExtractAllSyncableData(Animator animator, Rig[] rigs, out List<Transform> syncableTransforms, out List<SyncableProperties> syncableProperties)
+        {
+            syncableTransforms = new List<Transform>();
+            syncableProperties = new List<SyncableProperties>(rigs.Length);
+
+            Dictionary<Type, FieldInfo[]> typeToSyncableFields = new Dictionary<Type, FieldInfo[]>();
+            foreach (var rig in rigs)
             {
-                int key = references[i].transform.GetInstanceID();
-                if (!uniqueReferences.TryGetValue(key, out List<int> indices))
-                {
-                    indices = new List<int>();
-                    uniqueReferences[key] = indices;
-                }
-                indices.Add(i);
-            }
+                var constraints = rig.constraints;
+                List<ConstraintProperties> allConstraintProperties = new List<ConstraintProperties>(constraints.Length);
 
-            return uniqueReferences;
+                foreach (var constraint in constraints)
+                {
+                    var data = constraint.data;
+                    var dataType = constraint.data.GetType();
+                    if (!typeToSyncableFields.TryGetValue(dataType, out FieldInfo[] syncableFields))
+                    {
+                        FieldInfo[] allFields = dataType.GetFields(
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
+                            );
+
+                        List<FieldInfo> filteredFields = new List<FieldInfo>(allFields.Length);
+                        foreach (var field in allFields)
+                            if (field.GetCustomAttribute<SyncSceneToStreamAttribute>() != null)
+                                filteredFields.Add(field);
+
+                        syncableFields = filteredFields.ToArray();
+                        typeToSyncableFields[dataType] = syncableFields;
+                    }
+
+                    List<Property> properties = new List<Property>(syncableFields.Length);
+                    foreach (var field in syncableFields)
+                    {
+                        if (ExtractTransformType(animator, field, ref data, syncableTransforms))
+                            continue;
+                        if (ExtractPropertyType(field, ref data, properties))
+                            continue;
+
+                        throw new NotSupportedException("Field type [" + field.FieldType + "] is not a supported syncable property type.");
+                    }
+
+                    allConstraintProperties.Add(
+                        new ConstraintProperties {
+                            component = constraint as Component,
+                            properties = properties.ToArray()
+                        }
+                    );
+                }
+
+                var extraTransforms = GetSyncableRigTransforms(rig);
+                if (extraTransforms != null)
+                    syncableTransforms.AddRange(extraTransforms);
+
+                syncableProperties.Add(
+                    new SyncableProperties {
+                        rig = new RigProperties { component = rig as Component },
+                        constraints = allConstraintProperties.ToArray()
+                    }
+                );
+            }
         }
 
         public static IAnimationJob[] CreateAnimationJobs(Animator animator, IRigConstraint[] constraints)
@@ -102,58 +191,70 @@ namespace UnityEngine.Animations.Rigging
                 constraints[i].DestroyJob(jobs[i]);
         }
 
-        private struct SyncSceneToStreamData : IAnimationJobData, ISyncSceneToStreamData
+        private struct RigSyncSceneToStreamData : IAnimationJobData, IRigSyncSceneToStreamData
         {
-            public SyncSceneToStreamData(JobTransform[] references)
+            public RigSyncSceneToStreamData(Transform[] transforms, SyncableProperties[] properties, int rigCount)
             {
-                if (references == null || references.Length == 0)
+                if (transforms != null && transforms.Length > 0)
                 {
-                    objects = null;
-                    sync = null;
-                    return;
-                }
-
-                var uniqueReferences = BuildUniqueReferenceMap(references);
-                var keys = uniqueReferences.Keys;
-
-                objects = new Transform[keys.Count];
-                sync = new bool[keys.Count];
-
-                int index = 0;
-                foreach (var key in keys)
-                {
-                    var values = uniqueReferences[key];
-                    objects[index] = references[values[0]].transform;
-
-                    bool state = false;
-                    foreach (var val in values)
+                    var unique = UniqueTransformIndices(transforms);
+                    if (unique.Length != transforms.Length)
                     {
-                        if ((state |= references[val].sync))
-                            break;
+                        syncableTransforms = new Transform[unique.Length];
+                        for (int i = 0; i < unique.Length; ++i)
+                            syncableTransforms[i] = transforms[unique[i]];
                     }
-
-                    sync[index] = state;
-                    ++index;
+                    else
+                        syncableTransforms = transforms;
                 }
+                else
+                    syncableTransforms = null;
+
+                syncableProperties = properties;
+
+                rigStates = rigCount > 0 ? new bool[rigCount] : null;
+
+                m_IsValid = !(((syncableTransforms == null || syncableTransforms.Length == 0) &&
+                    (syncableProperties == null || syncableProperties.Length == 0) &&
+                    rigStates == null));
             }
 
-            public Transform[] objects { get; private set; }
-            public bool[] sync { get; private set; }
+            static int[] UniqueTransformIndices(Transform[] transforms)
+            {
+                if (transforms == null || transforms.Length == 0)
+                    return null;
 
-            bool IAnimationJobData.IsValid() => objects != null && objects.Length > 0 && sync.Length == objects.Length;
+                HashSet<int> instanceIDs = new HashSet<int>();
+                List<int> unique = new List<int>(transforms.Length);
+
+                for (int i = 0; i < transforms.Length; ++i)
+                    if (instanceIDs.Add(transforms[i].GetInstanceID()))
+                        unique.Add(i);
+
+                return unique.ToArray();
+            }
+
+            public Transform[] syncableTransforms { get; private set; }
+            public SyncableProperties[] syncableProperties { get; private set; }
+            public bool[] rigStates { get; set; }
+            private readonly bool m_IsValid;
+
+            bool IAnimationJobData.IsValid() => m_IsValid;
 
             void IAnimationJobData.SetDefaultValues()
             {
-                sync = null;
-                objects = null;
+                syncableTransforms = null;
+                syncableProperties = null;
+                rigStates = null;
             }
         }
-
-        public static IAnimationJobData CreateSyncSceneToStreamData(JobTransform[] references)
+ 
+        public static IAnimationJobData CreateSyncSceneToStreamData(Animator animator, Rig[] rigs)
         {
-            return new SyncSceneToStreamData(references);
+            ExtractAllSyncableData(animator, rigs, out List<Transform> syncableTransforms, out List<SyncableProperties> syncableProperties);
+            return new RigSyncSceneToStreamData(syncableTransforms.ToArray(), syncableProperties.ToArray(), rigs.Length);
         }
 
-        public static IAnimationJobBinder syncSceneToStreamBinder { get; } = new SyncSceneToStreamJobBinder<SyncSceneToStreamData>();
+        public static IAnimationJobBinder syncSceneToStreamBinder { get; } = new RigSyncSceneToStreamJobBinder<RigSyncSceneToStreamData>();
     }
 }

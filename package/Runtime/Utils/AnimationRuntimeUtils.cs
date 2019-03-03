@@ -10,11 +10,11 @@ namespace UnityEngine.Animations.Rigging
 
         public static void SolveTwoBoneIK(
             AnimationStream stream,
-            TransformHandle root,
-            TransformHandle mid,
-            TransformHandle tip,
-            TransformHandle target,
-            TransformHandle hint,
+            ReadWriteTransformHandle root,
+            ReadWriteTransformHandle mid,
+            ReadWriteTransformHandle tip,
+            ReadOnlyTransformHandle target,
+            ReadOnlyTransformHandle hint,
             float posWeight,
             float rotWeight,
             float hintWeight,
@@ -25,8 +25,9 @@ namespace UnityEngine.Animations.Rigging
             Vector3 aPosition = root.GetPosition(stream);
             Vector3 bPosition = mid.GetPosition(stream);
             Vector3 cPosition = tip.GetPosition(stream);
-            Vector3 tPosition = Vector3.Lerp(cPosition, target.GetPosition(stream) + targetOffset.translation, posWeight);
-            Quaternion tRotation = Quaternion.Lerp(tip.GetRotation(stream), target.GetRotation(stream) * targetOffset.rotation, rotWeight);
+            target.GetGlobalTR(stream, out Vector3 targetPos, out Quaternion targetRot);
+            Vector3 tPosition = Vector3.Lerp(cPosition, targetPos + targetOffset.translation, posWeight);
+            Quaternion tRotation = Quaternion.Lerp(tip.GetRotation(stream), targetRot * targetOffset.rotation, rotWeight);
             bool hasHint = hint.IsValid(stream) && hintWeight > 0f;
 
             Vector3 ab = bPosition - aPosition;
@@ -109,7 +110,7 @@ namespace UnityEngine.Animations.Rigging
         {
             // If the target is unreachable
             var rootToTargetDir = target - linkPositions[0];
-            if (rootToTargetDir.sqrMagnitude > (maxReach * maxReach))
+            if (rootToTargetDir.sqrMagnitude > Square(maxReach))
             {
                 // Line up chain towards target
                 var dir = rootToTargetDir.normalized;
@@ -121,7 +122,7 @@ namespace UnityEngine.Animations.Rigging
             else
             {
                 int tipIndex = linkPositions.Length - 1;
-                float sqrTolerance = tolerance * tolerance;
+                float sqrTolerance = Square(tolerance);
                 if (SqrDistance(linkPositions[tipIndex], target) > sqrTolerance)
                 {
                     var rootPos = linkPositions[0];
@@ -155,6 +156,11 @@ namespace UnityEngine.Animations.Rigging
             return (p1 - p0).sqrMagnitude;
         }
 
+        public static float Square(float value)
+        {
+            return value * value;
+        }
+
         public static Vector3 Lerp(Vector3 a, Vector3 b, Vector3 t)
         {
             return Vector3.Scale(a, Vector3.one - t) + Vector3.Scale(b, t);
@@ -172,11 +178,10 @@ namespace UnityEngine.Animations.Rigging
             return sum;
         }
 
-        public static void PassThrough(AnimationStream stream, TransformHandle handle)
+        public static void PassThrough(AnimationStream stream, ReadWriteTransformHandle handle)
         {
-            handle.SetLocalPosition(stream, handle.GetLocalPosition(stream));
-            handle.SetLocalRotation(stream, handle.GetLocalRotation(stream));
-            handle.SetLocalScale(stream, handle.GetLocalScale(stream));
+            handle.GetLocalTRS(stream, out Vector3 position, out Quaternion rotation, out Vector3 scale);
+            handle.SetLocalTRS(stream, position, rotation, scale);
         }
     }
 }

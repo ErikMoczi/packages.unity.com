@@ -2,50 +2,51 @@
 {
     using Experimental.Animations;
 
-    public struct BlendConstraintJob : IAnimationJob
+    public struct BlendConstraintJob : IWeightedAnimationJob
     {
         public const int k_BlendTranslationMask = 1 << 0;
         public const int k_BlendRotationMask = 1 << 1;
 
-        public TransformHandle driven;
-        public TransformHandle sourceA;
-        public TransformHandle sourceB;
+        public ReadWriteTransformHandle driven;
+        public ReadOnlyTransformHandle sourceA;
+        public ReadOnlyTransformHandle sourceB;
         public AffineTransform sourceAOffset;
         public AffineTransform sourceBOffset;
 
-        public CacheIndex optionsIdx;
-        public CacheIndex positionWeightIdx;
-        public CacheIndex rotationWeightIdx;
-        public AnimationJobCache cache;
+        public BoolProperty blendPosition;
+        public BoolProperty blendRotation;
+        public FloatProperty positionWeight;
+        public FloatProperty rotationWeight;
+
+        public FloatProperty jobWeight { get; set; }
 
         public void ProcessRootMotion(AnimationStream stream) { }
 
         public void ProcessAnimation(AnimationStream stream)
         {
-            float jobWeight = stream.GetInputWeight(0);
-            if (jobWeight > 0f)
+            float w = jobWeight.Get(stream);
+            if (w > 0f)
             {
-                var flags = (int)cache.GetRaw(optionsIdx);
-                if ((flags & k_BlendTranslationMask) != 0)
+                if (blendPosition.Get(stream))
                 {
                     Vector3 posBlend = Vector3.Lerp(
                         sourceA.GetPosition(stream) + sourceAOffset.translation,
                         sourceB.GetPosition(stream) + sourceBOffset.translation,
-                        cache.GetRaw(positionWeightIdx)
+                        positionWeight.Get(stream)
                         );
-                    driven.SetPosition(stream, Vector3.Lerp(driven.GetPosition(stream), posBlend, jobWeight));
+                    driven.SetPosition(stream, Vector3.Lerp(driven.GetPosition(stream), posBlend, w));
                 }
                 else
                     driven.SetLocalPosition(stream, driven.GetLocalPosition(stream));
 
-                if ((flags & k_BlendRotationMask) != 0)
+                if (blendRotation.Get(stream))
                 {
                     Quaternion rotBlend = Quaternion.Lerp(
                         sourceA.GetRotation(stream) * sourceAOffset.rotation,
                         sourceB.GetRotation(stream) * sourceBOffset.rotation,
-                        cache.GetRaw(rotationWeightIdx)
+                        rotationWeight.Get(stream)
                         );
-                    driven.SetRotation(stream, Quaternion.Lerp(driven.GetRotation(stream), rotBlend, jobWeight));
+                    driven.SetRotation(stream, Quaternion.Lerp(driven.GetRotation(stream), rotBlend, w));
                 }
                 else
                     driven.SetLocalRotation(stream, driven.GetLocalRotation(stream));
@@ -53,72 +54,59 @@
             else
                 AnimationRuntimeUtils.PassThrough(stream, driven);
         }
-
-        public static int PackFlags(bool blendT, bool blendR)
-        {
-            return System.Convert.ToInt32(blendT) | System.Convert.ToInt32(blendR) * k_BlendRotationMask;
-        }
     }
 
     public interface IBlendConstraintData
     {
         Transform constrainedObject { get; }
-        Transform sourceA { get; }
-        Transform sourceB { get; }
-        bool blendPosition { get; }
-        bool blendRotation { get; }
-        float positionWeight { get; }
-        float rotationWeight { get; }
+        Transform sourceObjectA { get; }
+        Transform sourceObjectB { get; }
 
         bool maintainPositionOffsets { get; }
         bool maintainRotationOffsets { get; }
+
+        string blendPositionBoolProperty { get; }
+        string blendRotationBoolProperty { get; }
+        string positionWeightFloatProperty { get; }
+        string rotationWeightFloatProperty { get; }
     }
 
     public class BlendConstraintJobBinder<T> : AnimationJobBinder<BlendConstraintJob, T>
         where T : struct, IAnimationJobData, IBlendConstraintData
     {
-        public override BlendConstraintJob Create(Animator animator, ref T data)
+        public override BlendConstraintJob Create(Animator animator, ref T data, Component component)
         {
             var job = new BlendConstraintJob();
-            var cacheBuilder = new AnimationJobCacheBuilder();
-
-            job.driven = TransformHandle.Bind(animator, data.constrainedObject);
-            job.sourceA = TransformHandle.Bind(animator, data.sourceA);
-            job.sourceB = TransformHandle.Bind(animator, data.sourceB);
-            job.optionsIdx = cacheBuilder.Add(BlendConstraintJob.PackFlags(data.blendPosition, data.blendRotation));
-
+            
+            job.driven = ReadWriteTransformHandle.Bind(animator, data.constrainedObject);
+            job.sourceA = ReadOnlyTransformHandle.Bind(animator, data.sourceObjectA);
+            job.sourceB = ReadOnlyTransformHandle.Bind(animator, data.sourceObjectB);
+            
             job.sourceAOffset = job.sourceBOffset = AffineTransform.identity;
             if (data.maintainPositionOffsets)
             {
                 var drivenPos = data.constrainedObject.position;
-                job.sourceAOffset.translation = drivenPos - data.sourceA.position;
-                job.sourceBOffset.translation = drivenPos - data.sourceB.position;
+                job.sourceAOffset.translation = drivenPos - data.sourceObjectA.position;
+                job.sourceBOffset.translation = drivenPos - data.sourceObjectB.position;
             }
 
             if (data.maintainRotationOffsets)
             {
                 var drivenRot = data.constrainedObject.rotation;
-                job.sourceAOffset.rotation = Quaternion.Inverse(data.sourceA.rotation) * drivenRot;
-                job.sourceBOffset.rotation = Quaternion.Inverse(data.sourceB.rotation) * drivenRot;
+                job.sourceAOffset.rotation = Quaternion.Inverse(data.sourceObjectA.rotation) * drivenRot;
+                job.sourceBOffset.rotation = Quaternion.Inverse(data.sourceObjectB.rotation) * drivenRot;
             }
 
-            job.positionWeightIdx = cacheBuilder.Add(data.positionWeight);
-            job.rotationWeightIdx = cacheBuilder.Add(data.rotationWeight);
-            job.cache = cacheBuilder.Build();
+            job.blendPosition = BoolProperty.Bind(animator, component, data.blendPositionBoolProperty);
+            job.blendRotation = BoolProperty.Bind(animator, component, data.blendRotationBoolProperty);
+            job.positionWeight = FloatProperty.Bind(animator, component, data.positionWeightFloatProperty);
+            job.rotationWeight = FloatProperty.Bind(animator, component, data.rotationWeightFloatProperty);
 
             return job;
         }
 
         public override void Destroy(BlendConstraintJob job)
         {
-            job.cache.Dispose();
-        }
-
-        public override void Update(BlendConstraintJob job, ref T data)
-        {
-            job.cache.SetRaw(data.positionWeight, job.positionWeightIdx);
-            job.cache.SetRaw(data.rotationWeight, job.rotationWeightIdx);
-            job.cache.SetRaw(BlendConstraintJob.PackFlags(data.blendPosition, data.blendRotation), job.optionsIdx);
         }
     }
 }

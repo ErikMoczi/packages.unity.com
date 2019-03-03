@@ -34,17 +34,17 @@ class MultiParentConstraintTests
 
         multiParent.data.constrainedObject = data.rigData.hipsGO.transform;
         data.constrainedObjectRestTx = new AffineTransform(
-            multiParent.data.constrainedObject.transform.position,
-            multiParent.data.constrainedObject.transform.rotation
+            multiParent.data.constrainedObject.position,
+            multiParent.data.constrainedObject.rotation
             );
 
-        List<WeightedJobTransform> sources = new List<WeightedJobTransform>(2);
+        List<WeightedTransform> sources = new List<WeightedTransform>(2);
         var src0GO = new GameObject("source0");
         var src1GO = new GameObject("source1");
         src0GO.transform.parent = multiParentGO.transform;
         src1GO.transform.parent = multiParentGO.transform;
-        sources.Add(new WeightedJobTransform(src0GO.transform, true, 0f));
-        sources.Add(new WeightedJobTransform(src1GO.transform, true, 0f));
+        sources.Add(new WeightedTransform(src0GO.transform, 0f));
+        sources.Add(new WeightedTransform(src1GO.transform, 0f));
         multiParent.data.sourceObjects = sources;
 
         var pos = data.rigData.hipsGO.transform.position;
@@ -73,8 +73,8 @@ class MultiParentConstraintTests
         Assert.Zero(sources[1].weight);
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
-        Assert.AreEqual(constrainedObject.transform.position, data.constrainedObjectRestTx.translation);
-        Assert.AreEqual(constrainedObject.transform.rotation, data.constrainedObjectRestTx.rotation);
+        Assert.AreEqual(constrainedObject.position, data.constrainedObjectRestTx.translation);
+        Assert.AreEqual(constrainedObject.rotation, data.constrainedObjectRestTx.rotation);
 
         // Add displacement to source objects
         sources[0].transform.position += Vector3.right;
@@ -87,8 +87,8 @@ class MultiParentConstraintTests
         constraint.data.MarkSourceWeightsDirty();
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
-        Assert.AreEqual(constrainedObject.transform.position, sources[0].transform.position);
-        Assert.AreEqual(constrainedObject.transform.rotation, sources[0].transform.rotation);
+        Assert.AreEqual(constrainedObject.position, sources[0].transform.position);
+        Assert.AreEqual(constrainedObject.rotation, sources[0].transform.rotation);
 
         // src0.w = 0, src1.w = 1
         sources[0].weight = 0f;
@@ -96,8 +96,8 @@ class MultiParentConstraintTests
         constraint.data.MarkSourceWeightsDirty();
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
-        Assert.AreEqual(constrainedObject.transform.position, sources[1].transform.position);
-        Assert.AreEqual(constrainedObject.transform.rotation, sources[1].transform.rotation);
+        Assert.AreEqual(constrainedObject.position, sources[1].transform.position);
+        Assert.AreEqual(constrainedObject.rotation, sources[1].transform.rotation);
     }
 
     [UnityTest]
@@ -119,21 +119,21 @@ class MultiParentConstraintTests
             float w = i / 5.0f;
 
             data.constraint.weight = w;
-            yield return RuntimeRiggingTestFixture.YieldTwoFrames();
+            yield return null;
 
 
             var weightedPos = Vector3.Lerp(data.constrainedObjectRestTx.translation, sources[0].transform.position, w);
             Assert.AreEqual(
-                constrainedObject.transform.position,
+                constrainedObject.position,
                 weightedPos,
-                String.Format("Expected constrainedObject to be at {0} for a weight of {1}, but was {2}", weightedPos, w, constrainedObject.transform.position)
+                String.Format("Expected constrainedObject to be at {0} for a weight of {1}, but was {2}", weightedPos, w, constrainedObject.position)
                 );
 
             var weightedRot = Quaternion.Lerp(data.constrainedObjectRestTx.rotation, sources[0].transform.rotation, w);
              Assert.AreEqual(
-                constrainedObject.transform.rotation,
+                constrainedObject.rotation,
                 weightedRot,
-                String.Format("Expected constrainedObject to be at {0} for a weight of {1}, but was {2}", weightedRot, w, constrainedObject.transform.rotation)
+                String.Format("Expected constrainedObject to be at {0} for a weight of {1}, but was {2}", weightedRot, w, constrainedObject.rotation)
                 );
         }
     }

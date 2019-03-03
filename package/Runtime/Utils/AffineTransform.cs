@@ -12,6 +12,12 @@
             rotation = r;
         }
 
+        public void Set(Vector3 t, Quaternion r)
+        {
+            translation = t;
+            rotation = r;
+        }
+
         public Vector3 Transform(Vector3 p) =>
             rotation * p + translation;
 

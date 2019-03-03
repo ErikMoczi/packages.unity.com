@@ -33,7 +33,7 @@ class OverrideTransformTests
         var overrideSourceGO = new GameObject ("source");
         overrideSourceGO.transform.parent = overrideTransformGO.transform;
 
-        overrideTransform.data.sourceObject = new JobTransform(overrideSourceGO.transform, true);
+        overrideTransform.data.sourceObject = overrideSourceGO.transform;
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
 
@@ -51,8 +51,8 @@ class OverrideTransformTests
         constraint.data.space = OverrideTransformData.Space.World;
         yield return null;
 
-        var constrainedTransform = constraint.data.constrainedObject.transform;
-        var sourceTransform = constraint.data.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject;
+        var sourceTransform = constraint.data.sourceObject;
 
         for (int i = 0; i < 5; ++i)
         {
@@ -74,8 +74,8 @@ class OverrideTransformTests
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        var constrainedTransform = constraint.data.constrainedObject.transform;
-        var sourceTransform = constraint.data.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject;
+        var sourceTransform = constraint.data.sourceObject;
 
         Vector3 originalPosition = constrainedTransform.position;
 
@@ -103,8 +103,8 @@ class OverrideTransformTests
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        var constrainedTransform = constraint.data.constrainedObject.transform;
-        var sourceTransform = constraint.data.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject;
+        var sourceTransform = constraint.data.sourceObject;
 
         Vector3 parentPosition = constrainedTransform.parent.position;
 
@@ -132,8 +132,8 @@ class OverrideTransformTests
         var data = SetupConstraintRig();
         var constraint = data.constraint;
 
-        var constrainedTransform = constraint.data.constrainedObject.transform;
-        var sourceTransform = constraint.data.sourceObject.transform;
+        var constrainedTransform = constraint.data.constrainedObject;
+        var sourceTransform = constraint.data.sourceObject;
 
         Vector3 constrainedPos1 = constrainedTransform.position;
 

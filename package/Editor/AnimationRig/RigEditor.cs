@@ -9,7 +9,7 @@ namespace UnityEditor.Animations.Rigging
 
         void OnEnable()
         {
-            m_Weight = serializedObject.FindProperty("weight");
+            m_Weight = serializedObject.FindProperty("m_Weight");
         }
 
         public override void OnInspectorGUI()
