@@ -23,3 +23,4 @@
 0.9.100-preview.3
 0.9.100-preview.4
 1.0.0-preview.1
+1.0.0-preview.2

@@ -1,10 +1,11 @@
-## [1.0.0-preview.1] - 2019-02-26
+## [1.0.0-preview.2] - 2019-02-26
 - Update style to work better with the Northstar branch.
 - Use Alt+Left to open the filter window box.
 - Use Alt+Down to cycle to next recent search.
 - Navigate the filter window using the keyboard only.
 - Consolidate web search providers into a single one with sub categories.
 - Update documentation to include new features.
+- Set the game object as the selected active game object when activated.
 
 ## [0.9.95-preview] - 2019-02-25
 - Add AssetStoreProvider example
@@ -16,7 +17,7 @@
 - Cycle too previous search query using ALT+UpArrow
 - Fix various Mac UX issues
 - New icons
-- Select first item by default en pressing Enter
+- Select first item by default en pressing
 
 ## [0.9.9-preview.2] - 2019-02-21
 - Added drag and drop support. You can drag an item from the quick search tool to a drop target.

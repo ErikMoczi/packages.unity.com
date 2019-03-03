@@ -78,6 +78,7 @@ namespace Unity.QuickSearch
                             var obj = ObjectFromItem(item);
                             if (obj != null)
                             {
+                                Selection.activeGameObject = obj;
                                 EditorGUIUtility.PingObject(obj);
                                 SceneView.lastActiveSceneView.FrameSelected();
                             }

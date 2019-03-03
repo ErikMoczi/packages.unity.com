@@ -1,7 +1,7 @@
 {
   "name": "com.unity.quicksearch",
   "displayName": "Quick Search",
-  "version": "1.0.0-preview.1",
+  "version": "1.0.0-preview.2",
   "unity": "2019.1",
   "keywords": ["unity", "editor", "omni", "quick", "search", "assets", "menu", "scene", "anything"],
   "description": "Search multiple areas of Unity: assets, scene objects, menu items, settings, etc.\n\nOn Windows simply press Alt+' to find anything or Option+' on Mac.",
