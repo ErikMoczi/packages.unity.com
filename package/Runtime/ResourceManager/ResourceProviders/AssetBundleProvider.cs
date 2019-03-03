@@ -143,10 +143,8 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
                             {
                                 if (typeof(TObject) == typeof(AssetBundle) && webReq.downloadHandler is DownloadHandlerAssetBundle)
                                 {
-                                    var handler = webReq.downloadHandler as DownloadHandlerAssetBundle;
-                                    res = handler.assetBundle as TObject;
-                                    if(handler.assetBundle != null)
-                                        loadedDownloadHandlers.Add(handler);
+                                    res = (webReq.downloadHandler as DownloadHandlerAssetBundle).assetBundle as TObject;
+                                    loadedBundles.Add((Context as IResourceLocation).InternalId.GetHashCode());
                                 }
                                 else
                                     res = webReq.downloadHandler as TObject;
@@ -250,31 +248,40 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
             return operation.Start(location, deps);
         }
 
-        static HashSet<DownloadHandlerAssetBundle> loadedDownloadHandlers = new HashSet<DownloadHandlerAssetBundle>();
-        internal static AssetBundle LoadBundleFromDependecies(IList<object> results)
+        static HashSet<int> loadedBundles = new HashSet<int>();
+        internal static AssetBundle GetBundleFromDependencyOperation(IResourceLocation loc, IAsyncOperation<IList<object>> op)
         {
             //access all of the dependent bundles to force them to load
-            for (int i = 1; i < results.Count; i++)
+            var depLocList = op.Context as IList<IResourceLocation>;
+            for (int i = 1; i < op.Result.Count; i++)
             {
-                
-                var handler = results[i] as DownloadHandlerAssetBundle;
+                var handler = op.Result[i] as DownloadHandlerAssetBundle;
                 if (handler != null)
                 {
+                    IResourceLocation depLoc = depLocList[i];
                     var b = handler.assetBundle;
-                    if (b != null)
-                        loadedDownloadHandlers.Add(handler);
+                    if (b == null)
+                    {
+                        Debug.LogWarningFormat("Failed to load dependent bundle {0} for location {1}.", depLoc, loc);
+                    }
+                    else
+                    {
+                        loadedBundles.Add(depLoc.InternalId.GetHashCode());
+                    }
                 }
             }
 
-            AssetBundle bundle = results[0] as AssetBundle;
+            AssetBundle bundle = op.Result[0] as AssetBundle;
             if (bundle == null)
             {
-                var handler = results[0] as DownloadHandlerAssetBundle;
+                var handler = op.Result[0] as DownloadHandlerAssetBundle;
                 if (handler != null)
                 {
                     bundle = handler.assetBundle;
                     if (bundle != null)
-                        loadedDownloadHandlers.Add(handler);
+                    {
+                        loadedBundles.Add(depLocList[0].InternalId.GetHashCode());
+                    }
                 }
             }
             return bundle;
@@ -304,7 +311,8 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
             var dhHandler = asset as DownloadHandlerAssetBundle;
             if (dhHandler != null)
             {
-                if (loadedDownloadHandlers.Contains(dhHandler))
+                var bundleHash = location.InternalId.GetHashCode();
+                if (loadedBundles.Contains(bundleHash))
                 {
                     bundle = dhHandler.assetBundle;
                     if (bundle != null)
@@ -315,7 +323,7 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
                     {
                         Debug.LogWarningFormat("Asset Bundle {0} was marked as loaded but is null.", location.InternalId);
                     }
-                    loadedDownloadHandlers.Remove(dhHandler);
+                    loadedBundles.Remove(bundleHash);
                 }
                 dhHandler.Dispose();
                 return true;

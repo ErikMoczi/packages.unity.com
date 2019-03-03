@@ -20,7 +20,7 @@ namespace UnityEngine.AddressableAssets.Initialization
         /// <returns>True if the initialization succeeded.</returns>
         public bool Initialize(string id, string dataStr)
         {
-#if !UNITY_SWITCH && !UNITY_PS4
+#if !UNITY_SWITCH
             var data = JsonUtility.FromJson<CacheInitializationData>(dataStr);
             if (data != null)
             {
@@ -45,7 +45,7 @@ namespace UnityEngine.AddressableAssets.Initialization
 
                 activeCache.expirationDelay = data.ExpirationDelay;
             }
-#endif //!UNITY_SWITCH && !UNITY_PS4
+#endif
             return true;
         }
 

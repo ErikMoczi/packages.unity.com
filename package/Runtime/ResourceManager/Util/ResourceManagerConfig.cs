@@ -115,7 +115,7 @@ namespace UnityEngine.ResourceManagement.Util
         /// <summary>
         /// The object id.
         /// </summary>
-        public string Id { get { return m_Id; } internal set { m_Id = value; } }
+        public string Id { get { return m_Id; } }
 
         [FormerlySerializedAs("m_objectType")]
         [SerializeField]
@@ -131,7 +131,7 @@ namespace UnityEngine.ResourceManagement.Util
         /// <summary>
         /// String representation of the data that will be passed to the IInitializableObject.Initialize method of the created object.  This is usually a JSON string of the serialized data object.
         /// </summary>
-        public string Data { get { return m_Data; } internal set { m_Data = value; } }
+        public string Data { get { return m_Data; } }
 
         /// <inheritdoc/>
         public override string ToString()
@@ -217,20 +217,9 @@ namespace UnityEngine.ResourceManagement.Util
             var elementType = t.GetElementType();
             if (elementType  == null)
                 return null;
-            int length = 0;
-            foreach (var asset in allAssets)
-            {
-                if (asset.GetType() == elementType)
-                    length++;
-            }
-            var array = Array.CreateInstance(elementType, length);
-            int index = 0;
-            
-            foreach (var asset in allAssets)
-            {
-                if(asset.GetType() == elementType)
-                    array.SetValue(asset, index++);
-            }
+            var array = Array.CreateInstance(elementType, allAssets.Length);
+            for (int i = 0; i < allAssets.Length; i++)
+                array.SetValue(allAssets[i], i);
             return array as TObject;
         }
 

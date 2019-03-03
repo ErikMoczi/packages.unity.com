@@ -344,12 +344,7 @@ namespace UnityEngine.ResourceManagement.ResourceProviders.Simulation
                 else
                 {
                     var mainType = AssetDatabase.GetMainAssetTypeAtPath(assetPath);
-                    if (mainType == typeof(Texture2D) && typeof(TObject) == typeof(Sprite))
-                    {
-                        SetResult(AssetDatabase.LoadAssetAtPath(assetPath, typeof(TObject)) as TObject);
-                    }
-                    else
-                        SetResult(AssetDatabase.LoadAssetAtPath(assetPath, mainType) as TObject);
+                    SetResult(AssetDatabase.LoadAssetAtPath(assetPath, mainType) as TObject);
                 }
                 InvokeCompletionEvent();
                 return false;

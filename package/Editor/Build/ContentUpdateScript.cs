@@ -6,74 +6,38 @@ using System.Runtime.Serialization.Formatters.Binary;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEditor.Build.Pipeline.Tasks;
+using UnityEditor.Build.Pipeline.Utilities;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Serialization;
 
 namespace UnityEditor.AddressableAssets.Build
 {
-    [Serializable]
-    struct AssetState : IEquatable<AssetState>
-    {
-        public GUID guid;
-        public Hash128 hash;
-
-        public bool Equals(AssetState other)
-        {
-            return guid == other.guid && hash == other.hash;
-        }
-    }
-
-    [Serializable]
-    class CachedAssetState : IEquatable<CachedAssetState>
-    {
-        public AssetState asset;
-        public AssetState[] dependencies;
-
-        public bool Equals(CachedAssetState other)
-        {
-            bool result = other != null && asset.Equals(other.asset);
-            result &= dependencies != null && other.dependencies != null;
-            result &= dependencies.Length == other.dependencies.Length;
-            var index = 0;
-            while (result && index < dependencies.Length)
-            {
-                result &= dependencies[index].Equals(other.dependencies[index]);
-                index++;
-            }
-            return result;
-        }
-    }
-
-
     /// <summary>
     /// Data stored with each build that is used to generated content updates.
     /// </summary>
     [Serializable]
-    class AddressablesContentState
+    public class AddressablesContentState
     {
         /// <summary>
         /// The version that the player was built with.  This is usually set to AddressableAssetSettings.PlayerBuildVersion.
         /// </summary>
+        [FormerlySerializedAs("m_playerVersion")]
         [SerializeField]
         public string playerVersion;
-
         /// <summary>
         /// The version of the unity editor used to build the player.
         /// </summary>
+        [FormerlySerializedAs("m_editorVersion")]
         [SerializeField]
         public string editorVersion;
-
         /// <summary>
         /// Dependency information for all assets in the build that have been marked StaticContent.
         /// </summary>
+        [FormerlySerializedAs("m_cachedInfos")]
         [SerializeField]
-        public CachedAssetState[] cachedInfos;
-
-        /// <summary>
-        /// The path of a remote catalog.  This is the only place the player knows to look for an updated catalog.
-        /// </summary>
-        [SerializeField]
-        public string remoteCatalogLoadPath;
+        public CachedInfo[] cachedInfos;
     }
 
     /// <summary>
@@ -81,95 +45,35 @@ namespace UnityEditor.AddressableAssets.Build
     /// </summary>
     public static class ContentUpdateScript
     {
-        static bool GetAssetState(GUID asset, out AssetState assetState)
-        {
-            assetState = new AssetState();
-            if (asset.Empty())
-                return false;
-
-            var path = AssetDatabase.GUIDToAssetPath(asset.ToString());
-            if (string.IsNullOrEmpty(path))
-                return false;
-
-            var hash = AssetDatabase.GetAssetDependencyHash(path);
-            if (!hash.isValid)
-                return false;
-
-            assetState.guid = asset;
-            assetState.hash = hash;
-            return true;
-        }
-
-        static bool GetCachedAssetStateForData(GUID asset, IEnumerable<GUID> dependencies, out CachedAssetState cachedAssetState)
-        {
-            cachedAssetState = null;
-
-            AssetState assetState;
-            if (!GetAssetState(asset, out assetState))
-                return false;
-
-            var visited = new HashSet<GUID>();
-            visited.Add(asset);
-            var dependencyStates = new List<AssetState>();
-            foreach (var dependency in dependencies)
-            {
-                if (!visited.Add(dependency))
-                    continue;
-
-                AssetState dependencyState;
-                if (!GetAssetState(dependency, out dependencyState))
-                    continue;
-                dependencyStates.Add(dependencyState);
-            }
-
-            cachedAssetState = new CachedAssetState();
-            cachedAssetState.asset = assetState;
-            cachedAssetState.dependencies = dependencyStates.ToArray();
-            return true;
-        }
-
-        static bool HasAssetOrDependencyChanged(CachedAssetState cachedInfo)
-        {
-            CachedAssetState newCachedInfo;
-            if (!GetCachedAssetStateForData(cachedInfo.asset.guid, cachedInfo.dependencies.Select(x => x.guid), out newCachedInfo))
-                return true;
-            return !cachedInfo.Equals(newCachedInfo);
-        }
-
         /// <summary>
         /// Save the content update information for a set of AddressableAssetEntry objects.
         /// </summary>
         /// <param name="path">File to write content stat info to.  If file already exists, it will be deleted before the new file is created.</param>
         /// <param name="entries">The entries to save.</param>
-        /// <param name="dependencyData">The raw dependency information generated from the build.</param>
+        /// <param name="buildCache">The cache dependency information generated from the build.</param>
         /// <param name="playerVersion">The player version to save. This is usually set to AddressableAssetSettings.PlayerBuildVersion.</param>
-        /// <param name="remoteCatalogPath">The server path (if any) that contains an updateable content catalog.  If this is empty, updates cannot occur.</param>
         /// <returns>True if the file is saved, false otherwise.</returns>
-        public static bool SaveContentState(string path, List<AddressableAssetEntry> entries, IDependencyData dependencyData, string playerVersion, string remoteCatalogPath)
+        public static bool SaveContentState(string path, List<AddressableAssetEntry> entries, IBuildCache buildCache, string playerVersion)
         {
             try
             {
-                IList<CachedAssetState> cachedInfos = new List<CachedAssetState>();
-                foreach (var assetData in dependencyData.AssetInfo)
+                var cacheEntries = new List<CacheEntry>();
+                var assetVer = new CalculateAssetDependencyData().Version;
+                var sceneVer = new CalculateSceneDependencyData().Version;
+                foreach (var entry in entries)
                 {
-                    CachedAssetState cachedAssetState;
-                    if (GetCachedAssetStateForData(assetData.Key, assetData.Value.referencedObjects.Select(x => x.guid), out cachedAssetState))
-                        cachedInfos.Add(cachedAssetState);
+                    GUID guid;
+                    if (GUID.TryParse(entry.guid, out guid))
+                    {
+                        var cacheEntry = buildCache.GetCacheEntry(guid, entry.IsScene ? sceneVer : assetVer);
+                        if (cacheEntry.IsValid())
+                            cacheEntries.Add(cacheEntry);
+                    }
                 }
-                foreach (var sceneData in dependencyData.SceneInfo)
-                {
-                    CachedAssetState cachedAssetState;
-                    if (GetCachedAssetStateForData(sceneData.Key, sceneData.Value.referencedObjects.Select(x => x.guid), out cachedAssetState))
-                        cachedInfos.Add(cachedAssetState);
-                }
-
-                var cacheData = new AddressablesContentState
-                {
-                    cachedInfos = cachedInfos.ToArray(),
-                    playerVersion = playerVersion,
-                    editorVersion = Application.unityVersion,
-                    remoteCatalogLoadPath = remoteCatalogPath
-                };
+                IList<CachedInfo> cachedInfos = new List<CachedInfo>();
+                if(buildCache != null)
+                    buildCache.LoadCachedData(cacheEntries, out cachedInfos);
+                var cacheData = new AddressablesContentState { cachedInfos = cachedInfos.ToArray(), playerVersion = playerVersion, editorVersion = Application.unityVersion };
                 var formatter = new BinaryFormatter();
                 if (File.Exists(path))
                     File.Delete(path);
@@ -223,7 +127,17 @@ namespace UnityEditor.AddressableAssets.Build
         /// </summary>
         /// <param name="contentStateDataPath"></param>
         /// <returns></returns>
-        internal static AddressablesContentState LoadContentState(string contentStateDataPath)
+        public static AddressablesContentState LoadCacheData(string contentStateDataPath)
+        {
+            return LoadContentState(contentStateDataPath);
+        }
+
+        /// <summary>
+        /// Loads cache data from a specific location
+        /// </summary>
+        /// <param name="contentStateDataPath"></param>
+        /// <returns></returns>
+        public static AddressablesContentState LoadContentState(string contentStateDataPath)
         {
             if (string.IsNullOrEmpty(contentStateDataPath))
             {
@@ -276,17 +190,19 @@ namespace UnityEditor.AddressableAssets.Build
         /// <returns>The build operation.</returns>
         public static AddressablesPlayerBuildResult BuildContentUpdate(AddressableAssetSettings settings, string contentStateDataPath)
         {
-            var cacheData = LoadContentState(contentStateDataPath);
-
-            if (!IsCacheDataValid(settings, cacheData))
+            var cacheData = LoadCacheData(contentStateDataPath);
+            if (cacheData == null)
                 return null;
 
+            if (cacheData.editorVersion != Application.unityVersion)
+                Debug.LogWarningFormat("Building content update with Unity editor version {0}, data was create with version {1}.  This may result in incompatible data.", Application.unityVersion, cacheData.editorVersion);
+
             s_StreamingAssetsExists = Directory.Exists("Assets/StreamingAssets");
-            var context = new AddressablesBuildDataBuilderContext(settings,
+            var context = new AddressablesBuildDataBuilderContext(settings, 
                 BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget),
-                EditorUserBuildSettings.activeBuildTarget,
-                false,
-                false,
+                EditorUserBuildSettings.activeBuildTarget, 
+                false, 
+                false, 
                 cacheData.playerVersion);
 
             SceneManagerState.Record();
@@ -296,37 +212,9 @@ namespace UnityEditor.AddressableAssets.Build
             return buildOp;
         }
 
-        internal static bool IsCacheDataValid(AddressableAssetSettings settings, AddressablesContentState cacheData)
-        {
-            if (cacheData == null)
-                return false;
-
-            if (cacheData.editorVersion != Application.unityVersion)
-                Addressables.LogWarningFormat("Building content update with Unity editor version `{0}`, data was created with version `{1}`.  This may result in incompatible data.", Application.unityVersion, cacheData.editorVersion);
-
-            if (string.IsNullOrEmpty(cacheData.remoteCatalogLoadPath))
-            {
-                Addressables.LogError("Previous build had 'Build Remote Catalog' disabled.  You cannot update a player that has no remote catalog specified");
-                return false;
-            }
-            if (!settings.BuildRemoteCatalog)
-            {
-                Addressables.LogError("Current settings have 'Build Remote Catalog' disabled.  You cannot update a player that has no remote catalog to look to.");
-                return false;
-            }
-
-            if (cacheData.remoteCatalogLoadPath != settings.RemoteCatalogLoadPath.GetValue(settings))
-            {
-                Addressables.LogErrorFormat("Current 'Remote Catalog Load Path' does not match load path of original player.  Player will only know to look up catalog at original location. Original: {0}  Current: {1}", cacheData.remoteCatalogLoadPath, settings.RemoteCatalogLoadPath.GetValue(settings));
-                return false;
-            }
-
-            return true;
-        }
-
         internal static List<AddressableAssetEntry> GatherModifiedEntries(AddressableAssetSettings settings, string cacheDataPath)
         {
-            var cacheData = LoadContentState(cacheDataPath);
+            var cacheData = LoadCacheData(cacheDataPath);
             if (cacheData == null)
             {
                 return null;
@@ -335,15 +223,16 @@ namespace UnityEditor.AddressableAssets.Build
             var allEntries = new List<AddressableAssetEntry>();
             settings.GetAllAssets(allEntries, g => g.HasSchema<BundledAssetGroupSchema>() && g.GetSchema<ContentUpdateGroupSchema>().StaticContent);
 
-            var entryToCacheInfo = new Dictionary<string, CachedAssetState>();
+            var entryToCacheInfo = new Dictionary<string, CachedInfo>();
             foreach (var cacheInfo in cacheData.cachedInfos)
                 if (cacheInfo != null)
-                    entryToCacheInfo[cacheInfo.asset.guid.ToString()] = cacheInfo;
+                    entryToCacheInfo[cacheInfo.Asset.Guid.ToString()] = cacheInfo;
             var modifiedEntries = new List<AddressableAssetEntry>();
+            var buildCache = new BuildCache();
             foreach (var entry in allEntries)
             {
-                CachedAssetState cachedInfo;
-                if (!entryToCacheInfo.TryGetValue(entry.guid, out cachedInfo) || HasAssetOrDependencyChanged(cachedInfo))
+                CachedInfo info;
+                if (!entryToCacheInfo.TryGetValue(entry.guid, out info) || buildCache.HasAssetOrDependencyChanged(info))
                     modifiedEntries.Add(entry);
             }
             return modifiedEntries;
@@ -368,5 +257,5 @@ namespace UnityEditor.AddressableAssets.Build
 
     }
 
-
+ 
 }

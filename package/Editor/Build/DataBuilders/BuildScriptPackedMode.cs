@@ -142,7 +142,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                 allBundleInputDefs.AddRange(bundleInputDefs);
             }
             ExtractDataTask extractData = new ExtractDataTask();
-
+            
 
             if (allBundleInputDefs.Count > 0)
             {
@@ -192,7 +192,18 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             contentCatalog.InstanceProviderData = ObjectInitializationData.CreateSerializedInitializationData<InstanceProvider>();
             contentCatalog.SceneProviderData = ObjectInitializationData.CreateSerializedInitializationData<SceneProvider>();
 
-            CreateCatalog(aaSettings, contentCatalog, runtimeData.CatalogLocations, playerBuildVersion, context);
+            var createdCatalogs = new HashSet<string>();
+            foreach (var assetGroup in aaSettings.groups)
+                CreateCatalog(assetGroup, contentCatalog, runtimeData.CatalogLocations, playerBuildVersion, createdCatalogs);
+
+			runtimeData.CatalogLocations.Sort((a, b) => a.Keys[0].CompareTo(b.Keys[0]));
+
+            var catalogFilename = context.GetValue(AddressablesBuildDataBuilderContext.BuildScriptContextConstants.kRuntimeCatalogFilename, "catalog.json");
+            var catalogPath = Addressables.BuildPath + "/" + catalogFilename;
+            WriteFile(catalogPath, JsonUtility.ToJson(contentCatalog));
+            runtimeData.CatalogLocations.Add(new ResourceLocationData(new[] { "catalogs" }, "{UnityEngine.AddressableAssets.Addressables.RuntimePath}/" + catalogFilename, typeof(JsonAssetProvider)));
+
+
 
             foreach (var io in aaSettings.InitializationObjects)
             {
@@ -215,8 +226,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             aaSettings.GetAllAssets(allEntries, g => g.HasSchema<ContentUpdateGroupSchema>() && g.GetSchema<ContentUpdateGroupSchema>().StaticContent);
             var tempPath = Path.GetDirectoryName(Application.dataPath) + "/Library/com.unity.addressables/addressables_content_state.bin";
 
-            var remoteCatalogLoadPath = aaSettings.BuildRemoteCatalog ? aaSettings.RemoteCatalogLoadPath.GetValue(aaSettings) : string.Empty;
-            if (extractData.BuildCache != null && ContentUpdateScript.SaveContentState(tempPath, allEntries, extractData.DependencyData, playerBuildVersion, remoteCatalogLoadPath))
+            if (extractData.BuildCache != null && ContentUpdateScript.SaveContentState(tempPath, allEntries, extractData.BuildCache, playerBuildVersion))
             {
                 try
                 {
@@ -281,64 +291,41 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             return assetsInputDef;
         }
 
-        static void CreateCatalog(AddressableAssetSettings aaSettings, ContentCatalogData contentCatalog, List<ResourceLocationData> locations, string playerVersion, IDataBuilderContext context)
+        internal static void CreateCatalog(AddressableAssetGroup group, ContentCatalogData contentCatalog, List<ResourceLocationData> locations, string playerVersion, HashSet<string> createdCatalogs)
         {
-            var localCatalogFilename = context.GetValue(AddressablesBuildDataBuilderContext.BuildScriptContextConstants.kRuntimeCatalogFilename, "catalog.json");
-            var localBuildPath = Addressables.BuildPath + "/" + localCatalogFilename;
-            var localLoadPath = "{UnityEngine.AddressableAssets.Addressables.RuntimePath}/" + localCatalogFilename;
+            var schema = group.GetSchema<BundledAssetGroupSchema>();
+            if (schema == null || !schema.IncludeInBuild)
+                return;
+
+            var aaSettings = group.Settings;
+            var lPath = schema.LoadPath.GetValue(group.Settings);
+            if (createdCatalogs.Contains(lPath))
+                return;
+            createdCatalogs.Add(lPath);
+
+            var bPath = schema.BuildPath.GetValue(group.Settings);
+
+            var buildPath = bPath + aaSettings.profileSettings.EvaluateString(aaSettings.activeProfileId, "/catalog_" + playerVersion + ".json");
+            var remoteHashLoadPath = lPath + "/" + "catalog_" + playerVersion + ".hash";
+
+            var localCacheLoadPath = "{UnityEngine.Application.persistentDataPath}/com.unity.addressables/catalog_" + playerVersion + ".hash";
 
             var jsonText = JsonUtility.ToJson(contentCatalog);
-            WriteFile(localBuildPath, jsonText);
+            var contentHash = HashingMethods.Calculate(jsonText).ToString();
 
-            string[] dependencyHashes = null;
-            if (aaSettings.BuildRemoteCatalog)
-            {
-                var contentHash = HashingMethods.Calculate(jsonText).ToString();
+            WriteFile(buildPath, jsonText);
+            WriteFile(buildPath.Replace(".json", ".hash"), contentHash);
 
-                var versionedFileName = aaSettings.profileSettings.EvaluateString(aaSettings.activeProfileId, "/catalog_" + playerVersion + ".json");
-                var remoteBuildFolder = aaSettings.RemoteCatalogBuildPath.GetValue(aaSettings);
-                var remoteLoadFolder = aaSettings.RemoteCatalogLoadPath.GetValue(aaSettings);
+            var depKeys = new[] { "RemoteCatalogHash" + group.Guid, "LocalCatalogHash" + group.Guid };
 
-                if (string.IsNullOrEmpty(remoteBuildFolder) ||
-                    string.IsNullOrEmpty(remoteLoadFolder) ||
-                    remoteBuildFolder == AddressableAssetProfileSettings.undefinedEntryValue ||
-                    remoteLoadFolder == AddressableAssetProfileSettings.undefinedEntryValue)
-                {
-                    Addressables.LogError("Remote Build and/or Load paths are not set on the main AddressableAssetSettings asset, but 'Build Remote Catalog' is true.  Cannot create remote catalog.  In the inspector for any group, double click the 'Addressable Asset Settings' object to begin inspecting it. '" + remoteBuildFolder + "', '" + remoteLoadFolder + "'");
-                }
-                else
-                {
-                    var remoteJsonBuildPath = remoteBuildFolder + versionedFileName + ".json";
-                    var remoteHashBuildPath = remoteBuildFolder + versionedFileName + ".hash";
+            var remoteHash = new ResourceLocationData(new[] { depKeys[0] }, remoteHashLoadPath, typeof(TextDataProvider));
+            var localHash = new ResourceLocationData(new[] { depKeys[1] }, localCacheLoadPath, typeof(TextDataProvider));
 
-                    WriteFile(remoteJsonBuildPath, jsonText);
-                    WriteFile(remoteHashBuildPath, contentHash);
-
-                    dependencyHashes = new string[((int)ContentCatalogProvider.DependencyHashIndex.Count)];
-                    dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Remote] = InitializationOperation.CatalogAddress + "RemoteHash";
-                    dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Cache] = InitializationOperation.CatalogAddress + "CacheHash";
-
-                    var remoteHashLoadPath = remoteLoadFolder + versionedFileName + ".hash";
-                    locations.Add(new ResourceLocationData(
-                        new[] { dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Remote] },
-                        remoteHashLoadPath,
-                        typeof(TextDataProvider)));
-
-                    var cacheLoadPath = "{UnityEngine.Application.persistentDataPath}/com.unity.addressables" + versionedFileName + ".hash";
-                    locations.Add(new ResourceLocationData(
-                        new[] { dependencyHashes[(int)ContentCatalogProvider.DependencyHashIndex.Cache] },
-                        cacheLoadPath,
-                        typeof(TextDataProvider)));
-                }
-            }
-
-            locations.Add(new ResourceLocationData(
-                new []{ InitializationOperation.CatalogAddress},
-                localLoadPath,
-                typeof(ContentCatalogProvider),
-                dependencyHashes));
+            var internalId = remoteHashLoadPath.Replace(".hash", ".json");
+            locations.Add(new ResourceLocationData(new[] { schema.ContentCataLogLoadOrder + "_Catalog_" + group.Guid, "catalogs" }, internalId, typeof(ContentCatalogProvider), depKeys));
+            locations.Add(localHash);
+            locations.Add(remoteHash);
         }
-
 
         static IList<IBuildTask> RuntimeDataBuildTasks(string builtinShaderBundleName)
         {

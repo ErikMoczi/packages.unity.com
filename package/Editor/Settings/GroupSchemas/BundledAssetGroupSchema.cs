@@ -131,6 +131,25 @@ namespace UnityEditor.AddressableAssets.Settings.GroupSchemas
             }
         }
 
+
+        [FormerlySerializedAs("m_contentCatalogLoadOrder")]
+        [SerializeField]
+        [Tooltip("The order in which the content catalog from this group will be loaded.  Usually remote catalogs are tried first and would have a lower value.")]
+        uint m_ContentCatalogLoadOrder;
+        /// <summary>
+        ///The order in which the content catalog from this group will be loaded.  Usually remote catalogs are tried first and would have a lower value.  If this value is less than 0, no catalog will be generated.
+        /// </summary>
+        public uint ContentCataLogLoadOrder
+        {
+            get { return m_ContentCatalogLoadOrder; }
+            set
+            {
+                m_ContentCatalogLoadOrder = value;
+                SetDirty(true);
+            }
+        }
+
+
         [FormerlySerializedAs("m_useAssetBundleCache")]
         [SerializeField]
         [Tooltip("If true, the Hash value of the asset bundle is used to determine if a bundle can be loaded from the local cache instead of downloaded. (Only applies to remote asset bundles)")]

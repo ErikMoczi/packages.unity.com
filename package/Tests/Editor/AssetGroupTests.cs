@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor.AddressableAssets.Settings;
-using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -82,7 +81,7 @@ namespace UnityEditor.AddressableAssets.Tests
             List<AddressableAssetEntry> entries = new List<AddressableAssetEntry>();
             for (int i = 0; i < 10; i++)
                 group1.AddAssetEntry(new AddressableAssetEntry("000" + i.ToString(), "unknown" + i.ToString(), group1, false));
-
+        
 
             List<AddressableAssetEntry> callbackEntries = new List<AddressableAssetEntry>();
             Action<AddressableAssetSettings, AddressableAssetSettings.ModificationEvent, object> callback = (x, y, z) => callbackEntries.AddRange((AddressableAssetEntry[])z);
@@ -90,68 +89,11 @@ namespace UnityEditor.AddressableAssets.Tests
 
             group1.RemoveAssetEntries(entries.ToArray());
 
-            for (int i = 0; i < entries.Count; i++)
+            for(int i = 0 ; i < entries.Count; i++)
                 Assert.AreEqual(entries[i], callbackEntries[i]);
 
             //Cleanup
             AddressableAssetSettings.OnModificationGlobal -= callback;
-            m_Settings.RemoveGroup(group1);
-        }
-
-        [Test]
-        public void CannotSetInvalidGroupAsDefault()
-        {
-            AddressableAssetGroup group1 = m_Settings.CreateGroup("group1", false, false, true, null, new Type[] { });
-            LogAssert.Expect(LogType.Error, "Unable to set " + group1.Name + " as the Default Group.  Default Groups must contain a BundledAssetGroupSchema and not be ReadOnly.");
-            m_Settings.DefaultGroup = group1;
-            Assert.AreNotEqual(m_Settings.DefaultGroup, group1);
-
-            //Cleanup
-            m_Settings.RemoveGroup(group1);
-        }
-
-        [Test]
-        public void DefaultGroupContainsCorrectProperties()
-        {
-            Assert.IsTrue(m_Settings.DefaultGroup.HasSchema<BundledAssetGroupSchema>());
-            Assert.IsFalse(m_Settings.DefaultGroup.ReadOnly);
-        }
-
-        [Test]
-        public void DefaultGroupChangesToValidDefaultGroup()
-        {
-            LogAssert.ignoreFailingMessages = true;
-            AddressableAssetGroup oldDefault = m_Settings.DefaultGroup;
-            oldDefault.RemoveSchema<BundledAssetGroupSchema>();
-            AddressableAssetGroup newDefault = m_Settings.DefaultGroup;
-
-            Assert.AreNotEqual(oldDefault, newDefault);
-            Assert.IsTrue(m_Settings.DefaultGroup.HasSchema<BundledAssetGroupSchema>());
-            Assert.IsFalse(m_Settings.DefaultGroup.ReadOnly);
-
-            //Cleanup
-            oldDefault.AddSchema<BundledAssetGroupSchema>();
-            m_Settings.DefaultGroup = oldDefault;
-        }
-
-        [Test]
-        public void PreventNullDefaultGroup()
-        {
-            LogAssert.Expect(LogType.Error, "Unable to set null as the Default Group.  Default Groups must contain a BundledAssetGroupSchema and not be ReadOnly.");
-            m_Settings.DefaultGroup = null;
-            Assert.IsNotNull(m_Settings.DefaultGroup);
-        }
-
-        [Test]
-        public void ValidGroupsCanBeSetAsDefault()
-        {
-            AddressableAssetGroup oldDefault = m_Settings.DefaultGroup;
-            AddressableAssetGroup group1 = m_Settings.CreateGroup("group1", false, false, true, null, new Type[] { typeof(BundledAssetGroupSchema) });
-            m_Settings.DefaultGroup = group1;
-            Assert.AreEqual(group1, m_Settings.DefaultGroup);
-
-            //Cleanup
-            m_Settings.DefaultGroup = oldDefault;
             m_Settings.RemoveGroup(group1);
         }
     }

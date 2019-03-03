@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor.AddressableAssets.Build;
-using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace UnityEditor.AddressableAssets.Tests
 {
@@ -39,27 +37,6 @@ namespace UnityEditor.AddressableAssets.Tests
                 }
             }
 
-        }
-
-        [Test]
-        public void BuildCompleteCallbackGetsCalled()
-        {
-            LogAssert.ignoreFailingMessages = true;
-            AddressableAssetSettings oldSettings = AddressableAssetSettingsDefaultObject.Settings;
-            AddressableAssetSettingsDefaultObject.Settings = m_Settings;
-
-            bool callbackCalled = false;
-            BuildScript.buildCompleted += (result) =>
-            {
-                callbackCalled = true;
-            };
-            AddressableAssetSettings.BuildPlayerContent();
-            Assert.IsTrue(callbackCalled);
-
-            if (oldSettings != null)
-                AddressableAssetSettingsDefaultObject.Settings = oldSettings;
-            AddressableAssetSettings.BuildPlayerContent();
-            LogAssert.ignoreFailingMessages = false;
         }
     }
 }

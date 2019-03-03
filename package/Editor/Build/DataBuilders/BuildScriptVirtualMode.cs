@@ -11,7 +11,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.Initialization;
 using UnityEngine.AddressableAssets.ResourceLocators;
-using UnityEngine.AddressableAssets.ResourceProviders;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 using UnityEngine.ResourceManagement.Util;
@@ -278,7 +277,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             WriteFile(string.Format(m_PathFormat, "", "catalog"), JsonUtility.ToJson(contentCatalog));
 
             //create runtime data
-            runtimeData.CatalogLocations.Add(new ResourceLocationData(new[] { InitializationOperation.CatalogAddress}, string.Format(m_PathFormat, "file://{UnityEngine.Application.dataPath}/../", "catalog"), typeof(ContentCatalogProvider)));
+            runtimeData.CatalogLocations.Add(new ResourceLocationData(new[] { "catalogs" }, string.Format(m_PathFormat, "file://{UnityEngine.Application.dataPath}/../", "catalog"), typeof(JsonAssetProvider)));
 
             foreach (var io in aaSettings.InitializationObjects)
             {

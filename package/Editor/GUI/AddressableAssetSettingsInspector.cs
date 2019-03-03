@@ -101,15 +101,8 @@ namespace UnityEditor.AddressableAssets.GUI
         GUIContent m_LogRuntimeExceptions = 
             new GUIContent("Log Runtime Exceptions", 
                 "Addressables does not throw exceptions at run time when there are loading issues, instead it adds to the error state of the IAsyncOperation.  With this flag enabled, exceptions will also be logged.");
-        GUIContent m_OverridePlayerVersion =
+        GUIContent m_overridePlayerVersion =
             new GUIContent("Player Version Override", "If set, this will be used as the player version instead of one based off of a time stamp.");
-        GUIContent m_BuildRemoteCatalog =
-            new GUIContent("Build Remote Catalog", "If set, this will create a copy of the content catalog for storage on a remote server.  This catalog can be overwritten later for content updates.");
-        GUIContent m_RemoteCatBuildPath =
-            new GUIContent("Remote Catalog Build Path", "The path for a remote content catalog.");
-        GUIContent m_RemoteCatLoadPath =
-            new GUIContent("Remote Catalog Load Path", "The path to load a remote content catalog.");
-        
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -119,16 +112,7 @@ namespace UnityEditor.AddressableAssets.GUI
             {
                 ProjectConfigData.postProfilerEvents = EditorGUILayout.Toggle(m_SendProfilerEvents, ProjectConfigData.postProfilerEvents);
                 m_AasTarget.buildSettings.LogResourceManagerExceptions = EditorGUILayout.Toggle(m_LogRuntimeExceptions, m_AasTarget.buildSettings.LogResourceManagerExceptions);
-                m_AasTarget.OverridePlayerVersion = EditorGUILayout.TextField(m_OverridePlayerVersion, m_AasTarget.OverridePlayerVersion);
-                
-                m_AasTarget.BuildRemoteCatalog = EditorGUILayout.Toggle(m_BuildRemoteCatalog, m_AasTarget.BuildRemoteCatalog);
-                if ( (m_AasTarget.RemoteCatalogBuildPath != null && m_AasTarget.RemoteCatalogLoadPath != null) // these will never actually be null, as the accessor initializes them.
-                    && (m_AasTarget.BuildRemoteCatalog))
-                {
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("m_RemoteCatalogBuildPath"), m_RemoteCatBuildPath);
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("m_RemoteCatalogLoadPath"), m_RemoteCatLoadPath);
-                }
-
+                m_AasTarget.OverridePlayerVersion = EditorGUILayout.TextField(m_overridePlayerVersion, m_AasTarget.OverridePlayerVersion);
             }
             GUILayout.Space(6);
             m_GroupFoldout = EditorGUILayout.Foldout(m_GroupFoldout, "Groups");

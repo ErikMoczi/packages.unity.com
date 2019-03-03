@@ -618,13 +618,11 @@ namespace UnityEditor.AddressableAssets.GUI
             {
                 if (isGroup)
                 {
-                    var group = selectedNodes.First().group; 
-                    if (!group.IsDefaultGroup())
-                        menu.AddItem(new GUIContent("Remove Group(s)"), false, RemoveGroup, selectedNodes);
+                    menu.AddItem(new GUIContent("Remove Group(s)"), false, RemoveGroup, selectedNodes);
 
                     if (selectedNodes.Count == 1)
                     {
-                        if (!group.IsDefaultGroup() && group.CanBeSetAsDefault())
+                        if (!selectedNodes.First().group.Default)
                             menu.AddItem(new GUIContent("Set as Default"), false, SetGroupAsDefault, selectedNodes);
                         menu.AddItem(new GUIContent("Inspect Group Settings"), false, GoToGroupAsset, selectedNodes);
                     }
