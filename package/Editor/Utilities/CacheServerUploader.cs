@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Unity.CacheServer;
+using UnityEngine;
 
 namespace UnityEditor.Build.Pipeline.Utilities
 {
@@ -10,6 +11,8 @@ namespace UnityEditor.Build.Pipeline.Utilities
     {
         Queue<WorkItem> m_WorkItems = new Queue<WorkItem>();
         Semaphore m_Semaphore = new Semaphore(0, Int32.MaxValue);
+        Hash128 m_GlobalHash;
+        Thread m_UploaderThread;
 
         Client m_Client;
 
@@ -27,15 +30,21 @@ namespace UnityEditor.Build.Pipeline.Utilities
             m_Client = new Client(host, port);
             m_Client.Connect();
 
-            var uploadThread = new Thread(ThreadedUploader);
-            uploadThread.Start();
+            m_UploaderThread = new Thread(ThreadedUploader);
+            m_UploaderThread.Start();
+        }
+
+        public void SetGlobalHash(Hash128 hash)
+        {
+            m_GlobalHash = hash;
         }
 
         // We return from this function before all uploads are complete. So we must wait to dispose until all uploads are finished.
         public void QueueUpload(CacheEntry entry, string artifactsPath, MemoryStream stream)
         {
             var item = new WorkItem();
-            item.fileId = FileId.From(entry.Guid.ToString(), entry.Hash.ToString());
+            string finalHash = HashingMethods.Calculate(entry.Hash, m_GlobalHash).ToString();
+            item.fileId = FileId.From(entry.Guid.ToString(), finalHash);
             item.artifactsPath = artifactsPath;
             item.stream = stream;
 
@@ -86,6 +95,11 @@ namespace UnityEditor.Build.Pipeline.Utilities
             {
                 m_Disposed = true;
                 m_Semaphore.Release();
+                if (m_UploaderThread != null)
+                {
+                    m_UploaderThread.Join();
+                    m_UploaderThread = null;
+                }
             }
         }
     }

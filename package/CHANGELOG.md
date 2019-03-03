@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.0-preview] - 2019-02-06
+- Added missing version into CacheEntry calculation
+- Fixed build error causing AssetBundle.LoadAssetWithSubAssets to return partial results
+- Updated function implementations to be virtual for overriding
+- Added GetOutputFilePathForIdentifier function to generate the final file path for a given build identifier
+
 ## [1.2.2-preview] - 2018-12-19
 - Fixed SpritePacker failing to pack SpriteAtlas objects into AssetBundles
 

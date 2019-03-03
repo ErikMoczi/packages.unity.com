@@ -42,11 +42,6 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         ScriptCompilationOptions ScriptOptions { get; set; }
 
         /// <summary>
-        /// Final output location where built content will be written.
-        /// </summary>
-        string OutputFolder { get; set; }
-
-        /// <summary>
         /// Temporary location to be used for artifacts generated during the build but are not part of the final output.
         /// </summary>
         string TempOutputFolder { get; set; }
@@ -71,6 +66,13 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// </summary>
         /// <returns>Returns the BuildSettings struct to use for content building.</returns>
         BuildSettings GetContentBuildSettings();
+
+        /// <summary>
+        /// Returns the output folder to use for the specified identifier.
+        /// </summary>
+        /// <param name="identifier">Identifier used to identify which output folder to use.</param>
+        /// <returns>Returns the output folder to use for the specified identifier.</returns>
+        string GetOutputFilePathForIdentifier(string identifier);
 
         /// <summary>
         /// Constructs and returns the BuildCompression struct to use for the specified identifier.

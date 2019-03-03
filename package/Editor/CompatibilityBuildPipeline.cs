@@ -89,7 +89,7 @@ namespace UnityEditor.Build.Pipeline
 
             var manifest = ScriptableObject.CreateInstance<CompatibilityAssetBundleManifest>();
             manifest.SetResults(results.BundleInfos);
-            File.WriteAllText(parameters.OutputFolder + "/" + Path.GetFileName(parameters.OutputFolder) + ".manifest", manifest.ToString());
+            File.WriteAllText(parameters.GetOutputFilePathForIdentifier(Path.GetFileName(outputPath) + ".manifest"), manifest.ToString());
             return manifest;
         }
     }

@@ -5,6 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Unity.CacheServer;
 using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace UnityEditor.Build.Pipeline.Utilities
@@ -15,6 +16,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         IBuildCache m_Cache;
         Client m_Client;
+        Hash128 m_GlobalHash;
 
         bool m_Disposed;
 
@@ -36,14 +38,21 @@ namespace UnityEditor.Build.Pipeline.Utilities
             }
         }
 
+        public void SetGlobalHash(Hash128 hash)
+        {
+            m_GlobalHash = hash;
+        }
+
         string GetCachedInfoFile(CacheEntry entry)
         {
-            return string.Format("{0}/{1}_{2}.info", k_CachePath, entry.Guid.ToString(), entry.Hash.ToString());
+            string finalHash = HashingMethods.Calculate(entry.Hash, m_GlobalHash).ToString();
+            return string.Format("{0}/{1}_{2}.info", k_CachePath, entry.Guid.ToString(), finalHash);
         }
 
         string GetCachedArtifactsFile(CacheEntry entry)
         {
-            return string.Format("{0}/{1}_{2}.sbpGz", k_CachePath, entry.Guid.ToString(), entry.Hash.ToString());
+            string finalHash = HashingMethods.Calculate(entry.Hash, m_GlobalHash).ToString();
+            return string.Format("{0}/{1}_{2}.sbpGz", k_CachePath, entry.Guid.ToString(), finalHash);
         }
 
         // Called on background thread
@@ -73,7 +82,9 @@ namespace UnityEditor.Build.Pipeline.Utilities
                     continue;
 
                 var entry = entries[index];
-                var fileId = FileId.From(entry.Guid.ToString(), entry.Hash.ToString());
+
+                string finalHash = HashingMethods.Calculate(entry.Hash, m_GlobalHash).ToHash128().ToString();
+                var fileId = FileId.From(entry.Guid.ToString(), finalHash);
 
                 // Download artifacts before info to ensure both are available when download for info returns
                 var downloadArtifact = new FileDownloadItem(fileId, FileType.Resource, GetCachedArtifactsFile(entry));
@@ -107,8 +118,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
                     using (var fileStream = new FileStream(tempInfoFile, FileMode.Open, FileAccess.Read))
                         info = formatter.Deserialize(fileStream) as CachedInfo;
 
-                    // NeedsRebuild checks for nulls as well
-                    if (m_Cache.NeedsRebuild(info))
+                    if (m_Cache.HasAssetOrDependencyChanged(info))
                         continue;
 
                     // Not every info file will have artifacts. So just check to see if we downloaded something.

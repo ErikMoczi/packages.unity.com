@@ -32,7 +32,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
         CachedInfo GetCachedInfo(GUID scene, IEnumerable<ObjectIdentifier> references, SceneDependencyInfo sceneInfo, BuildUsageTagSet usageTags)
         {
             var info = new CachedInfo();
-            info.Asset = m_Cache.GetCacheEntry(scene);
+            info.Asset = m_Cache.GetCacheEntry(scene, Version);
 
             var dependencies = new HashSet<CacheEntry>();
             foreach (ObjectIdentifier reference in references)
@@ -50,7 +50,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             IList<CachedInfo> uncachedInfo = null;
             if (m_Parameters.UseCache && m_Cache != null)
             {
-                IList<CacheEntry> entries = m_Content.Scenes.Select(x => m_Cache.GetCacheEntry(x)).ToList();
+                IList<CacheEntry> entries = m_Content.Scenes.Select(x => m_Cache.GetCacheEntry(x, Version)).ToList();
                 m_Cache.LoadCachedData(entries, out cachedInfo);
 
                 uncachedInfo = new List<CachedInfo>();

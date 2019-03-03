@@ -18,6 +18,8 @@ namespace UnityEditor.Build.Pipeline
         /// <inheritdoc />
         public List<GUID> Scenes { get; private set; }
 
+        internal BuildContent() { }
+
         /// <summary>
         /// Default constructor, takes a set of Assets and converts them to the appropriate properties.
         /// </summary>
@@ -61,6 +63,8 @@ namespace UnityEditor.Build.Pipeline
 
         /// <inheritdoc />
         public Dictionary<string, List<GUID>> BundleLayout { get; private set; }
+
+        internal BundleBuildContent() { }
 
         /// <summary>
         /// Default constructor, takes a set of AssetBundleBuild and converts them to the appropriate properties.

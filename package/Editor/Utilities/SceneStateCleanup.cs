@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.SceneManagement;
+using System.Linq;
 
 namespace UnityEditor.Build.Utilities
 {
@@ -30,7 +31,7 @@ namespace UnityEditor.Build.Utilities
 
             if (disposing)
             {
-                if (!m_Scenes.IsNullOrEmpty())
+                if (!m_Scenes.IsNullOrEmpty() && m_Scenes.All(s => !string.IsNullOrEmpty(s.path)))
                     EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
                 else
                     EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);

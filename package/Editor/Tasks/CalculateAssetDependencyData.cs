@@ -9,7 +9,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
 {
     public class CalculateAssetDependencyData : IBuildTask
     {
-        public int Version { get { return 1; } }
+        public int Version { get { return 2; } }
 
 #pragma warning disable 649
         [InjectContext(ContextUsage.In)]
@@ -24,6 +24,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
         [InjectContext(ContextUsage.InOut, true)]
         IBuildSpriteData m_SpriteData;
 
+        [InjectContext(ContextUsage.InOut, true)]
+        IBuildExtendedAssetData m_ExtendedAssetData;
+
         [InjectContext(ContextUsage.In, true)]
         IProgressTracker m_Tracker;
 
@@ -31,17 +34,17 @@ namespace UnityEditor.Build.Pipeline.Tasks
         IBuildCache m_Cache;
 #pragma warning restore 649
 
-        CachedInfo GetCachedInfo(GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, SpriteImporterData importerData)
+        CachedInfo GetCachedInfo(GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, SpriteImporterData importerData, ExtendedAssetData assetData)
         {
             var info = new CachedInfo();
-            info.Asset = m_Cache.GetCacheEntry(asset);
+            info.Asset = m_Cache.GetCacheEntry(asset, Version);
 
             var dependencies = new HashSet<CacheEntry>();
             foreach (var reference in assetInfo.referencedObjects)
                 dependencies.Add(m_Cache.GetCacheEntry(reference));
             info.Dependencies = dependencies.ToArray();
 
-            info.Data = new object[] { assetInfo, usageTags, importerData };
+            info.Data = new object[] { assetInfo, usageTags, importerData, assetData };
 
             return info;
         }
@@ -55,11 +58,14 @@ namespace UnityEditor.Build.Pipeline.Tasks
             if (m_SpriteData == null)
                 m_SpriteData = new BuildSpriteData();
 
+            if (m_ExtendedAssetData == null)
+                m_ExtendedAssetData = new BuildExtendedAssetData();
+
             IList<CachedInfo> cachedInfo = null;
             List<CachedInfo> uncachedInfo = null;
             if (m_Parameters.UseCache && m_Cache != null)
             {
-                IList<CacheEntry> entries = m_Content.Assets.Select(m_Cache.GetCacheEntry).ToList();
+                IList<CacheEntry> entries = m_Content.Assets.Select(x => m_Cache.GetCacheEntry(x, Version)).ToList();
                 m_Cache.LoadCachedData(entries, out cachedInfo);
 
                 uncachedInfo = new List<CachedInfo>();
@@ -73,6 +79,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                 AssetLoadInfo assetInfo;
                 BuildUsageTagSet usageTags;
                 SpriteImporterData importerData;
+                ExtendedAssetData assetData;
 
                 if (cachedInfo != null && cachedInfo[i] != null)
                 {
@@ -82,6 +89,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     assetInfo = cachedInfo[i].Data[0] as AssetLoadInfo;
                     usageTags = cachedInfo[i].Data[1] as BuildUsageTagSet;
                     importerData = cachedInfo[i].Data[2] as SpriteImporterData;
+                    assetData = cachedInfo[i].Data[3] as ExtendedAssetData;
                 }
                 else
                 {
@@ -91,6 +99,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     assetInfo = new AssetLoadInfo();
                     usageTags = new BuildUsageTagSet();
                     importerData = null;
+                    assetData = null;
 
                     assetInfo.asset = asset;
                     var includedObjects = ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(asset, m_Parameters.Target);
@@ -107,14 +116,35 @@ namespace UnityEditor.Build.Pipeline.Tasks
                         importerData.SourceTexture = includedObjects.First();
                     }
 
+                    var representations = AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath);
+                    if (!representations.IsNullOrEmpty())
+                    {
+                        assetData = new ExtendedAssetData();
+                        foreach (var representation in representations)
+                        {
+                            if (AssetDatabase.IsMainAsset(representation))
+                                continue;
+
+                            string guid;
+                            long localId;
+                            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(representation, out guid, out localId))
+                                continue;
+
+                            assetData.Representations.AddRange(includedObjects.Where(x => x.localIdentifierInFile == localId));
+                        }
+                    }
+
                     if (uncachedInfo != null)
-                        uncachedInfo.Add(GetCachedInfo(asset, assetInfo, usageTags, importerData));
+                        uncachedInfo.Add(GetCachedInfo(asset, assetInfo, usageTags, importerData, assetData));
                 }
 
-                SetOutputInformation(asset, assetInfo, usageTags, importerData);
+                SetOutputInformation(asset, assetInfo, usageTags, importerData, assetData);
             }
 
             if (m_SpriteData.ImporterData.Count == 0)
+                m_SpriteData = null;
+
+            if (m_ExtendedAssetData.ExtendedData.Count == 0)
                 m_SpriteData = null;
 
             if (m_Parameters.UseCache && m_Cache != null)
@@ -123,7 +153,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             return ReturnCode.Success;
         }
 
-        void SetOutputInformation(GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, SpriteImporterData importerData)
+        void SetOutputInformation(GUID asset, AssetLoadInfo assetInfo, BuildUsageTagSet usageTags, SpriteImporterData importerData, ExtendedAssetData assetData)
         {
             // Add generated asset information to IDependencyData
             m_DependencyData.AssetInfo.Add(asset, assetInfo);
@@ -132,6 +162,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
             // Add generated importer data to IBuildSpriteData
             if (importerData != null)
                 m_SpriteData.ImporterData.Add(asset, importerData);
+
+            if (assetData != null)
+                m_ExtendedAssetData.ExtendedData.Add(asset, assetData);
         }
     }
 }

@@ -12,14 +12,14 @@ namespace UnityEditor.Build.Pipeline
     public class PrefabPackedIdentifiers : IDeterministicIdentifiers
     {
         /// <inheritdoc />
-        public string GenerateInternalFileName(string name)
+        public virtual string GenerateInternalFileName(string name)
         {
             var hash = HashingMethods.Calculate(name).ToString();
             return string.Format("CAB-{0}", hash);
         }
 
         /// <inheritdoc />
-        public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
+        public virtual long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {
             byte[] assetHash = HashingMethods.Calculate(objectID.guid, objectID.filePath).ToBytes();
             byte[] objectHash = HashingMethods.Calculate(objectID).ToBytes();

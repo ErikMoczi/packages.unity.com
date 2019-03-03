@@ -37,7 +37,9 @@ namespace UnityEditor.Build.Pipeline
         /// </summary>
         public BuildCompression BundleCompression { get; set; }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Final output location where built content will be written.
+        /// </summary>
         public string OutputFolder { get; set; }
 
         string m_TempOutputFolder;
@@ -59,6 +61,8 @@ namespace UnityEditor.Build.Pipeline
         public string CacheServerHost { get; set; }
         /// <inheritdoc />
         public int CacheServerPort { get; set; }
+
+        internal BuildParameters() { }
 
         /// <summary>
         /// Default constructor, requires the target, group and output parameters at minimum for a successful build.
@@ -89,7 +93,7 @@ namespace UnityEditor.Build.Pipeline
         }
 
         /// <inheritdoc />
-        public BuildSettings GetContentBuildSettings()
+        public virtual BuildSettings GetContentBuildSettings()
         {
             return new BuildSettings
             {
@@ -101,7 +105,7 @@ namespace UnityEditor.Build.Pipeline
         }
 
         /// <inheritdoc />
-        public ScriptCompilationSettings GetScriptCompilationSettings()
+        public virtual ScriptCompilationSettings GetScriptCompilationSettings()
         {
             return new ScriptCompilationSettings
             {
@@ -112,7 +116,13 @@ namespace UnityEditor.Build.Pipeline
         }
 
         /// <inheritdoc />
-        public BuildCompression GetCompressionForIdentifier(string identifier)
+        public virtual string GetOutputFilePathForIdentifier(string identifier)
+        {
+            return string.Format("{0}/{1}", OutputFolder, identifier);
+        }
+
+        /// <inheritdoc />
+        public virtual BuildCompression GetCompressionForIdentifier(string identifier)
         {
             return BundleCompression;
         }
@@ -121,9 +131,11 @@ namespace UnityEditor.Build.Pipeline
     [Serializable]
     public class BundleBuildParameters : BuildParameters, IBundleBuildParameters
     {
+        internal BundleBuildParameters() { }
+
         /// <inheritdoc />
-        public BundleBuildParameters(BuildTarget target, BuildTargetGroup @group, string outputFolder)
-            : base(target, @group, outputFolder) { }
+        public BundleBuildParameters(BuildTarget target, BuildTargetGroup group, string outputFolder)
+            : base(target, group, outputFolder) { }
 
         /// <inheritdoc />
         public bool AppendHash { get; set; }

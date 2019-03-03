@@ -43,6 +43,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             entry.Type = CacheEntry.EntryType.Data;
             entry.Guid = HashingMethods.Calculate("ArchiveAndCompressBundles", bundleName).ToGUID();
             entry.Hash = HashingMethods.Calculate(Version, resources, compression).ToHash128();
+            entry.Version = Version;
             return entry;
         }
 
@@ -144,7 +145,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                         return ReturnCode.Canceled;
 
                     details = (BundleDetails)cachedInfo[i].Data[0];
-                    details.FileName = string.Format("{0}/{1}", m_Parameters.OutputFolder, bundleName);
+                    details.FileName = m_Parameters.GetOutputFilePathForIdentifier(bundleName);
 
                     HashSet<string> dependencies;
                     if (bundleDependencies.TryGetValue(bundleName, out dependencies))
@@ -164,7 +165,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                         writePath = string.Format("{0}/{1}", m_Cache.GetCachedArtifactsDirectory(entries[i]), bundleName);
                     Directory.CreateDirectory(Path.GetDirectoryName(writePath));
 
-                    details.FileName = string.Format("{0}/{1}", m_Parameters.OutputFolder, bundleName);
+                    details.FileName = m_Parameters.GetOutputFilePathForIdentifier(bundleName);
                     details.Crc = ContentBuildInterface.ArchiveAndCompress(resourceFiles, writePath, compression);
                     details.Hash = CalculateHashVersion(fileOffsets, resourceFiles);
 

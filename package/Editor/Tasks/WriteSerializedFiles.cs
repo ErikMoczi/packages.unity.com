@@ -39,6 +39,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             entry.Type = CacheEntry.EntryType.Data;
             entry.Guid = HashingMethods.Calculate("WriteSerializedFiles", operation.Command.internalName).ToGUID();
             entry.Hash = HashingMethods.Calculate(Version, operation.GetHash128(), settings.GetHash128(), globalUsage).ToHash128();
+            entry.Version = Version;
             return entry;
         }
 

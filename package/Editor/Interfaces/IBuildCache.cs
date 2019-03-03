@@ -13,29 +13,32 @@ namespace UnityEditor.Build.Pipeline.Interfaces
         /// Gets a CacheEntry for an asset identified by its GUID.
         /// </summary>
         /// <param name="asset">GUID identifier for an asset from the Asset Database</param>
+        /// <param name="version">Version number of the system asking for an entry to distinguish it from previous incompatible entries. (Optional)</param>
         /// <returns>CacheEntry representing current asset.</returns>
-        CacheEntry GetCacheEntry(GUID asset);
+        CacheEntry GetCacheEntry(GUID asset, int version = 1);
 
         /// <summary>
         /// Gets a CacheEntry for a file identified by its relative path.
         /// </summary>
         /// <param name="path">Relative path of a file on disk</param>
+        /// <param name="version">Version number of the system asking for an entry to distinguish it from previous incompatible entries. (Optional)</param>
         /// <returns>CacheEntry representing a file on disk.</returns>
-        CacheEntry GetCacheEntry(string path);
+        CacheEntry GetCacheEntry(string path, int version = 1);
 
         /// <summary>
         /// Gets a CacheEntry for an object identified by an Object Identifier.
         /// </summary>
         /// <param name="objectID">Object identifier for an object</param>
+        /// <param name="version">Version number of the system asking for an entry to distinguish it from previous incompatible entries. (Optional)</param>
         /// <returns>CacheEntry representing an object identifier.</returns>
-        CacheEntry GetCacheEntry(ObjectIdentifier objectID);
+        CacheEntry GetCacheEntry(ObjectIdentifier objectID, int version = 1);
 
         /// <summary>
         /// Checks if the CachedInfo passed in needs to be rebuilt
         /// </summary>
         /// <param name="info">Cached Info to check</param>
         /// <returns><c>true</c> if the cached info needs to be rebuilt; otherwise, <c>false</c>.</returns>
-        bool NeedsRebuild(CachedInfo info);
+        bool HasAssetOrDependencyChanged(CachedInfo info);
 
         /// <summary>
         /// Returns the path where info data can be saved in the cache

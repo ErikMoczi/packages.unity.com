@@ -12,13 +12,13 @@ namespace UnityEditor.Build.Pipeline
     public class Unity5PackedIdentifiers : IDeterministicIdentifiers
     {
         /// <inheritdoc />
-        public string GenerateInternalFileName(string name)
+        public virtual string GenerateInternalFileName(string name)
         {
             return "CAB-" + HashingMethods.Calculate<MD4>(name);
         }
 
         /// <inheritdoc />
-        public long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
+        public virtual long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
         {
             RawHash hash;
             if (objectID.fileType == FileType.MetaAssetType || objectID.fileType == FileType.SerializedAssetType)

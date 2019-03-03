@@ -32,7 +32,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
         CachedInfo GetCachedInfo(GUID scene, IEnumerable<ObjectIdentifier> references, SceneDependencyInfo sceneInfo, BuildUsageTagSet usageTags)
         {
             var info = new CachedInfo();
-            info.Asset = m_Cache.GetCacheEntry(scene);
+            info.Asset = m_Cache.GetCacheEntry(scene, Version);
 
             var dependencies = new HashSet<CacheEntry>();
             foreach (var reference in references)
@@ -53,7 +53,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
             IList<CachedInfo> uncachedInfo = null;
             if (m_Parameters.UseCache && m_Cache != null)
             {
-                IList<CacheEntry> entries = m_Content.Scenes.Select(m_Cache.GetCacheEntry).ToList();
+                IList<CacheEntry> entries = m_Content.Scenes.Select(x => m_Cache.GetCacheEntry(x, Version)).ToList();
                 m_Cache.LoadCachedData(entries, out cachedInfo);
 
                 uncachedInfo = new List<CachedInfo>();
@@ -84,7 +84,7 @@ namespace UnityEditor.Build.Pipeline.Tasks
                     usageTags = new BuildUsageTagSet();
                     string outputFolder = m_Parameters.TempOutputFolder;
                     if (m_Parameters.UseCache && m_Cache != null)
-                        outputFolder = m_Cache.GetCachedArtifactsDirectory(m_Cache.GetCacheEntry(scene));
+                        outputFolder = m_Cache.GetCachedArtifactsDirectory(m_Cache.GetCacheEntry(scene, Version));
                     Directory.CreateDirectory(outputFolder);
 
                     sceneInfo = ContentBuildInterface.PrepareScene(scenePath, settings, usageTags, m_DependencyData.DependencyUsageCache, outputFolder);

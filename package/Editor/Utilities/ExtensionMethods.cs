@@ -29,6 +29,13 @@ namespace UnityEditor.Build.Pipeline.Utilities
             dictionary.Add(key, value);
         }
 
+        public static void Swap<T>(this IList<T> list, int first, int second)
+        {
+            T temp = list[second];
+            list[second] = list[first];
+            list[first] = temp;
+        }
+
         public static Hash128 GetHash128(this BuildSettings settings)
         {
             if (settings.typeDB == null)

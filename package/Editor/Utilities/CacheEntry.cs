@@ -25,6 +25,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public Hash128 Hash { get; internal set; }
         public GUID Guid { get; internal set; }
+        public int Version { get; internal set; }
         public EntryType Type { get; internal set; }
         public string File { get; internal set; }
 
@@ -56,6 +57,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
             {
                 var hashCode = Hash.GetHashCode();
                 hashCode = (hashCode * 397) ^ Guid.GetHashCode();
+                hashCode = (hashCode * 397) ^ Version;
                 hashCode = (hashCode * 397) ^ (int)Type;
                 hashCode = (hashCode * 397) ^ (File != null ? File.GetHashCode() : 0);
                 return hashCode;
@@ -71,7 +73,7 @@ namespace UnityEditor.Build.Pipeline.Utilities
 
         public bool Equals(CacheEntry other)
         {
-            return Hash.Equals(other.Hash) && Guid.Equals(other.Guid) && Type == other.Type && string.Equals(File, other.File);
+            return Hash.Equals(other.Hash) && Guid.Equals(other.Guid) && Version == other.Version && Type == other.Type && string.Equals(File, other.File);
         }
     }
 }

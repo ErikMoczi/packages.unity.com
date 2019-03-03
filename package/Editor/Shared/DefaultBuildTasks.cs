@@ -85,7 +85,7 @@ namespace UnityEditor.Build.Pipeline
             // Packing
             buildTasks.Add(new GenerateBundlePacking());
             buildTasks.Add(new GenerateBundleCommands());
-            buildTasks.Add(new GenerateSpritePathMaps());
+            buildTasks.Add(new GenerateSubAssetPathMaps());
             buildTasks.Add(new GenerateBundleMaps());
             buildTasks.Add(new PostPackingCallback());
 
@@ -117,14 +117,14 @@ namespace UnityEditor.Build.Pipeline
             buildTasks.Add(new CalculateSceneDependencyData());
             buildTasks.Add(new CalculateAssetDependencyData());
             buildTasks.Add(new StripUnusedSpriteSources());
-            buildTasks.Add(new CreateBuiltInShadersBundle("UnityBuiltInShaders"));
+            buildTasks.Add(new CreateBuiltInShadersBundle("UnityBuiltInShaders.bundle"));
             buildTasks.Add(new PostDependencyCallback());
 
             // Packing
             buildTasks.Add(new GenerateBundlePacking());
             buildTasks.Add(new UpdateBundleObjectLayout());
             buildTasks.Add(new GenerateBundleCommands());
-            buildTasks.Add(new GenerateSpritePathMaps());
+            buildTasks.Add(new GenerateSubAssetPathMaps());
             buildTasks.Add(new GenerateBundleMaps());
             buildTasks.Add(new PostPackingCallback());
 
