@@ -1,4 +1,10 @@
-## [0.9.91-preview] - 2019-02-23
+## [0.9.92-preview] - 2019-02-22
+- Add Page Up and Down support to scroll the item list faster.
+- Add AssetStoreProvider example
+- Add onEnable/onDisable API for Search provider.
+- Add HTTP asynchronous item loading by querying the asset store.
+
+## [0.9.91-preview] - 2019-02-22
 - Fix various Mac UX issues
 
 ## [0.9.9-preview.4] - 2019-02-22

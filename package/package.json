@@ -1,7 +1,7 @@
 {
   "name": "com.unity.quicksearch",
   "displayName": "Quick Search",
-  "version": "0.9.91-preview",
+  "version": "0.9.92-preview",
   "unity": "2019.1",
   "keywords": ["unity", "editor", "omni", "quick", "search", "assets", "menu", "scene", "anything"],
   "description": "Search multiple areas of Unity: assets, scene objects, menu items, settings, etc.\n\nOn Windows simply press Alt+' to find anything or Option+' on Mac.",
@@ -9,6 +9,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.quicksearch.git",
-    "revision": "a8e7d6e3fde3ef3cdd330b7905c74fa22b703dde"
+    "revision": "5558ec0f7e9eb4379c938c12a7b2af3893b440c2"
   }
 }

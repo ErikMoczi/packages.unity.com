@@ -3,10 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+
+#if QUICKSEARCH_DEBUG
+using System.Reflection;
 using Debug = System.Diagnostics.Debug;
+#endif
 
 namespace Unity.QuickSearch
 {
@@ -298,6 +301,8 @@ namespace Unity.QuickSearch
         public GetItemsHandler fetchItems;
         public List<SearchAction> actions;
         public List<NameId> subCategories;
+        public Action onEnable;
+        public Action onDisable;
         public IsItemValidHandler isItemValid;
         public int priority;
     }
@@ -331,7 +336,6 @@ namespace Unity.QuickSearch
         const string k_LastSearchPrefKey = "quicksearch.last_search";
         
         private static int s_CurrentSearchId = 0;
-        private static readonly List<SearchItem> s_NoItem = new List<SearchItem>();
         private static string s_LastSearch;
         private static List<string> s_RecentSearches = new List<string>(10);
         private static int s_RecentSearchIndex = -1;
@@ -427,7 +431,7 @@ namespace Unity.QuickSearch
                 return GetItems(context, Filter);
             }
 
-            return s_NoItem;
+            return new List<SearchItem>(0);
         }
 
         internal static void SaveLastSearch()
@@ -523,11 +527,11 @@ namespace Unity.QuickSearch
         {
             try
             {
-                Providers = GetAllMethodsWithAttribute<SearchItemProviderAttribute>()
+                Providers = Utils.GetAllMethodsWithAttribute<SearchItemProviderAttribute>()
                     .Select(methodInfo => methodInfo.Invoke(null, null) as SearchProvider)
                     .Where(provider => provider != null).ToList();
 
-                foreach (var action in GetAllMethodsWithAttribute<SearchActionsProviderAttribute>()
+                foreach (var action in Utils.GetAllMethodsWithAttribute<SearchActionsProviderAttribute>()
                          .SelectMany(methodInfo => methodInfo.Invoke(null, null) as object[]).Where(a => a != null).Cast<SearchAction>())
                 {
                     var provider = Providers.Find(p => p.name.id == action.type);
@@ -560,15 +564,6 @@ namespace Unity.QuickSearch
             return true;
         }
 
-        private static IEnumerable<MethodInfo> GetAllMethodsWithAttribute<T>(BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-        {
-            Assembly assembly = typeof(Selection).Assembly;
-            var managerType = assembly.GetTypes().First(t => t.Name == "EditorAssemblies");
-            var method = managerType.GetMethod("Internal_GetAllMethodsWithAttribute", BindingFlags.NonPublic | BindingFlags.Static);
-            var arguments = new object[] { typeof(T), bindingFlags };
-            return ((method.Invoke(null, arguments) as object[]) ?? throw new InvalidOperationException()).Cast<MethodInfo>();
-        }
-
         private static bool LoadFilters()
         {
             try
@@ -578,7 +573,7 @@ namespace Unity.QuickSearch
 
                 if (!string.IsNullOrEmpty(filtersStr))
                 {
-                    var filters = JsonDeserialize(filtersStr) as List<object>;
+                    var filters = Utils.JsonDeserialize(filtersStr) as List<object>;
                     foreach (var filterObj in filters)
                     {
                         var filter = filterObj as Dictionary<string, object>;
@@ -631,41 +626,13 @@ namespace Unity.QuickSearch
                 filters.Add(filter);
             }
 
-            return JsonSerialize(filters);
+            return Utils.JsonSerialize(filters);
         }
 
         private static void SaveFilters()
         {
             var filter = FilterToString();
             EditorPrefs.SetString(k_FilterPrefKey, filter);
-        }
-
-        private static string JsonSerialize(object obj)
-        {
-            var assembly = typeof(Selection).Assembly;
-            var managerType = assembly.GetTypes().First(t => t.Name == "Json");
-            var method = managerType.GetMethod("Serialize", BindingFlags.Public | BindingFlags.Static);
-            var jsonString = "";
-            if (UnityVersion.IsVersionGreaterOrEqual(2019, 1, UnityVersion.ParseBuild("0a10")))
-            {
-                var arguments = new object[] { obj, false, "  " };
-                jsonString = method.Invoke(null, arguments) as string;
-            }
-            else
-            {
-                var arguments = new object[] { obj };
-                jsonString = method.Invoke(null, arguments) as string;
-            }
-            return jsonString;
-        }
-
-        private static object JsonDeserialize(object obj)
-        {
-            Assembly assembly = typeof(Selection).Assembly;
-            var managerType = assembly.GetTypes().First(t => t.Name == "Json");
-            var method = managerType.GetMethod("Deserialize", BindingFlags.Public | BindingFlags.Static);
-            var arguments = new object[] { obj };
-            return method.Invoke(null, arguments);
         }
     }
 }
