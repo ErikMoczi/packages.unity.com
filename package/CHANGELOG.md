@@ -1,9 +1,10 @@
-## [0.9.100-preview.4] - 2019-02-25
+## [1.0.0-preview.1] - 2019-02-26
 - Update style to work better with the Northstar branch.
 - Use Alt+Left to open the filter window box.
 - Use Alt+Down to cycle to next recent search.
 - Navigate the filter window using the keyboard only.
 - Consolidate web search providers into a single one with sub categories.
+- Update documentation to include new features.
 
 ## [0.9.95-preview] - 2019-02-25
 - Add AssetStoreProvider example

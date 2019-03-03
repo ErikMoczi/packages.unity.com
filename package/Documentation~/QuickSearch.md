@@ -40,9 +40,9 @@ Each Project Settings or Preferences pages is available for search. The Quick Se
 
 ![asset filter](Images/settings_provider.png)
 
-### Search the Web
+### Online Search Providers
 
-We have created 4 `SearchProvider`s to search various Unity websites. Using these providers will open your default browser at a a specific Unity page and perform a search and display some results. You can search the following websites and it is very easy to add new web search providers:
+We have a `SearchProvider` that allows to search various Unity websites. Using this provider will open your default browser at a specific Unity page and perform a search and display some results. You can search the following websites and it is very easy to add new web search providers:
 
 - [answers.unity.com](answers.unity.com)
 - [The Official Unity Documentation](docs.unity3d.com/Manual)
@@ -50,6 +50,25 @@ We have created 4 `SearchProvider`s to search various Unity websites. Using thes
 - [The Mighty Unity Asset Store](assetstore.unity.com)
 
 ![store](Images/online_search.gif)
+
+## Keyboard Navigation
+
+All the features of the Quick Search tool can be access using the keyboard:
+
+- The Search box is always focused and you can type even with an element selected.
+- `Alt + Left Arrow` : Toggle the Filter view
+    - Using `Up Arrow`, `Down Arrow` in the Filter view cycle between filters.
+    - Using `spacebar` toggle a filter
+
+![filter](Images/filter_keyboard.gif)
+- `Alt + Right Arrow` brings the action menu
+
+![action](Images/action_keyboard.gif)
+
+- `Alt + Up Arrow` or `Alt + Down Arrow` navigate through the search history:
+
+![history navigation](Images/history_cycle.gif)
+
 
 ## Filters
 
@@ -72,10 +91,7 @@ From the Quick Search Box you can type a search `provider search filter token` t
 - Asset: `p:`
 - Menu: `me:`
 - Scene: `h:`
-- Answers: `ua:`
-- Documentation: `ud:`
-- Store: `us:`
-- Settings: `se:`
+- Online Search: `web:`
 
 Example of queries using text providers:
 
