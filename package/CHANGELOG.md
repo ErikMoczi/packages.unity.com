@@ -4,15 +4,11 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2019-02-05
-- EditorBuildSettings no longer hardcodes to sample scene.
-
-## [1.2.0] - 2019-02-04
+## [2.1.0] - 2019-01-31
 - Corrected some default values in project settings.
 
-## [1.1.0] - 2019-02-01
-- Editor Build Settings loads the correct scene on launch.
-- HoloLens `depthbufferSharingEnabled` is now enabled by default.
+## [2.0.0] - 2019-01-30
+- Enable HoloLens `depthBufferSharingEnabled` by default.
 
 ## [1.0.8] - 2019-01-22
 - Removes unnecessary manifest entries

@@ -1,9 +1,9 @@
 {
   "name": "com.unity.template.2d",
   "displayName": "2D",
-  "version": "1.3.0",
+  "version": "2.1.0",
   "type": "template",
-  "unity": "2018.3",
+  "unity": "2019.1",
   "description": "This is an empty project configured for 2D apps. It uses Unity's built-in renderer.",
   "dependencies": {
     "com.unity.ads": "2.0.8",
@@ -47,6 +47,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/upm-package-template-2D.git",
-    "revision": "73f42510c33c0dd4ecb39c2ce72ef7edd1329126"
+    "revision": "07d978fac5e36816d4604691644e0644ae37ae0d"
   }
 }
