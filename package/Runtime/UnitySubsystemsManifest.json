@@ -5,11 +5,7 @@
 
   "displays": [
     {
-      "id": "oculus display",
-      "supportsEditorMode": true,
-      "disableBackbufferMSAA": true,
-      "stereoscopicBackbuffer": false,
-      "usePBufferEGL": true
+      "id": "oculus display"
     }
   ],
   "inputs": [

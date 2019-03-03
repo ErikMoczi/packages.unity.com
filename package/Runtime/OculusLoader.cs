@@ -5,11 +5,17 @@ using UnityEngine;
 using UnityEngine.Experimental.XR;
 using UnityEngine.XR.Management;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 namespace Unity.XR.Oculus
 {
     public class OculusLoader : XRLoaderHelper
+#if UNITY_EDITOR
+    //, IXRLoaderPreInit
+#endif
     {
         private static List<XRSessionSubsystemDescriptor> s_SessionSubsystemDescriptors = new List<XRSessionSubsystemDescriptor>();
         private static List<XRDisplaySubsystemDescriptor> s_DisplaySubsystemDescriptors = new List<XRDisplaySubsystemDescriptor>();
@@ -114,5 +120,11 @@ namespace Unity.XR.Oculus
             return settings;
         }
 
+#if UNITY_EDITOR
+        public string GetPreInitLibraryName(BuildTarget buildTarget, BuildTargetGroup buildTargetGroup)
+        {
+            return "XRSDKOculus";
+        }
+#endif
     }
 }
