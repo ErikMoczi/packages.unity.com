@@ -9,12 +9,11 @@ namespace Unity.QuickSearch
 {
     namespace Providers
     {
-        [UsedImplicitly]
         static class SearchUtility
         {
             public static void Goto(string baseUrl, List<Tuple<string, string>> query)
             {
-                var url = baseUrl += "?";
+                var url = baseUrl + "?";
                 for (var i = 0; i < query.Count; ++i)
                 {
                     var item = query[i];
@@ -30,7 +29,6 @@ namespace Unity.QuickSearch
             }
         }
 
-        [UsedImplicitly]
         static class AnswersHelper
         {
             internal static string searchUrl = "https://answers.unity.com/search.html";
@@ -53,7 +51,6 @@ namespace Unity.QuickSearch
             }
         }
 
-        [UsedImplicitly]
         static class DocManualHelper
         {
             internal static string searchUrl = "https://docs.unity3d.com/Manual/30_search.html";
@@ -74,7 +71,6 @@ namespace Unity.QuickSearch
             }
         }
 
-        [UsedImplicitly]
         static class DocScriptingHelper
         {
             internal static string searchUrl = "https://docs.unity3d.com/ScriptReference/30_search.html";
@@ -95,7 +91,6 @@ namespace Unity.QuickSearch
             }
         }
 
-        [UsedImplicitly]
         static class AssetStoreHelper
         {
             internal static string searchUrl = "https://assetstore.unity.com/search";
@@ -131,8 +126,8 @@ namespace Unity.QuickSearch
         [UsedImplicitly]
         static class OnlineSearchProvider
         {
-            internal static string type = "store_search";
-            internal static string displayName = "Store Search";
+            internal static string type = "web";
+            internal static string displayName = "Online Search";
             static OnlineSearchItemTemplate[] s_ItemTemplates;
 
             static OnlineSearchItemTemplate FindById(string id)
@@ -150,18 +145,21 @@ namespace Unity.QuickSearch
                     {
                         DocScriptingHelper.template,
                         DocManualHelper.template,
-                        AssetStoreHelper.template
+                        AssetStoreHelper.template,
+                        AnswersHelper.template
                     };
                 }
 
                 return new SearchProvider(type, displayName)
                 {
                     priority = 10000,
-                    filterId = "os:",
+                    filterId = "web:",
                     fetchItems = (context, items, provider) =>
                     {
                         foreach (var category in context.categories)
                         {
+                            if (!category.isEnabled)
+                                continue;
                             var template = FindById(category.name.id);
                             var item = provider.CreateItem(category.name.id, "Search " + template.descriptionTitle, "Search for: " + context.searchQuery, template.icon);
                             items.Add(item);
@@ -174,7 +172,7 @@ namespace Unity.QuickSearch
             [UsedImplicitly, SearchActionsProvider]
             internal static IEnumerable<SearchAction> ActionHandlers()
             {
-                return new SearchAction[]
+                return new []
                 {
                     new SearchAction(type, "search", null, "Search") {
                         handler = (item, context) => FindById(item.id).actionHandler(item, context)

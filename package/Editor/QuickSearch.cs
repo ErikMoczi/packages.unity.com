@@ -25,7 +25,7 @@ namespace Unity.QuickSearch
             public static readonly GUIStyle filterToggle = new GUIStyle("Toggle")
             {
                 name = "quick-search-filter-toggle",
-                margin = new RectOffset(4, 4, 1, 0)
+                margin = new RectOffset(4, 4, 1, 1)
             };
 
             public static readonly GUIStyle filterEntry = new GUIStyle(EditorStyles.label) { name = "quick-search-filter-entry" };
