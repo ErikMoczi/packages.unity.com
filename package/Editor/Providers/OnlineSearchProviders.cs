@@ -162,8 +162,8 @@ namespace Unity.QuickSearch
         [UsedImplicitly]
         static class AssetStoreProvider
         {
-            internal static string type = "store_search";
-            internal static string displayName = "Store Search";
+            internal static string type = "store";
+            internal static string displayName = "Store";
             internal static string urlTitle = "assetstore.unity.com";
             internal static string searchUrl = "https://assetstore.unity.com/search";
 
