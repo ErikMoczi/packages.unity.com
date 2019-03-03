@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.Initialization;
 using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.AddressableAssets.ResourceProviders;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.Util;
 
@@ -76,7 +77,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
             runtimeData.BuildTarget = context.GetValue<BuildTarget>(AddressablesBuildDataBuilderContext.BuildScriptContextConstants.kBuildTarget).ToString();
             runtimeData.LogResourceManagerExceptions = aaSettings.buildSettings.LogResourceManagerExceptions;
             runtimeData.ProfileEvents = ProjectConfigData.postProfilerEvents;
-            runtimeData.CatalogLocations.Add(new ResourceLocationData(new[] { "catalogs" }, string.Format(m_PathFormat, "file://{UnityEngine.Application.dataPath}/../", "catalog"), typeof(JsonAssetProvider)));
+            runtimeData.CatalogLocations.Add(new ResourceLocationData(new[] { InitializationOperation.CatalogAddress }, string.Format(m_PathFormat, "file://{UnityEngine.Application.dataPath}/../", "catalog"), typeof(ContentCatalogProvider)));
             foreach (var io in aaSettings.InitializationObjects)
             {
                 if(io is IObjectInitializationDataProvider )

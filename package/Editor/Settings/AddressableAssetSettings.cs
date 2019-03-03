@@ -172,6 +172,60 @@ namespace UnityEditor.AddressableAssets.Settings
         /// Returns whether this settings object is persisted to an asset.
         /// </summary>
         public bool IsPersisted { get { return !m_IsTemporary; } }
+        
+        [SerializeField]
+        bool m_BuildRemoteCatalog = true;
+
+        /// <summary>
+        /// Determine if a remote catalog should be built-for and loaded-by the app.
+        /// </summary>
+        public bool BuildRemoteCatalog
+        {
+            get { return m_BuildRemoteCatalog; }
+            set { m_BuildRemoteCatalog = value; }
+        }
+        
+        [SerializeField]
+        ProfileValueReference m_RemoteCatalogBuildPath;
+        /// <summary>
+        /// The path to place a copy of the content catalog for online retrieval.  To do any content updates
+        /// to an existing built app, there must be a remote catalog. Overwriting the catalog is how the app
+        /// gets informed of the updated content.
+        /// </summary>
+        public ProfileValueReference RemoteCatalogBuildPath
+        {
+            get
+            {
+                if (m_RemoteCatalogBuildPath.Id == null)
+                {
+                    m_RemoteCatalogBuildPath = new ProfileValueReference();
+                    m_RemoteCatalogBuildPath.SetVariableByName(this, kRemoteBuildPath);
+                }
+                return m_RemoteCatalogBuildPath;
+            }
+            set { m_RemoteCatalogBuildPath = value; }
+        }
+
+        [SerializeField]
+        ProfileValueReference m_RemoteCatalogLoadPath;
+        /// <summary>
+        /// The path to load the remote content catalog from.  This is the location the app will check to
+        /// look for updated catalogs, which is the only indication the app has for updated content.
+        /// </summary>
+        public ProfileValueReference RemoteCatalogLoadPath
+        {
+            get
+            {
+                if (m_RemoteCatalogLoadPath.Id == null)
+                {
+                    m_RemoteCatalogLoadPath = new ProfileValueReference();
+                    m_RemoteCatalogLoadPath.SetVariableByName(this, kRemoteLoadPath);
+                }
+                return m_RemoteCatalogLoadPath;
+            }
+            set { m_RemoteCatalogLoadPath = value; }
+        }
+
 
         /// <summary>
         /// Hash of the current settings.  This value is recomputed if anything changes.

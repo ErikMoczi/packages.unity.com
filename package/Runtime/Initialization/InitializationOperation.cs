@@ -16,6 +16,8 @@ namespace UnityEngine.AddressableAssets.Initialization
     /// </summary>
     public class InitializationOperation : AsyncOperationBase<IResourceLocator>
     {
+        public static string CatalogAddress = "AddressablesMainContentCatalog";
+        
         string m_providerSuffix;
         /// <summary>
         ///  Operation to set up the Addressables system.
@@ -81,7 +83,7 @@ namespace UnityEngine.AddressableAssets.Initialization
             var locMap = new ResourceLocationMap(rtd.CatalogLocations);
             Addressables.ResourceLocators.Add(locMap);
             IList<IResourceLocation> catalogs;
-            if (!locMap.Locate("catalogs", out catalogs))
+            if (!locMap.Locate(CatalogAddress, out catalogs))
             {
                 Addressables.LogWarningFormat("Addressables - Unable to find any catalog locations in the runtime data.");
                 Addressables.ResourceLocators.Remove(locMap);
@@ -169,6 +171,7 @@ namespace UnityEngine.AddressableAssets.Initialization
             return AsyncOperationCache.Instance.Acquire<ChainOperation<IResourceLocator, ContentCatalogData>>().Start(loc, loc, Addressables.LoadAsset<ContentCatalogData>(loc), res => OnCatalogDataLoaded(res.Result, providerSuffix));
         }
 
+        //Attempts to load each catalog in order, stopping at first success. 
         void LoadContentCatalog(IList<IResourceLocation> catalogs, int index, ResourceLocationMap locMap)
         {
             Addressables.LogFormat("Addressables - loading content catalog from {0}.", catalogs[index].InternalId);

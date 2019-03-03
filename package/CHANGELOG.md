@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-preview] - 2019-02-06
+## [1.0.1-preview] - 2019-02-11
  - *BREAKING CODE CHANGES* 
    - to ease code navigation, we have added several layers of namespace to the code.  
    - any hardcoded profile path to com.unity.addressables (specifically LocalLoadPath, RemoteLoadPath, etc) should use UnityEngine.AddressableAssets.Addressables.RuntimePath instead.  
@@ -13,7 +13,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
    - We have removed attribute AssetReferenceTypeRestriction as it is cleaner to enforce type via generics
    - Attribute AssetReferenceLabelRestriction is renamed to AssetReferenceUILabelRestriction and must be surrounded by #if UNITY_EDITOR in your game code, to enforce it's editor-only capability
    - Modifications to IResourceProvider API.
- - Moved all of the Resource Manager project to be contained within Addressables.  No code change implications. 
+ - Content Update calculation has changed, this will invalide previously generated addressables_content_state.bin files.
+   - Some types for content update were made private as a result of the above change.
+ - Moved all of the Resource Manager package to be contained within Addressables (no longer a stand alone package).  No code change implications. 
+ - Change to content catalog building: 
+   - Previous model built one catalog per group, wherever that group built it's data.
+   - New model builds one catalog locally, and optionally one "remote".  Remote location is set on the top level AddressableAssetSettings object.
+   - Loading will now always check if remote has changes (if remote exists), and use local otherwise (or cached version of remote).
  - LoadScene API now takes LoadSceneParameters in 2018.2+
  - Exposed AddressablesBuildDataBuilderContext.BuildScriptContextConstants for use in build scripts.
  - Refactored AddressablesBuildDataBuilderContext.GetValue to take default parameter.
@@ -51,7 +57,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Added attribute AssetReferenceUIRestriction to support user-created AssetReference restrictions (they are only enforced in UI, for dropdown and drag&drop)
  - All Instantiate API calls (Adddressables and AssetReference) have been changed to only work with GameObjects.
  - Changed addressables_content_state.bin to only build to the folder containing the AddressableAssetSettings object (Assets/AddressableAssetsData/ in most cases)
- - Changed group's "Content Catalog Load Order" to be an unsigned int.  Thus you can no longer prevent catalog creation by setting the load order to less than 0.  Note: If anyone has a previously serialized value less than 0 it will be come very large.
  
 ## [0.5.3-preview] - 2018-12-19
  - fixed upgrade bug from 0.4.x or lower to 0.5.x or higher. During upgrade, the "Packed Mode" option was removed from play mode.  Now it's back and upgrades are safe from 0.4.x or from 0.5.x to 0.5.3

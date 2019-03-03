@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -15,6 +16,18 @@ namespace UnityEngine.AddressableAssets.ResourceProviders
     /// </summary>
     public class ContentCatalogProvider : ResourceProviderBase
     {
+        /// <summary>
+        /// An enum used to specify which entry in the catalog dependencies should hold each hash item.
+        ///  The Remote should point to the hash on the server.  The Cache should point to the
+        ///  local cache copy of the remote data. 
+        /// </summary>
+        public enum DependencyHashIndex
+        {
+            Remote = 0,
+            Cache,
+            Count
+        }
+        
         public ContentCatalogProvider()
         {
             m_BehaviourFlags = ProviderBehaviourFlags.CanProvideWithFailedDependencies;
@@ -33,43 +46,49 @@ namespace UnityEngine.AddressableAssets.ResourceProviders
                 m_StartFrame = Time.frameCount;
                 m_Result = null;
                 Context = location;
-                if (deps == null || deps.Count != 2)
-                {
-                    Addressables.LogWarningFormat("Addressables -Invalid dependencies for content catalog at location {0}", location);
-                    SetResult(default(TObject));
-                    DelayedActionManager.AddAction((Action)InvokeCompletionEvent);
-                }
-                else
-                {
-                    var remoteHash = deps[0] as string;
-                    var localHash = deps[1] as string;
-                    Addressables.LogFormat("Addressables - ContentCatalogProvider LocalHash = {0}, RemoteHash = {1}.", localHash, remoteHash);
 
-                    if (remoteHash == localHash || string.IsNullOrEmpty(remoteHash))
-                    {
-                        if (string.IsNullOrEmpty(localHash))
-                            Addressables.LogFormat("Addressables - Unable to load localHash catalog hash: {0}.", OperationException);
-                        if (location.Dependencies != null)
-                        {
-                            var localDataPath = location.Dependencies[1].InternalId.Replace(".hash", ".json");
-                            Addressables.LogFormat("Addressables - Using content catalog from {0}.", localDataPath);
-                            Addressables.ResourceManager.ProvideResource<ContentCatalogData>(new ResourceLocationBase(localDataPath, localDataPath, typeof(JsonAssetProvider).FullName)).Completed += OnCatalogLoaded;
-                        }
-                    }
-                    else
-                    {
-
-                        if (location.Dependencies != null)
-                        {
-                            var remoteDataPath = location.Dependencies[0].InternalId.Replace(".hash", ".json");
-                            m_LocalDataPath = location.Dependencies[1].InternalId.Replace(".hash", ".json");
-                            m_HashValue = remoteHash;
-                            Addressables.LogFormat("Addressables - Using content catalog from {0}.", remoteDataPath);
-                            Addressables.ResourceManager.ProvideResource<ContentCatalogData>(new ResourceLocationBase(remoteDataPath, remoteDataPath, typeof(JsonAssetProvider).FullName)).Completed += OnCatalogLoaded;
-                        }
-                    }
-                }
+                string idToLoad = DetermineIdToLoad(location, deps);
+                
+                Addressables.LogFormat("Addressables - Using content catalog from {0}.", idToLoad);
+                Addressables.ResourceManager.ProvideResource<ContentCatalogData>(new ResourceLocationBase(idToLoad, idToLoad, typeof(JsonAssetProvider).FullName)).Completed += OnCatalogLoaded;
+                
                 return this;
+            }
+
+            internal string DetermineIdToLoad(IResourceLocation location, IList<object> dependencyObjects)
+            {
+                //default to load actual local source catalog
+                string idToLoad = location.InternalId;
+                if (dependencyObjects != null && 
+                    location.Dependencies != null &&
+                    dependencyObjects.Count == (int)DependencyHashIndex.Count && 
+                    location.Dependencies.Count == (int)DependencyHashIndex.Count )
+                {
+                    var remoteHash = dependencyObjects[(int)DependencyHashIndex.Remote] as string;
+                    var cachedHash = dependencyObjects[(int)DependencyHashIndex.Cache] as string;
+                    Addressables.LogFormat("Addressables - ContentCatalogProvider CachedHash = {0}, RemoteHash = {1}.", cachedHash, remoteHash);
+
+                    if (string.IsNullOrEmpty(remoteHash)) //offline
+                    {
+                        if(!string.IsNullOrEmpty(cachedHash)) //cache exists
+                            idToLoad = location.Dependencies[(int)DependencyHashIndex.Cache].InternalId.Replace(".hash", ".json");
+                    }
+                    else //online
+                    {
+                        if (remoteHash == cachedHash) //cache of remote is good
+                        {
+                            idToLoad = location.Dependencies[(int)DependencyHashIndex.Cache].InternalId.Replace(".hash", ".json");
+                        }
+                        else //remote is different than cache, or no cache
+                        {
+                            idToLoad = location.Dependencies[(int)DependencyHashIndex.Remote].InternalId.Replace(".hash", ".json");
+                            m_LocalDataPath = location.Dependencies[(int)DependencyHashIndex.Cache].InternalId.Replace(".hash", ".json");
+                            m_HashValue = remoteHash;
+                        }
+                    }
+                }
+
+                return idToLoad;
             }
 
             void OnCatalogLoaded(IAsyncOperation<ContentCatalogData> op)

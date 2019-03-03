@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using UnityEngine.AddressableAssets.Initialization;
 using UnityEngine.AddressableAssets.ResourceLocators;
@@ -12,8 +13,8 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.Util;
 using UnityEngine.SceneManagement;
-using System.Linq;
-using UnityEngine.AddressableAssets.ResourceProviders;
+
+[assembly: InternalsVisibleTo("Unity.Addressables.Tests")]
 
 namespace UnityEngine.AddressableAssets
 {
