@@ -1,20 +1,14 @@
-## [0.9.93-preview] - 2019-02-25
-- New icons
-
-## [0.9.92-preview] - 2019-02-22
-- Add Page Up and Down support to scroll the item list faster.
+## [0.9.95-preview] - 2019-02-25
 - Add AssetStoreProvider example
-- Add onEnable/onDisable API for Search provider.
 - Add HTTP asynchronous item loading by querying the asset store.
-
-## [0.9.91-preview] - 2019-02-22
-- Fix various Mac UX issues
-
-## [0.9.9-preview.4] - 2019-02-22
-- Add support for async results
+- Add onEnable/onDisable API for Search provider.
+- Add Page Up and Down support to scroll the item list faster.
 - Add search provider examples
-- Select first item by default
+- Add support for async results
 - Cycle too previous search query using ALT+UpArrow
+- Fix various Mac UX issues
+- New icons
+- Select first item by default en pressing Enter
 
 ## [0.9.9-preview.2] - 2019-02-21
 - Added drag and drop support. You can drag an item from the quick search tool to a drop target.
