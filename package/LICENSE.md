@@ -1,4 +1,4 @@
-Unity OmniTool copyright © 2017-2019 Unity Technologies ApS
+Unity Copyright © 2017-2019 Unity Technologies ApS
 
 Licensed under the Unity Companion License for Unity-dependent projects--see [Unity Companion License](http://www.unity3d.com/legal/licenses/Unity_Companion_License).
 

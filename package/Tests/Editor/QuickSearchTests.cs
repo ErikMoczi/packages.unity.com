@@ -7,10 +7,10 @@ using UnityEngine.TestTools;
 namespace Tests
 {
     // trivial editor tests.
-    internal class OmniToolTests
+    internal class QuickSearchTests
     {
         [Test]
-        public void OmniToolTest()
+        public void QuickSearchTests()
         {
             Assert.IsTrue(true);
         }
