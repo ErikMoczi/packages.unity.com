@@ -8,7 +8,6 @@ using NUnit.Framework.Internal.Commands;
 using UnityEngine;
 using UnityEngine.TestRunner.NUnitExtensions.Runner;
 using UnityEngine.TestTools;
-using UnityEngine.TestTools.Logging;
 
 namespace FrameworkTests
 {
@@ -21,7 +20,7 @@ namespace FrameworkTests
             var testClass = new ClassWithTestAndMultipleSetupAndTearDown();
             var testName = "PassingTest";
             var testExecutionContext = new UnityTestExecutionContext();
-            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<EnumerableSetUpTearDownCommandState>();
+            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<BeforeAfterTestCommandState>();
             s_Outputs = new List<string>();
 
             var executeEnumerable =  ExecuteTestWithSetupAndTearDown(testClass, testName, testExecutionContext);
@@ -39,7 +38,7 @@ namespace FrameworkTests
             testClass.enterPlaymode = true;
             var testName = "PassingTest";
             var testExecutionContext = new UnityTestExecutionContext();
-            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<EnumerableSetUpTearDownCommandState>();
+            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<BeforeAfterTestCommandState>();
             s_Outputs = new List<string>();
 
             var executeEnumerator =  ExecuteTestWithSetupAndTearDown(testClass, testName, testExecutionContext).GetEnumerator();
@@ -69,7 +68,7 @@ namespace FrameworkTests
             testClass.logErrorInSetup = true;
             var testName = "PassingTest";
             var testExecutionContext = new UnityTestExecutionContext();
-            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<EnumerableSetUpTearDownCommandState>();
+            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<BeforeAfterTestCommandState>();
             s_Outputs = new List<string>();
 
             LogAssert.Expect(LogType.Error, "Error in Setup1");
@@ -89,10 +88,8 @@ namespace FrameworkTests
             testClass.throwExceptionInSetup = true;
             var testName = "PassingTest";
             var testExecutionContext = new UnityTestExecutionContext();
-            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<EnumerableSetUpTearDownCommandState>();
+            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<BeforeAfterTestCommandState>();
             s_Outputs = new List<string>();
-
-            LogAssert.Expect(LogType.Exception, "Exception: Exception in Setup1");
 
             var executeEnumerable =  ExecuteTestWithSetupAndTearDown(testClass, testName, testExecutionContext);
             foreach (var workItemStep in executeEnumerable)
@@ -109,7 +106,7 @@ namespace FrameworkTests
             testClass.logErrorInTearDown = true;
             var testName = "PassingTest";
             var testExecutionContext = new UnityTestExecutionContext();
-            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<EnumerableSetUpTearDownCommandState>();
+            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<BeforeAfterTestCommandState>();
             s_Outputs = new List<string>();
 
             LogAssert.Expect(LogType.Error, "Error in TearDown1");
@@ -129,10 +126,8 @@ namespace FrameworkTests
             testClass.throwExceptionInTearDown = true;
             var testName = "PassingTest";
             var testExecutionContext = new UnityTestExecutionContext();
-            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<EnumerableSetUpTearDownCommandState>();
+            testExecutionContext.SetUpTearDownState = ScriptableObject.CreateInstance<BeforeAfterTestCommandState>();
             s_Outputs = new List<string>();
-
-            LogAssert.Expect(LogType.Exception, "Exception: Exception in TearDown1");
 
             var executeEnumerable =  ExecuteTestWithSetupAndTearDown(testClass, testName, testExecutionContext);
             foreach (var workItemStep in executeEnumerable)

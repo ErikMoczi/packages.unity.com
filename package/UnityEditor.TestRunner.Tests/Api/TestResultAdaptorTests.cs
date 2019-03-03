@@ -91,26 +91,6 @@ public class TestResultAdaptorTests
         Assert.AreEqual(true, testResultMock.ToXmlRecursive);
     }
 
-    [Test]
-    public void TestRunnerTestResultWrapsITestResultForInconclusiveResult()
-    {
-        var expectedXmlNode = new TNode("result");
-        var testResultMock = new TestResultMock()
-        {
-            ResultState = ResultState.Inconclusive,
-            Children = new ITestResult[0],
-            Test = new TestAdaptorTests.TestMock()
-            {
-                Tests = new ITest[0]
-            },
-            ToXmlResult = expectedXmlNode,
-        };
-
-        var testResultUnderTest = new TestResultAdaptor(testResultMock);
-
-        Assert.AreEqual(TestStatus.Failed, testResultUnderTest.TestStatus);
-    }
-
     private class TestResultMock : ITestResult
     {
         public TNode ToXmlResult;
