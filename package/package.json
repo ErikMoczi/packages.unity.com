@@ -1,7 +1,7 @@
 {
   "name": "com.unity.template.hd",
   "displayName": "High-Definition RP (Preview)",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "type": "template",
   "unity": "2019.1",
   "description": "This template utilizes the High Definition Scriptible Render Pipeline. Making it a good starting point for people focused on high-end graphics that want to develop games for platforms that support Shader Model 5.0 (DX11 and above). \n\nBeyond being tuned for High End visuals this project includes\n▪ Shadergraph \n▪ Post Processing V2 Stack  \n▪ Presets \n▪ Example content",
@@ -49,6 +49,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/upm-package-template-HD.git",
-    "revision": "545e0c8ab09a3108ed516b744df355984a1d874e"
+    "revision": "15d15ebf90631391391131193515c617c4b67622"
   }
 }
