@@ -93,6 +93,14 @@ namespace Unity.QuickSearch
             pos.y = parentWindowPosition.y + h;
             return pos;
         }
+        internal static IEnumerable<MethodInfo> GetAllMethodsWithAttribute<T>(BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+        {
+            Assembly assembly = typeof(Selection).Assembly;
+            var managerType = assembly.GetTypes().First(t => t.Name == "EditorAssemblies");
+            var method = managerType.GetMethod("Internal_GetAllMethodsWithAttribute", BindingFlags.NonPublic | BindingFlags.Static);
+            var arguments = new object[] { typeof(T), bindingFlags };
+            return ((method.Invoke(null, arguments) as object[]) ?? throw new InvalidOperationException()).Cast<MethodInfo>();
+        }
 
         internal static Rect GetMainWindowCenteredPosition(Vector2 size)
         {
@@ -125,6 +133,34 @@ namespace Unity.QuickSearch
             var dontSaveToLayoutField = containerWindowType.GetField("m_DontSaveToLayout", BindingFlags.Instance | BindingFlags.NonPublic);
             dontSaveToLayoutField.SetValue(parentContainerWindowValue, true);
             Debug.Assert((bool) dontSaveToLayoutField.GetValue(parentContainerWindowValue));
+        }
+
+        internal static string JsonSerialize(object obj)
+        {
+            var assembly = typeof(Selection).Assembly;
+            var managerType = assembly.GetTypes().First(t => t.Name == "Json");
+            var method = managerType.GetMethod("Serialize", BindingFlags.Public | BindingFlags.Static);
+            var jsonString = "";
+            if (UnityVersion.IsVersionGreaterOrEqual(2019, 1, UnityVersion.ParseBuild("0a10")))
+            {
+                var arguments = new object[] { obj, false, "  " };
+                jsonString = method.Invoke(null, arguments) as string;
+            }
+            else
+            {
+                var arguments = new object[] { obj };
+                jsonString = method.Invoke(null, arguments) as string;
+            }
+            return jsonString;
+        }
+
+        internal static object JsonDeserialize(object obj)
+        {
+            Assembly assembly = typeof(Selection).Assembly;
+            var managerType = assembly.GetTypes().First(t => t.Name == "Json");
+            var method = managerType.GetMethod("Deserialize", BindingFlags.Public | BindingFlags.Static);
+            var arguments = new object[] { obj };
+            return method.Invoke(null, arguments);
         }
     }
 

@@ -174,6 +174,12 @@ namespace Unity.QuickSearch
             [UsedImplicitly, SearchActionsProvider]
             internal static IEnumerable<SearchAction> ActionHandlers()
             {
+                #if UNITY_EDITOR_OSX
+                const string k_RevealActionLabel = "Reveal in Finder...";
+                #else
+                const string k_RevealActionLabel = "Show in Explorer...";
+                #endif
+
                 return new[]
                 {
                     new SearchAction("asset", "select", null, "Select asset...")
@@ -201,7 +207,7 @@ namespace Unity.QuickSearch
                             if (asset != null) AssetDatabase.OpenAsset(asset);
                         }
                     },
-                    new SearchAction("asset", "reveal", null, "Show in Explorer...")
+                    new SearchAction("asset", "reveal", null, k_RevealActionLabel)
                     {
                         handler = (item, context) => EditorUtility.RevealInFinder(item.id)
                     }
