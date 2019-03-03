@@ -4,24 +4,51 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2019-02-05
-- EditorBuildSettings no longer hardcodes to the sample scene. 
-
-## [1.2.0] - 2019-02-04
+## [2.1.0] - 2019-02-04
 - Corrected some default values in project settings.
 
-## [1.1.0] - 2018-02-01
-- EditorBuildSettings loads correct scene on launch.
-- HoloLens `depthBufferSharingEnabled` is enabled by default.
+## [2.0.0] - 2019 - 01 - 30
+- Enabled HoloLens `depthBufferSharingEnabled` by default.
 
-## [1.0.4] - 2018-9-24
+## [1.0.11] - 2019 - 01 - 22
+- Removed unneeded packages from manifest
+
+## [1.0.10] - 2018 - 12 - 06
+- Android: enable Vulkan, disable x86
+- Update new project templates to use 4.x scripting runtime
+- Updated default manifest entries
+
+## [1.0.9] - 2018-11-08
+- Physics.reuseCollisionCallbacks property now defaults to true.
+- Physics2D.reuseCollisionCallbacks property now defaults to true.
+- Physics.autoSyncTransforms property now defaults to false.
+- Physics2D.autoSyncTransforms property now defaults to false.
+
+## [1.0.8] - 2018-24-10
+- AndroidTVCompatibility to false
 
 ### Changed
 - Oculus XR settings default to dash support and depth export enabled.
 
+## [1.0.7] - 2018-24-09
+
+### Changed
+- Oculus XR settings default to dash support and depth export enabled.
+
+## [1.0.6] - 2018-19-09
+
+### Changed
+- Removing Preview tag
+
+## [1.0.4] - 2018-17-07
+
+### Changed
+- Deleting scene file so camera and directional light are once more generated from code
+
 ## [1.0.3] - 2018-17-07
 
 ### Changed
+- moved to package format
 - set camera tag
 
 ## [1.0.2] - 2018-06-06
