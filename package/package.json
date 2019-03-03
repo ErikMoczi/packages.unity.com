@@ -1,7 +1,7 @@
 {
   "name": "com.unity.quicksearch",
   "displayName": "Quick Search",
-  "version": "0.9.4-preview.2",
+  "version": "0.9.5-preview.1",
   "unity": "2019.1",
   "keywords": ["unity", "editor", "search", "tools", "assets", "menu", "scene"],
   "description": "Search multiple areas of Unity: assets, scene objects, menu items, settings and event the asset store.",
@@ -9,6 +9,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.quicksearch.git",
-    "revision": "e77ad9e73ae00c0ed83c191a47b2398d9e19c1ef"
+    "revision": "700a1862e8fa764d3f12f5c0c7c5351bce18101a"
   }
 }
