@@ -100,7 +100,7 @@ namespace Unity.QuickSearch
                         }
                         
                         var safeFilter = string.Join("_", context.searchQuery.Split(k_InvalidSearchFileChars));
-                        if (context.searchQuery.Contains('*') || items.Count == 0)
+                        if (context.searchQuery.Contains('*'))
                         {
                             items.AddRange(Directory.GetFiles(Application.dataPath, safeFilter, SearchOption.AllDirectories)
                                 .Select(path => _provider.CreateItem(path.Replace(Application.dataPath, "Assets").Replace("\\", "/"), Path.GetFileName(path))));

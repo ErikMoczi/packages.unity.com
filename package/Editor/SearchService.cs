@@ -253,12 +253,14 @@ namespace Unity.QuickSearch
             };
         }
 
-        public static bool MatchSearchGroups(string searchContext, string content)
+        public static bool MatchSearchGroups(SearchContext context, string content, bool useLowerTokens = false)
         {
-            return MatchSearchGroups(searchContext, content, out _, out _);
+            return MatchSearchGroups(context.searchQuery,
+                useLowerTokens ? context.tokenizedSearchQueryLower : context.tokenizedSearchQuery, content, out _, out _, 
+                useLowerTokens ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
         }
 
-        public static bool MatchSearchGroups(string searchContext, string content, out int startIndex, out int endIndex)
+        private static bool MatchSearchGroups(string searchContext, string[] tokens, string content, out int startIndex, out int endIndex, StringComparison sc = StringComparison.OrdinalIgnoreCase)
         {
             startIndex = endIndex = -1;
             if (content == null)
@@ -273,14 +275,14 @@ namespace Unity.QuickSearch
 
             // Each search group is space separated
             // Search group must match in order and be complete.
-            var searchGroups = searchContext.Split(' ');
+            var searchGroups = tokens;
             var startSearchIndex = 0;
             foreach (var searchGroup in searchGroups)
             {
                 if (searchGroup.Length == 0)
                     continue;
 
-                startSearchIndex = content.IndexOf(searchGroup, startSearchIndex, StringComparison.CurrentCultureIgnoreCase);
+                startSearchIndex = content.IndexOf(searchGroup, startSearchIndex, sc);
                 if (startSearchIndex == -1)
                 {
                     return false;
@@ -315,6 +317,7 @@ namespace Unity.QuickSearch
         public string searchQuery;
         public EditorWindow focusedWindow;
         public string[] tokenizedSearchQuery;
+        public string[] tokenizedSearchQueryLower;
         public string[] textFilters;
         public List<SearchFilter.Entry> categories;
         public int totalItemCount;
@@ -455,6 +458,7 @@ namespace Unity.QuickSearch
 
             var tokens = context.searchQuery.Split(' ');
             context.tokenizedSearchQuery = tokens.Where(t => !t.Contains(":")).ToArray();
+            context.tokenizedSearchQueryLower = context.tokenizedSearchQuery.Select(t => t.ToLowerInvariant()).ToArray();
             context.textFilters = tokens.Where(t => t.Contains(":")).ToArray();
 
             // Reformat search text so it only contains text filter that are specific to providers and ensure those filters are at the beginning of the search text.

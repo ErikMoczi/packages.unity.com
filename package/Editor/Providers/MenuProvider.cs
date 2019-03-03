@@ -15,22 +15,30 @@ namespace Unity.QuickSearch
         {
             internal static string type = "menu";
             internal static string displayName = "Menu";
+
+            internal static string[] itemNamesLower;
+            internal static List<string> itemNames = new List<string>();
+
             [UsedImplicitly, SearchItemProvider]
             internal static SearchProvider CreateProvider()
             {
+                List<string> shortcuts = new List<string>();
+                GetMenuInfo(itemNames, shortcuts);
+                itemNamesLower = itemNames.Select(n => n.ToLowerInvariant()).ToArray();
+
                 return new SearchProvider(type, displayName)
                 {
                     priority = 80,
                     filterId = "me:",
                     fetchItems = (context, items, provider) =>
                     {
-                        var itemNames = new List<string>();
-                        var shortcuts = new List<string>();
-                        GetMenuInfo(itemNames, shortcuts);
-
-                        items.AddRange(itemNames.Where(menuName =>
-                            SearchProvider.MatchSearchGroups(context.searchQuery, menuName))
-                            .Select(menuName => provider.CreateItem(menuName, Utils.GetNameFromPath(menuName), menuName)));
+                        for (int i = 0; i < itemNames.Count; ++i)
+                        {
+                            var menuName = itemNames[i];
+                            if (!SearchProvider.MatchSearchGroups(context, itemNamesLower[i], true))
+                                continue;
+                            items.Add(provider.CreateItem(menuName, Utils.GetNameFromPath(menuName), menuName));
+                        }
                     },
 
                     fetchThumbnail = (item, context) => Icons.shortcut

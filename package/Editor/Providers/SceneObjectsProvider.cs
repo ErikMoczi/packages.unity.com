@@ -13,27 +13,67 @@ namespace Unity.QuickSearch
         [UsedImplicitly]
         static class SceneObjects
         {
-            internal static string type = "scene";
-            internal static string displayName = "Scene";
-            [UsedImplicitly, SearchItemProvider]
-            internal static SearchProvider CreateProvider()
+            public struct GOD
             {
-                return new SearchProvider(type, displayName)
+                public string name;
+                public GameObject gameObject;
+            }
+
+            class SceneSearchProvider : SearchProvider
+            {
+                public GOD[] gods { get; set; }
+
+                public SceneSearchProvider(string providerId, string displayName = null)
+                    : base(providerId, displayName)
                 {
-                    priority = 50,
-                    filterId = "h:",
+                    priority = 50;
+                    filterId = "h:";
+
+                    onEnable = () =>
+                    {
+                        var objects = UnityEngine.Object.FindObjectsOfType(typeof(GameObject));
+                        gods = new GOD[objects.Length];
+                        for (int i = 0; i < objects.Length; ++i)
+                        {
+                            gods[i].gameObject = (GameObject)objects[i];
+                            gods[i].name = gods[i].gameObject.name.ToLower();
+                        }
+                    };
+
+                    onDisable = () => 
+                    {
+                        gods = new GOD[0];
+                    };
+
                     fetchItems = (context, items, provider) =>
                     {
-                        items.AddRange(
-                            UnityEngine.Object.FindObjectsOfType(typeof(GameObject)).Cast<GameObject>()
-                                .Where(go => SearchProvider.MatchSearchGroups(context.searchQuery, go.name))
-                                .Select(go =>
-                                     {
-                                         var id = go.GetInstanceID().ToString();
-                                         return provider.CreateItem(id, $"{go.name} ({id})", go.transform.GetPath());
-                                     })
-                        );
-                    },
+                        var sq = context.searchQuery.ToLowerInvariant();
+
+                        int addedCount = 0;
+                        int i = 0, end = 0;
+                        for (i = 0, end = gods.Length; i != end; ++i)
+                        {
+                            if (!SearchProvider.MatchSearchGroups(context, gods[i].name, true))
+                                continue;
+
+                            var go = gods[i].gameObject;
+                            var gameObjectId = go.GetInstanceID().ToString();
+                        
+                            items.Add(provider.CreateItem(gameObjectId, $"{go.name} ({gameObjectId})", null));
+                            if (++addedCount >= 200)
+                                break;
+                        }
+                    };
+
+                    fetchDescription = (item, context) =>
+                    {
+                        const int maxChars = 85;
+                        var go = ObjectFromItem(item);
+                        item.data = item.description = go.transform.GetPath();
+                        if (item.description.Length > maxChars)
+                            item.description = "..." + item.description.Substring(item.description.Length-maxChars, maxChars);
+                        return item.description;
+                    };
 
                     fetchThumbnail = (item, context) =>
                     {
@@ -50,7 +90,7 @@ namespace Unity.QuickSearch
                         }
 
                         return item.thumbnail;
-                    },
+                    };
 
                     startDrag = (item, context) =>
                     {
@@ -61,10 +101,18 @@ namespace Unity.QuickSearch
                             DragAndDrop.objectReferences = new[] { obj };
                             DragAndDrop.StartDrag("Drag scene object");
                         }
-                    },
+                    };
 
-                    isItemValid = item => ObjectFromItem(item) != null
-                };
+                    isItemValid = item => ObjectFromItem(item) != null;
+                }
+            }
+
+            internal static string type = "scene";
+            internal static string displayName = "Scene";
+            [UsedImplicitly, SearchItemProvider]
+            internal static SearchProvider CreateProvider()
+            {
+                return new SceneSearchProvider(type, displayName);
             }
 
             [UsedImplicitly, SearchActionsProvider]

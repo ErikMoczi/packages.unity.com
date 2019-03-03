@@ -3,8 +3,10 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Diagnostics;
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.QuickSearch
 {
@@ -176,7 +178,6 @@ namespace Unity.QuickSearch
         }
     }
 
-    #if QUICKSEARCH_DEBUG
     internal struct DebugTimer : IDisposable
     {
         private bool m_Disposed;
@@ -200,7 +201,6 @@ namespace Unity.QuickSearch
             Debug.Log($"{m_Name} took {timespan.TotalMilliseconds} ms");
         }
     }
-    #endif
 
     #if UNITY_EDITOR
     [InitializeOnLoad]

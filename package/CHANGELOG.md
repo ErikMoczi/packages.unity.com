@@ -1,5 +1,6 @@
-## [1.0.1-preview] - 2019-02-27
+## [1.0.1-preview.1] - 2019-02-27
 - Fix ReflectionTypeLoadException exception for certain user with invalid project assemblies
+- Optimize fetching results from menu, asset and scene search providers (~50x boost).
 
 ## [1.0.0-preview.2] - 2019-02-26
 - Update style to work better with the Northstar branch.
