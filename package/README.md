@@ -19,4 +19,4 @@ The manual can be found [here](Documentation~/QuickSearch.md).
 
 This version of Timeline is compatible with the following versions of the Unity Editor:
 
-* 2018.3 and later
+* 2019.1 and later
