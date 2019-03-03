@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.6.0-preview] - 2019-02-25
+## [0.6.1-preview] - 2019-02-28
  - *BREAKING CODE CHANGES* 
    - to ease code navigation, we have added several layers of namespace to the code.  
    - All Instantiate API calls (Adddressables and AssetReference) have been changed to only work with GameObjects.
@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Fixed error case where an asset (usually a bundle) was loaded multiple times as different types (object and AssetBundle).
  - Fixed divide by zero bug when computing load percent of simulated asset bundles.
  - AddressableAssetBuildResult.CreateResult now takes the settingsPath as a parameter to pass this to the result.
- - Fix AssetReference GUI when the AssetReference is inside an array of classes
+ - Fix AssetReference GUI when the AssetReference is inside an array of classes, part of a SerializedObject, or private.
  - Fix AssetReferenceSprite to properly support sprites (as opposed to Texture2D's).
  - Fixed bug involving scenes being repeatedly added to the build scenes list.
  - Removed deprecated and obsolete code.  If you are upgrading from a very old version of Addressables, please update to 0.5.3-preview first.
@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Fixed AssetReferences to handle assets inside folders marked as Addressable.
  - Added attribute AssetReferenceUIRestriction to support user-created AssetReference restrictions (they are only enforced in UI, for dropdown and drag&drop)
  - Changed addressables_content_state.bin to only build to the folder containing the AddressableAssetSettings object (Assets/AddressableAssetsData/ in most cases)
+ - Fixed issue where the wrong scene would sometimes be open post-build.
  
 ## [0.5.3-preview] - 2018-12-19
  - fixed upgrade bug from 0.4.x or lower to 0.5.x or higher. During upgrade, the "Packed Mode" option was removed from play mode.  Now it's back and upgrades are safe from 0.4.x or from 0.5.x to 0.5.3
