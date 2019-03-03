@@ -4,6 +4,25 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2019-02-13
+- Updating HD package version
+
+## [2.4.0] - 2019-02-11
+- Graphics API for LInux is now manually set to Vulkan.
+
+## [2.3.0] - 2019-02-08
+- setup post processing v3
+- remove post processing v2 profiles
+- apply TAA on the camera
+- tweak sunlight color and intensity
+- reset HDRP asset default values
+- change max shadow distance and cascade settings to fix https://fogbugz.unity3d.com/f/cases/1098489/
+- keep only one quality setting
+- populate HDRPDefaultResources folder for the new "New scene" workflow
+- Player settings : uncheck "Clamp blendshapes"
+- Graphics settings : tier settings reset to default
+- Preset manager : Remove default presets for diffusion profile asset and light
+
 ## [2.2.0] - 2019-02-04
 - Corrected some default values in project settings.
 
