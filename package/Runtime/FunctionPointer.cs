@@ -1,15 +1,23 @@
-﻿using System;
+#if !UNITY_ZEROPLAYER && !UNITY_CSHARP_TINY
+using System;
 using System.Runtime.InteropServices;
 
 namespace Unity.Burst
 {
-#if BURST_FEATURE_FUNCTION_POINTER
+#if UNITY_BURST_FEATURE_FUNCPTR
     public interface IFunctionPointer
+#else
+    internal interface IFunctionPointer
+#endif
     {
         IFunctionPointer FromIntPtr(IntPtr ptr);
     }
 
+#if UNITY_BURST_FEATURE_FUNCPTR
     public struct FunctionPointer<T> : IFunctionPointer
+#else
+    internal struct FunctionPointer<T> : IFunctionPointer
+#endif
     {
         private readonly IntPtr _ptr;
 
@@ -25,5 +33,5 @@ namespace Unity.Burst
 
         public T Invoke => (T) (object) Marshal.GetDelegateForFunctionPointer(_ptr, typeof(T));
     }
-#endif
 }
+#endif

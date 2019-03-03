@@ -4,6 +4,14 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 // Make internals visible to Unity.Burst.Editor for BurstGlobalCompilerOptions
 [assembly: InternalsVisibleTo("Unity.Burst.Editor")]
+// Make internals visible to burst tests
+[assembly: InternalsVisibleTo("btests")]
+// Make internals visible to Unity.Physics
+[assembly: InternalsVisibleTo("Unity.Physics")]
+[assembly: InternalsVisibleTo("Unity.Physics.Tests")]
+[assembly: InternalsVisibleTo("Unity.Audio.DSPGraph")]
+[assembly: InternalsVisibleTo("Unity.UNode")]
+[assembly: InternalsVisibleTo("Unity.UNode.Tests")]
 
 namespace Unity.Burst
 {

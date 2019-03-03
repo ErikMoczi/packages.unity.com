@@ -4,13 +4,10 @@
 using System;
 using System.Runtime.CompilerServices;
 
-[assembly:InternalsVisibleTo("Unity.Burst.Experimental")]
-
 namespace Unity.Burst
 {
     /// <summary>
     /// Internal, accessing the burst compiler service in Unity.
-    /// NOTE: only used by the com.unity.burst.experimental for now
     /// </summary>
     internal static class BurstCompilerInternal
     {
