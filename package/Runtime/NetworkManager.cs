@@ -56,9 +56,7 @@ namespace UnityEngine.Networking
         [SerializeField] public uint matchSize = 4;
 
 
-#if ENABLE_UNET_HOST_MIGRATION
         NetworkMigrationManager m_MigrationManager;
-#endif
 
         private EndPoint m_EndPoint;
         bool m_ClientLoadedScene;
@@ -103,9 +101,8 @@ namespace UnityEngine.Networking
         public int matchPort                 { get { return m_MatchPort; } set { m_MatchPort = value; } }
         public bool clientLoadedScene        { get { return m_ClientLoadedScene; } set { m_ClientLoadedScene = value; } }
 
-#if ENABLE_UNET_HOST_MIGRATION
         public NetworkMigrationManager migrationManager { get { return m_MigrationManager; }}
-#endif
+
         // only really valid on the server
         public int numPlayers
         {
@@ -267,13 +264,10 @@ namespace UnityEngine.Networking
             NetworkServer.RegisterHandler(MsgType.Error, OnServerErrorInternal);
         }
 
-#if ENABLE_UNET_HOST_MIGRATION
         public void SetupMigrationManager(NetworkMigrationManager man)
         {
             m_MigrationManager = man;
         }
-
-#endif
 
         public bool StartServer(ConnectionConfig config, int maxConnections)
         {
@@ -490,12 +484,10 @@ namespace UnityEngine.Networking
                 }
             }
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 m_MigrationManager.Initialize(client, matchInfo);
             }
-#endif
 
             OnStartClient(client);
             s_Address = m_NetworkAddress;
@@ -562,26 +554,21 @@ namespace UnityEngine.Networking
             client = ClientScene.ConnectLocalServer();
             RegisterClientMessages(client);
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 m_MigrationManager.Initialize(client, matchInfo);
             }
-#endif
             return client;
         }
 
         public void StopHost()
         {
-#if ENABLE_UNET_HOST_MIGRATION
             var serverWasActive = NetworkServer.active;
-#endif
             OnStopHost();
 
             StopServer();
             StopClient();
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 if (serverWasActive)
@@ -589,7 +576,6 @@ namespace UnityEngine.Networking
                     m_MigrationManager.LostHostOnHost();
                 }
             }
-#endif
         }
 
         public void StopServer()
@@ -675,14 +661,12 @@ namespace UnityEngine.Networking
 
             if (newSceneName == networkSceneName)
             {
-#if ENABLE_UNET_HOST_MIGRATION
                 if (m_MigrationManager != null)
                 {
                     // special case for rejoining a match after host migration
                     FinishLoadScene();
                     return;
                 }
-#endif
 
                 if (!forceReload)
                 {
@@ -833,12 +817,10 @@ namespace UnityEngine.Networking
                 netMsg.conn.Send(MsgType.Scene, msg);
             }
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 m_MigrationManager.SendPeerInfo();
             }
-#endif
             OnServerConnect(netMsg.conn);
         }
 
@@ -846,12 +828,10 @@ namespace UnityEngine.Networking
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkManager:OnServerDisconnectInternal"); }
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 m_MigrationManager.SendPeerInfo();
             }
-#endif
             OnServerDisconnect(netMsg.conn);
         }
 
@@ -878,12 +858,10 @@ namespace UnityEngine.Networking
                 OnServerAddPlayer(netMsg.conn, s_AddPlayerMessage.playerControllerId);
             }
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 m_MigrationManager.SendPeerInfo();
             }
-#endif
         }
 
         internal void OnServerRemovePlayerMessageInternal(NetworkMessage netMsg)
@@ -897,12 +875,10 @@ namespace UnityEngine.Networking
             OnServerRemovePlayer(netMsg.conn, player);
             netMsg.conn.RemovePlayerController(s_RemovePlayerMessage.playerControllerId);
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 m_MigrationManager.SendPeerInfo();
             }
-#endif
         }
 
         internal void OnServerErrorInternal(NetworkMessage netMsg)
@@ -938,7 +914,6 @@ namespace UnityEngine.Networking
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkManager:OnClientDisconnectInternal"); }
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (m_MigrationManager != null)
             {
                 if (m_MigrationManager.LostHostOnClient(netMsg.conn))
@@ -947,7 +922,6 @@ namespace UnityEngine.Networking
                     return;
                 }
             }
-#endif
 
             if (!string.IsNullOrEmpty(m_OfflineScene))
             {

@@ -2,35 +2,35 @@
 using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.Collections;
-using UnityEngine.Networking; 
+using UnityEngine.Networking;
 
 public class NetworkManagerWorksWithNullScenesTest
-{    
+{
     [UnityTest]
-    public IEnumerator TestNetworkManageNullScenes ()
+    public IEnumerator TestNetworkManageNullScenes()
     {
-		NetworkServer.Reset();
-		NetworkClient.ShutdownAll();
-		
-        var networkManagerObj = new GameObject();
-		NetworkManager nmanager = networkManagerObj.AddComponent<NetworkManager>();
-		nmanager.playerPrefab = Resources.Load("CleanPlayerPrefab", typeof(GameObject)) as GameObject;
+        NetworkClient.ShutdownAll();
+        NetworkServer.Reset();
 
-		nmanager.offlineScene = null;
-		nmanager.onlineScene = null;
+        var networkManagerObj = new GameObject();
+        NetworkManager nmanager = networkManagerObj.AddComponent<NetworkManager>();
+        nmanager.playerPrefab = Resources.Load("CleanPlayerPrefab", typeof(GameObject)) as GameObject;
+
+        nmanager.offlineScene = null;
+        nmanager.onlineScene = null;
 
         NetworkServer.Reset();
-		
+
         if (!nmanager.isNetworkActive)
         {
-			nmanager.StartHost();
-            yield return null; 
+            nmanager.StartHost();
+            yield return null;
         }
 
-        Assert.IsTrue(nmanager.isNetworkActive, 
-                      "Network is not active.");
+        Assert.IsTrue(nmanager.isNetworkActive,
+            "Network is not active.");
 
-		nmanager.StopHost();
-		GameObject.Destroy(networkManagerObj);
-	}
+        nmanager.StopHost();
+        Object.Destroy(networkManagerObj);
+    }
 }

@@ -46,13 +46,8 @@ namespace UnityEngine.Networking
         static public HostTopology hostTopology { get { return instance.m_SimpleServerSimple.hostTopology; }}
         public static Dictionary<NetworkInstanceId, NetworkIdentity> objects { get { return instance.m_NetworkScene.localObjects; } }
 
-#if ENABLE_UNET_HOST_MIGRATION
         [Obsolete("Moved to NetworkMigrationManager")]
         public static bool sendPeerInfo { get { return false; } set {} }
-#else
-        [Obsolete("Removed")]
-        public static bool sendPeerInfo { get { return false; } set {} }
-#endif
 
         public static bool dontListen { get { return m_DontListen; } set { m_DontListen = value; } }
         public static bool useWebSockets { get { return instance.m_SimpleServerSimple.useWebSockets; } set { instance.m_SimpleServerSimple.useWebSockets = value; } }
@@ -210,7 +205,6 @@ namespace UnityEngine.Networking
             return true;
         }
 
-#if ENABLE_UNET_HOST_MIGRATION
         static public NetworkClient BecomeHost(NetworkClient oldClient, int port, MatchInfo matchInfo, int oldConnectionId, PeerInfoMessage[] peers)
         {
             return instance.BecomeHostInternal(oldClient, port, matchInfo, oldConnectionId, peers);
@@ -285,8 +279,6 @@ namespace UnityEngine.Networking
 
             return newLocalClient;
         }
-
-#endif
 
         void InternalSetMaxDelay(float seconds)
         {
@@ -1819,11 +1811,7 @@ namespace UnityEngine.Networking
             targetConnection.Send(MsgType.CRC, crcMsg);
         }
 
-#if ENABLE_UNET_HOST_MIGRATION
         [Obsolete("moved to NetworkMigrationManager")]
-#else
-        [Obsolete("Removed")]
-#endif
         public void SendNetworkInfo(NetworkConnection targetConnection)
         {
         }

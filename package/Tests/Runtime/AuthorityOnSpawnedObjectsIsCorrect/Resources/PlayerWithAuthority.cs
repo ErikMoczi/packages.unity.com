@@ -1,44 +1,44 @@
-﻿using UnityEngine;
+using UnityEngine;
 using NUnit.Framework;
 using UnityEngine.Networking;
-public class PlayerWithAuthority : NetworkBehaviour {
+public class PlayerWithAuthority : NetworkBehaviour
+{
+    GameObject spawned;
+    public GameObject objAuthPrefab;
+    public GameObject objNoAuthPrefab;
 
-	GameObject spawned;
-	public GameObject objAuthPrefab;
-	public GameObject objNoAuthPrefab;
+    public override void OnStartAuthority()
+    {
+        Assert.IsTrue(hasAuthority);
+    }
 
-	public override void OnStartAuthority()
-	{
-		Assert.IsTrue(hasAuthority);
-	}
+    public override void OnStartLocalPlayer()
+    {
+        Assert.IsTrue(hasAuthority);
+        Assert.IsTrue(isLocalPlayer);
 
-	public override void OnStartLocalPlayer()
-	{
-		Assert.IsTrue(hasAuthority);
-		Assert.IsTrue(isLocalPlayer);
+        CmdSpawnObj();
+    }
 
-		CmdSpawnObj();
-	}
+    [Command]
+    void CmdSpawnObj()
+    {
+        // spawn auth object
+        var objAuth = (GameObject)Instantiate(objAuthPrefab, Vector3.zero, objAuthPrefab.transform.rotation);
+        NetworkServer.SpawnWithClientAuthority(objAuth, connectionToClient);
 
-	[Command]
-	void CmdSpawnObj()
-	{
-		// spawn auth object
-		var objAuth = (GameObject)Instantiate(objAuthPrefab, Vector3.zero, objAuthPrefab.transform.rotation);
-		NetworkServer.SpawnWithClientAuthority(objAuth, connectionToClient);
+        // spawn no auth object
+        var objNoAuth = (GameObject)Instantiate(objNoAuthPrefab, Vector3.zero, objNoAuthPrefab.transform.rotation);
+        NetworkServer.Spawn(objNoAuth);
 
-		// spawn no auth object
-		var objNoAuth = (GameObject)Instantiate(objNoAuthPrefab, Vector3.zero, objNoAuthPrefab.transform.rotation);
-		NetworkServer.Spawn(objNoAuth);
+        objNoAuth.GetComponent<NetworkIdentity>().AssignClientAuthority(connectionToClient);
 
-		objNoAuth.GetComponent<NetworkIdentity>().AssignClientAuthority(connectionToClient);
+        spawned = objNoAuth;
+        Invoke("RemoveAuthority", 0.1f);
+    }
 
-		spawned = objNoAuth;
-		Invoke("RemoveAuthority", 0.1f);
-	}
-
-	void RemoveAuthority()
-	{
-		spawned.GetComponent<NetworkIdentity>().RemoveClientAuthority(connectionToClient);
-	}
+    void RemoveAuthority()
+    {
+        spawned.GetComponent<NetworkIdentity>().RemoveClientAuthority(connectionToClient);
+    }
 }

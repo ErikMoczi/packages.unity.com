@@ -264,7 +264,6 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
-#if ENABLE_UNET_HOST_MIGRATION
     public class ReconnectMessage : MessageBase
     {
         public int oldConnectionId;
@@ -290,7 +289,6 @@ namespace UnityEngine.Networking.NetworkSystem
             writer.WriteBytesAndSize(msgData, msgSize);
         }
     }
-#endif
 
     // ---------- System Messages requried for code gen path -------------------
     /* These are not used directly but manually serialized, these are here for reference.

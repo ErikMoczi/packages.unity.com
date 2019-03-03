@@ -68,11 +68,7 @@ namespace UnityEngine.Networking
         public int serverPort { get { return m_ServerPort; } }
         public NetworkConnection connection { get { return m_Connection; } }
 
-#if ENABLE_UNET_HOST_MIGRATION
         [Obsolete("Moved to NetworkMigrationManager.")]
-#else
-        [Obsolete("Removed")]
-#endif
         public PeerInfoMessage[] peers { get { return null; } }
 
         internal int hostId { get { return m_ClientId; } }
@@ -148,7 +144,6 @@ namespace UnityEngine.Networking
             ConnectWithRelay(matchInfo);
         }
 
-#if ENABLE_UNET_HOST_MIGRATION
         public bool ReconnectToNewHost(string serverIp, int serverPort)
         {
             if (!NetworkClient.active)
@@ -282,8 +277,6 @@ namespace UnityEngine.Networking
             m_Connection.Initialize(m_ServerIp, m_ClientId, m_ClientConnectionId, m_HostTopology);
             return true;
         }
-
-#endif
 
         public void ConnectWithSimulator(string serverIp, int serverPort, int latency, float packetLoss)
         {

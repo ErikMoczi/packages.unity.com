@@ -2210,7 +2210,8 @@ namespace Unity.UNetWeaver
                             fieldModuleName != Weaver.m_UnityAssemblyDefinition.MainModule.Name &&
                             fieldModuleName != Weaver.m_UNetAssemblyDefinition.MainModule.Name &&
                             fieldModuleName != Weaver.corLib.Name &&
-                            fieldModuleName != "System.Runtime.dll" // this is only for Metro, built-in types are not in corlib on metro
+                            fieldModuleName != "System.Runtime.dll" && // this is only for Metro, built-in types are not in corlib on metro
+                            fieldModuleName != "netstandard.dll" // .NET Standard 2.0
                             )
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] from " + resolvedField.Module.ToString() + " cannot be a different module.");

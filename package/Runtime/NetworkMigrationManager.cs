@@ -1,5 +1,4 @@
 #if ENABLE_UNET
-#if ENABLE_UNET_HOST_MIGRATION
 
 using System;
 using System.Collections.Generic;
@@ -932,5 +931,4 @@ namespace UnityEngine.Networking
     }
 }
 
-#endif
 #endif

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 using UnityEngine;
@@ -6,34 +6,33 @@ using UnityEngine.Networking;
 
 public class AuthorityOnSpawnedObjectsIsCorrect
 {
-	public static bool isTestDone = false;
+    public static bool isTestDone = false;
 
-	[UnityTest]
-	public IEnumerator AuthorityOnSpawnedObjectsIsCorrectTest()
-	{
-		NetworkServer.Reset();
-		NetworkClient.ShutdownAll();
+    [UnityTest]
+    public IEnumerator AuthorityOnSpawnedObjectsIsCorrectTest()
+    {
+        NetworkServer.Reset();
+        NetworkClient.ShutdownAll();
 
-		GameObject nmObject = new GameObject();
-		NetworkManager nmanager = nmObject.AddComponent<NetworkManager>();
-		nmanager.playerPrefab = Resources.Load("PlayerWithAuthPrefab", typeof(GameObject)) as GameObject;
-		nmanager.spawnPrefabs.Add(Resources.Load("NoAuthObjPrefab", typeof(GameObject)) as GameObject);
-		nmanager.spawnPrefabs.Add(Resources.Load("AuthObjPrefab", typeof(GameObject)) as GameObject);
+        GameObject nmObject = new GameObject();
+        NetworkManager nmanager = nmObject.AddComponent<NetworkManager>();
+        nmanager.playerPrefab = Resources.Load("PlayerWithAuthPrefab", typeof(GameObject)) as GameObject;
+        nmanager.spawnPrefabs.Add(Resources.Load("NoAuthObjPrefab", typeof(GameObject)) as GameObject);
+        nmanager.spawnPrefabs.Add(Resources.Load("AuthObjPrefab", typeof(GameObject)) as GameObject);
 
-		Assert.IsNotNull(nmanager.playerPrefab, "Player prefab field is not set on NetworkManager");
+        Assert.IsNotNull(nmanager.playerPrefab, "Player prefab field is not set on NetworkManager");
+        nmanager.StartHost();
+        yield return null;
 
-		nmanager.StartHost();
-		yield return null;
+        Assert.IsTrue(NetworkServer.active, "Server is not active after StartHost");
+        Assert.IsTrue(NetworkClient.active, "Client is not active after StartHost");
 
-		Assert.IsTrue(NetworkServer.active, "Server is not active after StartHost");
-		Assert.IsTrue(NetworkClient.active, "Client is not active after StartHost");
+        while (!isTestDone)
+        {
+            yield return null;
+        }
 
-		while (!isTestDone)
-		{
-			yield return null;
-		}
-
-		nmanager.StopHost();
-		GameObject.Destroy(nmObject);
-	}
+        nmanager.StopHost();
+        Object.Destroy(nmObject);
+    }
 }

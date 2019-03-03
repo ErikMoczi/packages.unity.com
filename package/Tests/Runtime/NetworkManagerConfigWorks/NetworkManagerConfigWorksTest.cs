@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using System; 
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -8,13 +8,12 @@ using UnityEngine.Networking;
 
 public class NetworkManagerConfigWorksTest
 {
-    NetworkManager netManager;  
+    NetworkManager netManager;
 
     [UnityTest]
-    public IEnumerator NetworkManagerConfigCheck ()
+    public IEnumerator NetworkManagerConfigCheck()
     {
-		NetworkServer.Reset();
-		NetworkTransport.Shutdown();      
+        NetworkServer.Reset();
 
         var netManagerObj = new GameObject();
         netManager = netManagerObj.AddComponent<NetworkManager>();
@@ -24,40 +23,40 @@ public class NetworkManagerConfigWorksTest
         foreach (QosType channel in Enum.GetValues(typeof(QosType)))
         {
             netManager.GetComponent<NetworkManager>().
-                      connectionConfig.AddChannel(channel);
+            connectionConfig.AddChannel(channel);
         }
 
         Assert.AreEqual(netManager.connectionConfig.ChannelCount, Enum.GetValues(typeof(QosType)).Length, "Not all channels are added");
 
         netManager.connectionConfig.AckDelay = 33;
         netManager.connectionConfig.AcksType = ConnectionAcksType.Acks32;
-        netManager.connectionConfig.AllCostTimeout = 20;		
+        netManager.connectionConfig.AllCostTimeout = 20;
         netManager.connectionConfig.FragmentSize = 500;
         netManager.connectionConfig.ConnectTimeout = 500;
         netManager.connectionConfig.DisconnectTimeout = 2000;
 
         NetworkHostCanBeStartedWithConfig();
-        NetworkServerClientCanBeStartedWithConfig(); 
+        NetworkServerClientCanBeStartedWithConfig();
 
         yield return null;
-		GameObject.Destroy(netManager);
-	}
+        UnityEngine.Object.Destroy(netManager);
+    }
 
     //check that Host can be started
-    public IEnumerator NetworkHostCanBeStartedWithConfig ()
-    {   
-        NetworkClient netClient = new NetworkClient(); 
+    public IEnumerator NetworkHostCanBeStartedWithConfig()
+    {
+        NetworkClient netClient = new NetworkClient();
 
         if (!netManager.isNetworkActive)
             netClient = netManager.StartHost();
 
         if (!netClient.isConnected)
             yield return null;
- 
-        Assert.IsTrue(netClient.isConnected,
-                      "Network is not active.");
 
-        netManager.StopHost(); 
+        Assert.IsTrue(netClient.isConnected,
+            "Network is not active.");
+
+        netManager.StopHost();
     }
 
     //check that Server/Client can be started
@@ -66,21 +65,21 @@ public class NetworkManagerConfigWorksTest
         string netAddress = "127.0.0.1";
         int netPort = 8887;
         netManager.networkAddress = netAddress;
-        netManager.networkPort = netPort; 
+        netManager.networkPort = netPort;
 
         netManager.StartServer();
 
         NetworkClient netClient = netManager.StartClient();
 
-        netClient.Connect(netAddress, netPort); 
+        netClient.Connect(netAddress, netPort);
 
         if (!netClient.isConnected)
         {
-            yield return null; 
+            yield return null;
         }
 
         Assert.IsTrue(netClient.isConnected,
-                "Client did not connect to server");
+            "Client did not connect to server");
 
         netManager.StopServer();
     }

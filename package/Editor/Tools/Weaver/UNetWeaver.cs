@@ -1858,8 +1858,15 @@ namespace Unity.UNetWeaver
                 {
                     writeParams.SymbolWriterProvider = new MdbWriterProvider();
                     // old pdb file is out of date so delete it. symbols will be stored in mdb
-                    var pdb = Path.ChangeExtension(assName, ".pdb");
-                    File.Delete(pdb);
+                    try
+                    {
+                        var pdb = Path.ChangeExtension(assName, ".pdb");
+                        File.Delete(pdb);
+                    }
+                    catch (IOException ioException)
+                    {
+                        Console.WriteLine("Exception while attempting to delete old pdb: " + ioException.Message);
+                    }
                 }
 
                 scriptDef.Write(dest, writeParams);

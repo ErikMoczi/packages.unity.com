@@ -1,5 +1,4 @@
 #if ENABLE_UNET
-#if ENABLE_UNET_HOST_MIGRATION
 using System;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -131,5 +130,4 @@ namespace UnityEditor
         }
     }
 }
-#endif
 #endif

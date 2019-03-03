@@ -23,8 +23,6 @@ namespace UnityEngine.Networking
         static OwnerMessage s_OwnerMessage = new OwnerMessage();
         static ClientAuthorityMessage s_ClientAuthorityMessage = new ClientAuthorityMessage();
 
-#if ENABLE_UNET_HOST_MIGRATION
-
         public const int ReconnectIdInvalid = -1;
         public const int ReconnectIdHost = 0;
         static int s_ReconnectId = ReconnectIdInvalid;
@@ -38,8 +36,6 @@ namespace UnityEngine.Networking
 
             if (LogFilter.logDebug) { Debug.Log("ClientScene::SetReconnectId: " + newReconnectId); }
         }
-
-#endif
 
         static internal void SetNotReady()
         {
@@ -57,9 +53,7 @@ namespace UnityEngine.Networking
         public static bool ready { get { return s_IsReady; } }
         public static NetworkConnection readyConnection { get { return s_ReadyConnection; }}
 
-#if ENABLE_UNET_HOST_MIGRATION
         public static int reconnectId { get { return s_ReconnectId; }}
-#endif
 
         //NOTE: spawn handlers, prefabs and local objects now live in NetworkScene
         public static Dictionary<NetworkInstanceId, NetworkIdentity> objects { get { return s_NetworkScene.localObjects; } }
@@ -75,9 +69,7 @@ namespace UnityEngine.Networking
             s_ReadyConnection = null;
             s_IsReady = false;
             s_IsSpawnFinished = false;
-#if ENABLE_UNET_HOST_MIGRATION
             s_ReconnectId = ReconnectIdInvalid;
-#endif
             NetworkTransport.Shutdown();
             NetworkTransport.Init();
         }
@@ -191,32 +183,26 @@ namespace UnityEngine.Networking
 
             if (LogFilter.logDebug) { Debug.Log("ClientScene::AddPlayer() for ID " + playerControllerId + " called with connection [" + s_ReadyConnection + "]"); }
 
-#if ENABLE_UNET_HOST_MIGRATION
             if (!hasMigrationPending())
             {
-#endif
-            var msg = new AddPlayerMessage();
-            msg.playerControllerId = playerControllerId;
-            if (extraMessage != null)
-            {
-                var writer = new NetworkWriter();
-                extraMessage.Serialize(writer);
-                msg.msgData = writer.ToArray();
-                msg.msgSize = writer.Position;
+                var msg = new AddPlayerMessage();
+                msg.playerControllerId = playerControllerId;
+                if (extraMessage != null)
+                {
+                    var writer = new NetworkWriter();
+                    extraMessage.Serialize(writer);
+                    msg.msgData = writer.ToArray();
+                    msg.msgSize = writer.Position;
+                }
+                s_ReadyConnection.Send(MsgType.AddPlayer, msg);
             }
-            s_ReadyConnection.Send(MsgType.AddPlayer, msg);
-#if ENABLE_UNET_HOST_MIGRATION
-        }
-
-        else
-        {
-            return SendReconnectMessage(extraMessage);
-        }
-#endif
+            else
+            {
+                return SendReconnectMessage(extraMessage);
+            }
             return true;
         }
 
-#if ENABLE_UNET_HOST_MIGRATION
         public static bool SendReconnectMessage(MessageBase extraMessage)
         {
             if (!hasMigrationPending())
@@ -267,8 +253,6 @@ namespace UnityEngine.Networking
             SetReconnectId(ReconnectIdInvalid, null);
             return true;
         }
-
-#endif
 
         public static bool RemovePlayer(short playerControllerId)
         {
@@ -322,7 +306,6 @@ namespace UnityEngine.Networking
             return newClient;
         }
 
-#if ENABLE_UNET_HOST_MIGRATION
         static internal NetworkClient ReconnectLocalServer()
         {
             LocalClient newClient = new LocalClient();
@@ -336,7 +319,6 @@ namespace UnityEngine.Networking
             s_LocalPlayers.Clear();
         }
 
-#endif
         static internal void HandleClientDisconnect(NetworkConnection conn)
         {
             if (s_ReadyConnection == conn && s_IsReady)
