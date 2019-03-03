@@ -4,6 +4,22 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2019-02-04
+- Corrected some default values in project settings.
+
+## [2.1.0] 2019-02-01
+- Fixed `-preview` tag on HD version 5.3.1
+- Updated default settings in HDRP Asset
+
+## [2.0.0] - 2019-01-30
+- Updating HD version 5.3.1
+- Enable HoloLens `depthBufferSharingEnabled` by default.
+
+## [1.4.2] - 2019-01-22
+
+### Changed
+- Removing unneeded manifest entries
+
 ## [1.4.1] - 2018-12-07
 
 ### Changed
