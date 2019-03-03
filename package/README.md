@@ -6,7 +6,7 @@ Use Quick Search to easily find anything in Unity.
 
 To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).
 
-Note that Quick Search is a *Preview Package* and that you need to use the [Advanced button](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@2.1/manual/index.html#advanced) to have acces to that kind of packages.
+Note that Quick Search is a *Preview Package* and that you need to use the [Advanced button](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@2.1/manual/index.html#advanced) to have access to that kind of packages.
 
 # Using Quick Search
 
