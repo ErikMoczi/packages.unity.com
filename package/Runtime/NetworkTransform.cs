@@ -286,13 +286,12 @@ namespace UnityEngine.Networking
         /// Cached Rigidbody.
         /// </summary>
         public Rigidbody            rigidbody3D { get { return m_RigidBody3D; } }
-#if !PLATFORM_WINRT || ENABLE_DOTNET
-        new
-#endif
         /// <summary>
         /// Cached Rigidbody2D.
         /// </summary>
-        public Rigidbody2D          rigidbody2D { get { return m_RigidBody2D; } }
+#pragma warning disable 109
+        new public Rigidbody2D          rigidbody2D { get { return m_RigidBody2D; } }
+#pragma warning restore 109
         /// <summary>
         /// The most recent time when a movement synchronization packet arrived for this object.
         /// </summary>

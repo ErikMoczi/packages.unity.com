@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2019-02-14
+
+### Changed
+- Disabled warnings around the usage of the 'new' keyword in the NetworkTransform, it's needed sometimes but can trigger when building (likely because of stripping) and the warning messed with CI/automation
+
 ## [1.0.0] - 2019-02-13
 
 ### Changed
