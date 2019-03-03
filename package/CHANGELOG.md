@@ -4,69 +4,25 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.4.1] - 2018-12-07
+## [1.3.0] - 2019-02-05
+- EditorBuildSettings no longer hardcodes to sample scene.
 
-### Changed
-- LW version updated to 5.2.3
+## [1.2.0] - 2019-02-04
+- Corrected some default values in project settings.
 
-## [1.4.0] - 2018-12-06
+## [1.1.0] - 2-19-02-01
+- EditorBuildSettings loads correct scene on launch.
+- HoloLens `depthBufferSharingEnabled` is enabled by default.
 
-### Changed
-- LW version updated to 5.2.2
-- Directional Light is now set to realtime
-- High quality Main light shadow resolution is now 2084px
-
-## [1.3.0] - 2018-11-30
-
-### Changed
-- LW version update to 5.2.1
-
-## [1.2.0] - 2018 - 11 - 27
-
-### Changed
-- Updating lw package to 5.2.0
-- Update new project templates to use 4.x scripting runtime
-
-## [1.1.1] - 2018-11-08
-
-### Fixed
-- Physics.reuseCollisionCallbacks property now defaults to true.
-- Physics2D.reuseCollisionCallbacks property now defaults to true.
-- Physics.autoSyncTransforms property now defaults to false.
-- Physics2D.autoSyncTransforms property now defaults to false.
-
-## [1.1.0] - 2018-09-24
-
-### Changed
-- LW version updated ]
-- AndroidTVCompatibility to false
-- TPD now from package
-
-## [1.0.6] - 2018-09-24
+## [1.0.4] - 2018-9-24
 
 ### Changed
 - Oculus XR settings default to dash support and depth export enabled.
-- update default webgl memory size
-- update default upload manager ring buffer size to 16 mb
-- remove platform overrides for texture presets
-- update textures affected by texture overrides 
-- update lw package to 4.0.0-preview
-- adding oculus and openvr package to manifest
-
-## [1.0.5] - 2018-09-06
-
-### Changed
-- LW Version update to 3.3.0
-
-## [1.0.4] - 2018-07-16
-
-### Changed
-- LW Version update to 2.0.5
 
 ## [1.0.3] - 2018-07-17
 
 ### Changed
-- Migrating old lightweight templates into package format 
+- LW Version update to 2.0.5
 - Removing transform and right and left empty hand objects
 
 ## [1.0.2] - 2018-06-01
