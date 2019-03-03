@@ -24,3 +24,4 @@
 6.1.0-preview
 6.2.0-preview
 6.3.0-preview
+6.4.0-preview
