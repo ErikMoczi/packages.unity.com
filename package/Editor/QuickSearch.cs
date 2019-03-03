@@ -22,10 +22,10 @@ namespace Unity.QuickSearch
                 margin = new RectOffset(4, 4, 3, 2)
             };
 
-            public static readonly GUIStyle filterToggle = new GUIStyle("OL Toggle")
+            public static readonly GUIStyle filterToggle = new GUIStyle("Toggle")
             {
                 name = "quick-search-filter-toggle",
-                margin = new RectOffset(4, 4, 4, 0)
+                margin = new RectOffset(4, 4, 1, 0)
             };
 
             public static readonly GUIStyle filterEntry = new GUIStyle(EditorStyles.label) { name = "quick-search-filter-entry" };
@@ -46,6 +46,10 @@ namespace Unity.QuickSearch
         public QuickSearchTool quickSearchTool;
 
         private Vector2 m_ScrollPos;
+        private int m_ToggleFilterFocusIndex = 1;
+        private int m_ToggleFilterNextIndex = 0;
+        private int m_ToggleFilterCount = 0;
+        private int m_ExpandToggleIndex = -1;
 
         internal static double s_CloseTime;
         internal static bool canShow
@@ -85,8 +89,14 @@ namespace Unity.QuickSearch
             if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
             {
                 Close();
+                if (quickSearchTool)
+                    quickSearchTool.Focus();
                 return;
             }
+
+            HandleKeyboardNavigation();
+
+            m_ToggleFilterNextIndex = 0;
 
             GUI.Box(new Rect(0, 0, position.width, position.height), GUIContent.none, Styles.panelBorder);
             DrawHeader();
@@ -101,7 +111,31 @@ namespace Unity.QuickSearch
                     DrawSubCategories(providerDesc);
             }
 
+            m_ToggleFilterCount = m_ToggleFilterNextIndex;
+
             GUILayout.EndScrollView();
+        }
+
+        private void HandleKeyboardNavigation()
+        {
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.UpArrow)
+            {
+
+                m_ToggleFilterFocusIndex = Math.Max(0, m_ToggleFilterFocusIndex-1);
+                Event.current.Use();
+            }
+            else if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.DownArrow)
+            {
+                m_ToggleFilterFocusIndex = Math.Min(m_ToggleFilterFocusIndex+1, m_ToggleFilterCount-1);
+                Event.current.Use();
+            }
+            else if (Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.LeftArrow || Event.current.keyCode == KeyCode.RightArrow))
+            {
+                m_ExpandToggleIndex = m_ToggleFilterFocusIndex;
+                Event.current.Use();
+            }
+
+            GUI.FocusControl($"Box_{m_ToggleFilterFocusIndex}");
         }
 
         private void DrawHeader()
@@ -110,6 +144,7 @@ namespace Unity.QuickSearch
             GUILayout.Label("Search Providers", Styles.filterHeader);
             GUILayout.FlexibleSpace();
             EditorGUI.BeginChangeCheck();
+            GUI.SetNextControlName($"Box_{m_ToggleFilterNextIndex++}");
             bool isEnabled = GUILayout.Toggle(SearchService.Filter.providerFilters.All(p => p.entry.isEnabled), "", Styles.filterToggle, GUILayout.ExpandWidth(false));
             if (EditorGUI.EndChangeCheck())
             {
@@ -125,12 +160,18 @@ namespace Unity.QuickSearch
 
         private void DrawSectionHeader(SearchFilter.ProviderDesc desc)
         {
-            // filterHeader
             GUILayout.BeginHorizontal();
 
             if (desc.categories.Count > 0)
             {
                 EditorGUI.BeginChangeCheck();
+                if (m_ExpandToggleIndex == m_ToggleFilterNextIndex && 
+                    (Event.current.type == EventType.Repaint || Event.current.type == EventType.Layout))
+                {
+                    desc.isExpanded = !desc.isExpanded;
+                    GUI.changed = true;
+                    m_ExpandToggleIndex = -1;
+                }
                 bool isExpanded = GUILayout.Toggle(desc.isExpanded, "", Styles.filterExpanded);
                 if (EditorGUI.EndChangeCheck())
                 {
@@ -146,6 +187,7 @@ namespace Unity.QuickSearch
             GUILayout.FlexibleSpace();
 
             EditorGUI.BeginChangeCheck();
+            GUI.SetNextControlName($"Box_{m_ToggleFilterNextIndex++}");
             bool isEnabled = GUILayout.Toggle(desc.entry.isEnabled, "", Styles.filterToggle, GUILayout.ExpandWidth(false));
             if (EditorGUI.EndChangeCheck())
             {
@@ -166,6 +208,7 @@ namespace Unity.QuickSearch
                 GUILayout.FlexibleSpace();
 
                 EditorGUI.BeginChangeCheck();
+                GUI.SetNextControlName($"Box_{m_ToggleFilterNextIndex++}");
                 bool isEnabled = GUILayout.Toggle(cat.isEnabled, "", Styles.filterToggle);
                 if (EditorGUI.EndChangeCheck())
                 {
@@ -251,6 +294,7 @@ namespace Unity.QuickSearch
         private double m_NextBlinkTime = 0;
         private bool m_PrepareDrag;
         private string m_CycledSearch;
+        private bool m_ShowFilterWindow = false;
 
         private const string k_QuickSearchBoxName = "QuickSearchBox";
 
@@ -618,8 +662,16 @@ namespace Unity.QuickSearch
                 var prev = m_SelectedIndex;
                 if (evt.keyCode == KeyCode.DownArrow)
                 {
-                    m_SelectedIndex = Math.Min(m_SelectedIndex + 1, m_FilteredItems.Count - 1);
-                    Event.current.Use();
+                    if (m_SelectedIndex == -1 && evt.modifiers.HasFlag(EventModifiers.Alt))
+                    {
+                        m_CycledSearch = SearchService.CyclePreviousSearch(-1);
+                        GUI.FocusControl(null);
+                    }
+                    else
+                    {
+                        m_SelectedIndex = Math.Min(m_SelectedIndex + 1, m_FilteredItems.Count - 1);
+                        Event.current.Use();
+                    }
                 }
                 else if (evt.keyCode == KeyCode.UpArrow)
                 {
@@ -632,7 +684,7 @@ namespace Unity.QuickSearch
                     }
                     else if (evt.modifiers.HasFlag(EventModifiers.Alt))
                     {
-                        m_CycledSearch = SearchService.CyclePreviousSearch();
+                        m_CycledSearch = SearchService.CyclePreviousSearch(+1);
                         GUI.FocusControl(null);
                     }
                 }
@@ -655,6 +707,11 @@ namespace Unity.QuickSearch
                         ShowItemContextualMenu(item, context, new Rect(position.width - Styles.actionButtonSize, menuPositionY, 1, 1));
                         Event.current.Use();
                     }
+                }
+                else if (evt.keyCode == KeyCode.LeftArrow && evt.modifiers.HasFlag(EventModifiers.Alt))
+                {
+                    m_ShowFilterWindow = true;
+                    Event.current.Use();
                 }
                 else if (evt.keyCode == KeyCode.KeypadEnter || evt.keyCode == KeyCode.Return)
                 {
@@ -891,11 +948,15 @@ namespace Unity.QuickSearch
             GUILayout.BeginHorizontal(Styles.toolbar);
             {
                 var rightRect = EditorGUILayout.GetControlRect(GUILayout.MaxWidth(32f), GUILayout.ExpandHeight(true));
-                if (EditorGUI.DropdownButton(rightRect, Styles.filterButtonContent, FocusType.Passive, Styles.filterButton))
+                if (EditorGUI.DropdownButton(rightRect, Styles.filterButtonContent, FocusType.Passive, Styles.filterButton) || m_ShowFilterWindow)
                 {
                     if (FilterWindow.canShow)
                     {
                         rightRect.x += 12f; rightRect.y -= 3f;
+                        if (m_ShowFilterWindow)
+                            rightRect.y += 30f;
+
+                        m_ShowFilterWindow = false;
                         if (FilterWindow.ShowAtPosition(this, rightRect))
                             GUIUtility.ExitGUI();
                     }

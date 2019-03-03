@@ -362,19 +362,19 @@ namespace Unity.QuickSearch
             }
         }
 
-        internal static string CyclePreviousSearch()
+        internal static string CyclePreviousSearch(int shift)
         {
             if (s_RecentSearches.Count == 0)
                 return s_LastSearch;
-            IncrementRecentSearchIndex();
+
+            s_RecentSearchIndex = Wrap(s_RecentSearchIndex + shift, s_RecentSearches.Count);
+            
             return s_RecentSearches[s_RecentSearchIndex];
         }
 
-        private static void IncrementRecentSearchIndex()
+        private static int Wrap(int index, int n)
         {
-            s_RecentSearchIndex = Math.Max(0, Math.Min(s_RecentSearchIndex + 1, s_RecentSearches.Count));
-            if (s_RecentSearchIndex == s_RecentSearches.Count)
-                s_RecentSearchIndex = 0;
+            return ((index % n) + n) % n;
         }
 
         public static SearchFilter Filter { get; private set; }

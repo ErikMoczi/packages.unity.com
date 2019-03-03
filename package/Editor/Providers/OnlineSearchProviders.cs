@@ -2,6 +2,8 @@ using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using UnityEngine;
 
 namespace Unity.QuickSearch
 {
@@ -26,156 +28,146 @@ namespace Unity.QuickSearch
                 var uri = new Uri(url);
                 Process.Start(uri.AbsoluteUri);
             }
-
-            public static SearchItem GetSearchItem(SearchProvider provider, string title, SearchContext context)
-            {
-                return provider.CreateItem("Search " + title, null, "Search for: " + context.searchQuery);
-            }
         }
 
         [UsedImplicitly]
-        static class AnswersProvider
+        static class AnswersHelper
         {
-            internal static string type = "answers";
-            internal static string displayName = "Answers";
-            internal static string urlTitle = "answers.unity.com";
             internal static string searchUrl = "https://answers.unity.com/search.html";
-
-            [UsedImplicitly, SearchItemProvider]
-            internal static SearchProvider CreateProvider()
+            internal static OnlineSearchItemTemplate template = new OnlineSearchItemTemplate()
             {
-                return new SearchProvider(type, displayName)
-                {
-                    priority = 10000,
-                    filterId = "ua:",
-                    fetchItems = (context, items, provider) =>
-                    {
-                        items.Add(SearchUtility.GetSearchItem(provider, urlTitle, context));
-                    },
-                    fetchThumbnail = (item, context) => Icons.search
-                };
-            }
+                name = new NameId("answers", "Answers"),
+                icon = Icons.search,
+                descriptionTitle = "answers.unity.com",
+                actionHandler = Goto
+            };
 
-            [UsedImplicitly, SearchActionsProvider]
-            internal static IEnumerable<SearchAction> ActionHandlers()
+            internal static void Goto(SearchItem item, SearchContext context)
             {
-                return new SearchAction[]
-                {
-                    new SearchAction(type, "search", null, "Search")
-                    {
-                        handler = (item, context) =>
-                        {
-                            // ex: https://answers.unity.com/search.html?f=&type=question&sort=relevance&q=Visual+scripting
-                            var query = new List<Tuple<string, string>>();
-                            query.Add(Tuple.Create("type", "question"));
-                            query.Add(Tuple.Create("sort", "relevance"));
-                            query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
-                            SearchUtility.Goto(searchUrl, query);
-                        }
-                    }
-                };
+                // ex: https://answers.unity.com/search.html?f=&type=question&sort=relevance&q=Visual+scripting
+                var query = new List<Tuple<string, string>>();
+                query.Add(Tuple.Create("type", "question"));
+                query.Add(Tuple.Create("sort", "relevance"));
+                query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
+                SearchUtility.Goto(searchUrl, query);
             }
         }
 
         [UsedImplicitly]
-        static class DocManualProvider
+        static class DocManualHelper
         {
-            internal static string type = "manual";
-            internal static string displayName = "Manual";
-            internal static string urlTitle = "docs.unity3d.com/Manual";
             internal static string searchUrl = "https://docs.unity3d.com/Manual/30_search.html";
-
-            [UsedImplicitly, SearchItemProvider]
-            internal static SearchProvider CreateProvider()
+            internal static OnlineSearchItemTemplate template = new OnlineSearchItemTemplate()
             {
-                return new SearchProvider(type, displayName)
-                {
-                    priority = 9999,
-                    filterId = "um:",
-                    fetchItems = (context, items, provider) =>
-                    {
-                        items.Add(SearchUtility.GetSearchItem(provider, urlTitle, context));
-                    },
-                    fetchThumbnail = (item, context) => Icons.search
-                };
-            }
+                name = new NameId("manual", "Manual"),
+                icon = Icons.search,
+                descriptionTitle = "docs.unity3d.com/Manual",
+                actionHandler = Goto
+            };
 
-            [UsedImplicitly, SearchActionsProvider]
-            internal static IEnumerable<SearchAction> ActionHandlers()
+            internal static void Goto(SearchItem item, SearchContext context)
             {
-                return new SearchAction[]
-                {
-                    new SearchAction(type, "search", null, "Search") {
-                        handler = (item, context) =>
-                        {
-                            // ex: https://docs.unity3d.com/Manual/30_search.html?q=Visual+Scripting
-                            var query = new List<Tuple<string, string>>();
-                            query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
-                            SearchUtility.Goto(searchUrl, query);
-                        }
-                    }
-                };
+                // ex: https://docs.unity3d.com/Manual/30_search.html?q=Visual+Scripting
+                var query = new List<Tuple<string, string>>();
+                query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
+                SearchUtility.Goto(searchUrl, query);
             }
         }
 
         [UsedImplicitly]
-        static class DocScriptingProvider
+        static class DocScriptingHelper
         {
-            internal static string type = "scripting";
-            internal static string displayName = "Scripting API";
-            internal static string urlTitle = "docs.unity3d.com/ScriptReference";
             internal static string searchUrl = "https://docs.unity3d.com/ScriptReference/30_search.html";
-
-            [UsedImplicitly, SearchItemProvider]
-            internal static SearchProvider CreateProvider()
+            internal static OnlineSearchItemTemplate template = new OnlineSearchItemTemplate()
             {
-                return new SearchProvider(type, displayName)
-                {
-                    priority = 9999,
-                    filterId = "us:",
-                    fetchItems = (context, items, provider) =>
-                    {
-                        items.Add(SearchUtility.GetSearchItem(provider, urlTitle, context));
-                    },
-                    fetchThumbnail = (item, context) => Icons.search
-                };
-            }
+                name = new NameId("scripting", "Scripting API"),
+                icon = Icons.search,
+                descriptionTitle = "docs.unity3d.com/ScriptReference",
+                actionHandler = Goto
+            };
 
-            [UsedImplicitly, SearchActionsProvider]
-            internal static IEnumerable<SearchAction> ActionHandlers()
+            internal static void Goto(SearchItem item, SearchContext context)
             {
-                return new SearchAction[]
-                {
-                    new SearchAction(type, "search", null, "Search") {
-                        handler = (item, context) =>
-                        {
-                            // ex: https://docs.unity3d.com/ScriptReference/30_search.html?q=Visual+Scripting
-                            var query = new List<Tuple<string, string>>();
-                            query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
-                            SearchUtility.Goto(searchUrl, query);
-                        }
-                    }
-                };
+                // ex: https://docs.unity3d.com/ScriptReference/30_search.html?q=Visual+Scripting
+                var query = new List<Tuple<string, string>>();
+                query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
+                SearchUtility.Goto(searchUrl, query);
             }
         }
 
         [UsedImplicitly]
-        static class AssetStoreProvider
+        static class AssetStoreHelper
+        {
+            internal static string searchUrl = "https://assetstore.unity.com/search";
+            internal static OnlineSearchItemTemplate template = new OnlineSearchItemTemplate()
+            {
+                name = new NameId("store", "Asset Store"),
+                icon = Icons.store,
+                descriptionTitle = "assetstore.unity.com",
+                actionHandler = Goto
+            };
+
+            internal static void Goto(SearchItem item, SearchContext context)
+            {
+                // ex: https://docs.unity3d.com/Manual/30_search.html?q=Visual+Scripting
+                var query = new List<Tuple<string, string>>();
+
+                foreach (var token in context.tokenizedSearchQuery)
+                    query.Add(Tuple.Create("q", token));
+
+                query.Add(Tuple.Create("k", string.Join(" ", context.tokenizedSearchQuery)));
+                SearchUtility.Goto(searchUrl, query);
+            }
+        }
+
+        internal class OnlineSearchItemTemplate
+        {
+            public NameId name;
+            public Action<SearchItem, SearchContext> actionHandler;
+            public Texture2D icon;
+            public string descriptionTitle;
+        }
+
+        [UsedImplicitly]
+        static class OnlineSearchProvider
         {
             internal static string type = "store_search";
             internal static string displayName = "Store Search";
-            internal static string urlTitle = "assetstore.unity.com";
-            internal static string searchUrl = "https://assetstore.unity.com/search";
+            static OnlineSearchItemTemplate[] s_ItemTemplates;
+
+            static OnlineSearchItemTemplate FindById(string id)
+            {
+                var result = Array.Find(s_ItemTemplates, template => template.name.id == id);
+                return result ?? s_ItemTemplates[0];
+            }
 
             [UsedImplicitly, SearchItemProvider]
             internal static SearchProvider CreateProvider()
             {
+                if (s_ItemTemplates == null)
+                {
+                    s_ItemTemplates = new[]
+                    {
+                        DocScriptingHelper.template,
+                        DocManualHelper.template,
+                        AssetStoreHelper.template
+                    };
+                }
+
                 return new SearchProvider(type, displayName)
                 {
                     priority = 10000,
-                    filterId = "as:",
-                    fetchItems = (context, items, provider) => items.Add(SearchUtility.GetSearchItem(provider, urlTitle, context)),
-                    fetchThumbnail = (item, context) => Icons.store
+                    filterId = "os:",
+                    fetchItems = (context, items, provider) =>
+                    {
+                        foreach (var category in context.categories)
+                        {
+                            var template = FindById(category.name.id);
+                            var item = provider.CreateItem(category.name.id, "Search " + template.descriptionTitle, "Search for: " + context.searchQuery, template.icon);
+                            items.Add(item);
+                        }
+                    },
+                    subCategories = s_ItemTemplates.Select(template => template.name).ToList()
                 };
             }
 
@@ -185,17 +177,7 @@ namespace Unity.QuickSearch
                 return new SearchAction[]
                 {
                     new SearchAction(type, "search", null, "Search") {
-                        handler = (item, context) =>
-                        {
-                            // ex: https://docs.unity3d.com/Manual/30_search.html?q=Visual+Scripting
-                            var query = new List<Tuple<string, string>>();
-
-                            foreach (var token in context.tokenizedSearchQuery)
-                                query.Add(Tuple.Create("q", token));
-
-                            query.Add(Tuple.Create("k", string.Join(" ", context.tokenizedSearchQuery)));
-                            SearchUtility.Goto(searchUrl, query);
-                        }
+                        handler = (item, context) => FindById(item.id).actionHandler(item, context)
                     }
                 };
             }

@@ -19,3 +19,4 @@
 0.9.93-preview
 0.9.95-preview
 0.9.100-preview.1
+0.9.100-preview.2

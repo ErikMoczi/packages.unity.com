@@ -190,8 +190,11 @@ namespace Unity.QuickSearch
                             if (asset != null)
                             {
                                 Selection.activeObject = asset;
-                                EditorWindow.FocusWindowIfItsOpen(Utils.GetProjectBrowserWindowType());
-                                EditorApplication.delayCall += () => EditorGUIUtility.PingObject(asset);
+                                EditorApplication.delayCall += () =>
+                                {
+                                    EditorWindow.FocusWindowIfItsOpen(Utils.GetProjectBrowserWindowType());
+                                    EditorGUIUtility.PingObject(asset);
+                                };
                             }
                             else
                             {
