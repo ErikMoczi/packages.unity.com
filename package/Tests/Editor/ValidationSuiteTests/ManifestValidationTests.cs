@@ -76,13 +76,38 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
         }
 
         [Test]
+        public void When_Name_Valid_Validation_Succeeds()
+        {
+            var manifestData = GenerateValidManifestData();
+
+            manifestData.name = "com.unity.name";
+            var manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
+
+            Assert.AreEqual(TestState.Succeeded, manifestValidation.TestState);
+            Assert.AreEqual(0, manifestValidation.TestOutput.Count);
+
+            manifestData.name = "com.autodesk.name";
+            manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
+
+            Assert.AreEqual(TestState.Succeeded, manifestValidation.TestState);
+            Assert.AreEqual(manifestValidation.TestOutput.Count, 0);
+        }
+
+        [Test]
         public void When_Name_Invalid_Validation_Fails()
         {
             var manifestData = GenerateValidManifestData();
 
             // Put in a bad name
-            manifestData.name = "com.bad.name";
+            manifestData.name = "com.unity.[your package name]";
             var manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
+
+            Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
+            Assert.AreEqual(1, manifestValidation.TestOutput.Count);
+
+            // Put in a bad name
+            manifestData.name = "com.bad.name";
+            manifestValidation = SetupTestManifestAndRunValidation(manifestData, null, ValidationType.Publishing);
 
             Assert.AreEqual(TestState.Failed, manifestValidation.TestState);
             Assert.AreEqual(1, manifestValidation.TestOutput.Count);

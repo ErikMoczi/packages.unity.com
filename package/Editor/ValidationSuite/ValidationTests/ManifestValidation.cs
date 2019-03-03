@@ -10,7 +10,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class ManifestValidation : BaseValidation
     {
-        private const string PackageNamePrefix = "com.unity.";
+        private string[] PackageNamePrefixList= { "com.unity.", "com.autodesk." };
         private const string UpmRegex = @"^[a-z0-9][a-z0-9-._]{0,213}$";
         private const string UpmDisplayRegex = @"^[a-zA-Z0-9 ]+$";
         private const int MinDescriptionSize = 50;
@@ -126,12 +126,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         private void ValidateManifestData()
         {
             var manifestData = Context.ProjectPackageInfo;
-            // Check the package Name, which needs to start with "com.unity."
-            if (manifestData.name == (PackageNamePrefix + "[your package name]") ||
-                !manifestData.name.StartsWith(PackageNamePrefix) ||
-                manifestData.name.Length == PackageNamePrefix.Length)
+
+            // Check the package Name, which needs to start with one of the approved company names.
+            if (!PackageNamePrefixList.Any(namePrefix => (manifestData.name.StartsWith(namePrefix) && manifestData.name.Length > namePrefix.Length)))
             {
-                Error("In package.json, \"name\" needs to start with \"{0}\", and end with your package name.", PackageNamePrefix);
+                Error("In package.json, \"name\" needs to start with one of these approved company names: " + string.Join(", ", PackageNamePrefixList));
             }
 
             // There cannot be any capital letters in package names.

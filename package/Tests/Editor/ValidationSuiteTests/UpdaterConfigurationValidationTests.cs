@@ -90,6 +90,23 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(TestState.Succeeded, updateConfigurationValidation.TestState, string.Join("\n", updateConfigurationValidation.TestOutput));
         }
         [Test]
+        public void NativeDllsGiveNoErrors()
+        {
+            var updateConfigurationValidation = new UpdateConfigurationValidation()
+            {
+                Context = new VettingContext()
+                {
+                    ProjectPackageInfo = new VettingContext.ManifestData()
+                    {
+                        path = testPackageRoot + "TestPackage_WithNativeDll"
+                    },
+                    ValidationType = ValidationType.Publishing
+                }
+            };
+            updateConfigurationValidation.RunTest();
+            Assert.AreEqual(TestState.Succeeded, updateConfigurationValidation.TestState, string.Join("\n", updateConfigurationValidation.TestOutput));
+        }
+        [Test]
         public void InvalidRenameOnDllGivesErrors()
         {
             var updateConfigurationValidation = new UpdateConfigurationValidation()

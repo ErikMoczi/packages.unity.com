@@ -6,7 +6,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 {
     internal class CIUtils
     {
-        internal const string UpmCIUtilsId = "upm-ci-utils";
+        internal const string UpmCIUtilsId = "upm-ci-utils@0.8.2";
 
         internal static string GetCIUtilsScript()
         {

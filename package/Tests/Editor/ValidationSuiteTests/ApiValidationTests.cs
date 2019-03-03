@@ -24,10 +24,10 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
 
         [Test]
         [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInPatch")]
-        public void AddingEmptyAssembly_FailsInPatch(ReleaseType releaseType, bool expectError)
+        public void AddingInternalOnlyAssembly_FailsInPatch(ReleaseType releaseType, bool expectError)
         {
-            List<string> messagesExpected = new List<string> { "Error: New assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_EmptyAsmdefAdd.NewAsmdef\" may only be added in a new minor or major version." };
-            var apiValidation = Validate("TestPackage_EmptyAsmdefAdd", releaseType);
+            List<string> messagesExpected = new List<string> { "Error: New assembly \"Unity.PackageValidationSuite.EditorTests.TestPackage_InternalOnlyAsmdefAdd.NewAsmdef\" may only be added in a new minor or major version." };
+            var apiValidation = Validate("TestPackage_InternalOnlyAsmdefAdd", releaseType);
             ExpectResult(apiValidation, expectError, messagesExpected);
         }
 
