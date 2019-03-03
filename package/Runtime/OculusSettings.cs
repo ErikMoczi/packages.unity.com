@@ -35,7 +35,7 @@ namespace Unity.XR.Oculus
         public bool DashSupport;
 
 
-        public ushort GetStereoReneringMode()
+        public ushort GetStereoRenderingMode()
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             return (ushort)StereoRenderingModeAndroid;

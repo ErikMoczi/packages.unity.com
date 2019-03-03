@@ -47,7 +47,7 @@ namespace Unity.XR.Oculus
                 UserDefinedSettings userDefinedSettings;
                 userDefinedSettings.sharedDepthBuffer = (ushort)(settings.SharedDepthBuffer ? 1 : 0);
                 userDefinedSettings.dashSupport = (ushort)(settings.DashSupport ? 1 : 0);
-                userDefinedSettings.stereoRenderingMode = (ushort) settings.GetStereoReneringMode();
+                userDefinedSettings.stereoRenderingMode = (ushort) settings.GetStereoRenderingMode();
                 SetUserDefinedSettings(userDefinedSettings);
             }
 
