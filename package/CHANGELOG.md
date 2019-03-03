@@ -1,4 +1,4 @@
-## [0.9.100-preview.3] - 2019-02-25
+## [0.9.100-preview.4] - 2019-02-25
 - Update style to work better with the Northstar branch.
 - Use Alt+Left to open the filter window box.
 - Use Alt+Down to cycle to next recent search.

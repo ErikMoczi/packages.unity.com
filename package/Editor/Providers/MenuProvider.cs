@@ -46,7 +46,8 @@ namespace Unity.QuickSearch
                     {
                         handler = (item, context) =>
                         {
-                            EditorApplication.ExecuteMenuItem(item.id);
+                            var menuId = item.id;
+                            EditorApplication.delayCall += () => EditorApplication.ExecuteMenuItem(menuId);
                         }
                     }
                 };
