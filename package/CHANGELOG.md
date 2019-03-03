@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.0] - 2019-02-13
+
+### Changed
+- Only updating version to 1.0.0 to reflect the status of the package
+
 ## [0.2.6-preview] - 2019-02-13
 
 ### Changed

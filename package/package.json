@@ -1,7 +1,7 @@
 {
   "name": "com.unity.multiplayer-hlapi",
   "displayName": "Multiplayer HLAPI",
-  "version": "0.2.6-preview",
+  "version": "1.0.0",
   "unity": "2019.1",
   "description": "The high level API component of the Unity Multiplayer system.",
   "keywords": [
@@ -17,6 +17,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/multiplayer/com.unity.multiplayer-hlapi.git",
-    "revision": "fdf951e2b4fd7bebe490da8996ad1cf28f639d1c"
+    "revision": "3da113d986622d63a130355a4438204d3dba6f16"
   }
 }
