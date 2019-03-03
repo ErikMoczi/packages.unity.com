@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.14] - 2019-02-12
+### Fixed
+ - If the user opens an Undocked window, that is not part of the tutorial, the window tabs are unmasked, so they can close or move the window.
+ - Improved compatibility with old content.
+
 ## [0.1.13] - 2019-02-04
 ### Added
 - Add support for specifying alternate EditorWindow types when configuring unmasked views

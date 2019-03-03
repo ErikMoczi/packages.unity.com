@@ -68,6 +68,21 @@ namespace Unity.InteractiveTutorials
             s_AddMethod.Invoke(element, new object[] { child });
         }
 
+        public static void Add(GUIViewProxy view, VisualElement child)
+        {
+            if (view.IsDockedToEditor())
+            {
+                Add(GetVisualTree(view), child);
+            }
+            else
+            {
+                foreach (var visualElement in GetVisualTree(view).Children())
+                {
+                    Add(visualElement, child);
+                }
+            }
+        }
+
         public static void Remove(VisualElement element, VisualElement child)
         {
             s_RemoveMethod.Invoke(element, new object[] { child });

@@ -114,6 +114,31 @@ namespace Unity.InteractiveTutorials
             }
         }
 
+        public static void AddMaskToView(GUIViewProxy view, VisualElement child)
+        {
+            if (view.IsDockedToEditor())
+            {
+                UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), child);
+            }
+            else
+            {
+                var viewVisualElement = UIElementsHelper.GetVisualTree(view);
+
+                Debug.Assert(viewVisualElement.Children().Count() == 2
+                    && viewVisualElement.Children().Count(viewChild => viewChild is IMGUIContainer) == 1,
+                    "Could not find the expected VisualElement structure");
+
+                foreach (var visualElement in viewVisualElement.Children())
+                {
+                    if (!(visualElement is IMGUIContainer))
+                    {
+                        UIElementsHelper.Add(visualElement, child);
+                        break;
+                    }
+                }
+            }
+        }
+
         public static void Mask(
             UnmaskedView.MaskData unmaskedViewsAndRegionsMaskData, Color maskColor,
             UnmaskedView.MaskData highlightedRegionsMaskData, Color highlightColor, Color blockedInteractionsColor, float highlightThickness
@@ -146,7 +171,7 @@ namespace Unity.InteractiveTutorials
                         var mask = new VisualElement();
                         mask.style.backgroundColor = maskColor;
                         mask.SetLayout(rect);
-                        UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
+                        AddMaskToView(view, mask);
                         s_Masks.Add(mask);
                     }
 
@@ -157,7 +182,7 @@ namespace Unity.InteractiveTutorials
                             var mask = new VisualElement();
                             mask.style.backgroundColor = blockedInteractionsColor;
                             mask.SetLayout(rect);
-                            UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
+                            AddMaskToView(view, mask);
                             s_Masks.Add(mask);
                         }
                     }
@@ -168,7 +193,7 @@ namespace Unity.InteractiveTutorials
                     var mask = new VisualElement();
                     mask.style.backgroundColor = maskColor;
                     mask.SetLayout(viewRect);
-                    UIElementsHelper.Add(UIElementsHelper.GetVisualTree(view), mask);
+                    AddMaskToView(view, mask);
                     s_Masks.Add(mask);
                 }
 

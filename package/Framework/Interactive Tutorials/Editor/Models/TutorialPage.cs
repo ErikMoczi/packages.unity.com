@@ -24,7 +24,6 @@ namespace Unity.InteractiveTutorials
         internal event Action<TutorialPage> playedCompletionSound;
 
         public bool hasMovedToNextPage { get { return m_HasMovedToNextPage; } }
-        [SerializeField]
         private bool m_HasMovedToNextPage;
 
         public bool allCriteriaAreSatisfied { get; private set; }

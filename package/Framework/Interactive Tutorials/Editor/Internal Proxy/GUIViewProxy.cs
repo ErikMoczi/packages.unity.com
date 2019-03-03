@@ -58,6 +58,18 @@ namespace Unity.InteractiveTutorials
             return hostView != null && hostView.actualView != null && editorWindowType.IsInstanceOfType(hostView.actualView);
         }
 
+        public bool IsDockedToEditor()
+        {
+            var hostView = m_GUIView as HostView;
+
+            if (hostView != null)
+            {
+                return hostView.window.showMode == ShowMode.MainWindow;
+            }
+
+            return true;
+        }
+
         public bool IsGUIViewAssignableTo(Type targetViewType)
         {
             return targetViewType.IsInstanceOfType(m_GUIView);
