@@ -4,24 +4,9 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.7.0] - 2019-02-25
-- fixing version mismatch
-
-## [2.6.0] - 2019-02-25
-- Removing deprecated package from manifest
-
-## [2.5.0] - 2019-02-22
-- Upgrading materials for LW
-- Adding packman instructions to Readme
-
-## [2.4.0] - 2019-02-21
-- Updated LW package version
-
-## [2.3.0] - 2019-02-20
-- Updated LW package version
-
-## [2.2.0] - 2019-02-13
-- Updated LW package version to 5.4.1
+## [3.0.0] - 2019-02-12
+- Updated LW package version to 6.0.0
+- Removed deprecated packages from manifest
 
 ## [2.1.0] - 2019-02-04
 - Corrected some default values in project settings.
