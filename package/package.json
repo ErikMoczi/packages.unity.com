@@ -1,7 +1,7 @@
 {
   "name": "com.unity.xr.oculus",
   "displayName": "Oculus",
-  "version": "0.0.7-preview",
+  "version": "0.0.8-preview",
   "unity": "2018.3",
   "description": "Provides rendering and input support for Oculus devices using the XRSDK.",
   "keywords": [
@@ -18,6 +18,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/xr/sdk/oculus.git",
-    "revision": "345cb091ae0223168debe783b0d72bc09314c162"
+    "revision": "7dc417b76e054c53920a4f8d71bfadff2091cf71"
   }
 }
