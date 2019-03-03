@@ -1,7 +1,7 @@
 {
   "name": "com.unity.template.lightweight",
   "displayName": "Lightweight RP",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "type": "template",
   "unity": "2019.1",
   "description": "This Project Template utilzes the Lightweight Render Pipeline. \n\nIt is a great starting point for users targeting a broad range of mobile platforms, low-end to mid-tier hardware, or for developers making games that have limited realtime lighting needs. \n\nThis project also includes \n▪ Shadergraph \n▪ Post-processing V2 Stack  \n▪ Presets \n▪ Example content",
@@ -11,7 +11,7 @@
     "com.unity.collab-proxy": "1.2.9",
     "com.unity.package-manager-ui": "0.0.0-builtin",
     "com.unity.purchasing": "2.0.1",
-    "com.unity.render-pipelines.lightweight": "5.4.1",
+    "com.unity.render-pipelines.lightweight": "5.5.0",
     "com.unity.textmeshpro": "1.3.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
@@ -47,6 +47,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/project-template-lightweight.git",
-    "revision": "6d706a8bdf5d58cc71e2669be68aedd7e8f199c5"
+    "revision": "f87986818c17f3d67bbb0747125e914ce18c2a2c"
   }
 }
