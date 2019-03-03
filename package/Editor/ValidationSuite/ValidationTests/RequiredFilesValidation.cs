@@ -1,4 +1,3 @@
-﻿
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class RequiredFilesValidation : BaseValidation

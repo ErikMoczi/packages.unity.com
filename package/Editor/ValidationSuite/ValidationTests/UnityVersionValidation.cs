@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.PackageManager.ValidationSuite.ValidationTests;
 using UnityEngine;
@@ -8,7 +8,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
     internal class UnityVersionValidation : BaseValidation
     {
         private string unityVersion;
-  
+
         // Move code that validates that development is happening on the right version based on the package.json
         public UnityVersionValidation()
         {
@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             SupportedValidations = new[] { ValidationType.LocalDevelopment };
         }
 
-        // This method is called synchronously during initialization, 
+        // This method is called synchronously during initialization,
         // and allows a test to interact with APIs, which need to run from the main thread.
         public override void Setup()
         {

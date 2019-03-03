@@ -1,6 +1,9 @@
 {
     "name": "TestPackage_WithInvalidRenameConfigInDll",
     "references": [],
+	"includePlatforms": [
+		"Editor"
+	],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],

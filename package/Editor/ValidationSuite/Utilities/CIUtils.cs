@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using UnityEngine;
 
@@ -41,7 +41,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
         internal static string _Pack(string command, string path, string destinationPath)
         {
-            //Create a copy of the package on the temp folder so that it can be modified 
+            //Create a copy of the package on the temp folder so that it can be modified
 
             var launcher = new NodeLauncher();
             launcher.WorkingDirectory = path;
@@ -53,7 +53,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
             //Copy the file to the destinationPath
             string finalPackagePath = Path.Combine(destinationPath, packageName);
-            
+
             if (File.Exists(finalPackagePath))
                 File.Delete(finalPackagePath);
 

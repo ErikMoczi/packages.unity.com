@@ -183,6 +183,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             ExpectResult(apiValidation, true, messagesExpected);
         }
 
+        [Test]
+        [TestCaseSource(typeof(VersionComparisonTestUtilities), "FailsInMinor")]
+        public void AddingUpdaterConfig_FailsInMinor(ReleaseType releaseType, bool expectError)
+        {
+            List<string> messagesExpected = new List<string> { "Error: Breaking changes require a new major version." };
+
+            var apiValidation = Validate("TestPackage_WithObsoleteUpdater", releaseType);
+            ExpectResult(apiValidation, expectError, messagesExpected);
+        }
+
         //need to make decisions on dependencies and write more tests
 
         private static ApiValidation Validate(string projectPackageName, ReleaseType releaseType, string previousPackageName = "TestPackage_Base")

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
@@ -34,7 +34,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 AddMissingTestsErrors();
                 return;
             }
-            
+
             // let's look for files in the "test" directory.
             matchingFiles.Clear();
             DirectorySearch(testDir, "*.cs", matchingFiles);
@@ -49,8 +49,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             {
                 if (!Directory.Exists(relatedPackage.Path))
                 {
-                    if (Context.ValidationType == ValidationType.Publishing || 
-                              Context.ValidationType == ValidationType.VerifiedSet)
+                    if (Context.ValidationType == ValidationType.Publishing ||
+                        Context.ValidationType == ValidationType.VerifiedSet)
                     {
                         AddMissingTestsErrors();
                     }
@@ -62,7 +62,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 }
 
                 var relatedPackageTestDir = Path.Combine(relatedPackage.Path, "Tests");
-            
+
                 // let's look for files in the "test" directory.
                 matchingFiles.Clear();
                 DirectorySearch(relatedPackageTestDir, "*.cs", matchingFiles);
@@ -76,9 +76,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // TODO: Go through files, make sure they have actual tests.
 
             // TODO: Can we evaluate coverage imperically for now, until we have code coverage numbers?
-
         }
-
 
         private void AddMissingTestsErrors()
         {

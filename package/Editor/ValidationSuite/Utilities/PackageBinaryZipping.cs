@@ -1,4 +1,3 @@
-
 #if UNITY_2018_1_OR_NEWER
 
 using System;
@@ -13,7 +12,6 @@ namespace UnityEditor.PackageManager.ValidationSuite
 {
     public static class PackageBinaryZipping
     {
-
         /// <summary>
         /// Creates a zip file containing the .dlls built from .asmdefs in the given package.
         /// </summary>

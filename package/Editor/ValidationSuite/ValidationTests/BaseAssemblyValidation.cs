@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -55,8 +55,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             if (IncludePrecompiledAssemblies)
             {
                 relevantAssemblyInfo = relevantAssemblyInfo.Concat(
-                        files.Where(f => string.Equals(Path.GetExtension(f), ".dll", StringComparison.OrdinalIgnoreCase) && IsManagedDll(f))
-                            .Select(f => new AssemblyInfo(f)))
+                    files.Where(f => string.Equals(Path.GetExtension(f), ".dll", StringComparison.OrdinalIgnoreCase) && IsManagedDll(f))
+                        .Select(f => new AssemblyInfo(f)))
                     .ToArray();
             }
 

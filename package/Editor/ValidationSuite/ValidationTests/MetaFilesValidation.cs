@@ -18,32 +18,31 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         {
             //Names starting with a "." are being ignored by AssetDB.
             //Names finishing with ".meta" are considered meta files in Editor Code.
-            if(Path.GetFileName(name).StartsWith(".") || name.EndsWith(".meta"))
+            if (Path.GetFileName(name).StartsWith(".") || name.EndsWith(".meta"))
                 return true;
 
             // Honor the Unity tilde skipping of import
             if (Path.GetDirectoryName(name).EndsWith("~") || name.EndsWith("~"))
                 return true;
-            
+
             // Ignore node_modules folder as it is created inside the tested directory when production dependencies exist
             if (Path.GetDirectoryName(name).EndsWith("node_modules") || name.Contains("node_modules"))
                 return true;
 
             return false;
         }
-        
+
         void CheckMeta(string toCheck)
         {
-            if(ShouldIgnore(toCheck))
+            if (ShouldIgnore(toCheck))
                 return;
-            
-            if(System.IO.File.Exists(toCheck + ".meta"))
+
+            if (System.IO.File.Exists(toCheck + ".meta"))
                 return;
-            
+
             TestState = TestState.Failed;
             TestOutput.Add("Did not find meta file for " + toCheck);
         }
-
 
         void CheckMetaInFolderRecursively(string folder)
         {
@@ -56,9 +55,9 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
                 foreach (string dir in Directory.GetDirectories(folder))
                 {
-                    if(ShouldIgnore(dir))
+                    if (ShouldIgnore(dir))
                         continue;
-                    
+
                     CheckMeta(dir);
                     CheckMetaInFolderRecursively(dir);
                 }

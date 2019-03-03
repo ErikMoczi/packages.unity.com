@@ -36,6 +36,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             updateConfigurationValidation.RunTest();
             Assert.AreEqual(TestState.Succeeded, updateConfigurationValidation.TestState, string.Join("\n", updateConfigurationValidation.TestOutput));
         }
+
         [Test]
         public void GoodRenameOnDllWithSpacesGivesNoErrors()
         {
@@ -53,6 +54,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             updateConfigurationValidation.RunTest();
             Assert.AreEqual(TestState.Succeeded, updateConfigurationValidation.TestState, string.Join("\n", updateConfigurationValidation.TestOutput));
         }
+
         [Test]
         public void InvalidRenameGivesErrors()
         {
@@ -72,6 +74,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             Assert.AreEqual(TestState.Failed, updateConfigurationValidation.TestState, string.Join("\n", updateConfigurationValidation.TestOutput));
             Assert.That(updateConfigurationValidation.TestOutput.Single(o => o.StartsWith("Error")), Contains.Substring("Error: Failed to resolve target member in configuration [*] System.Void [*] TestPackage_WithInvalidRenameConfig.Foo::Bar -> * TestPackage_WithInvalidRenameConfig.Foo::Baz"));
         }
+
         [Test]
         public void GoodRenameOnDllGivesNoErrors()
         {
@@ -89,6 +92,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             updateConfigurationValidation.RunTest();
             Assert.AreEqual(TestState.Succeeded, updateConfigurationValidation.TestState, string.Join("\n", updateConfigurationValidation.TestOutput));
         }
+
         [Test]
         public void NativeDllsGiveNoErrors()
         {
@@ -106,6 +110,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
             updateConfigurationValidation.RunTest();
             Assert.AreEqual(TestState.Succeeded, updateConfigurationValidation.TestState, string.Join("\n", updateConfigurationValidation.TestOutput));
         }
+
         [Test]
         public void InvalidRenameOnDllGivesErrors()
         {

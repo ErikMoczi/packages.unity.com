@@ -1,4 +1,4 @@
-﻿namespace UnityEditor.PackageManager.ValidationSuite
+namespace UnityEditor.PackageManager.ValidationSuite
 {
     internal enum TestCategory
     {
@@ -11,7 +11,7 @@
     internal interface IValidationTest
     {
         ValidationSuite Suite { get; }
-        
+
         string TestName { get; }
 
         string TestDescription { get; }

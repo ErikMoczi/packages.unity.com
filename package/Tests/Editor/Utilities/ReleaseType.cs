@@ -1,4 +1,4 @@
-﻿namespace UnityEditor.PackageManager.ValidationSuite.Tests
+namespace UnityEditor.PackageManager.ValidationSuite.Tests
 {
     public enum ReleaseType
     {

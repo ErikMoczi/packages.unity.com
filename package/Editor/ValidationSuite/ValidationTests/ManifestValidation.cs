@@ -10,7 +10,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class ManifestValidation : BaseValidation
     {
-        private string[] PackageNamePrefixList= { "com.unity.", "com.autodesk." };
+        private string[] PackageNamePrefixList = { "com.unity.", "com.autodesk." };
         private const string UpmRegex = @"^[a-z0-9][a-z0-9-._]{0,213}$";
         private const string UpmDisplayRegex = @"^[a-zA-Z0-9 ]+$";
         private const int MinDescriptionSize = 50;
@@ -165,7 +165,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Error("In package.json, \"description\" must be fleshed out and informative, as it is used in the user interface.");
             }
 
-            if (Context.ValidationType != ValidationType.LocalDevelopment)
+            if (Context.ValidationType == ValidationType.Publishing)
             {
                 // Check if `repository.url` and `repository.revision` exist and the content is valid
                 string value;

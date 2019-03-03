@@ -1,4 +1,3 @@
-﻿
 using System.IO;
 using System.Linq;
 
@@ -26,8 +25,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             string[] rootDirs = Directory.GetDirectories(Context.ProjectPackageInfo.path);
             var wrongNameDocsDir = rootDirs.FirstOrDefault(d =>
             {
-            	var path = Path.GetFileName(d).ToLower();
-            	return path == ".documentation" || path == "documentation";
+                var path = Path.GetFileName(d).ToLower();
+                return path == ".documentation" || path == "documentation";
             });
             var docsDir = rootDirs.FirstOrDefault(d =>
             {

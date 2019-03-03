@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         public ValidationType[] SupportedValidations { get; set; }
 
         public ValidationSuite Suite { get; set; }
-        
+
         public string TestName { get; protected set; }
 
         public string TestDescription { get; protected set; }
@@ -26,7 +26,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         public List<string> TestOutput { get; set; }
 
         public DateTime StartTime { get; private set; }
-        
+
         public DateTime EndTime { get; private set; }
 
         public VettingContext Context { get; set; }
@@ -43,7 +43,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.CI, ValidationType.LocalDevelopment, ValidationType.Publishing, ValidationType.VerifiedSet };
         }
 
-        // This method is called synchronously during initialization, 
+        // This method is called synchronously during initialization,
         // and allows a test to interact with APIs, which need to run from the main thread.
         public virtual void Setup()
         {

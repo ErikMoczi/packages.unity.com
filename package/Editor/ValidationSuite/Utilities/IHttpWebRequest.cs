@@ -1,4 +1,3 @@
-﻿
 namespace UnityEditor.PackageManager.ValidationSuite
 {
     public interface IHttpWebRequest

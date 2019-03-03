@@ -1,6 +1,9 @@
 {
     "name": "TestPackage With Good Rename Config In Dll",
     "references": [],
+	"includePlatforms": [
+		"Editor"
+	],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],

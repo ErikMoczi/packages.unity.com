@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +17,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         public string EndTime;
         public int Elpased;
     }
-    
+
     internal class ValidationSuiteReport
     {
         public static readonly string resultsPath = "ValidationSuiteResults";
@@ -26,7 +26,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         private readonly string jsonReportPath;
 
         public ValidationSuiteReport()
-        { }
+        {}
 
         public ValidationSuiteReport(string packageId, string packageName, string packageVersion, string packagePath)
         {
@@ -50,7 +50,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
 
             List<PackageDependencyInfo> packageParents;
             if (context.ProjectPackageInfo.dependencies.Any())
-            { 
+            {
                 File.AppendAllText(txtReportPath, "\r\nPACKAGE DEPENDENCIES:\r\n");
                 File.AppendAllText(txtReportPath, "--------------------\r\n");
                 foreach (var dependencies in context.ProjectPackageInfo.dependencies)
@@ -87,7 +87,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 testReports[i].StartTime = validationTest.StartTime.ToString();
                 testReports[i].EndTime = validationTest.EndTime.ToString();
                 var span = validationTest.EndTime - validationTest.StartTime;
-                testReports[i].Elpased = span.TotalMilliseconds > 1 ? (int)(span.TotalMilliseconds): 1;
+                testReports[i].Elpased = span.TotalMilliseconds > 1 ? (int)(span.TotalMilliseconds) : 1;
                 i++;
             }
 
@@ -134,11 +134,11 @@ namespace UnityEditor.PackageManager.ValidationSuite
             var testReports = BuildReport(suite);
             var span = suite.EndTime - suite.StartTime;
             var report = string.Format
-                ("{{\"TestResult\":\"{0}\", \"StartTime\":\"{1}\", \"EndTime\":\"{2}\", \"Elapsed\":{3}, \"Tests\":",
-                suite.testSuiteState.ToString(),
-                suite.StartTime.ToString(),
-                suite.EndTime.ToString(),
-                span.TotalMilliseconds > 1 ? (int)(span.TotalMilliseconds): 1);
+                    ("{{\"TestResult\":\"{0}\", \"StartTime\":\"{1}\", \"EndTime\":\"{2}\", \"Elapsed\":{3}, \"Tests\":",
+                    suite.testSuiteState.ToString(),
+                    suite.StartTime.ToString(),
+                    suite.EndTime.ToString(),
+                    span.TotalMilliseconds > 1 ? (int)(span.TotalMilliseconds) : 1);
 
             File.WriteAllText(jsonReportPath, report);
             if (testReports.Length == 0)
@@ -146,9 +146,9 @@ namespace UnityEditor.PackageManager.ValidationSuite
                 File.AppendAllText(jsonReportPath, "[]}");
                 return;
             }
-            
+
             File.AppendAllText(jsonReportPath, "[");
-            for (var i = 0 ; i < testReports.Length ; i++)
+            for (var i = 0; i < testReports.Length; i++)
             {
                 File.AppendAllText(jsonReportPath, JsonUtility.ToJson(testReports[i], false));
                 if (i < testReports.Length - 1)

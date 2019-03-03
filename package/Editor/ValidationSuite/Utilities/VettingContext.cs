@@ -125,13 +125,13 @@ internal class VettingContext
         if (context.ValidationType == ValidationType.LocalDevelopment)
         {
             var publishPackagePath = PublishPackage(context);
-            context.PublishPackageInfo = GetManifest(publishPackagePath);    
+            context.PublishPackageInfo = GetManifest(publishPackagePath);
         }
         else
         {
             context.PublishPackageInfo = GetManifest(packageInfo.resolvedPath);
         }
-        
+
 
 #if UNITY_2019_1_OR_NEWER
         foreach (var relatedPackage in context.PublishPackageInfo.relatedPackages)
@@ -261,10 +261,10 @@ internal class VettingContext
         {
             var tempPath = System.IO.Path.GetTempPath();
             string packageName = context.ProjectPackageInfo.Id.Replace("@", "-") + ".tgz";
-            
+
             //Use upm-template-tools package-ci
             PackageCIUtils.Pack(packagePath, tempPath);
-            
+
             // Create a NodeLauncher object that will handle the installation of the
             // package to validate
             NodeLauncher launcher;
@@ -322,7 +322,7 @@ internal class VettingContext
                     continue;
                 }
             }
-            
+
             if (Utilities.PackageExistsOnProduction(package.Key))
             {
                 var tempPath = Path.GetTempPath();
@@ -430,7 +430,7 @@ internal class VettingContext
         var packageCoDependencies = new Dictionary<string, List<PackageDependencyInfo>>();
 
         var foundPackages =  Utilities.UpmSearch(string.Empty, true);
-        
+
 
         // Fill in the dictionary
         if (foundPackages != null && foundPackages.Length > 0)
@@ -491,5 +491,6 @@ internal class VettingContext
             ParentIsPreview = semVer.Prerelease.Contains("preview") || semVer.Major == 0
         };
     }
+
 #endif
 }

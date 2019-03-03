@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using Semver;
 
@@ -20,7 +20,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             TestState = TestState.Succeeded;
             ValidateVersion();
         }
-
 
         private void ValidateVersion()
         {

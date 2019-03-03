@@ -1,4 +1,4 @@
-﻿namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
+namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class LicenseValidation : BaseValidation
     {

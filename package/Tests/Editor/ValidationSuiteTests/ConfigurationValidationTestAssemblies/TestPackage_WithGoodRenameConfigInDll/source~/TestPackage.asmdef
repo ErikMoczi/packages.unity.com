@@ -1,6 +1,9 @@
 {
     "name": "Unity.PackageValidationSuite.EditorTests.TestPackage_WithGoodRenameConfigInDll",
     "references": [],
+	"includePlatforms": [
+		"Editor"
+	],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,9 +27,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 if (matchingFiles.Any())
                 {
                     foreach (var file in matchingFiles)
-                        TestOutput.Add(file + " cannot be included in a package.");
-
-                    TestState = TestState.Failed;
+                    {
+                        // For asset store packages, no exceptions.
+                        // Internally, let's allow a specific set of exceptions.
+                        if (Context.ValidationType == ValidationType.AssetStore ||
+                            !internalExceptionFileList.Contains(Path.GetFileName(file).ToLowerInvariant()))
+                        {
+                            TestOutput.Add(file + " cannot be included in a package.");
+                            TestState = TestState.Failed;
+                        }
+                    }
                 }
             }
 
@@ -42,12 +49,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 if (matchingFiles.Any())
                 {
                     foreach (var file in matchingFiles)
-                        Warning(file + " should not be included in packages unless absolutely necessary.  " + 
-                                "Please confirm that it's inclusion is deliberate and intentional.");
+                        Warning(file + " should not be included in packages unless absolutely necessary.  " +
+                            "Please confirm that it's inclusion is deliberate and intentional.");
                 }
             }
-
         }
+
+        private readonly string[] internalExceptionFileList =
+        {
+            "vswhere.exe",  // required for com.unity.ide.visualstudio
+        };
 
         private readonly string[] restrictedFileList =
         {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -128,7 +128,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             for (int i = 0; i < (depth * 4); i++)
                 linePrefix += " ";
 
-            // Take a snapshot of the file system.  
+            // Take a snapshot of the file system.
             List<String> files1 = string.IsNullOrEmpty(path1) ? new List<string>() : Directory.GetFiles(path1).Select(d => d.Substring(path1.Length + 1).ToLower()).ToList();
             List<String> files2 = string.IsNullOrEmpty(path2) ? new List<string>() : Directory.GetFiles(path2).Select(d => d.Substring(path2.Length + 1).ToLower()).ToList();
 

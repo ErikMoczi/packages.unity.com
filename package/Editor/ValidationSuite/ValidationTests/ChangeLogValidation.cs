@@ -25,7 +25,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             // Check if the file exists first
             var changeLogPath = Path.Combine(Context.ProjectPackageInfo.path, Utilities.ChangeLogFilename);
 
-            if(!System.IO.File.Exists(changeLogPath))
+            if (!System.IO.File.Exists(changeLogPath))
             {
                 TestState = TestState.Failed;
                 TestOutput.Add("Cannot find chanlog at: " + changeLogPath);
@@ -33,7 +33,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
             }
 
             SemVersion packageJsonVersion;
-            
+
             if (!SemVersion.TryParse(Context.ProjectPackageInfo.version, out packageJsonVersion))
             {
                 TestState = TestState.Failed;
@@ -51,11 +51,11 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
             // We are basically searching for a string ## [Version] - YYYY-MM-DD
             var changeLogLineRegex = @"## \[(?<version>(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?)\] - (?<date>\d{4}-\d{1,2}-\d{1,2})";
-            
+
             var textChangeLog = File.ReadAllText(changeLogPath);
 
             MatchCollection matches = Regex.Matches(textChangeLog, changeLogLineRegex);
-            if(matches.Count == 0)
+            if (matches.Count == 0)
             {
                 TestState = TestState.Failed;
                 TestOutput.Add(string.Format("Can't find any entries in changelog that fits `format: ## [x.y.z] - YYYY-MM-DD`"));
@@ -73,18 +73,18 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     TestOutput.Add(string.Format("Version format {0} is not valid in: [{1}]", match.Groups["version"].ToString(), changeLogPath));
                     return;
                 }
-                
-                if(versionInChangelog == packageJsonVersion || versionInChangelog == packageJsonVersionNoPrelease)
+
+                if (versionInChangelog == packageJsonVersion || versionInChangelog == packageJsonVersionNoPrelease)
                 {
                     found = match;
                     DateTime date;
                     string[] dateFormats = { "yyyy-MM-dd", "yyyy-MM-d", "yyyy-M-dd", "yyyy-M-d" };
                     var dateToCheck = match.Groups["date"].ToString();
-                    if(!DateTime.TryParseExact(dateToCheck, 
-                                dateFormats, 
-                                CultureInfo.InvariantCulture, 
-                                DateTimeStyles.None, 
-                                out date))
+                    if (!DateTime.TryParseExact(dateToCheck,
+                        dateFormats,
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out date))
                     {
                         TestState = TestState.Failed;
                         TestOutput.Add(string.Format("Date {0} is not valid expecting format: YYYY-MM-DD in: [{1}]", dateToCheck, changeLogPath));
@@ -94,13 +94,13 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 index++;
             }
 
-            if(found == null)
+            if (found == null)
             {
                 TestState = TestState.Failed;
                 var expected = string.Format("`## [{0}] - YYYY-MM-DD` or `## [{1}] - YYYY-MM-DD`", packageJsonVersion.ToString(), packageJsonVersionNoPrelease.ToString());
                 TestOutput.Add(string.Format("No changelog entry for version `{0}` (expected: {1}) found in: [{2}]", packageJsonVersion.ToString(), expected, changeLogPath));
             }
-            else if(found != null && index != 1)
+            else if (found != null && index != 1)
             {
                 TestState = TestState.Failed;
                 TestOutput.Add(string.Format("Found changelog entry `{0}`, but it was not the first entry of the changelog (it was entry #{1}) in: [{2}]", found.ToString(), index, changeLogPath));

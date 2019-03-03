@@ -1,6 +1,6 @@
-﻿namespace UnityEditor.PackageManager.ValidationSuite
+namespace UnityEditor.PackageManager.ValidationSuite
 {
-    internal class PackageCIUtils: CIUtils
+    internal class PackageCIUtils : CIUtils
     {
         internal static string Pack(string path, string destinationPath)
         {

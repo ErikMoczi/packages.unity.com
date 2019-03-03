@@ -100,7 +100,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
         public NodeLauncher(string workingPath = "", string npmLogLevel = "error", string npmRegistry = ProductionRepositoryUrl, string npmPrefix = "")
         {
             NodeSetup();
-            
+
             if (npmLogLevel != "")
                 NpmLogLevel = npmLogLevel;
 

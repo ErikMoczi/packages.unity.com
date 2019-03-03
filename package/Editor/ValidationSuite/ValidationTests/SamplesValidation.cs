@@ -34,7 +34,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 Error("`Samples` and `Samples~` cannot both be present in the package.");
             }
 
-            if (Context.ValidationType != ValidationType.LocalDevelopment && samplesDirExists)
+            if ((Context.ValidationType == ValidationType.Publishing || Context.ValidationType == ValidationType.VerifiedSet) && samplesDirExists)
             {
                 Error("In a published package, the `Samples` needs to be renamed to `Samples~`. It should have been done automatically in the CI publishing process.");
             }
@@ -50,7 +50,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     "Please refer to https://gitlab.internal.unity3d.com/upm-packages/upm-package-template/blob/master/Samples/Example/.sample.json for more info.");
             }
 
-            if (Context.ValidationType != ValidationType.LocalDevelopment)
+            if (Context.ValidationType == ValidationType.Publishing || Context.ValidationType == ValidationType.VerifiedSet)
             {
                 if (Context.PublishPackageInfo.samples.Count != matchingFiles.Count)
                 {

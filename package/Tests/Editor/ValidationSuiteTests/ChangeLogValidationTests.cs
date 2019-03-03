@@ -198,7 +198,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.Tests
                 PublishPackageInfo = manifestData,
                 PreviousPackageInfo = manifestData,
                 ValidationType = ValidationType.Publishing
-
             };
 
             if (manifestData != null)

@@ -32,7 +32,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 return isProjectPackageTestOverride.Value;
 
             return assembly.assemblyDefinition.references.Contains("TestAssemblies") ||
-                   assembly.assemblyDefinition.optionalUnityReferences.Contains("TestAssemblies");
+                assembly.assemblyDefinition.optionalUnityReferences.Contains("TestAssemblies");
         }
 
         public string GetAssemblyName(Assembly assembly, bool isPrevious)

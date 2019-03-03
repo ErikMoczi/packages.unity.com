@@ -1,4 +1,4 @@
-﻿namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
+namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 {
     internal class SignatureValidation : BaseValidation
     {
@@ -16,7 +16,6 @@
             TestState = TestState.NotImplementedYet;
 
             // TODO: THIS CAN ONLY BE TURNED ON ONCE WE HAVE PACKAGE SIGNATURE WORKING END TO END.
-
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using Semver;
 using Unity.APIComparison.Framework.Changes;
 using Unity.APIComparison.Framework.Collectors;
+using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
@@ -47,7 +48,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 var previousAssemblyDefinition = previousAssemblyDefinitions.FirstOrDefault(ad => DoAssembliesMatch(ad, assemblyInfo.assemblyDefinition));
                 if (previousAssemblyDefinition == null)
                     continue; //new asmdefs are fine
-                
+
                 var excludePlatformsDiff = string.Format("Was:\"{0}\" Now:\"{1}\"",
                     string.Join(", ", previousAssemblyDefinition.excludePlatforms),
                     string.Join(", ", assemblyInfo.assemblyDefinition.excludePlatforms));
@@ -55,8 +56,8 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     versionChangeType == VersionChangeType.Patch)
                     Error("Removing from excludePlatfoms requires a new minor or major version. " + excludePlatformsDiff);
                 else if (assemblyInfo.assemblyDefinition.excludePlatforms.Any(p =>
-                                !previousAssemblyDefinition.excludePlatforms.Contains(p)) &&
-                            (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
+                    !previousAssemblyDefinition.excludePlatforms.Contains(p)) &&
+                         (versionChangeType == VersionChangeType.Patch || versionChangeType == VersionChangeType.Minor))
                     Error("Adding to excludePlatforms requires a new major version. " + excludePlatformsDiff);
 
                 var includePlatformsDiff = string.Format("Was:\"{0}\" Now:\"{1}\"",
@@ -67,7 +68,7 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                     Error("Removing from includePlatfoms requires a new major version. " + includePlatformsDiff);
                 else if (assemblyInfo.assemblyDefinition.includePlatforms.Any(p => !previousAssemblyDefinition.includePlatforms.Contains(p)))
                 {
-                    if (previousAssemblyDefinition.includePlatforms.Length == 0 && 
+                    if (previousAssemblyDefinition.includePlatforms.Length == 0 &&
                         (versionChangeType == VersionChangeType.Minor || versionChangeType == VersionChangeType.Patch))
                         Error("Adding the first entry in inlcudePlatforms requires a new major version. " + includePlatformsDiff);
                     else if (versionChangeType == VersionChangeType.Patch)
@@ -185,7 +186,16 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
 
                 if (info.assembly != null)
                 {
-                    var entityChanges = APIChangesCollector.Collect(oldAssemblyPath, info.assembly.outputPath).SelectMany(c => c.Changes).ToList();
+                    var extraSearchFolder = Path.GetDirectoryName(typeof(System.ObsoleteAttribute).Assembly.Location);
+
+                    var apiChangesAssemblyInfo = new APIChangesCollector.AssemblyInfo()
+                    {
+                        BaseAssemblyPath = oldAssemblyPath,
+                        BaseAssemblyExtraSearchFolder = extraSearchFolder,
+                        CurrentAssemblyPath = info.assembly.outputPath,
+                        CurrentExtraSearchFolder = extraSearchFolder
+                    };
+                    var entityChanges = APIChangesCollector.Collect(apiChangesAssemblyInfo).SelectMany(c => c.Changes).ToList();
                     var assemblyChange = new AssemblyChange(info.assembly.name)
                     {
                         additions = entityChanges.Where(c => c.IsAdd()).Select(c => c.ToString()).ToList(),
