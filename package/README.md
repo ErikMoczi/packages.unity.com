@@ -13,7 +13,7 @@ Packages are separated into individual platform support packages. These packages
 		CHANGELOG
 		Documentation
 
-	com.unity.oculus.standalone (Contains Standalone specific Oculus files)
+	com.unity.oculus.standalone (Contains Desktop specific Oculus files)
 		plugins
 		package.json
 

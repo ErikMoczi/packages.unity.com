@@ -1,10 +1,23 @@
 {
-	"name": "com.unity.xr.oculus.standalone",
-	"displayName":"Oculus (Standalone)",
-	"version": "1.29.0",
-	"unity": "2018.3",
-	"description": "This package contains the necessary components required to use the Oculus Virtual Reality SDK on Standalone platforms (Windows and OSX). By using this package, you will be able to deploy and run your applications on Oculus supported devices.",
-	"keywords": ["oculus", "xr", "vr", "virtual", "sdk", "standalone"],
-	"dependencies": {
-	}
+    "dependencies": {}, 
+    "description": "This package contains the necessary components required to use the Oculus Virtual Reality SDK on desktop platforms. By using this package, you will be able to deploy and run your applications on Oculus supported devices.", 
+    "displayName": "Oculus (Desktop)", 
+    "keywords": [
+        "oculus", 
+        "xr", 
+        "vr", 
+        "virtual", 
+        "sdk", 
+        "standalone", 
+        "desktop"
+    ], 
+    "name": "com.unity.xr.oculus.standalone", 
+    "repoPackagePath": "build/packages/com.unity.xr.oculus.standalone", 
+    "repository": {
+        "revision": "ca52d28b1c859bde09f5cb1ab0af54c4b94c2a7d", 
+        "type": "git", 
+        "url": "ssh://git@github.com/Unity-Technologies/upm-xr-oculus.git"
+    }, 
+    "unity": "2018.3", 
+    "version": "1.29.1"
 }

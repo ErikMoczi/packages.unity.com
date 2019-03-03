@@ -1,1 +1,1 @@
-This package contains the necessary components required to use the Oculus Virtual Reality SDK on Standalone platforms (Windows and OSX). By using this package, you will be able to deploy and run your applications on Oculus supported devices.
+This package contains the necessary components required to use the Oculus Virtual Reality SDK on desktop platforms. By using this package, you will be able to deploy and run your applications on Oculus supported devices.
