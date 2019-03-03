@@ -9,6 +9,7 @@ using UnityEngine.Networking.Types;
 namespace UnityEngine.Networking
 {
     [AddComponentMenu("Network/NetworkMigrationManager")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkMigrationManager : MonoBehaviour
     {
         public enum SceneChangeOption
@@ -275,7 +276,7 @@ namespace UnityEngine.Networking
                     NetworkID networkId;
                     NodeID node;
                     byte error2;
-                    NetworkTransportHelper.GetConnectionInfo(NetworkServer.serverHostId, conn.connectionId, out address, out port, out networkId, out node, out error2);
+                    NetworkManager.activeTransport.GetConnectionInfo(NetworkServer.serverHostId, conn.connectionId, out address, out port, out networkId, out node, out error2);
 
                     peerInfo.connectionId = conn.connectionId;
                     peerInfo.port = port;
@@ -571,7 +572,7 @@ namespace UnityEngine.Networking
 
 
             byte error;
-            NetworkTransportHelper.Disconnect(m_Client.hostId, m_Client.connection.connectionId, out error);
+            NetworkManager.activeTransport.Disconnect(m_Client.hostId, m_Client.connection.connectionId, out error);
 
             if (m_OldServerConnectionId != -1)
             {

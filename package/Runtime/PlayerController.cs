@@ -7,6 +7,7 @@ namespace UnityEngine.Networking
     // when there are multiple people playing on one machine
     // The server has one connection per client, and the connection has the player instances of that client
     // The client has player instances as member variables (should this be removed and just go though the connection like the server does?)
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class PlayerController
     {
         internal const short kMaxLocalPlayers = 8;

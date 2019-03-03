@@ -1,9 +1,11 @@
+using System;
 using System.Net;
 
 using UnityEngine.Networking.Types;
 
 namespace UnityEngine.Networking
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public interface INetworkTransport
     {
         void Init();
@@ -18,15 +20,15 @@ namespace UnityEngine.Networking
 
         int AddWebsocketHost(HostTopology topology, int port, string ip);
 
-        int ConnectWithSimulator(int hostId, string address, int port, int exceptionConnectionId, out byte error, ConnectionSimulatorConfig conf);
+        int ConnectWithSimulator(int hostId, string address, int port, int specialConnectionId, out byte error, ConnectionSimulatorConfig conf);
 
-        int Connect(int hostId, string address, int port, int exceptionConnectionId, out byte error);
+        int Connect(int hostId, string address, int port, int specialConnectionId, out byte error);
 
         void ConnectAsNetworkHost(int hostId, string address, int port, NetworkID network, SourceID source, NodeID node, out byte error);
 
-        int ConnectToNetworkPeer(int hostId, string address, int port, int exceptionConnectionId, int relaySlotId, NetworkID network, SourceID source, NodeID node, out byte error);
+        int ConnectToNetworkPeer(int hostId, string address, int port, int specialConnectionId, int relaySlotId, NetworkID network, SourceID source, NodeID node, out byte error);
 
-        int ConnectEndPoint(int hostId, EndPoint endPoint, int exceptionConnectionId, out byte error);
+        int ConnectEndPoint(int hostId, EndPoint endPoint, int specialConnectionId, out byte error);
 
         bool DoesEndPointUsePlatformProtocols(EndPoint endPoint);
 
@@ -35,6 +37,8 @@ namespace UnityEngine.Networking
         bool RemoveHost(int hostId);
 
         bool Send(int hostId, int connectionId, int channelId, byte[] buffer, int size, out byte error);
+
+        NetworkEventType Receive(out int hostId, out int connectionId, out int channelId, byte[] buffer, int bufferSize, out int receivedSize, out byte error);
 
         NetworkEventType ReceiveFromHost(int hostId, out int connectionId, out int channelId, byte[] buffer, int bufferSize, out int receivedSize, out byte error);
 

@@ -9,6 +9,7 @@ using UnityEngineInternal;
 
 namespace UnityEngine.Networking
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public sealed class NetworkServer
     {
         static bool s_Active;
@@ -89,7 +90,7 @@ namespace UnityEngine.Networking
 
         NetworkServer()
         {
-            NetworkTransportHelper.Init();
+            NetworkManager.activeTransport.Init();
             if (LogFilter.logDev) { Debug.Log("NetworkServer Created version " + Version.Current); }
             m_RemoveList = new HashSet<NetworkInstanceId>();
             m_ExternalConnections = new HashSet<int>();
@@ -112,8 +113,8 @@ namespace UnityEngine.Networking
 #if UNITY_EDITOR
             Profiler.ResetAll();
 #endif
-            NetworkTransportHelper.Shutdown();
-            NetworkTransportHelper.Init();
+            NetworkManager.activeTransport.Shutdown();
+            NetworkManager.activeTransport.Init();
 
             s_Instance = null;
             s_Active = false;
@@ -1510,7 +1511,7 @@ namespace UnityEngine.Networking
         static bool CheckForPrefab(GameObject obj)
         {
 #if UNITY_EDITOR
-            return (UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(obj) == null) && (UnityEditor.PrefabUtility.GetPrefabObject(obj) != null);
+            return UnityEditor.PrefabUtility.IsPartOfPrefabAsset(obj);
 #else
             return false;
 #endif
@@ -1812,6 +1813,7 @@ namespace UnityEngine.Networking
         class ServerSimpleWrapper : NetworkServerSimple
         {
             NetworkServer m_Server;
+
             public ServerSimpleWrapper(NetworkServer server)
             {
                 m_Server = server;

@@ -8,7 +8,8 @@ using UnityEngine.Networking.Types;
 
 namespace UnityEngine.Networking
 {
-    public class DefaultNetworkTransport : INetworkTransport
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
+    class DefaultNetworkTransport : INetworkTransport
     {
         public DefaultNetworkTransport()
         {
@@ -37,9 +38,9 @@ namespace UnityEngine.Networking
             return NetworkTransport.AddWebsocketHost(topology, port, ip);
         }
 
-        public int Connect(int hostId, string address, int port, int exceptionConnectionId, out byte error)
+        public int Connect(int hostId, string address, int port, int specialConnectionId, out byte error)
         {
-            return NetworkTransport.Connect(hostId, address, port, exceptionConnectionId, out error);
+            return NetworkTransport.Connect(hostId, address, port, specialConnectionId, out error);
         }
 
         public void ConnectAsNetworkHost(int hostId, string address, int port, NetworkID network, SourceID source, NodeID node, out byte error)
@@ -47,19 +48,19 @@ namespace UnityEngine.Networking
             NetworkTransport.ConnectAsNetworkHost(hostId, address, port, network, source, node, out error);
         }
 
-        public int ConnectEndPoint(int hostId, EndPoint endPoint, int exceptionConnectionId, out byte error)
+        public int ConnectEndPoint(int hostId, EndPoint endPoint, int specialConnectionId, out byte error)
         {
-            return NetworkTransport.ConnectEndPoint(hostId, endPoint, exceptionConnectionId, out error);
+            return NetworkTransport.ConnectEndPoint(hostId, endPoint, specialConnectionId, out error);
         }
 
-        public int ConnectToNetworkPeer(int hostId, string address, int port, int exceptionConnectionId, int relaySlotId, NetworkID network, SourceID source, NodeID node, out byte error)
+        public int ConnectToNetworkPeer(int hostId, string address, int port, int specialConnectionId, int relaySlotId, NetworkID network, SourceID source, NodeID node, out byte error)
         {
-            return NetworkTransport.ConnectToNetworkPeer(hostId, address, port, exceptionConnectionId, relaySlotId, network, source, node, out error);
+            return NetworkTransport.ConnectToNetworkPeer(hostId, address, port, specialConnectionId, relaySlotId, network, source, node, out error);
         }
 
-        public int ConnectWithSimulator(int hostId, string address, int port, int exceptionConnectionId, out byte error, ConnectionSimulatorConfig conf)
+        public int ConnectWithSimulator(int hostId, string address, int port, int specialConnectionId, out byte error, ConnectionSimulatorConfig conf)
         {
-            return NetworkTransport.ConnectWithSimulator(hostId, address, port, exceptionConnectionId, out error, conf);
+            return NetworkTransport.ConnectWithSimulator(hostId, address, port, specialConnectionId, out error, conf);
         }
 
         public bool Disconnect(int hostId, int connectionId, out byte error)
@@ -100,6 +101,11 @@ namespace UnityEngine.Networking
         public void Init(GlobalConfig config)
         {
             NetworkTransport.Init(config);
+        }
+
+        public NetworkEventType Receive(out int hostId, out int connectionId, out int channelId, byte[] buffer, int bufferSize, out int receivedSize, out byte error)
+        {
+            return NetworkTransport.Receive(out hostId, out connectionId, out channelId, buffer, bufferSize, out receivedSize, out error);
         }
 
         public NetworkEventType ReceiveFromHost(int hostId, out int connectionId, out int channelId, byte[] buffer, int bufferSize, out int receivedSize, out byte error)

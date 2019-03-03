@@ -8,6 +8,7 @@ namespace UnityEngine.Networking
     /*
     // Binary stream Writer. Supports simple types, buffers, arrays, structs, and nested types
         */
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkWriter
     {
         const int k_MaxStringLength = 1024 * 32;

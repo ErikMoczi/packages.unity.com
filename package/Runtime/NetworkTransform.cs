@@ -6,6 +6,7 @@ namespace UnityEngine.Networking
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkTransform")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkTransform : NetworkBehaviour
     {
         public enum TransformSyncMode

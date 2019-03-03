@@ -14,6 +14,7 @@ namespace UnityEngine.Networking
     public delegate void UnSpawnDelegate(GameObject spawned);
 
     // built-in system network messages
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class MsgType
     {
         // internal system messages - cannot be replaced by user code
@@ -133,6 +134,7 @@ namespace UnityEngine.Networking
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkMessage
     {
         public const int MaxMessageSize = (64 * 1024) - 1;
@@ -171,6 +173,7 @@ namespace UnityEngine.Networking
         Current = 1
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class Channels
     {
         public const int DefaultReliable = 0;

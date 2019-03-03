@@ -9,6 +9,7 @@ namespace UnityEngine.Networking
     * wire protocol is a list of :   size   |  msgType     | payload
     *                               (short)  (variable)   (buffer)
     */
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkConnection : IDisposable
     {
         ChannelBuffer[] m_Channels;
@@ -83,7 +84,7 @@ namespace UnityEngine.Networking
             int numChannels = hostTopology.DefaultConfig.ChannelCount;
             int packetSize = hostTopology.DefaultConfig.PacketSize;
 
-            if ((hostTopology.DefaultConfig.UsePlatformSpecificProtocols) && (UnityEngine.Application.platform != RuntimePlatform.PS4) && (UnityEngine.Application.platform != RuntimePlatform.PSP2))
+            if ((hostTopology.DefaultConfig.UsePlatformSpecificProtocols) && (UnityEngine.Application.platform != RuntimePlatform.PS4))
                 throw new ArgumentOutOfRangeException("Platform specific protocols are not supported on this platform");
 
             m_Channels = new ChannelBuffer[numChannels];
@@ -180,7 +181,7 @@ namespace UnityEngine.Networking
                 return;
             }
             byte error;
-            NetworkTransportHelper.Disconnect(hostId, connectionId, out error);
+            NetworkManager.activeTransport.Disconnect(hostId, connectionId, out error);
 
             RemoveObservers();
         }
@@ -406,8 +407,8 @@ namespace UnityEngine.Networking
                     var value = m_PacketStats[i];
                     value.count = 0;
                     value.bytes = 0;
-                    NetworkTransportHelper.SetPacketStat(0, i, 0, 0);
-                    NetworkTransportHelper.SetPacketStat(1, i, 0, 0);
+                    NetworkManager.activeTransport.SetPacketStat(0, i, 0, 0);
+                    NetworkManager.activeTransport.SetPacketStat(1, i, 0, 0);
                 }
             }
 #endif
@@ -579,7 +580,7 @@ namespace UnityEngine.Networking
 
         public virtual bool TransportSend(byte[] bytes, int numBytes, int channelId, out byte error)
         {
-            return NetworkTransportHelper.Send(hostId, connectionId, channelId, bytes, numBytes, out error);
+            return NetworkManager.activeTransport.Send(hostId, connectionId, channelId, bytes, numBytes, out error);
         }
 
         internal void AddOwnedObject(NetworkIdentity obj)

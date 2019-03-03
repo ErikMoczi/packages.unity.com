@@ -9,6 +9,7 @@ namespace UnityEngine.Networking
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkLobbyPlayer")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkLobbyPlayer : NetworkBehaviour
     {
         [Tooltip("Enable to show the default lobby GUI for this player.")]
@@ -37,7 +38,7 @@ namespace UnityEngine.Networking
 
         public override void OnStartClient()
         {
-            var lobby = NetworkManager.singleton as NetworkLobbyManager;
+            var lobby = GetLobbyManager();
             if (lobby)
             {
                 lobby.lobbySlots[m_Slot] = this;
@@ -54,7 +55,7 @@ namespace UnityEngine.Networking
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkLobbyPlayer SendReadyToBeginMessage"); }
 
-            var lobby = NetworkManager.singleton as NetworkLobbyManager;
+            var lobby = GetLobbyManager();
             if (lobby)
             {
                 var msg = new LobbyReadyToBeginMessage();
@@ -68,7 +69,7 @@ namespace UnityEngine.Networking
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkLobbyPlayer SendReadyToBeginMessage"); }
 
-            var lobby = NetworkManager.singleton as NetworkLobbyManager;
+            var lobby = GetLobbyManager();
             if (lobby)
             {
                 var msg = new LobbyReadyToBeginMessage();
@@ -82,7 +83,7 @@ namespace UnityEngine.Networking
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkLobbyPlayer SendSceneLoadedMessage"); }
 
-            var lobby = NetworkManager.singleton as NetworkLobbyManager;
+            var lobby = GetLobbyManager();
             if (lobby)
             {
                 var msg = new IntegerMessage(playerControllerId);
@@ -92,7 +93,7 @@ namespace UnityEngine.Networking
 
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            var lobby = NetworkManager.singleton as NetworkLobbyManager;
+            var lobby = GetLobbyManager();
             if (lobby)
             {
                 // dont even try this in the startup scene
@@ -109,6 +110,11 @@ namespace UnityEngine.Networking
             {
                 SendSceneLoadedMessage();
             }
+        }
+
+        NetworkLobbyManager GetLobbyManager()
+        {
+            return NetworkManager.singleton as NetworkLobbyManager;
         }
 
         public void RemovePlayer()
@@ -164,7 +170,7 @@ namespace UnityEngine.Networking
             if (!ShowLobbyGUI)
                 return;
 
-            var lobby = NetworkManager.singleton as NetworkLobbyManager;
+            var lobby = GetLobbyManager();
             if (lobby)
             {
                 if (!lobby.showLobbyGUI)

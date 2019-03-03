@@ -10,6 +10,7 @@ namespace UnityEditor
 {
     [CustomEditor(typeof(NetworkBehaviour), true)]
     [CanEditMultipleObjects]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkBehaviourInspector : Editor
     {
         bool m_Initialized;

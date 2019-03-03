@@ -9,6 +9,7 @@ namespace UnityEditor
 {
     [CustomEditor(typeof(NetworkManagerHUD), true)]
     [CanEditMultipleObjects]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkManagerHUDEditor : Editor
     {
         SerializedProperty m_ShowGUIProperty;

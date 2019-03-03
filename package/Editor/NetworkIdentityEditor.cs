@@ -7,6 +7,7 @@ namespace UnityEditor
 {
     [CustomEditor(typeof(NetworkIdentity), true)]
     [CanEditMultipleObjects]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkIdentityEditor : Editor
     {
         SerializedProperty m_ServerOnlyProperty;

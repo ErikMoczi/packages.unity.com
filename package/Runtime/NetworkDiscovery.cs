@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace UnityEngine.Networking
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public struct NetworkBroadcastResult
     {
         public string serverAddress;
@@ -13,6 +14,7 @@ namespace UnityEngine.Networking
 
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkDiscovery")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkDiscovery : MonoBehaviour
     {
         const int k_MaxBroadcastMsgSize = 1024;
@@ -179,9 +181,9 @@ namespace UnityEngine.Networking
                 return false;
             }
 
-            if (!NetworkTransportHelper.IsStarted)
+            if (!NetworkManager.activeTransport.IsStarted)
             {
-                NetworkTransportHelper.Init();
+                NetworkManager.activeTransport.Init();
             }
 
             if (m_UseNetworkManager && NetworkManager.singleton != null)
@@ -222,15 +224,17 @@ namespace UnityEngine.Networking
                 return false;
             }
 
-            m_HostId = NetworkTransportHelper.AddHost(m_DefaultTopology, m_BroadcastPort, null);
+            m_HostId = NetworkManager.activeTransport.AddHost(m_DefaultTopology, m_BroadcastPort, null);
             if (m_HostId == -1)
             {
                 if (LogFilter.logError) { Debug.LogError("NetworkDiscovery StartAsClient - addHost failed"); }
                 return false;
             }
 
+            NetworkTransport.SetMulticastLock(true);
+
             byte error;
-            NetworkTransportHelper.SetBroadcastCredentials(m_HostId, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, out error);
+            NetworkManager.activeTransport.SetBroadcastCredentials(m_HostId, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, out error);
 
             m_Running = true;
             m_IsClient = true;
@@ -247,16 +251,20 @@ namespace UnityEngine.Networking
                 return false;
             }
 
-            m_HostId = NetworkTransportHelper.AddHost(m_DefaultTopology, 0, null);
+            m_HostId = NetworkManager.activeTransport.AddHost(m_DefaultTopology, 0, null);
             if (m_HostId == -1)
             {
                 if (LogFilter.logError) { Debug.LogError("NetworkDiscovery StartAsServer - addHost failed"); }
                 return false;
             }
 
+            NetworkTransport.SetMulticastLock(true);
+
             byte err;
-            if (!NetworkTransportHelper.StartBroadcastDiscovery(m_HostId, m_BroadcastPort, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, m_MsgOutBuffer, m_MsgOutBuffer.Length, m_BroadcastInterval, out err))
+            if (!NetworkManager.activeTransport.StartBroadcastDiscovery(m_HostId, m_BroadcastPort, m_BroadcastKey, m_BroadcastVersion, m_BroadcastSubVersion, m_MsgOutBuffer, m_MsgOutBuffer.Length, m_BroadcastInterval, out err))
             {
+                NetworkTransport.RemoveHost(m_HostId);
+                m_HostId = -1;
                 if (LogFilter.logError) { Debug.LogError("NetworkDiscovery StartBroadcast failed err: " + err); }
                 return false;
             }
@@ -283,10 +291,11 @@ namespace UnityEngine.Networking
             }
             if (m_IsServer)
             {
-                NetworkTransportHelper.StopBroadcastDiscovery();
+                NetworkManager.activeTransport.StopBroadcastDiscovery();
             }
 
-            NetworkTransportHelper.RemoveHost(m_HostId);
+            NetworkManager.activeTransport.RemoveHost(m_HostId);
+            NetworkTransport.SetMulticastLock(false);
             m_HostId = -1;
             m_Running = false;
             m_IsServer = false;
@@ -311,15 +320,15 @@ namespace UnityEngine.Networking
                 int channelId;
                 int receivedSize;
                 byte error;
-                networkEvent = NetworkTransportHelper.ReceiveFromHost(m_HostId, out connectionId, out channelId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
+                networkEvent = NetworkManager.activeTransport.ReceiveFromHost(m_HostId, out connectionId, out channelId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
 
                 if (networkEvent == NetworkEventType.BroadcastEvent)
                 {
-                    NetworkTransportHelper.GetBroadcastConnectionMessage(m_HostId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
+                    NetworkManager.activeTransport.GetBroadcastConnectionMessage(m_HostId, m_MsgInBuffer, k_MaxBroadcastMsgSize, out receivedSize, out error);
 
                     string senderAddr;
                     int senderPort;
-                    NetworkTransportHelper.GetBroadcastConnectionInfo(m_HostId, out senderAddr, out senderPort, out error);
+                    NetworkManager.activeTransport.GetBroadcastConnectionInfo(m_HostId, out senderAddr, out senderPort, out error);
 
                     var recv = new NetworkBroadcastResult();
                     recv.serverAddress = senderAddr;
@@ -337,14 +346,17 @@ namespace UnityEngine.Networking
         {
             if (m_IsServer && m_Running && m_HostId != -1)
             {
-                NetworkTransportHelper.StopBroadcastDiscovery();
-                NetworkTransportHelper.RemoveHost(m_HostId);
+                NetworkManager.activeTransport.StopBroadcastDiscovery();
+                NetworkManager.activeTransport.RemoveHost(m_HostId);
             }
 
             if (m_IsClient && m_Running && m_HostId != -1)
             {
-                NetworkTransportHelper.RemoveHost(m_HostId);
+                NetworkManager.activeTransport.RemoveHost(m_HostId);
             }
+
+            if (m_Running)
+                NetworkTransport.SetMulticastLock(false);
         }
 
         public virtual void OnReceivedBroadcast(string fromAddress, string data)

@@ -7,6 +7,7 @@ namespace UnityEngine.Networking
 {
     [RequireComponent(typeof(NetworkIdentity))]
     [AddComponentMenu("")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkBehaviour : MonoBehaviour
     {
         uint m_SyncVarDirtyBits;

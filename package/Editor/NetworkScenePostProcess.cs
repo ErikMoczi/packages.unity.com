@@ -1,4 +1,5 @@
 #if ENABLE_UNET
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Callbacks;
@@ -7,6 +8,7 @@ using UnityEngine.Networking;
 
 namespace UnityEditor
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkScenePostProcess : MonoBehaviour
     {
         [PostProcessScene]
@@ -23,6 +25,7 @@ namespace UnityEditor
                 {
                     Debug.LogError("NetworkManager has a NetworkIdentity component. This will cause the NetworkManager object to be disabled, so it is not recommended.");
                 }
+
                 if (uv.isClient || uv.isServer)
                     continue;
 

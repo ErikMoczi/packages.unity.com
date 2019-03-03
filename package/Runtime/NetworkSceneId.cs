@@ -4,6 +4,7 @@ using System;
 namespace UnityEngine.Networking
 {
     [Serializable]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public struct NetworkSceneId : IEquatable<NetworkSceneId>
     {
         public NetworkSceneId(uint value)

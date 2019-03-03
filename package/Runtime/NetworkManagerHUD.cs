@@ -8,6 +8,7 @@ namespace UnityEngine.Networking
     [AddComponentMenu("Network/NetworkManagerHUD")]
     [RequireComponent(typeof(NetworkManager))]
     [EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkManagerHUD : MonoBehaviour
     {
         public NetworkManager manager;
@@ -75,7 +76,7 @@ namespace UnityEngine.Networking
             const int spacing = 24;
 
             bool noConnection = (manager.client == null || manager.client.connection == null ||
-                                 manager.client.connection.connectionId == -1);
+                manager.client.connection.connectionId == -1);
 
             if (!manager.IsClientConnected() && !NetworkServer.active && manager.matchMaker == null)
             {

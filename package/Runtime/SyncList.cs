@@ -6,6 +6,7 @@ using System.ComponentModel;
 
 namespace UnityEngine.Networking
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public sealed class SyncListString : SyncList<string>
     {
         protected override void SerializeItem(NetworkWriter writer, string item)
@@ -50,6 +51,7 @@ namespace UnityEngine.Networking
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public sealed class SyncListFloat : SyncList<float>
     {
         protected override void SerializeItem(NetworkWriter writer, float item)
@@ -94,6 +96,7 @@ namespace UnityEngine.Networking
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class SyncListInt : SyncList<int>
     {
         protected override void SerializeItem(NetworkWriter writer, int item)
@@ -139,6 +142,7 @@ namespace UnityEngine.Networking
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class SyncListUInt : SyncList<uint>
     {
         protected override void SerializeItem(NetworkWriter writer, uint item)
@@ -183,6 +187,7 @@ namespace UnityEngine.Networking
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class SyncListBool : SyncList<bool>
     {
         protected override void SerializeItem(NetworkWriter writer, bool item)
@@ -227,7 +232,7 @@ namespace UnityEngine.Networking
         }
     }
 
-
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class SyncListStruct<T> : SyncList<T> where T : struct
     {
         new public void AddInternal(T item)
@@ -253,6 +258,7 @@ namespace UnityEngine.Networking
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     abstract public class SyncList<T> : IList<T>
     {
         public delegate void SyncListChanged(Operation op, int itemIndex);

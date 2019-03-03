@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 
 namespace UnityEngine.Networking
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkServerSimple
     {
         bool m_Initialized = false;
@@ -57,7 +58,7 @@ namespace UnityEngine.Networking
                 return;
 
             m_Initialized = true;
-            NetworkTransportHelper.Init();
+            NetworkManager.activeTransport.Init();
 
             m_MsgBuffer = new byte[NetworkMessage.MaxMessageSize];
             m_MsgReader = new NetworkReader(m_MsgBuffer);
@@ -92,11 +93,11 @@ namespace UnityEngine.Networking
 
             if (m_UseWebSockets)
             {
-                m_ServerHostId = NetworkTransportHelper.AddWebsocketHost(m_HostTopology, serverListenPort, ipAddress);
+                m_ServerHostId = NetworkManager.activeTransport.AddWebsocketHost(m_HostTopology, serverListenPort, ipAddress);
             }
             else
             {
-                m_ServerHostId = NetworkTransportHelper.AddHost(m_HostTopology, serverListenPort, ipAddress);
+                m_ServerHostId = NetworkManager.activeTransport.AddHost(m_HostTopology, serverListenPort, ipAddress);
             }
 
             if (m_ServerHostId == -1)
@@ -121,11 +122,11 @@ namespace UnityEngine.Networking
 
             if (m_UseWebSockets)
             {
-                m_ServerHostId = NetworkTransportHelper.AddWebsocketHost(m_HostTopology, serverListenPort, null);
+                m_ServerHostId = NetworkManager.activeTransport.AddWebsocketHost(m_HostTopology, serverListenPort, null);
             }
             else
             {
-                m_ServerHostId = NetworkTransportHelper.AddHost(m_HostTopology, serverListenPort, null);
+                m_ServerHostId = NetworkManager.activeTransport.AddHost(m_HostTopology, serverListenPort, null);
             }
 
             if (m_ServerHostId == -1)
@@ -141,13 +142,13 @@ namespace UnityEngine.Networking
         {
             Initialize();
 
-            m_ServerHostId = NetworkTransportHelper.AddHost(m_HostTopology, listenPort, null);
+            m_ServerHostId = NetworkManager.activeTransport.AddHost(m_HostTopology, listenPort, null);
             if (LogFilter.logDebug) { Debug.Log("Server Host Slot Id: " + m_ServerHostId); }
 
             Update();
 
             byte error;
-            NetworkTransportHelper.ConnectAsNetworkHost(
+            NetworkManager.activeTransport.ConnectAsNetworkHost(
                 m_ServerHostId,
                 relayIp,
                 relayPort,
@@ -163,7 +164,7 @@ namespace UnityEngine.Networking
         public void Stop()
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkServerSimple stop "); }
-            NetworkTransportHelper.RemoveHost(m_ServerHostId);
+            NetworkManager.activeTransport.RemoveHost(m_ServerHostId);
             m_ServerHostId = -1;
         }
 
@@ -211,7 +212,7 @@ namespace UnityEngine.Networking
             var networkEvent = NetworkEventType.DataEvent;
             if (m_RelaySlotId != -1)
             {
-                networkEvent = NetworkTransportHelper.ReceiveRelayEventFromHost(m_ServerHostId, out error);
+                networkEvent = NetworkManager.activeTransport.ReceiveRelayEventFromHost(m_ServerHostId, out error);
                 if (NetworkEventType.Nothing != networkEvent)
                 {
                     if (LogFilter.logDebug) { Debug.Log("NetGroup event:" + networkEvent); }
@@ -228,7 +229,7 @@ namespace UnityEngine.Networking
 
             do
             {
-                networkEvent = NetworkTransportHelper.ReceiveFromHost(m_ServerHostId, out connectionId, out channelId, m_MsgBuffer, (int)m_MsgBuffer.Length, out receivedSize, out error);
+                networkEvent = NetworkManager.activeTransport.ReceiveFromHost(m_ServerHostId, out connectionId, out channelId, m_MsgBuffer, (int)m_MsgBuffer.Length, out receivedSize, out error);
                 if (networkEvent != NetworkEventType.Nothing)
                 {
                     if (LogFilter.logDev) { Debug.Log("Server event: host=" + m_ServerHostId + " event=" + networkEvent + " error=" + error); }
@@ -317,7 +318,7 @@ namespace UnityEngine.Networking
             NetworkID networkId;
             NodeID node;
             byte error2;
-            NetworkTransportHelper.GetConnectionInfo(m_ServerHostId, connectionId, out address, out port, out networkId, out node, out error2);
+            NetworkManager.activeTransport.GetConnectionInfo(m_ServerHostId, connectionId, out address, out port, out networkId, out node, out error2);
 
             NetworkConnection conn = (NetworkConnection)Activator.CreateInstance(m_NetworkConnectionClass);
             conn.SetHandlers(m_MessageHandlers);

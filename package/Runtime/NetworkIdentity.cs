@@ -13,6 +13,7 @@ namespace UnityEngine.Networking
     [ExecuteInEditMode]
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkIdentity")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public sealed class NetworkIdentity : MonoBehaviour
     {
         // configuration

@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 namespace UnityEditor
 {
     [CustomEditor(typeof(NetworkMigrationManager), true)]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkMigrationManagerEditor : Editor
     {
         bool m_Initialized;

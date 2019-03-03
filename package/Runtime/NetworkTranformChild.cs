@@ -5,6 +5,7 @@ using UnityEngine;
 namespace UnityEngine.Networking
 {
     [AddComponentMenu("Network/NetworkTransformChild")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkTransformChild : NetworkBehaviour
     {
         [SerializeField]

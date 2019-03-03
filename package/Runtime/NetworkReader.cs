@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace UnityEngine.Networking
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkReader
     {
         NetBuffer m_buf;

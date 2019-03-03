@@ -16,6 +16,7 @@ namespace UnityEngine.Networking
     };
 
     [AddComponentMenu("Network/NetworkManager")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkManager : MonoBehaviour
     {
         // configuration
@@ -60,6 +61,8 @@ namespace UnityEngine.Networking
 
         private EndPoint m_EndPoint;
         bool m_ClientLoadedScene;
+
+        static INetworkTransport s_ActiveTransport = new DefaultNetworkTransport();
 
         // properties
         public int networkPort               { get { return m_NetworkPort; } set { m_NetworkPort = value; } }
@@ -124,6 +127,36 @@ namespace UnityEngine.Networking
                     }
                 }
                 return numPlayers;
+            }
+        }
+
+        public static INetworkTransport defaultTransport
+        {
+            get
+            {
+                return new DefaultNetworkTransport();
+            }
+        }
+
+        public static INetworkTransport activeTransport
+        {
+            get
+            {
+                return s_ActiveTransport;
+            }
+            set
+            {
+                if (s_ActiveTransport != null && s_ActiveTransport.IsStarted)
+                {
+                    throw new InvalidOperationException("Cannot change network transport when current transport object is in use.");
+                }
+
+                if (value == null)
+                {
+                    throw new ArgumentNullException("Cannot set active transport to null.");
+                }
+
+                s_ActiveTransport = value;
             }
         }
 
@@ -298,7 +331,7 @@ namespace UnityEngine.Networking
 
             if (m_GlobalConfig != null)
             {
-                NetworkTransportHelper.Init(m_GlobalConfig);
+                NetworkManager.activeTransport.Init(m_GlobalConfig);
             }
 
             // passing a config overrides setting the connectionConfig property
@@ -426,7 +459,7 @@ namespace UnityEngine.Networking
 
             if (m_GlobalConfig != null)
             {
-                NetworkTransportHelper.Init(m_GlobalConfig);
+                NetworkManager.activeTransport.Init(m_GlobalConfig);
             }
 
             client = new NetworkClient();
@@ -434,7 +467,7 @@ namespace UnityEngine.Networking
 
             if (config != null)
             {
-                if ((config.UsePlatformSpecificProtocols) && (UnityEngine.Application.platform != RuntimePlatform.PS4) && (UnityEngine.Application.platform != RuntimePlatform.PSP2))
+                if ((config.UsePlatformSpecificProtocols) && (UnityEngine.Application.platform != RuntimePlatform.PS4))
                     throw new ArgumentOutOfRangeException("Platform specific protocols are not supported on this platform");
 
                 client.Configure(config, 1);
@@ -448,7 +481,7 @@ namespace UnityEngine.Networking
                     {
                         m_ConnectionConfig.AddChannel(m_Channels[i]);
                     }
-                    if ((m_ConnectionConfig.UsePlatformSpecificProtocols) && (UnityEngine.Application.platform != RuntimePlatform.PS4) && (UnityEngine.Application.platform != RuntimePlatform.PSP2))
+                    if ((m_ConnectionConfig.UsePlatformSpecificProtocols) && (UnityEngine.Application.platform != RuntimePlatform.PS4))
                         throw new ArgumentOutOfRangeException("Platform specific protocols are not supported on this platform");
                     client.Configure(m_ConnectionConfig, m_MaxConnections);
                 }
@@ -732,7 +765,7 @@ namespace UnityEngine.Networking
 
                 singleton.StopHost();
 
-                NetworkTransportHelper.Shutdown();
+                NetworkManager.activeTransport.Shutdown();
             }
 #endif
             if (singleton == null)

@@ -5,6 +5,7 @@ using UnityEngine.Networking.NetworkSystem;
 
 namespace UnityEngine.Networking
 {
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ClientScene
     {
         static List<PlayerController> s_LocalPlayers = new List<PlayerController>();
@@ -70,8 +71,8 @@ namespace UnityEngine.Networking
             s_IsReady = false;
             s_IsSpawnFinished = false;
             s_ReconnectId = ReconnectIdInvalid;
-            NetworkTransportHelper.Shutdown();
-            NetworkTransportHelper.Init();
+            NetworkManager.activeTransport.Shutdown();
+            NetworkManager.activeTransport.Init();
         }
 
         internal static bool GetPlayerController(short playerControllerId, out PlayerController player)

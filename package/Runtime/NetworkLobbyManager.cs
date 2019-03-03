@@ -9,6 +9,7 @@ using UnityEngine.SceneManagement;
 namespace UnityEngine.Networking
 {
     [AddComponentMenu("Network/NetworkLobbyManager")]
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkLobbyManager : NetworkManager
     {
         struct PendingPlayer

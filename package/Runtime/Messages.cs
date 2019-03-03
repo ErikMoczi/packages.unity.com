@@ -7,6 +7,7 @@ namespace UnityEngine.Networking
 {
     // This can't be an interface because users don't need to implement the
     // serialization functions, we'll code generate it for them when they omit it.
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public abstract class MessageBase
     {
         // De-serialize the contents of the reader into this message
@@ -20,7 +21,7 @@ namespace UnityEngine.Networking
 namespace UnityEngine.Networking.NetworkSystem
 {
     // ---------- General Typed Messages -------------------
-
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class StringMessage : MessageBase
     {
         public string value;
@@ -45,6 +46,7 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class IntegerMessage : MessageBase
     {
         public int value;
@@ -69,6 +71,7 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class EmptyMessage : MessageBase
     {
         public override void Deserialize(NetworkReader reader)
@@ -81,7 +84,7 @@ namespace UnityEngine.Networking.NetworkSystem
     }
 
     // ---------- Public System Messages -------------------
-
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ErrorMessage : MessageBase
     {
         public int errorCode;
@@ -97,14 +100,17 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ReadyMessage : EmptyMessage
     {
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NotReadyMessage : EmptyMessage
     {
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class AddPlayerMessage : MessageBase
     {
         public short playerControllerId;
@@ -132,6 +138,7 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class RemovePlayerMessage : MessageBase
     {
         public short playerControllerId;
@@ -147,7 +154,7 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
-
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class PeerAuthorityMessage : MessageBase
     {
         public int connectionId;
@@ -169,12 +176,14 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public struct PeerInfoPlayer
     {
         public NetworkInstanceId netId;
         public short playerControllerId;
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class PeerInfoMessage : MessageBase
     {
         public int connectionId;
@@ -235,6 +244,7 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class PeerListMessage : MessageBase
     {
         public PeerInfoMessage[] peers;
@@ -264,6 +274,7 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ReconnectMessage : MessageBase
     {
         public int oldConnectionId;
@@ -324,7 +335,6 @@ namespace UnityEngine.Networking.NetworkSystem
 */
 
     // ---------- Internal System Messages -------------------
-
     class ObjectSpawnMessage : MessageBase
     {
         public NetworkInstanceId netId;
