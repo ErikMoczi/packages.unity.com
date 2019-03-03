@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.6.1-preview] - 2019-02-28
+## [0.6.2-preview] - 2019-02-28
  - *BREAKING CODE CHANGES* 
    - to ease code navigation, we have added several layers of namespace to the code.  
    - All Instantiate API calls (Adddressables and AssetReference) have been changed to only work with GameObjects.
