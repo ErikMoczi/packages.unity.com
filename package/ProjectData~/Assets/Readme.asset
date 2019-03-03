@@ -30,11 +30,20 @@ MonoBehaviour:
     linkText: 
     url: 
   - heading: 
-    text: 'This project also includes the new Post-Processing stack, several presets
-      to jump start development, and example content. To learn more about Post-Processing
-      please refer to the wiki page located here: '
-    linkText: Post-Processing
-    url: https://github.com/Unity-Technologies/PostProcessing/wiki
+    text: 'HDRP uses its own implementation of post-processing, which is currently still in
+     development. HDRP’s implementation uses the Volume system to allow you to localize 
+     post-processing effects to a certain area of your Scene. For information about how to 
+     use the Volume system, see the documentation on Volumes: '
+    linkText: Volumes in HDRP
+    url: https://github.com/Unity-Technologies/ScriptableRenderPipeline/wiki/Volumes
+  - heading: 
+    text: 'This project uses the new Package Manager to bring you the latest features
+     Unity has to offer. Open the Package Manager from Windows > Package Manager and 
+     make sure you're using the most recent version of Lightweight Render Pipeline.
+     To update packages, select your desired package from the list on the left, and 
+     click the Update to button in the bottom right corner.'
+    linkText: 
+    url:
   - heading: 
     text: 'To read more about the HD Render Pipeline please refer to the Scriptable
       Render Pipeline wiki: '
