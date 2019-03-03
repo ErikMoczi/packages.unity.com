@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Burst.Compiler.IL;
-using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEditor.Compilation;
-using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.Burst.Editor
 {
@@ -20,7 +19,7 @@ namespace Unity.Burst.Editor
         {
             var result = new List<BurstCompileTarget>();
 
-            var valueTypes = new List<Type>();
+            var valueTypes = new List<TypeToVisit>();
             var interfaceToProducer = new Dictionary<Type, Type>();
 
             var assemblyList = GetAssemblyList(assemblyTypes);
@@ -89,6 +88,10 @@ namespace Unity.Burst.Editor
 
                     try
                     {
+                        // collect methods with types having a [BurstCompile] attribute
+                        bool visitStaticMethods = t.GetCustomAttribute<BurstCompileAttribute>() != null;
+                        bool isValueType = false;
+                        
                         if (t.IsInterface)
                         {
                             object[] attrs = t.GetCustomAttributes(typeof(JobProducerTypeAttribute), false);
@@ -106,7 +109,12 @@ namespace Unity.Burst.Editor
                             // NOTE: Make sure that we don't use a value type generic definition (e.g `class Outer<T> { struct Inner { } }`)
                             // We are only working on plain type or generic type instance!
                             if (!t.IsGenericTypeDefinition)
-                                valueTypes.Add(t);
+                                isValueType = true;
+                        }
+
+                        if (isValueType || visitStaticMethods)
+                        {
+                            valueTypes.Add(new TypeToVisit(t, visitStaticMethods));
                         }
                     }
                     catch (Exception ex)
@@ -123,10 +131,40 @@ namespace Unity.Burst.Editor
             //Debug.Log($"Mapped {interfaceToProducer.Count} producers; {valueTypes.Count} value types");
 
             // Revisit all types to find things that are compilable using the above producers.
-            foreach (var type in valueTypes)
+            foreach (var typePair in valueTypes)
             {
                 Type executeType = null;
 
+                var type = typePair.Type;
+
+                // collect static [BurstCompile] methods
+                if (typePair.CollectStaticMethods)
+                {
+                    try
+                    {
+                        var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                        foreach (var method in methods)
+                        {
+                            if (method.GetCustomAttribute<BurstCompileAttribute>() != null)
+                            {
+                                var target = new BurstCompileTarget(method, type, true);
+                                result.Add(target);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                    }
+                }
+
+                // If the type is not a value type, we don't need to proceed with struct Jobs
+                if (!type.IsValueType)
+                {
+                    continue;
+                }
+
+                // Otherwise try to find if we have an interface producer setup on the class
                 foreach (var interfaceType in type.GetInterfaces())
                 {
                     var genericLessInterface = interfaceType;
@@ -158,7 +196,7 @@ namespace Unity.Burst.Editor
                         throw new InvalidOperationException($"Burst reflection error. The type `{executeType}` does not contain an `Execute` method");
                     }
 
-                    var target = new BurstCompileTarget(executeMethod, type);
+                    var target = new BurstCompileTarget(executeMethod, type, false);
                     result.Add(target);
                 }
                 catch (Exception ex)
@@ -365,6 +403,20 @@ namespace Unity.Burst.Editor
                     }
                 }
             }
+        }
+
+        [DebuggerDisplay("{Type} (static methods: {CollectStaticMethods})")]
+        private struct TypeToVisit
+        {
+            public TypeToVisit(Type type, bool collectStaticMethods)
+            {
+                Type = type;
+                CollectStaticMethods = collectStaticMethods;
+            }
+
+            public readonly Type Type;
+
+            public readonly bool CollectStaticMethods;
         }
     }
 }

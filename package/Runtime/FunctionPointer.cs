@@ -1,6 +1,7 @@
 #if !UNITY_ZEROPLAYER && !UNITY_CSHARP_TINY
 using System;
 using System.Runtime.InteropServices;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.Burst
 {
@@ -19,6 +20,7 @@ namespace Unity.Burst
     internal struct FunctionPointer<T> : IFunctionPointer
 #endif
     {
+        [NativeDisableUnsafePtrRestriction]
         private readonly IntPtr _ptr;
 
         public FunctionPointer(IntPtr ptr)

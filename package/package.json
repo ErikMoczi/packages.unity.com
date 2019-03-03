@@ -1,9 +1,13 @@
 {
-    "name": "com.unity.burst",
-    "displayName": "Burst",
-    "version": "0.2.4-preview.48",
-    "unity": "2018.2",
-    "description": "Burst is a compiler, it translates from IL/.NET bytecode to highly optimized native code using LLVM.",
-    "dependencies": {
-    }
+  "name": "com.unity.burst",
+  "displayName": "Burst",
+  "version": "0.2.4-preview.49",
+  "unity": "2018.2",
+  "description": "Burst is a compiler, it translates from IL/.NET bytecode to highly optimized native code using LLVM.",
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.cds.internal.unity3d.com/burst/burst",
+    "revision": "d69a020ff00c62a8690417442acf49225ee806fe"
+  }
 }
