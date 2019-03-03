@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4-preview] - 2019-01-11
+
+### Changed
+- Fixed issue with assembly dependencies not being found by the weaver during certain conditions (like when doing full reimport).
+
+### Added
+- Added API documentation, migrated from unity source repo, only some formatting changes, text itself unchanged.
+
 ## [0.2.3-preview] - 2018-12-17
 
 ### This is the first release of the *Unity Multiplayer HLAPI \<com.unity.multiplayer-hlapi\>*.

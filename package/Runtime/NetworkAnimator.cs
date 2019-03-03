@@ -1,10 +1,16 @@
-#if ENABLE_UNET
 using System;
 using UnityEngine;
 using UnityEngine.Networking.NetworkSystem;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// A component to synchronize Mecanim animation states for networked objects.
+    /// <para>The animation of game objects can be networked by this component. There are two models of authority for networked movement:</para>
+    /// <para>If the object has authority on the client, then it should animated locally on the owning client. The animation state information will be sent from the owning client to the server, then broadcast to all of the other clients. This is common for player objects.</para>
+    /// <para>If the object has authority on the server, then it should be animated on the server and state information will be sent to all clients. This is common for objects not related to a specific client, such as an enemy unit.</para>
+    /// <para>The NetworkAnimator synchronizes the animation parameters that are checked in the inspector view. It does not automatically sychronize triggers. The function SetTrigger can by used by an object with authority to fire an animation trigger on other clients.</para>
+    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkAnimator")]
     [RequireComponent(typeof(NetworkIdentity))]
@@ -21,6 +27,9 @@ namespace UnityEngine.Networking
         static AnimationParametersMessage s_AnimationParametersMessage = new AnimationParametersMessage();
         static AnimationTriggerMessage s_AnimationTriggerMessage = new AnimationTriggerMessage();
 
+        /// <summary>
+        /// The animator component to synchronize.
+        /// </summary>
         // properties
         public Animator animator
         {
@@ -32,6 +41,11 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Sets whether an animation parameter should be auto sent.
+        /// </summary>
+        /// <param name="index">Index of the parameter in the Animator.</param>
+        /// <param name="value">The new value.</param>
         public void SetParameterAutoSend(int index, bool value)
         {
             if (value)
@@ -44,6 +58,11 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Gets whether an animation parameter should be auto sent.
+        /// </summary>
+        /// <param name="index">Index of the parameter in the Animator.</param>
+        /// <returns>True if the parameter should be sent.</returns>
         public bool GetParameterAutoSend(int index)
         {
             return (m_ParameterSendBits & (uint)(1 << index)) != 0;
@@ -339,11 +358,20 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Causes an animation trigger to be invoked for a networked object.
+        /// <para>If local authority is set, and this is called from the client, then the trigger will be invoked on the server and all clients. If not, then this is called on the server, and the trigger will be called on all clients.</para>
+        /// </summary>
+        /// <param name="triggerName">Name of trigger.</param>
         public void SetTrigger(string triggerName)
         {
             SetTrigger(Animator.StringToHash(triggerName));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="hash">Hash id of trigger (from the Animator).</param>
         public void SetTrigger(int hash)
         {
             var animMsg = new AnimationTriggerMessage();
@@ -482,4 +510,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif

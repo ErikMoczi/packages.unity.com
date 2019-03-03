@@ -1,19 +1,33 @@
 using System;
 using System.ComponentModel;
 
-#if ENABLE_UNET
-
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// An extension for the NetworkManager that displays a default HUD for controlling the network state of the game.
+    /// <para>This component also shows useful internal state for the networking system in the inspector window of the editor. It allows users to view connections, networked objects, message handlers, and packet statistics. This information can be helpful when debugging networked games.</para>
+    /// </summary>
     [AddComponentMenu("Network/NetworkManagerHUD")]
     [RequireComponent(typeof(NetworkManager))]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkManagerHUD : MonoBehaviour
     {
+        /// <summary>
+        /// The NetworkManager associated with this HUD.
+        /// </summary>
         public NetworkManager manager;
+        /// <summary>
+        /// Whether to show the default control HUD at runtime.
+        /// </summary>
         [SerializeField] public bool showGUI = true;
+        /// <summary>
+        /// The horizontal offset in pixels to draw the HUD runtime GUI at.
+        /// </summary>
         [SerializeField] public int offsetX;
+        /// <summary>
+        /// The vertical offset in pixels to draw the HUD runtime GUI at.
+        /// </summary>
         [SerializeField] public int offsetY;
 
         // Runtime variable
@@ -272,4 +286,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif //ENABLE_UNET

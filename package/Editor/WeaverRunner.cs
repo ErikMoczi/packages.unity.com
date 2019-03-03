@@ -93,8 +93,19 @@ namespace UnityEditor.Networking
             if (!foundThisAssembly)
             {
                 // Target assembly not found in current domain, trying to load it to check references 
-                // will lead to trouble in the build pipeline, so lets assume it should go to weaver
-                // (only saw this happen in runtime test framework on editor platform)
+                // will lead to trouble in the build pipeline, so lets assume it should go to weaver.
+                // Add all assemblies in current domain to dependency list since there could be a 
+                // dependency lurking there (there might be generated assemblies so ignore file not found exceptions).
+                // (can happen in runtime test framework on editor platform and when doing full library reimport)
+                foreach (var assembly in assemblies)
+                {
+                    try
+                    {
+                        if (!assembly.IsDynamic)
+                            depenencyPaths.Add(Path.GetDirectoryName(Assembly.Load(assembly.GetName().Name).Location));
+                    }
+                    catch (FileNotFoundException) { }
+                }
                 usesUnet = true;
             }
 
@@ -114,8 +125,6 @@ namespace UnityEditor.Networking
                 Debug.LogError("Failed to find hlapi runtime assembly");
                 return;
             }
-
-            //Debug.Log("Package invoking weaver with " + unityEngine + " " + unetAssemblyPath + " " + outputDirectory + " " + assemblyPath);
 
             Unity.UNetWeaver.Program.Process(unityEngine, unetAssemblyPath, outputDirectory, new[] { assemblyPath }, depenencyPaths.ToArray(), (value) => { Debug.LogWarning(value); }, (value) => { Debug.LogError(value); });
         }

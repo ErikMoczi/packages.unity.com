@@ -1,4 +1,3 @@
-#if ENABLE_UNET
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,6 +9,32 @@ using UnityEditor;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// The NetworkIdentity identifies objects across the network, between server and clients. Its primary data is a NetworkInstanceId which is allocated by the server and then set on clients. This is used in network communications to be able to lookup game objects on different machines.
+    /// <para>The NetworkIdentity is used to synchronize information in the object with the network. Only the server should create instances of objects which have NetworkIdentity as otherwise they will not be properly connected to the system.</para>
+    /// <para>For complex objects with a hierarchy of subcomponents, the NetworkIdentity must be on the root of the hierarchy. It is not supported to have multiple NetworkIdentity components on subcomponents of a hierarchy.</para>
+    /// <para>NetworkBehaviour scripts require a NetworkIdentity on the game object to be able to function.</para>
+    /// <para>The NetworkIdentity manages the dirty state of the NetworkBehaviours of the object. When it discovers that NetworkBehaviours are dirty, it causes an update packet to be created and sent to clients.</para>
+    /// <para>The flow for serialization updates managed by the NetworkIdentity is:</para>
+    /// <para>* Each NetworkBehaviour has a dirty mask. This mask is available inside OnSerialize as syncVarDirtyBits</para>
+    /// <para>* Each SyncVar in a NetworkBehaviour script is assigned a bit in the dirty mask.</para>
+    /// <para>* Changing the value of SyncVars causes the bit for that SyncVar to be set in the dirty mask</para>
+    /// <para>* Alternatively, calling SetDirtyBit() writes directly to the dirty mask</para>
+    /// <para>* NetworkIdentity objects are checked on the server as part of it&apos;s update loop</para>
+    /// <para>* If any NetworkBehaviours on a NetworkIdentity are dirty, then an UpdateVars packet is created for that object</para>
+    /// <para>* The UpdateVars packet is populated by calling OnSerialize on each NetworkBehaviour on the object</para>
+    /// <para>* NetworkBehaviours that are NOT dirty write a zero to the packet for their dirty bits</para>
+    /// <para>* NetworkBehaviours that are dirty write their dirty mask, then the values for the SyncVars that have changed</para>
+    /// <para>* If OnSerialize returns true for a NetworkBehaviour, the dirty mask is reset for that NetworkBehaviour, so it will not send again until its value changes.</para>
+    /// <para>* The UpdateVars packet is sent to ready clients that are observing the object</para>
+    /// <para>On the client:</para>
+    /// <para>* an UpdateVars packet is received for an object</para>
+    /// <para>* The OnDeserialize function is called for each NetworkBehaviour script on the object</para>
+    /// <para>* Each NetworkBehaviour script on the object reads a dirty mask.</para>
+    /// <para>* If the dirty mask for a NetworkBehaviour is zero, the OnDeserialize functions returns without reading any more</para>
+    /// <para>* If the dirty mask is non-zero value, then the OnDeserialize function reads the values for the SyncVars that correspond to the dirty bits that are set</para>
+    /// <para>* If there are SyncVar hook functions, those are invoked with the value read from the stream.</para>
+    /// </summary>
     [ExecuteInEditMode]
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkIdentity")]
@@ -43,8 +68,14 @@ namespace UnityEngine.Networking
         // check MarkForReset for more information.
         bool                        m_Reset = false;
         // properties
+        /// <summary>
+        /// Returns true if running as a client and this object was spawned by a server.
+        /// </summary>
         public bool isClient        { get { return m_IsClient; } }
 
+        /// <summary>
+        /// Returns true if running as a server, which spawned the object.
+        /// </summary>
         public bool isServer
         {
             get
@@ -54,14 +85,67 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This returns true if this object is the authoritative version of the object in the distributed network application.
+        /// <para>This value is determined at runtime, as opposed to localPlayerAuthority which is set on the prefab. For most objects, authority is held by the server / host. For objects with localPlayerAuthority set, authority is held by the client of that player.</para>
+        /// <para>For objects that had their authority set by AssignClientAuthority on the server, this will be true on the client that owns the object. NOT on other clients.</para>
+        /// </summary>
         public bool hasAuthority    { get { return m_HasAuthority; } }
 
+        /// <summary>
+        /// Unique identifier for this particular object instance, used for tracking objects between networked clients and the server.
+        /// <para>This is a unique identifier for this particular GameObject instance. Use it to track GameObjects between networked clients and the server.</para>
+        /// <code>
+        /// //For this example to work, attach a NetworkIdentity component to your GameObject.
+        /// //Then, create a new empty GameObject and drag it under your NetworkIdentity GameObject in the Hierarchy. This makes it the child of the GameObject. //Next, attach a TextMesh component to the child GameObject. You can then place this TextMesh GameObject to be above your GameObject in the Scene.
+        /// //Attach this script to the parent GameObject, and it changes the text of the TextMesh to the identity of your GameObject.
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class NetworkIdentityNetID : MonoBehaviour
+        /// {
+        ///    NetworkIdentity m_Identity;
+        ///    //This is a TextMesh component that you attach to the child of the NetworkIdentity GameObject
+        ///    TextMesh m_TextMesh;
+        ///
+        ///    void Start()
+        ///    {
+        ///        //Fetch the NetworkIdentity component of the GameObject
+        ///        m_Identity = GetComponent&lt;<see cref="NetworkIdentity">NetworkIdentity</see>&gt;();
+        ///        //Enter the child of your GameObject (the GameObject with the TextMesh you attach)
+        ///        //Fetch the TextMesh component of it
+        ///        m_TextMesh = GetComponentInChildren(typeof(TextMesh)) as TextMesh;
+        ///        //Change the Text of the TextMesh to show the netId
+        ///        m_TextMesh.text = "ID : " + m_Identity.netId;
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
         public NetworkInstanceId netId { get { return m_NetId; } }
+        /// <summary>
+        /// A unique identifier for NetworkIdentity objects within a scene.
+        /// <para>This is used for spawning scene objects on clients.</para>
+        /// </summary>
         public NetworkSceneId sceneId { get { return m_SceneId; } }
+        /// <summary>
+        /// Flag to make this object only exist when the game is running as a server (or host).
+        /// </summary>
         public bool serverOnly { get { return m_ServerOnly; } set { m_ServerOnly = value; } }
+        /// <summary>
+        /// localPlayerAuthority means that the client of the "owning" player has authority over their own player object.
+        /// <para>Authority for this object will be on the player's client. So hasAuthority will be true on that client - and false on the server and on other clients.</para>
+        /// </summary>
         public bool localPlayerAuthority { get { return m_LocalPlayerAuthority; } set { m_LocalPlayerAuthority = value; } }
+        /// <summary>
+        /// The client that has authority for this object. This will be null if no client has authority.
+        /// <para>This is set for player objects with localPlayerAuthority, and for objects set with AssignClientAuthority, and spawned with SpawnWithClientAuthority.</para>
+        /// </summary>
         public NetworkConnection clientAuthorityOwner { get { return m_ClientAuthorityOwner; }}
 
+        /// <summary>
+        /// Unique identifier used to find the source assets when server spawns the on clients.
+        /// </summary>
         public NetworkHash128 assetId
         {
             get
@@ -121,11 +205,54 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This returns true if this object is the one that represents the player on the local machine.
+        /// <para>This is set when the server has spawned an object for this particular client.</para>
+        /// </summary>
         public bool isLocalPlayer { get { return m_IsLocalPlayer; } }
+        /// <summary>
+        /// The id of the player associated with this GameObject.
+        /// <para>This is only valid if this GameObject is for a local player.</para>
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+        /// </summary>
         public short playerControllerId { get { return m_PlayerId; } }
+        /// <summary>
+        /// The UConnection associated with this NetworkIdentity. This is only valid for player objects on a local client.
+        /// </summary>
         public NetworkConnection connectionToServer { get { return m_ConnectionToServer; } }
+        /// <summary>
+        /// The connection associated with this <see cref="NetworkIdentity">NetworkIdentity.</see> This is only valid for player objects on the server.
+        /// <para>Use it to return details such as the connection&apos;s identity, IP address and ready status.</para>
+        /// <code>
+        /// //For this example to work, attach a NetworkIdentity component to your GameObject.
+        /// //Make sure your Scene has a NetworkManager and NetworkManagerHUD
+        /// //Attach this script to the GameObject, and it outputs the connection of your GameObject to the console.
+        ///
+        /// using System.Collections;
+        /// using System.Collections.Generic;
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class NetworkIdentityNetID : MonoBehaviour
+        /// {
+        ///    NetworkIdentity m_Identity;
+        ///    //This is a TextMesh component that you attach to the child of the NetworkIdentity GameObject
+        ///
+        ///    void Start()
+        ///    {
+        ///        //Fetch the NetworkIdentity component of the GameObject
+        ///        m_Identity = GetComponent&lt;NetworkIdentity&gt;();
+        ///        //Output to the console the connection associated with this NetworkIdentity
+        ///        Debug.Log("Connection : " + m_Identity.connectionToClient);
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
         public NetworkConnection connectionToClient { get { return m_ConnectionToClient; } }
 
+        /// <summary>
+        /// The set of network connections (players) that can see this object.
+        /// </summary>
         public ReadOnlyCollection<NetworkConnection> observers
         {
             get
@@ -155,7 +282,18 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// The delegate type for the clientAuthorityCallback.
+        /// </summary>
+        /// <param name="conn">The network connection that is gaining or losing authority.</param>
+        /// <param name="uv">The object whose client authority status is being changed.</param>
+        /// <param name="authorityState">The new state of client authority of the object for the connection.</param>
         public delegate void ClientAuthorityCallback(NetworkConnection conn, NetworkIdentity uv, bool authorityState);
+        /// <summary>
+        /// A callback that can be populated to be notified when the client-authority state of objects changes.
+        /// <para>Whenever an object is spawned using SpawnWithClientAuthority, or the client authority status of an object is changed with AssignClientAuthority or RemoveClientAuthority, then this callback will be invoked.</para>
+        /// <para>This callback is used by the NetworkMigrationManager to distribute client authority state to peers for host migration. If the NetworkMigrationManager is not being used, this callback does not need to be populated.</para>
+        /// </summary>
         public static ClientAuthorityCallback clientAuthorityCallback;
 
         static internal void AddNetworkId(uint id)
@@ -176,6 +314,11 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Force the scene ID to a specific value.
+        /// <para>This can be used to fix an invalid scene ID. If you process all the NetworkIdentity components in a scene you can assign them new values starting from 1.</para>
+        /// </summary>
+        /// <param name="newSceneId">The new scene ID.</param>
         // only used when fixing duplicate scene IDs duing post-processing
         public void ForceSceneId(int newSceneId)
         {
@@ -839,6 +982,10 @@ namespace UnityEngine.Networking
             conn.RemoveFromVisList(this, false);
         }
 
+        /// <summary>
+        /// This causes the set of players that can see this object to be rebuild. The OnRebuildObservers callback function will be invoked on each NetworkBehaviour.
+        /// </summary>
+        /// <param name="initialize">True if this is the first time.</param>
         public void RebuildObservers(bool initialize)
         {
             if (m_Observers == null)
@@ -937,6 +1084,12 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Removes ownership for an object for a client by its conneciton.
+        /// <para>This applies to objects that had authority set by AssignClientAuthority, or NetworkServer.SpawnWithClientAuthority. Authority cannot be removed for player objects.</para>
+        /// </summary>
+        /// <param name="conn">The connection of the client to remove authority for.</param>
+        /// <returns>True if authority is removed.</returns>
         public bool RemoveClientAuthority(NetworkConnection conn)
         {
             if (!isServer)
@@ -982,6 +1135,13 @@ namespace UnityEngine.Networking
             return true;
         }
 
+        /// <summary>
+        /// This assigns control of an object to a client via the client's <see cref="NetworkConnection">NetworkConnection.</see>
+        /// <para>This causes hasAuthority to be set on the client that owns the object, and NetworkBehaviour.OnStartAuthority will be called on that client. This object then will be in the NetworkConnection.clientOwnedObjects list for the connection.</para>
+        /// <para>Authority can be removed with RemoveClientAuthority. Only one client can own an object at any time. Only NetworkIdentities with localPlayerAuthority set can have client authority assigned. This does not need to be called for player objects, as their authority is setup automatically.</para>
+        /// </summary>
+        /// <param name="conn">	The connection of the client to assign authority to.</param>
+        /// <returns>True if authority was assigned.</returns>
         public bool AssignClientAuthority(NetworkConnection conn)
         {
             if (!isServer)
@@ -1086,4 +1246,3 @@ namespace UnityEngine.Networking
         }
     };
 }
-#endif //ENABLE_UNET

@@ -1,10 +1,17 @@
-#if ENABLE_UNET
 using System;
 using System.Collections.Generic;
 using UnityEngine.Networking.NetworkSystem;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// A client manager which contains static client information and functions.
+    /// <para>This manager contains references to tracked static local objects such as spawner registrations. It also has the default message handlers used by clients when they registered none themselves. The manager handles adding/removing player objects to the game after a client connection has been set as ready.</para>
+    /// <para>The ClientScene is a singleton, and it has static convenience methods such as ClientScene.Ready().</para>
+    /// <para>The ClientScene is used by the NetworkManager, but it can be used by itself.</para>
+    /// <para>As the ClientScene manages player objects on the client, it is where clients request to add players. The NetworkManager does this via the ClientScene automatically when auto-add-players is set, but it can be done through code using the function ClientScene.AddPlayer(). This sends an AddPlayer message to the server and will cause a player object to be created for this client.</para>
+    /// <para>Like NetworkServer, the ClientScene understands the concept of the local client. The function ClientScene.ConnectLocalServer() is used to become a host by starting a local client (when a server is already running).</para>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ClientScene
     {
@@ -24,12 +31,23 @@ namespace UnityEngine.Networking
         static OwnerMessage s_OwnerMessage = new OwnerMessage();
         static ClientAuthorityMessage s_ClientAuthorityMessage = new ClientAuthorityMessage();
 
+        /// <summary>
+        /// An invalid reconnect Id.
+        /// </summary>
         public const int ReconnectIdInvalid = -1;
+        /// <summary>
+        /// A constant ID used by the old host when it reconnects to the new host.
+        /// </summary>
         public const int ReconnectIdHost = 0;
         static int s_ReconnectId = ReconnectIdInvalid;
         static PeerInfoMessage[] s_Peers;
         static bool hasMigrationPending() { return s_ReconnectId != ReconnectIdInvalid; }
 
+        /// <summary>
+        /// Sets the Id that the ClientScene will use when reconnecting to a new host after host migration.
+        /// </summary>
+        /// <param name="newReconnectId">The Id to use when reconnecting to a game.</param>
+        /// <param name="peers">The set of known peers in the game. This may be null.</param>
         static public void SetReconnectId(int newReconnectId, PeerInfoMessage[] peers)
         {
             s_ReconnectId = newReconnectId;
@@ -50,15 +68,45 @@ namespace UnityEngine.Networking
         }
         static List<PendingOwner> s_PendingOwnerIds = new List<PendingOwner>();
 
+        /// <summary>
+        /// A list of all players added to the game.
+        /// <para>These are the players on this client, not all of the players in the game on the server. The client has no explicit knowledge of the player objects of other clients.</para>
+        /// </summary>
         public static List<PlayerController> localPlayers { get { return s_LocalPlayers; } }
+        /// <summary>
+        /// Returns true when a client's connection has been set to ready.
+        /// <para>A client that is ready recieves state updates from the server, while a client that is not ready does not. This useful when the state of the game is not normal, such as a scene change or end-of-game.</para>
+        /// <para>This is read-only. To change the ready state of a client, use ClientScene.Ready(). The server is able to set the ready state of clients using NetworkServer.SetClientReady(), NetworkServer.SetClientNotReady() and NetworkServer.SetAllClientsNotReady().</para>
+        /// <para>This is done when changing scenes so that clients don't receive state update messages during scene loading.</para>
+        /// </summary>
         public static bool ready { get { return s_IsReady; } }
+        /// <summary>
+        /// The NetworkConnection object that is currently "ready". This is the connection to the server where objects are spawned from.
+        /// <para>This connection can be used to send messages to the server. There can only be one ready connection at a time. There can be multiple NetworkClient instances in existence, each with their own NetworkConnections, but there is only one ClientScene instance and corresponding ready connection.</para>
+        /// </summary>
         public static NetworkConnection readyConnection { get { return s_ReadyConnection; }}
 
+        /// <summary>
+        /// The reconnectId to use when a client reconnects to the new host of a game after the old host was lost.
+        /// <para>This will be ClientScene.ReconnectIdInvalid by default (-1), and will be ClientScene.ReconnectIdHost when the old host is reconnecting to the host of the new game.</para>
+        /// </summary>
         public static int reconnectId { get { return s_ReconnectId; }}
 
+        /// <summary>
+        /// This is a dictionary of networked objects that have been spawned on the client.
+        /// <para>The key of the dictionary is the NetworkIdentity netId of the objects.</para>
+        /// </summary>
         //NOTE: spawn handlers, prefabs and local objects now live in NetworkScene
         public static Dictionary<NetworkInstanceId, NetworkIdentity> objects { get { return s_NetworkScene.localObjects; } }
+        /// <summary>
+        /// This is a dictionary of the prefabs that are registered on the client with ClientScene.RegisterPrefab().
+        /// <para>The key to the dictionary is the prefab asset Id.</para>
+        /// </summary>
         public static Dictionary<NetworkHash128, GameObject> prefabs { get { return NetworkScene.guidToPrefab; } }
+        /// <summary>
+        /// This is dictionary of the disabled NetworkIdentity objects in the scene that could be spawned by messages from the server.
+        /// <para>The key to the dictionary is the NetworkIdentity sceneId.</para>
+        /// </summary>
         public static Dictionary<NetworkSceneId, NetworkIdentity> spawnableObjects { get { return s_SpawnableObjects; } }
 
         internal static void Shutdown()
@@ -121,18 +169,39 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This adds a player GameObject for this client. This causes an AddPlayer message to be sent to the server, and NetworkManager.OnServerAddPlayer is called. If an extra message was passed to AddPlayer, then OnServerAddPlayer will be called with a NetworkReader that contains the contents of the message.
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client. This is not the global player number.</para>
+        /// </summary>
+        /// <param name="playerControllerId">The local player ID number.</param>
+        /// <returns>True if player was added.</returns>
         // use this if already ready
         public static bool AddPlayer(short playerControllerId)
         {
             return AddPlayer(null, playerControllerId);
         }
 
+        /// <summary>
+        /// This adds a player GameObject for this client. This causes an AddPlayer message to be sent to the server, and NetworkManager.OnServerAddPlayer is called. If an extra message was passed to AddPlayer, then OnServerAddPlayer will be called with a NetworkReader that contains the contents of the message.
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client. This is not the global player number.</para>
+        /// </summary>
+        /// <param name="readyConn">The connection to become ready for this client.</param>
+        /// <param name="playerControllerId">The local player ID number.</param>
+        /// <returns>True if player was added.</returns>
         // use this to implicitly become ready
         public static bool AddPlayer(NetworkConnection readyConn, short playerControllerId)
         {
             return AddPlayer(readyConn, playerControllerId, null);
         }
 
+        /// <summary>
+        /// This adds a player GameObject for this client. This causes an AddPlayer message to be sent to the server, and NetworkManager.OnServerAddPlayer is called. If an extra message was passed to AddPlayer, then OnServerAddPlayer will be called with a NetworkReader that contains the contents of the message.
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client. This is not the global player number.</para>
+        /// </summary>
+        /// <param name="readyConn">The connection to become ready for this client.</param>
+        /// <param name="playerControllerId">The local player ID number.</param>
+        /// <param name="extraMessage">An extra message object that can be passed to the server for this player.</param>
+        /// <returns>True if player was added.</returns>
         // use this to implicitly become ready
         public static bool AddPlayer(NetworkConnection readyConn, short playerControllerId, MessageBase extraMessage)
         {
@@ -204,6 +273,28 @@ namespace UnityEngine.Networking
             return true;
         }
 
+        /// <summary>
+        /// Send a reconnect message to the new host, used during host migration.
+        /// <para>An example usage might be that if you decide to spawn your own player and not use the built in "Auto Create Player" property in the NetworkManager together with HostMigration, you would need to send a reconnect message when your client reconnects. The code below illustrates such an example were we OnClientConnect check if we where disconnected from the host and in that case we send the reconnect message.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class NetworkManagerEx : NetworkManager
+        /// {
+        ///    public override void OnClientConnect(NetworkConnection conn)
+        ///    {
+        ///        base.OnClientConnect(conn);
+        ///        if (migrationManager.disconnectedFromHost)
+        ///        {
+        ///            ClientScene.SendReconnectMessage(null);
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="extraMessage">Any extra data to send.</param>
+        /// <returns>Returns true if the send succeeded.</returns>
         public static bool SendReconnectMessage(MessageBase extraMessage)
         {
             if (!hasMigrationPending())
@@ -255,6 +346,13 @@ namespace UnityEngine.Networking
             return true;
         }
 
+        /// <summary>
+        /// Removes the specified player ID from the game.
+        /// <para>Both the client and the server destroy the player GameObject and remove it from the player list. The playerControllerId is scoped to this client, not global to all players or clients.</para>
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+        /// </summary>
+        /// <param name="playerControllerId">The local playerControllerId number to be removed.</param>
+        /// <returns>Returns true if the player was successfully destoyed and removed.</returns>
         public static bool RemovePlayer(short playerControllerId)
         {
             if (LogFilter.logDebug) { Debug.Log("ClientScene::RemovePlayer() for ID " + playerControllerId + " called with connection [" + s_ReadyConnection + "]"); }
@@ -276,6 +374,64 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// Signal that the client connection is ready to enter the game.
+        /// <para>This could be for example when a client enters an ongoing game and has finished loading the current scene. The server should respond to the SYSTEM_READY event with an appropriate handler which instantiates the players object for example.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.UI;
+        /// using UnityEngine.Networking;
+        ///
+        /// //This makes the GameObject a NetworkManager GameObject
+        /// public class Example : NetworkManager
+        /// {
+        ///    public bool m_ServerStarted, m_ClientStarted;
+        ///    public Button m_ClientButton;
+        ///
+        ///
+        ///    //Detect when a client connects to the Server
+        ///    public override void OnClientConnect(NetworkConnection connection)
+        ///    {
+        ///        ClientScene.Ready(connection);
+        ///        ClientScene.AddPlayer(0);
+        ///        m_ClientStarted = true;
+        ///        //Output text to show the connection on the client side
+        ///        Debug.Log("Client Side : Client " + connection.connectionId + " Connected!");
+        ///        //Register and receive the message on the Client's side (NetworkConnection.Send Example)
+        ///        client.RegisterHandler(MsgType.Ready, ReadyMessage);
+        ///    }
+        ///
+        ///    //Use this to receive the message from the Server on the Client's side
+        ///    public void ReadyMessage(NetworkMessage networkMessage)
+        ///    {
+        ///        Debug.Log("Client Ready! ");
+        ///    }
+        ///
+        ///    //Detect when a client disconnects from the Server
+        ///    public override void OnClientDisconnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the connection loss on the client side
+        ///        Debug.Log("Client Side : Client " + connection.connectionId + " Lost!");
+        ///        m_ClientStarted = false;
+        ///    }
+        ///    public void ClientButton()
+        ///    {
+        ///        if (!m_ClientStarted)
+        ///        {
+        ///            NetworkServer.Reset();
+        ///            singleton.StartClient();
+        ///            m_ClientButton.GetComponentInChildren&lt;Text&gt;().text = "Disconnect";
+        ///        }
+        ///        else
+        ///        {
+        ///            singleton.StopClient();
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="conn">The client connection which is ready.</param>
+        /// <returns></returns>
         public static bool Ready(NetworkConnection conn)
         {
             if (s_IsReady)
@@ -299,6 +455,11 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// Create and connect a local client instance to the local server. This makes the client into a "host" - a client and server in the same process.
+        /// <para>The returned local client acts like normal remote client but internally all messages are routed directly to the server process. Commands from a local client are executed synchronously on the server.</para>
+        /// </summary>
+        /// <returns>A client object for communicating with the local server.</returns>
         static public NetworkClient ConnectLocalServer()
         {
             var newClient = new LocalClient();
@@ -416,53 +577,177 @@ namespace UnityEngine.Networking
             return "unknown";
         }
 
+        /// <summary>
+        /// Registers a prefab with the UNET spawning system.
+        /// <para>When a NetworkIdentity object is spawned on a server with NetworkServer.SpawnObject(), and the prefab that the object was created from was registered with RegisterPrefab(), the client will use that prefab to instantiate a corresponding client object with the same netId.</para>
+        /// <para>The NetworkManager has a list of spawnable prefabs, it uses this function to register those prefabs with the ClientScene.</para>
+        /// <para>The set of current spawnable object is available in the ClientScene static member variable ClientScene.prefabs, which is a dictionary of NetworkAssetIds and prefab references.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class PlantSpawner : NetworkBehaviour
+        /// {
+        ///    public GameObject plantPrefab;
+        ///
+        ///    public override void OnStartClient()
+        ///    {
+        ///        ClientScene.RegisterPrefab(plantPrefab);
+        ///    }
+        ///
+        ///    [Server]
+        ///    public void ServerSpawnPlant(Vector3 pos, Quaternion rot)
+        ///    {
+        ///        var plant = (GameObject)Instantiate(plantPrefab, pos, rot);
+        ///        NetworkServer.Spawn(plant);
+        ///    }
+        /// }
+        /// </code>
+        /// <para>The optional custom spawn and un-spawn handler functions can be used to implement more advanced spawning strategies such as object pools.</para>
+        /// </summary>
+        /// <param name="prefab">A Prefab that will be spawned.</param>
+        /// <param name="newAssetId">An assetId to be assigned to this prefab. This allows a dynamically created game object to be registered for an already known asset Id.</param>
         // this assigns the newAssetId to the prefab. This is for registering dynamically created game objects for already know assetIds.
         static public void RegisterPrefab(GameObject prefab, NetworkHash128 newAssetId)
         {
             NetworkScene.RegisterPrefab(prefab, newAssetId);
         }
 
+        /// <summary>
+        /// Registers a prefab with the UNET spawning system.
+        /// <para>When a NetworkIdentity object is spawned on a server with NetworkServer.SpawnObject(), and the prefab that the object was created from was registered with RegisterPrefab(), the client will use that prefab to instantiate a corresponding client object with the same netId.</para>
+        /// <para>The NetworkManager has a list of spawnable prefabs, it uses this function to register those prefabs with the ClientScene.</para>
+        /// <para>The set of current spawnable object is available in the ClientScene static member variable ClientScene.prefabs, which is a dictionary of NetworkAssetIds and prefab references.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class PlantSpawner : NetworkBehaviour
+        /// {
+        ///    public GameObject plantPrefab;
+        ///
+        ///    public override void OnStartClient()
+        ///    {
+        ///        ClientScene.RegisterPrefab(plantPrefab);
+        ///    }
+        ///
+        ///    [Server]
+        ///    public void ServerSpawnPlant(Vector3 pos, Quaternion rot)
+        ///    {
+        ///        var plant = (GameObject)Instantiate(plantPrefab, pos, rot);
+        ///        NetworkServer.Spawn(plant);
+        ///    }
+        /// }
+        /// </code>
+        /// <para>The optional custom spawn and un-spawn handler functions can be used to implement more advanced spawning strategies such as object pools.</para>
+        /// </summary>
+        /// <param name="prefab">A Prefab that will be spawned.</param>
         static public void RegisterPrefab(GameObject prefab)
         {
             NetworkScene.RegisterPrefab(prefab);
         }
 
+        /// <summary>
+        /// Registers a prefab with the UNET spawning system.
+        /// <para>When a NetworkIdentity object is spawned on a server with NetworkServer.SpawnObject(), and the prefab that the object was created from was registered with RegisterPrefab(), the client will use that prefab to instantiate a corresponding client object with the same netId.</para>
+        /// <para>The NetworkManager has a list of spawnable prefabs, it uses this function to register those prefabs with the ClientScene.</para>
+        /// <para>The set of current spawnable object is available in the ClientScene static member variable ClientScene.prefabs, which is a dictionary of NetworkAssetIds and prefab references.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class PlantSpawner : NetworkBehaviour
+        /// {
+        ///    public GameObject plantPrefab;
+        ///
+        ///    public override void OnStartClient()
+        ///    {
+        ///        ClientScene.RegisterPrefab(plantPrefab);
+        ///    }
+        ///
+        ///    [Server]
+        ///    public void ServerSpawnPlant(Vector3 pos, Quaternion rot)
+        ///    {
+        ///        var plant = (GameObject)Instantiate(plantPrefab, pos, rot);
+        ///        NetworkServer.Spawn(plant);
+        ///    }
+        /// }
+        /// </code>
+        /// <para>The optional custom spawn and un-spawn handler functions can be used to implement more advanced spawning strategies such as object pools.</para>
+        /// </summary>
+        /// <param name="prefab">A Prefab that will be spawned.</param>
+        /// <param name="spawnHandler">A method to use as a custom spawnhandler on clients.</param>
+        /// <param name="unspawnHandler">A method to use as a custom un-spawnhandler on clients.</param>
         static public void RegisterPrefab(GameObject prefab, SpawnDelegate spawnHandler, UnSpawnDelegate unspawnHandler)
         {
             NetworkScene.RegisterPrefab(prefab, spawnHandler, unspawnHandler);
         }
 
+        /// <summary>
+        /// Removes a registered spawn prefab that was setup with ClientScene.RegisterPrefab.
+        /// </summary>
+        /// <param name="prefab">The prefab to be removed from registration.</param>
         static public void UnregisterPrefab(GameObject prefab)
         {
             NetworkScene.UnregisterPrefab(prefab);
         }
 
+        /// <summary>
+        /// This is an advanced spawning function that registers a custom assetId with the UNET spawning system.
+        /// <para>This can be used to register custom spawning methods for an assetId - instead of the usual method of registering spawning methods for a prefab. This should be used when no prefab exists for the spawned objects - such as when they are constructed dynamically at runtime from configuration data.</para>
+        /// </summary>
+        /// <param name="assetId">Custom assetId string.</param>
+        /// <param name="spawnHandler">A method to use as a custom spawnhandler on clients.</param>
+        /// <param name="unspawnHandler">A method to use as a custom un-spawnhandler on clients.</param>
         static public void RegisterSpawnHandler(NetworkHash128 assetId, SpawnDelegate spawnHandler, UnSpawnDelegate unspawnHandler)
         {
             NetworkScene.RegisterSpawnHandler(assetId, spawnHandler, unspawnHandler);
         }
 
+        /// <summary>
+        /// Removes a registered spawn handler function that was registered with ClientScene.RegisterHandler().
+        /// </summary>
+        /// <param name="assetId">The assetId for the handler to be removed for.</param>
         static public void UnregisterSpawnHandler(NetworkHash128 assetId)
         {
             NetworkScene.UnregisterSpawnHandler(assetId);
         }
 
+        /// <summary>
+        /// This clears the registered spawn prefabs and spawn handler functions for this client.
+        /// </summary>
         static public void ClearSpawners()
         {
             NetworkScene.ClearSpawners();
         }
 
+        /// <summary>
+        /// Destroys all networked objects on the client.
+        /// <para>This can be used to clean up when a network connection is closed.</para>
+        /// </summary>
         static public void DestroyAllClientObjects()
         {
             s_NetworkScene.DestroyAllClientObjects();
         }
 
+        /// <summary>
+        /// NetId is a unique number assigned to all objects with NetworkIdentity components in a game.
+        /// <para>This number is the same on the server and all connected clients for a particular object, so it can be used to identify objects across the network. The FindLocalObject() function is called on a client to transform a netId received from a server to a local game object.</para>
+        /// </summary>
+        /// <param name="netId">NetId of object.</param>
+        /// <param name="obj">Networked object.</param>
         static public void SetLocalObject(NetworkInstanceId netId, GameObject obj)
         {
             // if still receiving initial state, dont set isClient
             s_NetworkScene.SetLocalObject(netId, obj, s_IsSpawnFinished, false);
         }
 
+        /// <summary>
+        /// This finds the local NetworkIdentity object with the specified network Id.
+        /// <para>NetId is a unique number assigned to all objects with NetworkIdentity components in a game. This number is the same on the server and all connected clients for a particular object, so it can be used to identify objects across the network. The FindLocalObject() function is called on a client to transform a netId received from a server to a local game object.</para>
+        /// </summary>
+        /// <param name="netId">The id of the networked object.</param>
+        /// <returns>The game object that matches the netId.</returns>
         static public GameObject FindLocalObject(NetworkInstanceId netId)
         {
             return s_NetworkScene.FindLocalObject(netId);
@@ -848,4 +1133,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif //ENABLE_UNET

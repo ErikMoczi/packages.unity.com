@@ -1,4 +1,3 @@
-#if ENABLE_UNET
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -8,6 +7,12 @@ using UnityEngine.Networking.NetworkSystem;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// This is a network client class used by the networking system. It contains a NetworkConnection that is used to connect to a network server.
+    /// <para>The <see cref="NetworkClient">NetworkClient</see> handle connection state, messages handlers, and connection configuration. There can be many <see cref="NetworkClient">NetworkClient</see> instances in a process at a time, but only one that is connected to a game server (<see cref="NetworkServer">NetworkServer</see>) that uses spawned objects.</para>
+    /// <para><see cref="NetworkClient">NetworkClient</see> has an internal update function where it handles events from the transport layer. This includes asynchronous connect events, disconnect events and incoming data from a server.</para>
+    /// <para>The <see cref="NetworkManager">NetworkManager</see> has a NetworkClient instance that it uses for games that it starts, but the NetworkClient may be used by itself.</para>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkClient
     {
@@ -18,7 +23,14 @@ namespace UnityEngine.Networking
         static List<NetworkClient> s_Clients = new List<NetworkClient>();
         static bool s_IsActive;
 
+        /// <summary>
+        /// A list of all the active network clients in the current process.
+        /// <para>This is NOT a list of all clients that are connected to the remote server, it is client instances on the local game.</para>
+        /// </summary>
         public static List<NetworkClient> allClients { get { return s_Clients; } }
+        /// <summary>
+        /// True if a network client is currently active.
+        /// </summary>
         public static bool active { get { return s_IsActive; } }
 
         HostTopology m_HostTopology;
@@ -65,17 +77,42 @@ namespace UnityEngine.Networking
             conn.SetHandlers(m_MessageHandlers);
         }
 
+        /// <summary>
+        /// The IP address of the server that this client is connected to.
+        /// <para>This will be empty if the client has not connected yet.</para>
+        /// </summary>
         public string serverIp { get { return m_ServerIp; } }
+        /// <summary>
+        /// The port of the server that this client is connected to.
+        /// <para>This will be zero if the client has not connected yet.</para>
+        /// </summary>
         public int serverPort { get { return m_ServerPort; } }
+        /// <summary>
+        /// The NetworkConnection object this client is using.
+        /// </summary>
         public NetworkConnection connection { get { return m_Connection; } }
 
         [Obsolete("Moved to NetworkMigrationManager.")]
         public PeerInfoMessage[] peers { get { return null; } }
 
         internal int hostId { get { return m_ClientId; } }
+        /// <summary>
+        /// The registered network message handlers.
+        /// </summary>
         public Dictionary<short, NetworkMessageDelegate> handlers { get { return m_MessageHandlers.GetHandlers(); } }
+        /// <summary>
+        /// The number of QoS channels currently configured for this client.
+        /// </summary>
         public int numChannels { get { return m_HostTopology.DefaultConfig.ChannelCount; } }
+        /// <summary>
+        /// The host topology that this client is using.
+        /// <para>This is read-only once the client is started.</para>
+        /// </summary>
         public HostTopology hostTopology { get { return m_HostTopology; }}
+        /// <summary>
+        /// The local port that the network client uses to connect to the server.
+        /// <para>It defaults to 0, which means the network client will use a free port of system choice.</para>
+        /// </summary>
         public int hostPort
         {
             get { return m_HostPort; }
@@ -91,18 +128,34 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This gives the current connection status of the client.
+        /// </summary>
         public bool isConnected { get { return m_AsyncConnect == ConnectState.Connected; }}
 
+        /// <summary>
+        /// The class to use when creating new NetworkConnections.
+        /// <para>This can be set with SetNetworkConnectionClass. This allows custom classes that do special processing of data from the transport layer to be used with the NetworkClient.</para>
+        /// <para>See NetworkConnection.TransportSend and NetworkConnection.TransportReceive for details.</para>
+        /// </summary>
         public Type networkConnectionClass
         {
             get { return m_NetworkConnectionClass; }
         }
 
+        /// <summary>
+        /// This sets the class that is used when creating new network connections.
+        /// <para>The class must be derived from NetworkConnection.</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
         public void SetNetworkConnectionClass<T>() where T : NetworkConnection
         {
             m_NetworkConnectionClass = typeof(T);
         }
 
+        /// <summary>
+        /// Creates a new NetworkClient instance.
+        /// </summary>
         public NetworkClient()
         {
             if (LogFilter.logDev) { Debug.Log("Client created version " + Version.Current); }
@@ -125,12 +178,61 @@ namespace UnityEngine.Networking
             RegisterSystemHandlers(false);
         }
 
+        /// <summary>
+        /// This configures the transport layer settings for a client.
+        /// <para>The settings in the ConnectionConfig or HostTopology object will be used to configure the transport layer connection used by this client. This must match the configuration of the server.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class Example : MonoBehaviour
+        /// {
+        ///    void DoConnect()
+        ///    {
+        ///        ConnectionConfig config = new ConnectionConfig();
+        ///        config.AddChannel(QosType.ReliableSequenced);
+        ///        config.AddChannel(QosType.UnreliableSequenced);
+        ///        config.PacketSize = 500;
+        ///        NetworkClient client = new NetworkClient();
+        ///        client.Configure(config, 1);
+        ///        client.Connect("127.0.0.1", 7070);
+        ///    }
+        /// };
+        /// </code>
+        /// </summary>
+        /// <param name="config">Transport layer configuration object.</param>
+        /// <param name="maxConnections">The maximum number of connections to allow.</param>
+        /// <returns>True if the configuration was successful.</returns>
         public bool Configure(ConnectionConfig config, int maxConnections)
         {
             HostTopology top = new HostTopology(config, maxConnections);
             return Configure(top);
         }
 
+        /// <summary>
+        /// This configures the transport layer settings for a client.
+        /// <para>The settings in the ConnectionConfig or HostTopology object will be used to configure the transport layer connection used by this client. This must match the configuration of the server.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class Example : MonoBehaviour
+        /// {
+        ///    void DoConnect()
+        ///    {
+        ///        ConnectionConfig config = new ConnectionConfig();
+        ///        config.AddChannel(QosType.ReliableSequenced);
+        ///        config.AddChannel(QosType.UnreliableSequenced);
+        ///        config.PacketSize = 500;
+        ///        NetworkClient client = new NetworkClient();
+        ///        client.Configure(config, 1);
+        ///        client.Connect("127.0.0.1", 7070);
+        ///    }
+        /// };
+        /// </code>
+        /// </summary>
+        /// <param name="topology">Transport layer topology object.</param>
+        /// <returns>True if the configuration was successful.</returns>
         public bool Configure(HostTopology topology)
         {
             //NOTE: this maxConnections is across all clients that use this tuner, so it is
@@ -145,6 +247,12 @@ namespace UnityEngine.Networking
             ConnectWithRelay(matchInfo);
         }
 
+        /// <summary>
+        /// This is used by a client that has lost the connection to the old host, to reconnect to the new host of a game.
+        /// </summary>
+        /// <param name="serverIp">The IP address of the new host.</param>
+        /// <param name="serverPort">The port of the new host.</param>
+        /// <returns>True if able to reconnect.</returns>
         public bool ReconnectToNewHost(string serverIp, int serverPort)
         {
             if (!NetworkClient.active)
@@ -279,6 +387,13 @@ namespace UnityEngine.Networking
             return true;
         }
 
+        /// <summary>
+        /// Connect client to a NetworkServer instance with simulated latency and packet loss.
+        /// </summary>
+        /// <param name="serverIp">Target IP address or hostname.</param>
+        /// <param name="serverPort">Target port number.</param>
+        /// <param name="latency">Simulated latency in milliseconds.</param>
+        /// <param name="packetLoss">Simulated packet loss percentage.</param>
         public void ConnectWithSimulator(string serverIp, int serverPort, int latency, float packetLoss)
         {
             m_UseSimulator = true;
@@ -306,6 +421,46 @@ namespace UnityEngine.Networking
             return true;
         }
 
+        /// <summary>
+        /// Connect client to a NetworkServer instance.
+        /// <para>Connecting to a server is asynchronous. There is connection message that is fired when the client connects. If the connection fails, a MsgType.Error message will be generated. Once a connection is established you are able to send messages on the connection using NetworkClient.Send(). If using other features of the high level api, the client should call NetworkClient.IsReady() once it is ready to participate in the game. At that point the client will be sent spawned objects and state update messages.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class NetClient
+        /// {
+        ///    NetworkClient myClient;
+        ///
+        ///    public void OnConnected(NetworkConnection conn, NetworkReader reader)
+        ///    {
+        ///        Debug.Log("Connected to server");
+        ///    }
+        ///
+        ///    public void OnDisconnected(NetworkConnection conn, NetworkReader reader)
+        ///    {
+        ///        Debug.Log("Disconnected from server");
+        ///    }
+        ///
+        ///    public void OnError(NetworkConnection conn, NetworkReader reader)
+        ///    {
+        ///        SystemErrorMessage errorMsg = reader.SmartRead&lt;SystemErrorMessage&gt;();
+        ///        Debug.Log("Error connecting with code " + errorMsg.errorCode);
+        ///    }
+        ///
+        ///    public void Start()
+        ///    {
+        ///        myClient = NetworkClient.Instance;
+        ///        myClient.RegisterHandler(MsgType.SYSTEM_CONNECT, OnConnected);
+        ///        myClient.RegisterHandler(MsgType.SYSTEM_DISCONNECT, OnDisconnected);
+        ///        myClient.RegisterHandler(MsgType.SYSTEM_ERROR, OnError);
+        ///        myClient.Connect("127.0.0.1", 8888);
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="serverIp">Target IP address or hostname.</param>
+        /// <param name="serverPort">Target port number.</param>
         public void Connect(string serverIp, int serverPort)
         {
             PrepareForConnect();
@@ -525,6 +680,10 @@ namespace UnityEngine.Networking
             if (error != 0) { Debug.LogError("ConnectToNetworkPeer Error: " + error); }
         }
 
+        /// <summary>
+        /// Disconnect from server.
+        /// <para>The disconnect message will be invoked.</para>
+        /// </summary>
         public virtual void Disconnect()
         {
             m_AsyncConnect = ConnectState.Disconnected;
@@ -542,6 +701,41 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This sends a network message with a message Id to the server. This message is sent on channel zero, which by default is the reliable channel.
+        /// <para>The message must be an instance of a class derived from MessageBase.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class RegisterHostMessage : MessageBase
+        /// {
+        ///    public string gameName;
+        ///    public string comment;
+        ///    public bool passwordProtected;
+        /// }
+        ///
+        /// public class MasterClient
+        /// {
+        ///    public NetworkClient client;
+        ///
+        ///    public const short RegisterHostMsgId = 888;
+        ///
+        ///    public void RegisterHost(string name)
+        ///    {
+        ///        RegisterHostMessage msg = new RegisterHostMessage();
+        ///        msg.gameName = name;
+        ///        msg.comment = "test";
+        ///        msg.passwordProtected = false;
+        ///        client.Send(RegisterHostMsgId, msg);
+        ///    }
+        /// }
+        /// </code>
+        /// <para>The message id passed to Send() is used to identify the handler function to invoke on the server when the message is received.</para>
+        /// </summary>
+        /// <param name="msgType">The id of the message to send.</param>
+        /// <param name="msg">A message instance to send.</param>
+        /// <returns>True if message was sent.</returns>
         public bool Send(short msgType, MessageBase msg)
         {
             if (m_Connection != null)
@@ -560,6 +754,33 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// This sends the contents of the NetworkWriter's buffer to the connected server on the specified channel.
+        /// <para>The format of the data in the writer must be properly formatted for it to be processed as a message by the server. The functions StartMessage() and FinishMessage() can be used to properly format messages:</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class TestClient
+        /// {
+        ///    public NetworkClient client;
+        ///
+        ///    public const int RegisterHostMsgId = 888;
+        ///
+        ///    public void RegisterHost(string name)
+        ///    {
+        ///        NetworkWriter writer = new NetworkWriter();
+        ///        writer.StartMessage(RegisterHostMsgId);
+        ///        writer.Write(name);
+        ///        writer.FinishMessage();
+        ///        client.SendWriter(writer, Channels.DefaultReliable);
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="writer">Writer object containing data to send.</param>
+        /// <param name="channelId">QoS channel to send data on.</param>
+        /// <returns>True if data successfully sent.</returns>
         public bool SendWriter(NetworkWriter writer, int channelId)
         {
             if (m_Connection != null)
@@ -575,6 +796,14 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// This sends the data in an array of bytes to the server that the client is connected to.
+        /// <para>The data must be properly formatted.</para>
+        /// </summary>
+        /// <param name="data">Data to send.</param>
+        /// <param name="numBytes">Number of bytes of data.</param>
+        /// <param name="channelId">The QoS channel to send data on.</param>
+        /// <returns>True if successfully sent.</returns>
         public bool SendBytes(byte[] data, int numBytes, int channelId)
         {
             if (m_Connection != null)
@@ -590,6 +819,13 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// This sends a network message with a message Id to the server on channel one, which by default is the unreliable channel.
+        /// <para>This does the same thing as NetworkClient.Send(), except that it send on the unreliable channel.</para>
+        /// </summary>
+        /// <param name="msgType">The message id to send.</param>
+        /// <param name="msg">The message to send.</param>
+        /// <returns>True if the message was sent.</returns>
         public bool SendUnreliable(short msgType, MessageBase msg)
         {
             if (m_Connection != null)
@@ -608,6 +844,14 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// This sends a network message with a message Id to the server on a specific channel.
+        /// <para>This does the same thing as NetworkClient.Send(), but allows a transport layer QoS channel to be specified.</para>
+        /// </summary>
+        /// <param name="msgType">The id of the message to send.</param>
+        /// <param name="msg">The message to send.</param>
+        /// <param name="channelId">The channel to send the message on.</param>
+        /// <returns>True if the message was sent.</returns>
         public bool SendByChannel(short msgType, MessageBase msg, int channelId)
         {
 #if UNITY_EDITOR
@@ -626,6 +870,10 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// Set the maximum amount of time that can pass for transmitting the send buffer.
+        /// </summary>
+        /// <param name="seconds">Delay in seconds.</param>
         public void SetMaxDelay(float seconds)
         {
             if (m_Connection == null)
@@ -636,6 +884,10 @@ namespace UnityEngine.Networking
             m_Connection.SetMaxDelay(seconds);
         }
 
+        /// <summary>
+        /// Shut down a client.
+        /// <para>This should be done when a client is no longer going to be used.</para>
+        /// </summary>
         public void Shutdown()
         {
             if (LogFilter.logDebug) Debug.Log("Shutting down client " + m_ClientId);
@@ -831,6 +1083,13 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Get outbound network statistics for the client.
+        /// </summary>
+        /// <param name="numMsgs">Number of messages sent so far (including collated messages send through buffer).</param>
+        /// <param name="numBufferedMsgs">Number of messages sent through buffer.</param>
+        /// <param name="numBytes">Number of bytes sent so far.</param>
+        /// <param name="lastBufferedPerSecond">Number of messages buffered for sending per second.</param>
         public void GetStatsOut(out int numMsgs, out int numBufferedMsgs, out int numBytes, out int lastBufferedPerSecond)
         {
             numMsgs = 0;
@@ -844,6 +1103,11 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Get inbound network statistics for the client.
+        /// </summary>
+        /// <param name="numMsgs">Number of messages received so far.</param>
+        /// <param name="numBytes">Number of bytes received so far.</param>
         public void GetStatsIn(out int numMsgs, out int numBytes)
         {
             numMsgs = 0;
@@ -855,6 +1119,10 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Retrieves statistics about the network packets sent on this connection.
+        /// </summary>
+        /// <returns>Dictionary of packet statistics for the client's connection.</returns>
         public Dictionary<short, NetworkConnection.PacketStat> GetConnectionStats()
         {
             if (m_Connection == null)
@@ -863,6 +1131,10 @@ namespace UnityEngine.Networking
             return m_Connection.packetStats;
         }
 
+        /// <summary>
+        /// Resets the statistics return by NetworkClient.GetConnectionStats() to zero values.
+        /// <para>Useful when building per-second network statistics.</para>
+        /// </summary>
         public void ResetConnectionStats()
         {
             if (m_Connection == null)
@@ -871,6 +1143,11 @@ namespace UnityEngine.Networking
             m_Connection.ResetStats();
         }
 
+        /// <summary>
+        /// Gets the Return Trip Time for this connection.
+        /// <para>This value is calculated by the transport layer.</para>
+        /// </summary>
+        /// <returns>Return trip time in milliseconds.</returns>
         public int GetRTT()
         {
             if (m_ClientId == -1)
@@ -893,6 +1170,32 @@ namespace UnityEngine.Networking
             NetworkCRC.Validate(s_CRCMessage.scripts, numChannels);
         }
 
+        /// <summary>
+        /// Register a handler for a particular message type.
+        /// <para>There are several system message types which you can add handlers for. You can also add your own message types.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class Server : MonoBehaviour
+        /// {
+        ///    void Start()
+        ///    {
+        ///        NetworkServer.Listen(7070);
+        ///        Debug.Log("Registering server callbacks");
+        ///        NetworkClient client = new NetworkClient();
+        ///        client.RegisterHandler(MsgType.Connect, OnConnected);
+        ///    }
+        ///
+        ///    void OnConnected(NetworkMessage netMsg)
+        ///    {
+        ///        Debug.Log("Client connected");
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="msgType">Message type number.</param>
+        /// <param name="handler">Function handler which will be invoked for when this message type is received.</param>
         public void RegisterHandler(short msgType, NetworkMessageDelegate handler)
         {
             m_MessageHandlers.RegisterHandler(msgType, handler);
@@ -903,11 +1206,19 @@ namespace UnityEngine.Networking
             m_MessageHandlers.RegisterHandlerSafe(msgType, handler);
         }
 
+        /// <summary>
+        /// Unregisters a network message handler.
+        /// </summary>
+        /// <param name="msgType">The message type to unregister.</param>
         public void UnregisterHandler(short msgType)
         {
             m_MessageHandlers.UnregisterHandler(msgType);
         }
 
+        /// <summary>
+        /// Retrieves statistics about the network packets sent on all connections.
+        /// </summary>
+        /// <returns>Dictionary of stats.</returns>
         static public Dictionary<short, NetworkConnection.PacketStat> GetTotalConnectionStats()
         {
             Dictionary<short, NetworkConnection.PacketStat> stats = new Dictionary<short, NetworkConnection.PacketStat>();
@@ -954,6 +1265,10 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Shuts down all network clients.
+        /// <para>This also shuts down the transport layer.</para>
+        /// </summary>
         static public void ShutdownAll()
         {
             while (s_Clients.Count != 0)
@@ -982,4 +1297,3 @@ namespace UnityEngine.Networking
         }
     };
 }
-#endif //ENABLE_UNET

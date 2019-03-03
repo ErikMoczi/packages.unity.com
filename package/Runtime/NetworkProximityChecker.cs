@@ -1,30 +1,55 @@
-#if ENABLE_UNET
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// Component that controls visibility of networked objects for players.
+    /// <para>Any object with this component on it will not be visible to players more than a (configurable) distance away.</para>
+    /// </summary>
     [AddComponentMenu("Network/NetworkProximityChecker")]
     [RequireComponent(typeof(NetworkIdentity))]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkProximityChecker : NetworkBehaviour
     {
+        /// <summary>
+        /// Enumeration of methods to use to check proximity.
+        /// </summary>
         public enum CheckMethod
         {
+            /// <summary>
+            /// Use 3D physics to determine proximity.
+            /// </summary>
             Physics3D,
+            /// <summary>
+            /// Use 2D physics to determine proximity.
+            /// </summary>
             Physics2D
         };
 
+        /// <summary>
+        /// The maximim range that objects will be visible at.
+        /// </summary>
         [TooltipAttribute("The maximum range that objects will be visible at.")]
         public int visRange = 10;
 
+        /// <summary>
+        /// How often (in seconds) that this object should update the set of players that can see it.
+        /// </summary>
         [TooltipAttribute("How often (in seconds) that this object should update the set of players that can see it.")]
         public float visUpdateInterval = 1.0f; // in seconds
 
+        /// <summary>
+        /// Which method to use for checking proximity of players.
+        /// </summary>
         [TooltipAttribute("Which method to use for checking proximity of players.\n\nPhysics3D uses 3D physics to determine proximity.\n\nPhysics2D uses 2D physics to determine proximity.")]
         public CheckMethod checkMethod = CheckMethod.Physics3D;
 
+        /// <summary>
+        /// Flag to force this object to be hidden for players.
+        /// <para>If this object is a player object, it will not be hidden for that player.</para>
+        /// </summary>
         [TooltipAttribute("Enable to force this object to be hidden from players.")]
         public bool forceHidden = false;
 
@@ -137,4 +162,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif

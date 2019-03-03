@@ -1,18 +1,63 @@
 using System;
 using System.Collections.Generic;
 
-#if ENABLE_UNET
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// Network message classes should be derived from this class. These message classes can then be sent using the various Send functions of NetworkConnection, NetworkClient and NetworkServer.
+    /// <para>Public data fields of classes derived from MessageBase will be automatically serialized with the class. The virtual methods Serialize and Deserialize may be implemented by developers for precise control, but if they are not implemented, then implementations will be generated for them.</para>
+    /// <para><b>Note :</b> Unity uses its own network serialization system. It doesn't support the NonSerialized attribute. Instead, use private variables.</para>
+    /// <para>In the example below, the methods have implementations, but if those methods were not implemented, the message would still be usable.</para>
+    /// <code>
+    /// using UnityEngine;
+    /// using UnityEngine.Networking;
+    ///
+    /// class SpawnMessage : MessageBase
+    /// {
+    ///    public uint netId;
+    ///    public NetworkHash128 assetId;
+    ///    public Vector3 position;
+    ///    public byte[] payload;
+    ///
+    ///    // This method would be generated
+    ///    public override void Deserialize(NetworkReader reader)
+    ///    {
+    ///        netId = reader.ReadPackedUInt32();
+    ///        assetId = reader.ReadNetworkHash128();
+    ///        position = reader.ReadVector3();
+    ///        payload = reader.ReadBytesAndSize();
+    ///    }
+    ///
+    ///    // This method would be generated
+    ///    public override void Serialize(NetworkWriter writer)
+    ///    {
+    ///        writer.WritePackedUInt32(netId);
+    ///        writer.Write(assetId);
+    ///        writer.Write(position);
+    ///        writer.WriteBytesFull(payload);
+    ///    }
+    /// }
+    /// </code>
+    /// </summary>
     // This can't be an interface because users don't need to implement the
     // serialization functions, we'll code generate it for them when they omit it.
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public abstract class MessageBase
     {
+        /// <summary>
+        /// This method is used to populate a message object from a NetworkReader stream.
+        /// <para>Developers may implement this method for precise control of serialization, but they do no have to. An implemenation of this method will be generated for derived classes.</para>
+        /// </summary>
+        /// <param name="reader">Stream to read from.</param>
         // De-serialize the contents of the reader into this message
         public virtual void Deserialize(NetworkReader reader) {}
 
+        /// <summary>
+        /// The method is used to populate a NetworkWriter stream from a message object.
+        /// <para>Developers may implement this method for precise control of serialization, but they do no have to. An implemenation of this method will be generated for derived classes.</para>
+        /// </summary>
+        /// <param name="writer">Stream to write to.</param>
         // Serialize the contents of this message into the writer
         public virtual void Serialize(NetworkWriter writer) {}
     }
@@ -21,9 +66,30 @@ namespace UnityEngine.Networking
 namespace UnityEngine.Networking.NetworkSystem
 {
     // ---------- General Typed Messages -------------------
+    /// <summary>
+    /// This is a utility class for simple network messages that contain only a string.
+    /// <para>This example sends a message with the name of the scene.</para>
+    /// <code>
+    /// using UnityEngine;
+    /// using UnityEngine.Networking;
+    /// using UnityEngine.Networking.NetworkSystem;
+    ///
+    /// public class Test
+    /// {
+    ///    void SendSceneName(string sceneName)
+    ///    {
+    ///        var msg = new StringMessage(sceneName);
+    ///        NetworkServer.SendToAll(MsgType.Scene, msg);
+    ///    }
+    /// }
+    /// </code>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class StringMessage : MessageBase
     {
+        /// <summary>
+        /// The string that will be serialized.
+        /// </summary>
         public string value;
 
         public StringMessage()
@@ -46,9 +112,29 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// A utility class to send simple network messages that only contain an integer.
+    /// <code>
+    /// using UnityEngine;
+    /// using UnityEngine.Networking;
+    /// using UnityEngine.Networking.NetworkSystem;
+    ///
+    /// public class Test
+    /// {
+    ///    void SendValue(int value)
+    ///    {
+    ///        var msg = new IntegerMessage(value);
+    ///        NetworkServer.SendToAll(MsgType.Scene, msg);
+    ///    }
+    /// }
+    /// </code>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class IntegerMessage : MessageBase
     {
+        /// <summary>
+        /// The integer value to serialize.
+        /// </summary>
         public int value;
 
         public IntegerMessage()
@@ -71,6 +157,23 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// A utility class to send a network message with no contents.
+    /// <code>
+    /// using UnityEngine;
+    /// using UnityEngine.Networking;
+    /// using UnityEngine.Networking.NetworkSystem;
+    /// 
+    /// public class Test
+    /// {
+    ///    void SendNotification()
+    ///    {
+    ///        var msg = new EmptyMessage();
+    ///        NetworkServer.SendToAll(667, msg);
+    ///    }
+    /// }
+    /// </code>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class EmptyMessage : MessageBase
     {
@@ -84,9 +187,16 @@ namespace UnityEngine.Networking.NetworkSystem
     }
 
     // ---------- Public System Messages -------------------
+    /// <summary>
+    /// This is passed to handler functions registered for the SYSTEM_ERROR built-in message.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ErrorMessage : MessageBase
     {
+        /// <summary>
+        /// The error code.
+        /// <para>This is a value from the UNETError enumeration.</para>
+        /// </summary>
         public int errorCode;
 
         public override void Deserialize(NetworkReader reader)
@@ -100,21 +210,41 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// This is passed to handler funtions registered for the SYSTEM_READY built-in message.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ReadyMessage : EmptyMessage
     {
     }
 
+    /// <summary>
+    /// This is passed to handler funtions registered for the SYSTEM_NOT_READY built-in message.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NotReadyMessage : EmptyMessage
     {
     }
 
+    /// <summary>
+    /// This is passed to handler funtions registered for the AddPlayer built-in message.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class AddPlayerMessage : MessageBase
     {
+        /// <summary>
+        /// The playerId of the new player.
+        /// <para>This is specified by the client when they call NetworkClient.AddPlayer(someId).</para>
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+        /// </summary>
         public short playerControllerId;
+        /// <summary>
+        /// The size of the extra message data included in the AddPlayerMessage.
+        /// </summary>
         public int msgSize;
+        /// <summary>
+        /// The extra message data included in the AddPlayerMessage.
+        /// </summary>
         public byte[] msgData;
 
         public override void Deserialize(NetworkReader reader)
@@ -138,9 +268,17 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// This is passed to handler funtions registered for the SYSTEM_REMOVE_PLAYER built-in message.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class RemovePlayerMessage : MessageBase
     {
+        /// <summary>
+        /// The player ID of the player GameObject which should be removed.
+        /// <para>This is specified by the client when they call NetworkClient.RemovePlayer(someId).</para>
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+        /// </summary>
         public short playerControllerId;
 
         public override void Deserialize(NetworkReader reader)
@@ -154,11 +292,24 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// Information about a change in authority of a non-player in the same network game.
+    /// <para>This information is cached by clients and used during host-migration.</para>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class PeerAuthorityMessage : MessageBase
     {
+        /// <summary>
+        /// The connection Id (on the server) of the peer whose authority is changing for the object.
+        /// </summary>
         public int connectionId;
+        /// <summary>
+        /// The network id of the object whose authority state changed.
+        /// </summary>
         public NetworkInstanceId netId;
+        /// <summary>
+        /// The new state of authority for the object referenced by this message.
+        /// </summary>
         public bool authorityState;
 
         public override void Deserialize(NetworkReader reader)
@@ -176,21 +327,53 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// A structure used to identify player object on other peers for host migration.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public struct PeerInfoPlayer
     {
+        /// <summary>
+        /// The networkId of the player object.
+        /// </summary>
         public NetworkInstanceId netId;
+        /// <summary>
+        /// The playerControllerId of the player GameObject.
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+        /// </summary>
         public short playerControllerId;
     }
 
+    /// <summary>
+    /// Information about another participant in the same network game.
+    /// <para>This information is cached by clients and used during host-migration.</para>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class PeerInfoMessage : MessageBase
     {
+        /// <summary>
+        /// The id of the NetworkConnection associated with the peer.
+        /// </summary>
         public int connectionId;
+        /// <summary>
+        /// The IP address of the peer.
+        /// </summary>
         public string address;
+        /// <summary>
+        /// The network port being used by the peer.
+        /// </summary>
         public int port;
+        /// <summary>
+        /// True if this peer is the host of the network game.
+        /// </summary>
         public bool isHost;
+        /// <summary>
+        /// True if the peer if the same as the current client.
+        /// </summary>
         public bool isYou;
+        /// <summary>
+        /// The players for this peer.
+        /// </summary>
         public PeerInfoPlayer[] playerIds;
 
         public override void Deserialize(NetworkReader reader)
@@ -244,10 +427,19 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// Internal UNET message for sending information about network peers to clients.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class PeerListMessage : MessageBase
     {
+        /// <summary>
+        /// The list of participants in a networked game.
+        /// </summary>
         public PeerInfoMessage[] peers;
+        /// <summary>
+        /// The connectionId of this client on the old host.
+        /// </summary>
         public int oldServerConnectionId;
 
         public override void Deserialize(NetworkReader reader)
@@ -274,13 +466,32 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 
+    /// <summary>
+    /// This network message is used when a client reconnect to the new host of a game.
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class ReconnectMessage : MessageBase
     {
+        /// <summary>
+        /// This client's connectionId on the old host.
+        /// </summary>
         public int oldConnectionId;
+        /// <summary>
+        /// The playerControllerId of the player that is rejoining.
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+        /// </summary>
         public short playerControllerId;
+        /// <summary>
+        /// The networkId of this player on the old host.
+        /// </summary>
         public NetworkInstanceId netId;
+        /// <summary>
+        /// Size of additional data.
+        /// </summary>
         public int msgSize;
+        /// <summary>
+        /// Additional data.
+        /// </summary>
         public byte[] msgData;
 
         public override void Deserialize(NetworkReader reader)
@@ -602,4 +813,3 @@ namespace UnityEngine.Networking.NetworkSystem
         }
     }
 }
-#endif //ENABLE_UNET

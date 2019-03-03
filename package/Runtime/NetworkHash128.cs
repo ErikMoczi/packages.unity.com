@@ -1,8 +1,10 @@
-#if ENABLE_UNET
 using System;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// A 128 bit number used to represent assets in a networking context.
+    /// </summary>
     // unrolled for your pleasure.
     [Serializable]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
@@ -26,6 +28,9 @@ namespace UnityEngine.Networking
         public byte i14;
         public byte i15;
 
+        /// <summary>
+        /// Resets the value of a NetworkHash to zero (invalid).
+        /// </summary>
         public void Reset()
         {
             i0 = 0;
@@ -46,6 +51,10 @@ namespace UnityEngine.Networking
             i15 = 0;
         }
 
+        /// <summary>
+        /// A valid NetworkHash has a non-zero value.
+        /// </summary>
+        /// <returns>True if the value is non-zero.</returns>
         public bool IsValid()
         {
             return (i0 | i1 | i2 | i3 | i4 | i5 | i6 | i7 | i8 | i9 | i10 | i11 | i12 | i13 | i14 | i15) != 0;
@@ -62,6 +71,26 @@ namespace UnityEngine.Networking
             return 0;
         }
 
+        /// <summary>
+        /// This parses the string representation of a NetworkHash into a binary object.
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// class HashTest : MonoBehaviour
+        /// {
+        ///    const string assetString = "0176acd452adc180";
+        ///    NetworkHash128 assetId = NetworkHash128.Parse(assetString);
+        ///
+        ///    void Start()
+        ///    {
+        ///        Debug.Log("asset:" + assetId);
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="text">A hex string to parse.</param>
+        /// <returns>A 128 bit network hash object.</returns>
         public static NetworkHash128 Parse(string text)
         {
             NetworkHash128 hash;
@@ -98,6 +127,10 @@ namespace UnityEngine.Networking
             return hash;
         }
 
+        /// <summary>
+        /// Returns a string representation of a NetworkHash object.
+        /// </summary>
+        /// <returns>A hex asset string.</returns>
         public override string ToString()
         {
             return String.Format("{0:x2}{1:x2}{2:x2}{3:x2}{4:x2}{5:x2}{6:x2}{7:x2}{8:x2}{9:x2}{10:x2}{11:x2}{12:x2}{13:x2}{14:x2}{15:x2}",
@@ -105,4 +138,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif //ENABLE_UNET

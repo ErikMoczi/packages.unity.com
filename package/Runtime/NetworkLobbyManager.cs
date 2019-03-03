@@ -1,4 +1,3 @@
-#if ENABLE_UNET
 
 using System;
 using System.Collections.Generic;
@@ -8,6 +7,12 @@ using UnityEngine.SceneManagement;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// This is a specialized NetworkManager that includes a networked lobby.
+    /// <para>The lobby has slots that track the joined players, and a maximum player count that is enforced. It requires that the NetworkLobbyPlayer component be on the lobby player objects.</para>
+    /// <para>NetworkLobbyManager is derived from NetworkManager, and so it implements many of the virtual functions provided by the NetworkManager class. To avoid accidentally replacing functionality of the NetworkLobbyManager, there are new virtual functions on the NetworkLobbyManager that begin with "OnLobby". These should be used on classes derived from NetworkLobbyManager instead of the virtual functions on NetworkManager.</para>
+    /// <para>The OnLobby*() functions have empty implementations on the NetworkLobbyManager base class, so the base class functions do not have to be called.</para>
+    /// </summary>
     [AddComponentMenu("Network/NetworkLobbyManager")]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkLobbyManager : NetworkManager
@@ -30,6 +35,10 @@ namespace UnityEngine.Networking
 
         // runtime data
         List<PendingPlayer> m_PendingPlayers = new List<PendingPlayer>();
+        /// <summary>
+        /// These slots track players that enter the lobby.
+        /// <para>The slotId on players is global to the game - across all players.</para>
+        /// </summary>
         public NetworkLobbyPlayer[] lobbySlots;
 
         // static message objects to avoid runtime-allocations
@@ -38,13 +47,45 @@ namespace UnityEngine.Networking
         static LobbyReadyToBeginMessage s_LobbyReadyToBeginMessage = new LobbyReadyToBeginMessage();
 
         // properties
+        /// <summary>
+        /// This flag enables display of the default lobby UI.
+        /// <para>This is rendered using the old GUI system, so is only recommended for testing purposes.</para>
+        /// </summary>
         public bool showLobbyGUI             { get { return m_ShowLobbyGUI; } set { m_ShowLobbyGUI = value; } }
+        /// <summary>
+        /// The maximum number of players allowed in the game.
+        /// <para>Note that this is the number "players" not clients or connections. There can be multiple players per client.</para>
+        /// </summary>
         public int maxPlayers                { get { return m_MaxPlayers; } set { m_MaxPlayers = value; } }
+        /// <summary>
+        /// The maximum number of players per connection.
+        /// <para>Calling ClientScene.AddPlayer will fail if this limit is reached.</para>
+        /// </summary>
         public int maxPlayersPerConnection   { get { return m_MaxPlayersPerConnection; } set { m_MaxPlayersPerConnection = value; } }
+        /// <summary>
+        /// The minimum number of players required to be ready for the game to start.
+        /// <para>If this is zero then the game can start with any number of players.</para>
+        /// </summary>
         public int minPlayers                { get { return m_MinPlayers; } set { m_MinPlayers = value; } }
+        /// <summary>
+        /// This is the prefab of the player to be created in the LobbyScene.
+        /// <para>This prefab must have a NetworkLobbyPlayer component on it.</para>
+        /// <para>In the lobby scene, this will be the active player object, but in other scenes while the game is running, this will be replaced by a player object created from the GamePlayerPrefab. But once returned to the lobby scene this will again become the active player object.</para>
+        /// <para>This can be used to store user data that persists for the lifetime of the session, such as color choices or weapon choices.</para>
+        /// </summary>
         public NetworkLobbyPlayer lobbyPlayerPrefab { get { return m_LobbyPlayerPrefab; } set { m_LobbyPlayerPrefab = value; } }
+        /// <summary>
+        /// This is the prefab of the player to be created in the PlayScene.
+        /// <para>When CheckReadyToBegin starts the game from the lobby, a new player object is created from this prefab, and that object is made the active player object using NetworkServer.ReplacePlayerForConnection.</para>
+        /// </summary>
         public GameObject gamePlayerPrefab   { get { return m_GamePlayerPrefab; } set { m_GamePlayerPrefab = value; } }
+        /// <summary>
+        /// The scene to use for the lobby. This is similar to the offlineScene of the NetworkManager.
+        /// </summary>
         public string lobbyScene             { get { return m_LobbyScene; } set { m_LobbyScene = value; offlineScene = value; } }
+        /// <summary>
+        /// The scene to use for the playing the game from the lobby. This is similar to the onlineScene of the NetworkManager.
+        /// </summary>
         public string playScene              { get { return m_PlayScene; } set { m_PlayScene = value; } }
 
         void OnValidate()
@@ -172,6 +213,10 @@ namespace UnityEngine.Networking
             return countPlayers;
         }
 
+        /// <summary>
+        /// CheckReadyToBegin checks all of the players in the lobby to see if their readyToBegin flag is set.
+        /// <para>If all of the players are ready, then the server switches from the LobbyScene to the PlayScene - essentially starting the game. This is called automatically in response to NetworkLobbyPlayer.SendReadyToBeginMessage().</para>
+        /// </summary>
         public void CheckReadyToBegin()
         {
             string loadedSceneName = SceneManager.GetSceneAt(0).name;
@@ -209,6 +254,9 @@ namespace UnityEngine.Networking
             OnLobbyServerPlayersReady();
         }
 
+        /// <summary>
+        /// Calling this causes the server to switch back to the lobby scene.
+        /// </summary>
         public void ServerReturnToLobby()
         {
             if (!NetworkServer.active)
@@ -246,6 +294,10 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Sends a message to the server to make the game return to the lobby scene.
+        /// </summary>
+        /// <returns>True if message was sent.</returns>
         public bool SendReturnToLobby()
         {
             if (client == null || !client.isConnected)
@@ -616,50 +668,284 @@ namespace UnityEngine.Networking
 
         // ------------------------ lobby server virtuals ------------------------
 
+        /// <summary>
+        /// This is called on the host when a host is started.
+        /// <code>
+        /// //This script shows you how to add extra functionality when the lobby host starts and stops
+        /// //Add this script to your GameObject. Make sure there isn&apos;t another NetworkManager in the Scene.
+        /// //Create a Host Button (<b>Create&gt;UI&gt;Text</b>) and assign it in the Inspector of the GameObject this script is attached to
+        /// //Create a Text GameObject (<b>Create&gt;UI&gt;Text</b>) and attach it to the Status Text field in the Inspector.
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.UI;
+        ///
+        /// public class Example : NetworkLobbyManager
+        /// {
+        ///    public Button m_HostButton;
+        ///    public Text m_StatusText;
+        ///    bool m_HostStarted;
+        ///
+        ///    void Start()
+        ///    {
+        ///        //Set the minimum and maximum number of players
+        ///        maxPlayers = 6;
+        ///        minPlayers = 2;
+        ///        maxPlayersPerConnection = 1;
+        ///        //Call these functions when each Button is clicked
+        ///        m_HostButton.onClick.AddListener(HostButton);
+        ///        m_StatusText.text = "Current Scene : " + lobbyScene;
+        ///    }
+        ///
+        ///    //Output a message when the host joins the lobby
+        ///    public override void OnLobbyStartHost()
+        ///    {
+        ///        //Change the Text to show this message
+        ///        m_StatusText.text = "A Host has joined the lobby!";
+        ///        m_HostStarted = true;
+        ///        //Do the default actions for when the host starts in the lobby
+        ///        base.OnLobbyStartHost();
+        ///    }
+        ///
+        ///    // Output a message to the host when the host stops
+        ///    public override void OnLobbyStopHost()
+        ///    {
+        ///        //Output this message when the host stops
+        ///        m_StatusText.text = "A Host has left the lobby!";
+        ///        //Do the default actions when the host stops
+        ///        base.OnLobbyStopHost();
+        ///        m_HostStarted = false;
+        ///    }
+        ///
+        ///    /// This is where the Buttons are given functionality
+        ///    //Start the host when this Button is pressed
+        ///    public void HostButton()
+        ///    {
+        ///        //Check if the host has already started
+        ///        if (m_HostStarted == false)
+        ///        {
+        ///            //Start the host
+        ///            StartHost();
+        ///            //Change the Button's Text
+        ///            m_HostButton.GetComponentInChildren&lt;Text&gt;().text = "Stop Host";
+        ///        }
+        ///        else
+        ///        {
+        ///            //If the host has already started, stop the host
+        ///            StopHost();
+        ///            //Change the Button's Text
+        ///            m_HostButton.GetComponentInChildren&lt;Text&gt;().text = "Start Host";
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
         public virtual void OnLobbyStartHost()
         {
         }
 
+        /// <summary>
+        /// This is called on the host when the host is stopped.
+        /// </summary>
         public virtual void OnLobbyStopHost()
         {
         }
 
+        /// <summary>
+        /// This is called on the server when the server is started - including when a host is started.
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.UI;
+        ///
+        /// public class Example : NetworkLobbyManager
+        /// {
+        ///    //Add this script to your GameObject. Make sure there isn&apos;t another NetworkManager in the Scene.
+        ///    //Create 2 Buttons (<b>Create&gt;UI&gt;Text</b>) and either:
+        ///    //1. assign them in the Inspector of the GameObject this script is attached to or
+        ///    //2. remove this part and the listeners and alter the OnClick section on each Button to match up with each function
+        ///    //Create a Text GameObject (<b>Create&gt;UI&gt;Text</b>) and attach it to the Status Text field in the Inspector.
+        ///
+        ///    public Button m_ClientButton, m_ServerButton;
+        ///    bool m_ServerStarted, m_ClientStarted;
+        ///
+        ///    void Start()
+        ///    {
+        ///        showLobbyGUI = true;
+        ///        //Call these functions when each Button is clicked
+        ///        m_ServerButton.onClick.AddListener(ServerButton);
+        ///        m_ClientButton.onClick.AddListener(ClientButton);
+        ///    }
+        ///
+        ///    //Output a message when your client enters the lobby
+        ///    public override void OnLobbyClientEnter()
+        ///    {
+        ///        m_ClientStarted = true;
+        ///        base.OnLobbyClientEnter();
+        ///        Debug.Log("Your client has entered the lobby!");
+        ///    }
+        ///
+        ///    public override void OnLobbyStopClient()
+        ///    {
+        ///        Debug.Log("Client stopped");
+        ///        base.OnLobbyStopClient();
+        ///    }
+        ///
+        ///    public override void OnLobbyStartServer()
+        ///    {
+        ///        m_ServerStarted = true;
+        ///        base.OnLobbyStartServer();
+        ///        Debug.Log("Server Started!");
+        ///    }
+        ///
+        ///    public override void OnStopServer()
+        ///    {
+        ///        m_ServerStarted = false;
+        ///        base.OnStopServer();
+        ///        Debug.Log("Server Stopped!");
+        ///    }
+        ///
+        ///    //Start the Client when this Button is pressed
+        ///    public void ClientButton()
+        ///    {
+        ///        if (m_ClientStarted == false)
+        ///        {
+        ///            StartClient();
+        ///            m_ClientButton.GetComponentInChildren&lt;Text&gt;().text = "Stop Client";
+        ///        }
+        ///        else
+        ///        {
+        ///            StopClient();
+        ///            m_ClientButton.GetComponentInChildren&lt;Text&gt;().text = "Start Client";
+        ///        }
+        ///    }
+        ///
+        ///    //Start the Server when this Button is pressed
+        ///    public void ServerButton()
+        ///    {
+        ///        Debug.Log("Server : " + m_ServerStarted);
+        ///        if (m_ServerStarted == false)
+        ///        {
+        ///            StartServer();
+        ///            m_ServerButton.GetComponentInChildren&lt;Text&gt;().text = "Stop Server";
+        ///        }
+        ///        else
+        ///        {
+        ///            StopServer();
+        ///            ServerReturnToLobby();
+        ///            m_ServerButton.GetComponentInChildren&lt;Text&gt;().text = "Start Server";
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
         public virtual void OnLobbyStartServer()
         {
         }
 
+        /// <summary>
+        /// This is called on the server when a new client connects to the server.
+        /// </summary>
+        /// <param name="conn">The new connection.</param>
         public virtual void OnLobbyServerConnect(NetworkConnection conn)
         {
         }
 
+        /// <summary>
+        /// This is called on the server when a client disconnects.
+        /// </summary>
+        /// <param name="conn">The connection that disconnected.</param>
         public virtual void OnLobbyServerDisconnect(NetworkConnection conn)
         {
         }
 
+        /// <summary>
+        /// This is called on the server when a networked scene finishes loading.
+        /// </summary>
+        /// <param name="sceneName">Name of the new scene.</param>
         public virtual void OnLobbyServerSceneChanged(string sceneName)
         {
         }
 
+        /// <summary>
+        /// This allows customization of the creation of the lobby-player object on the server.
+        /// <para>By default the lobbyPlayerPrefab is used to create the lobby-player, but this function allows that behaviour to be customized.</para>
+        /// </summary>
+        /// <param name="conn">The connection the player object is for.</param>
+        /// <param name="playerControllerId">The controllerId of the player.</param>
+        /// <returns>The new lobby-player object.</returns>
         public virtual GameObject OnLobbyServerCreateLobbyPlayer(NetworkConnection conn, short playerControllerId)
         {
             return null;
         }
 
+        /// <summary>
+        /// This allows customization of the creation of the GamePlayer object on the server.
+        /// <para>By default the gamePlayerPrefab is used to create the game-player, but this function allows that behaviour to be customized. The object returned from the function will be used to replace the lobby-player on the connection.</para>
+        /// </summary>
+        /// <param name="conn">The connection the player object is for.</param>
+        /// <param name="playerControllerId">The controllerId of the player on the connnection.</param>
+        /// <returns>A new GamePlayer object.</returns>
         public virtual GameObject OnLobbyServerCreateGamePlayer(NetworkConnection conn, short playerControllerId)
         {
             return null;
         }
 
+        /// <summary>
+        /// This is called on the server when a player is removed.
+        /// </summary>
+        /// <param name="conn">The connection the player object is for.</param>
+        /// <param name="playerControllerId">The controllerId of the player that was removed.</param>
         public virtual void OnLobbyServerPlayerRemoved(NetworkConnection conn, short playerControllerId)
         {
         }
 
+        /// <summary>
+        /// This is called on the server when it is told that a client has finished switching from the lobby scene to a game player scene.
+        /// <para>When switching from the lobby, the lobby-player is replaced with a game-player object. This callback function gives an opportunity to apply state from the lobby-player to the game-player object.</para>
+        /// </summary>
+        /// <param name="lobbyPlayer">The lobby player object.</param>
+        /// <param name="gamePlayer">The game player object.</param>
+        /// <returns>False to not allow this player to replace the lobby player.</returns>
         // for users to apply settings from their lobby player object to their in-game player object
         public virtual bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayer, GameObject gamePlayer)
         {
             return true;
         }
 
+        /// <summary>
+        /// This is called on the server when all the players in the lobby are ready.
+        /// <para>The default implementation of this function uses ServerChangeScene() to switch to the game player scene. By implementing this callback you can customize what happens when all the players in the lobby are ready, such as adding a countdown or a confirmation for a group leader.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class GuiLobby : NetworkLobbyManager
+        /// {
+        ///    float countTimer = 0;
+        ///
+        ///    public override void OnLobbyServerPlayersReady()
+        ///    {
+        ///        countTimer = Time.time + 5;
+        ///    }
+        ///
+        ///    void Update()
+        ///    {
+        ///        if (countTimer == 0)
+        ///            return;
+        ///        if (Time.time > countTimer)
+        ///        {
+        ///            countTimer = 0;
+        ///            ServerChangeScene(playScene);
+        ///        }
+        ///        else
+        ///        {
+        ///            Debug.Log("Counting down " + (countTimer - Time.time));
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
         public virtual void OnLobbyServerPlayersReady()
         {
             // all players are readyToBegin, start the game
@@ -668,34 +954,148 @@ namespace UnityEngine.Networking
 
         // ------------------------ lobby client virtuals ------------------------
 
+        /// <summary>
+        /// This is a hook to allow custom behaviour when the game client enters the lobby.
+        /// </summary>
         public virtual void OnLobbyClientEnter()
         {
         }
 
+        /// <summary>
+        /// This is a hook to allow custom behaviour when the game client exits the lobby.
+        /// </summary>
         public virtual void OnLobbyClientExit()
         {
         }
 
+        /// <summary>
+        /// This is called on the client when it connects to server.
+        /// </summary>
+        /// <param name="conn">The connection that connected.</param>
         public virtual void OnLobbyClientConnect(NetworkConnection conn)
         {
         }
 
+        /// <summary>
+        /// This is called on the client when disconnected from a server.
+        /// </summary>
+        /// <param name="conn">The connection that disconnected.</param>
         public virtual void OnLobbyClientDisconnect(NetworkConnection conn)
         {
         }
 
+        /// <summary>
+        /// This is called on the client when a client is started.
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.UI;
+        ///
+        /// public class Example : NetworkLobbyManager
+        /// {
+        ///    //Add this script to your GameObject. Make sure there isn&apos;t another NetworkManager in the Scene.
+        ///    //Create 2 Buttons (<b>Create&gt;UI&gt;Text</b>) and either:
+        ///    //1. assign them in the Inspector of the GameObject this script is attached to or
+        ///    //2. remove this part and the listeners and alter the OnClick section on each Button to match up with each function
+        ///    //Create a Text GameObject (<b>Create&gt;UI&gt;Text</b>) and attach it to the Status Text field in the Inspector.
+        ///
+        ///    public Button m_ClientButton, m_ServerButton;
+        ///    bool m_ServerStarted, m_ClientStarted;
+        ///
+        ///    void Start()
+        ///    {
+        ///        showLobbyGUI = true;
+        ///        //Call these functions when each Button is clicked
+        ///        m_ServerButton.onClick.AddListener(ServerButton);
+        ///        m_ClientButton.onClick.AddListener(ClientButton);
+        ///    }
+        ///
+        ///    //Output a message when your client enters the lobby
+        ///    public override void OnLobbyClientEnter()
+        ///    {
+        ///        m_ClientStarted = true;
+        ///        base.OnLobbyClientEnter();
+        ///        Debug.Log("Your client has entered the lobby!");
+        ///    }
+        ///
+        ///    public override void OnLobbyStopClient()
+        ///    {
+        ///        Debug.Log("Client stopped");
+        ///        base.OnLobbyStopClient();
+        ///    }
+        ///
+        ///    public override void OnLobbyStartServer()
+        ///    {
+        ///        m_ServerStarted = true;
+        ///        base.OnLobbyStartServer();
+        ///        Debug.Log("Server Started!");
+        ///    }
+        ///
+        ///    public override void OnStopServer()
+        ///    {
+        ///        m_ServerStarted = false;
+        ///        base.OnStopServer();
+        ///        Debug.Log("Server Stopped!");
+        ///    }
+        ///
+        ///    //Start the Client when this Button is pressed
+        ///    public void ClientButton()
+        ///    {
+        ///        if (m_ClientStarted == false)
+        ///        {
+        ///            StartClient();
+        ///            m_ClientButton.GetComponentInChildren&lt;Text&gt;().text = "Stop Client";
+        ///        }
+        ///        else
+        ///        {
+        ///            StopClient();
+        ///            m_ClientButton.GetComponentInChildren&lt;Text&gt;().text = "Start Client";
+        ///        }
+        ///    }
+        ///
+        ///    //Start the Server when this Button is pressed
+        ///    public void ServerButton()
+        ///    {
+        ///        Debug.Log("Server : " + m_ServerStarted);
+        ///        if (m_ServerStarted == false)
+        ///        {
+        ///            StartServer();
+        ///            m_ServerButton.GetComponentInChildren&lt;Text&gt;().text = "Stop Server";
+        ///        }
+        ///        else
+        ///        {
+        ///            StopServer();
+        ///            ServerReturnToLobby();
+        ///            m_ServerButton.GetComponentInChildren&lt;Text&gt;().text = "Start Server";
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="lobbyClient">The connection for the lobby.</param>
         public virtual void OnLobbyStartClient(NetworkClient lobbyClient)
         {
         }
 
+        /// <summary>
+        /// This is called on the client when the client stops.
+        /// </summary>
         public virtual void OnLobbyStopClient()
         {
         }
 
+        /// <summary>
+        /// This is called on the client when the client is finished loading a new networked scene.
+        /// </summary>
+        /// <param name="conn">The connection that finished loading a new networked scene.</param>
         public virtual void OnLobbyClientSceneChanged(NetworkConnection conn)
         {
         }
 
+        /// <summary>
+        /// Called on the client when adding a player to the lobby fails.
+        /// <para>This could be because the lobby is full, or the connection is not allowed to have more players.</para>
+        /// </summary>
         // for users to handle adding a player failed on the server
         public virtual void OnLobbyClientAddPlayerFailed()
         {
@@ -725,6 +1125,10 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This is used on clients to attempt to add a player to the game.
+        /// <para>This may fail if the game is full or the connection cannot have more players.</para>
+        /// </summary>
         public void TryToAddPlayer()
         {
             if (NetworkClient.active)
@@ -771,5 +1175,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-
-#endif //ENABLE_UNET

@@ -1,10 +1,12 @@
-#if ENABLE_UNET
 using System;
 using System.ComponentModel;
 using UnityEngine;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// This is a helper component to help understand and debug networked movement synchronization with the NetworkTransform component.
+    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkTransformVisualizer")]
     [RequireComponent(typeof(NetworkTransform))]
@@ -18,6 +20,9 @@ namespace UnityEngine.Networking
         NetworkTransform m_NetworkTransform;
         GameObject  m_Visualizer;
 
+        /// <summary>
+        /// The prefab to use for the visualization object.
+        /// </summary>
         public GameObject visualizerPrefab { get { return m_VisualizerPrefab; } set { m_VisualizerPrefab = value; }}
 
         public override void OnStartClient()
@@ -166,4 +171,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif //ENABLE_UNET

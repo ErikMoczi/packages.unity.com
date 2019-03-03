@@ -1,4 +1,3 @@
-#if ENABLE_UNET
 
 using System;
 using System.Collections.Generic;
@@ -8,13 +7,34 @@ using UnityEngine.Networking.Types;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// A component that manages the process of a new host taking over a game when the old host is lost. This is referred to as "host migration". The migration manager sends information about each peer in the game to all the clients, and when the host is lost because of a crash or network outage, the clients are able to choose a new host, and continue the game.
+    /// <para>The old host is able to rejoin the new game on the new host.</para>
+    /// <para>The state of SyncVars and SyncLists on all objects with NetworkIdentities in the scene is maintained during a host migration. This also applies to custom serialized data for objects.</para>
+    /// <para>All of the player objects in the game are disabled when the host is lost. Then, when the other clients rejoin the new game on the new host, the corresponding players for those clients are re-enabled on the host, and respawned on the other clients. No player state data is lost during a host migration.</para>
+    /// <para>This class provides a simple default UI for controlling the behaviour when the host is lost. The UI can be disabled with the showGUI property. There are a number of virtual functions that can be implemented to customize the behaviour of host migration.</para>
+    /// <para>Note that only data that is available to clients will be preserved during a host migration. If there is data that is only on the server, then it will not be available to the client that becomes the new host. This means data on the host that is not in SyncVars or SyncLists will not be available after a host migration.</para>
+    /// <para>The callback function OnStartServer is invoked for all networked objects when the client becomes a new host.</para>
+    /// <para>On the new host, the NetworkMigrationManager uses the function NetworkServer.BecomeNewHost() to construct a networked server scene from the state in the current ClientScene.</para>
+    /// <para>The peers in a game with host migration enabled are identified by their connectionId on the server. When a client reconnects to the new host of a game, this connectionId is passed to the new host so that it can match this client with the client that was connected to the old host. This Id is set on the ClientScene as the "reconnectId".</para>
+    /// <para>The old host of the game, the one that crashed or lost its network connection, can also reconnect to the new game as a client. This client uses the special ReconnectId of ClientScene.ReconnectIdHost (which is zero).</para>
+    /// </summary>
     [AddComponentMenu("Network/NetworkMigrationManager")]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkMigrationManager : MonoBehaviour
     {
+        /// <summary>
+        /// An enumeration of how to handle scene changes when the connection to the host is lost.
+        /// </summary>
         public enum SceneChangeOption
         {
+            /// <summary>
+            /// The client should stay in the online scene.
+            /// </summary>
             StayInOnlineScene,
+            /// <summary>
+            /// The client should return to the offline scene.
+            /// </summary>
             SwitchToOfflineScene
         }
 
@@ -45,16 +65,36 @@ namespace UnityEngine.Networking
 
         PeerInfoMessage[] m_Peers;
 
+        /// <summary>
+        /// Information about a player object from another peer.
+        /// </summary>
         // There can be multiple pending players for a connectionId, distinguished by oldNetId/playerControllerId
         public struct PendingPlayerInfo
         {
+            /// <summary>
+            /// The networkId of the player object.
+            /// </summary>
             public NetworkInstanceId netId;
+            /// <summary>
+            /// The playerControllerId of the player GameObject.
+            /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+            /// </summary>
             public short playerControllerId;
+            /// <summary>
+            /// The gameObject for the player.
+            /// </summary>
             public GameObject obj;
         }
 
+        /// <summary>
+        /// The player objects for connections to the old host.
+        /// <para>This is used when clients reconnect to the new host.</para>
+        /// </summary>
         public struct ConnectionPendingPlayers
         {
+            /// <summary>
+            /// The list of players for a connection.
+            /// </summary>
             public List<PendingPlayerInfo> players;
         }
         Dictionary<int, ConnectionPendingPlayers> m_PendingPlayers = new Dictionary<int, ConnectionPendingPlayers>();
@@ -95,78 +135,128 @@ namespace UnityEngine.Networking
             m_PendingPlayers.Remove(connectionId);
         }
 
+        /// <summary>
+        /// Controls whether host migration is active.
+        /// <para>If this is not true, then SendPeerInfo() will not send peer information to clients.</para>
+        /// </summary>
         public bool hostMigration
         {
             get { return m_HostMigration; }
             set { m_HostMigration = value; }
         }
 
+        /// <summary>
+        /// Flag to toggle display of the default UI.
+        /// </summary>
         public bool showGUI
         {
             get { return m_ShowGUI; }
             set { m_ShowGUI = value; }
         }
 
+        /// <summary>
+        /// The X offset in pixels of the migration manager default GUI.
+        /// </summary>
         public int offsetX
         {
             get { return m_OffsetX; }
             set { m_OffsetX = value; }
         }
 
+        /// <summary>
+        /// The Y offset in pixels of the migration manager default GUI.
+        /// </summary>
         public int offsetY
         {
             get { return m_OffsetY; }
             set { m_OffsetY = value; }
         }
 
+        /// <summary>
+        /// The client instance that is being used to connect to the host.
+        /// <para>This is populated by the Initialize() method. It will be set automatically by the NetworkManager if one is being used.</para>
+        /// </summary>
         public NetworkClient client
         {
             get { return m_Client; }
         }
 
+        /// <summary>
+        /// True if this is a client that was disconnected from the host, and was chosen as the new host.
+        /// </summary>
         public bool waitingToBecomeNewHost
         {
             get { return m_WaitingToBecomeNewHost; }
             set { m_WaitingToBecomeNewHost = value; }
         }
 
+        /// <summary>
+        /// True if this is a client that was disconnected from the host and is now waiting to reconnect to the new host.
+        /// </summary>
         public bool waitingReconnectToNewHost
         {
             get { return m_WaitingReconnectToNewHost; }
             set { m_WaitingReconnectToNewHost = value; }
         }
 
+        /// <summary>
+        /// True is this is a client that has been disconnected from a host.
+        /// </summary>
         public bool disconnectedFromHost
         {
             get { return m_DisconnectedFromHost; }
         }
 
+        /// <summary>
+        /// True if this was the host and the host has been shut down.
+        /// </summary>
         public bool hostWasShutdown
         {
             get { return m_HostWasShutdown; }
         }
 
+        /// <summary>
+        /// Information about the match. This may be null if there is no match.
+        /// </summary>
         public MatchInfo matchInfo
         {
             get { return m_MatchInfo; }
         }
 
+        /// <summary>
+        /// The connectionId that this client was assign on the old host.
+        /// <para>This is the Id that will be set on the ClientScene as the ReconnectId. This Id will be used to identify the client when it connects to the new host.</para>
+        /// </summary>
         public int oldServerConnectionId
         {
             get { return m_OldServerConnectionId; }
         }
 
+        /// <summary>
+        /// The IP address of the new host to connect to.
+        /// <para>The FindNewHost utility function will set this address. Methods of choosing the new host that are implemented by users should also set this address.</para>
+        /// <para>The default UI button to "Reconnect to New Host" uses this address.</para>
+        /// </summary>
         public string newHostAddress
         {
             get { return m_NewHostAddress; }
             set { m_NewHostAddress = value; }
         }
 
+        /// <summary>
+        /// The set of peers involved in the game. This includes the host and this client.
+        /// <para>This is populated on clients when they recieve a MsgType.NetworkInfo message from the host. That message is sent when SendPeerInfo() is called on the host.</para>
+        /// </summary>
         public PeerInfoMessage[] peers
         {
             get { return m_Peers; }
         }
 
+        /// <summary>
+        /// The player objects that have been disabled, and are waiting for their corresponding clients to reconnect.
+        /// <para>There may be multiple pending player GameObjects for each peer. Each will have a different playerControllerId.</para>
+        /// <para>The HLAPI treats players and clients as separate GameObjects. In most cases, there is a single player for each client, but in some situations (for example, when there are multiple controllers connected to a console system) there might be multiple player GameObjects for a single connection. When there are multiple players for a single connection, use the playerControllerId property to tell them apart. This is an identifier that is scoped to the connection, so that it maps to the id of the controller associated with the player on that client.</para>
+        /// </summary>
         public Dictionary<int, ConnectionPendingPlayers> pendingPlayers
         {
             get { return m_PendingPlayers; }
@@ -177,6 +267,10 @@ namespace UnityEngine.Networking
             Reset(ClientScene.ReconnectIdInvalid);
         }
 
+        /// <summary>
+        /// Resets the migration manager, and sets the ClientScene's ReconnectId.
+        /// </summary>
+        /// <param name="reconnectId">The connectionId for the ClientScene to use when reconnecting.</param>
         public void Reset(int reconnectId)
         {
             m_OldServerConnectionId = -1;
@@ -211,6 +305,12 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Used to initialize the migration manager with client and match information.
+        /// <para>This is called automatically by the NetworkManager from within StartClient() if a NetworkManager is being used with the migration manager.</para>
+        /// </summary>
+        /// <param name="newClient">The NetworkClient being used to connect to the host.</param>
+        /// <param name="newMatchInfo">Information about the match being used. This may be null if there is no match.</param>
         public void Initialize(NetworkClient newClient, MatchInfo newMatchInfo)
         {
             if (LogFilter.logDev) { Debug.Log("NetworkMigrationManager initialize"); }
@@ -223,6 +323,11 @@ namespace UnityEngine.Networking
             NetworkIdentity.clientAuthorityCallback = AssignAuthorityCallback;
         }
 
+        /// <summary>
+        /// This causes objects for known players to be disabled.
+        /// <para>These objects are added to the pendingPlayers list, and will be re-enabled when their clients reconnect.</para>
+        /// <para>This happens when the connection to the host of the game is lost.</para>
+        /// </summary>
         public void DisablePlayerObjects()
         {
             if (LogFilter.logDev) { Debug.Log("NetworkMigrationManager DisablePlayerObjects"); }
@@ -256,6 +361,10 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This sends the set of peers in the game to all the peers in the game.
+        /// <para>This is called automatically by the NetworkManager if one is active. It happens when clients connect to and disconnect from the server, and when players are added and removed from clients. The function SendPeers() udpates all clients with the information about which client owns which objects. It is automatically called when players are added and removed via the NetworkManager, but there is no hook in the NetworkManager when non-player client authority objects are added and removed. SendPeerInfo() is NOT called automatically. It is up to user code to call SendPeerInfo() when they want to update the set of client-owned objects.</para>
+        /// </summary>
         public void SendPeerInfo()
         {
             if (!m_HostMigration)
@@ -476,6 +585,14 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This re-establishes a non-player object with client authority with a client that is reconnected. It is similar to NetworkServer.SpawnWithClientAuthority().
+        /// <para>This is called by the default implementation of OnServerReconnectObject.</para>
+        /// </summary>
+        /// <param name="newConnection">The connection of the new client.</param>
+        /// <param name="oldObject">The object with client authority that is being reconnected.</param>
+        /// <param name="oldConnectionId">This client's connectionId on the old host.</param>
+        /// <returns>True if the object was reconnected.</returns>
         // call this on the server to re-setup an object for a new connection
         public bool ReconnectObjectForConnection(NetworkConnection newConnection, GameObject oldObject, int oldConnectionId)
         {
@@ -505,6 +622,28 @@ namespace UnityEngine.Networking
             return true;
         }
 
+        /// <summary>
+        /// This re-establishes a player object with a client that is reconnected. It is similar to NetworkServer.AddPlayerForConnection(). The player game object will become the player object for the new connection.
+        /// <para>This is called by the default implementation of OnServerReconnectPlayer.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// class MyMigrationManager : <see cref="NetworkMigrationManager">NetworkMigrationManager</see>
+        /// {
+        ///    protected override void OnServerReconnectPlayer(<see cref="NetworkConnection">NetworkConnection</see> newConnection, <see cref="GameObject">GameObject</see> oldPlayer, int oldConnectionId, short playerControllerId)
+        ///    {
+        ///        Debug.Log("Reconnecting oldPlayer:" + oldPlayer);
+        ///        ReconnectPlayerForConnection(newConnection, oldPlayer, oldConnectionId, playerControllerId);
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="newConnection">The connection of the new client.</param>
+        /// <param name="oldPlayer">The player object.</param>
+        /// <param name="oldConnectionId">This client's connectionId on the old host.</param>
+        /// <param name="playerControllerId">The playerControllerId of the player that is rejoining.</param>
+        /// <returns>True if able to re-add this player.</returns>
         // call this on the server to re-setup a reconnecting player for a new connection
         public bool ReconnectPlayerForConnection(NetworkConnection newConnection, GameObject oldPlayer, int oldConnectionId, short playerControllerId)
         {
@@ -543,6 +682,12 @@ namespace UnityEngine.Networking
             return true;
         }
 
+        /// <summary>
+        /// This should be called on a client when it has lost its connection to the host.
+        /// <para>This will caus the virtual function OnClientDisconnectedFromHost to be invoked. This is called automatically by the NetworkManager if one is in use.</para>
+        /// </summary>
+        /// <param name="conn">The connection of the client that was connected to the host.</param>
+        /// <returns>True if the client should stay in the on-line scene.</returns>
         // called by NetworkManager on clients when connection to host is lost.
         // return true to stay in online scene
         public bool LostHostOnClient(NetworkConnection conn)
@@ -586,6 +731,10 @@ namespace UnityEngine.Networking
             return false;
         }
 
+        /// <summary>
+        /// This should be called on a host when it has has been shutdown.
+        /// <para>This causes the virtual function OnServerHostShutdown to be invoked. This is called automatically by the NetworkManager if one is in use.</para>
+        /// </summary>
         // called by NetworkManager on host when host is closed
         public void LostHostOnHost()
         {
@@ -612,6 +761,14 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This causes a client that has been disconnected from the host to become the new host of the game.
+        /// <para>This starts a server, initializes it with the state of the existing networked objects, and starts a local client so that this client becomes a host. The old NetworkClient instance that was connected to the old host is destroyed.</para>
+        /// <para>This will cause OnStartServer to be called on networked objects in the scene.</para>
+        /// <para>Any player objects for this peer will automatically be re-added through the local client that was created.</para>
+        /// </summary>
+        /// <param name="port">The network port to listen on.</param>
+        /// <returns>True if able to become the new host.</returns>
         public bool BecomeNewHost(int port)
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkMigrationManager BecomeNewHost " + m_MatchInfo); }
@@ -647,23 +804,52 @@ namespace UnityEngine.Networking
 
         // ----------------------------- Callbacks ---------------------------------------
 
+        /// <summary>
+        /// A virtual function that is called when the client is disconnected from the host.
+        /// <para>The sceneChange parameter allows the game to choose to stay in the current scene, or switch to the offline scene.</para>
+        /// </summary>
+        /// <param name="conn">The connection to the old host.</param>
+        /// <param name="sceneChange">How to handle scene changes.</param>
         // called on client after the connection to host is lost. controls whether to switch scenes
         protected virtual void OnClientDisconnectedFromHost(NetworkConnection conn, out SceneChangeOption sceneChange)
         {
             sceneChange = SceneChangeOption.StayInOnlineScene;
         }
 
+        /// <summary>
+        /// A virtual function that is called when the host is shutdown.
+        /// <para>Calling NetworkManager.StopHost() will cause this function to be invoked if there is an active NetworkMigrationManager. Using the Stop Host button of the NetworkManagerHUD will cause this to be called.</para>
+        /// </summary>
         // called on host after the host is lost. host MUST change scenes
         protected virtual void OnServerHostShutdown()
         {
         }
 
+        /// <summary>
+        /// A virtual function that is called on the new host when a client from the old host reconnects to the new host.
+        /// <para>The base class version of this function calls ReconnectPlayerForConnection() to hookup the new client.</para>
+        /// <para>ReconnectPlayerForConnection does not have to be called from within this function, it can be done asynchronously.</para>
+        /// </summary>
+        /// <param name="newConnection">The connection of the new client.</param>
+        /// <param name="oldPlayer">The player object associated with this client.</param>
+        /// <param name="oldConnectionId">The connectionId of this client on the old host.</param>
+        /// <param name="playerControllerId">The playerControllerId of the player that is re-joining.</param>
         // called on new host (server) when a client from the old host re-connects a player
         protected virtual void OnServerReconnectPlayer(NetworkConnection newConnection, GameObject oldPlayer, int oldConnectionId, short playerControllerId)
         {
             ReconnectPlayerForConnection(newConnection, oldPlayer, oldConnectionId, playerControllerId);
         }
 
+        /// <summary>
+        /// A virtual function that is called on the new host when a client from the old host reconnects to the new host.
+        /// <para>The base class version of this function calls ReconnectPlayerForConnection() to hookup the new client.</para>
+        /// <para>ReconnectPlayerForConnection does not have to be called from within this function, it can be done asynchronously.</para>
+        /// </summary>
+        /// <param name="newConnection">The connection of the new client.</param>
+        /// <param name="oldPlayer">The player object associated with this client.</param>
+        /// <param name="oldConnectionId">The connectionId of this client on the old host.</param>
+        /// <param name="playerControllerId">The playerControllerId of the player that is re-joining.</param>
+        /// <param name="extraMessageReader">Additional message data (optional).</param>
         // called on new host (server) when a client from the old host re-connects a player
         protected virtual void OnServerReconnectPlayer(NetworkConnection newConnection, GameObject oldPlayer, int oldConnectionId, short playerControllerId, NetworkReader extraMessageReader)
         {
@@ -671,24 +857,53 @@ namespace UnityEngine.Networking
             ReconnectPlayerForConnection(newConnection, oldPlayer, oldConnectionId, playerControllerId);
         }
 
+        /// <summary>
+        /// A virtual function that is called for non-player objects with client authority on the new host when a client from the old host reconnects to the new host.
+        /// <para>The base class version of this function calls ReconnectObjectForConnection() to hookup the object for the new client.</para>
+        /// </summary>
+        /// <param name="newConnection">The connection of the new client.</param>
+        /// <param name="oldObject">The object with authority that is being reconnected.</param>
+        /// <param name="oldConnectionId">The connectionId of this client on the old host.</param>
         // called on new host (server) when a client from the old host re-connects an object with authority
         protected virtual void OnServerReconnectObject(NetworkConnection newConnection, GameObject oldObject, int oldConnectionId)
         {
             ReconnectObjectForConnection(newConnection, oldObject, oldConnectionId);
         }
 
+        /// <summary>
+        /// A virtual function that is called when the set of peers in the game changes.
+        /// <para>This happens when a new client connects to the host, a client disconnects from the host, and when players are added and removed from clients.</para>
+        /// <para>The list of peers is stored in the member variable peers on the migration manager. This is used when the connection to the host is lost, to choose the new host and to re-add player objects.</para>
+        /// </summary>
+        /// <param name="peers">The set of peers in the game.</param>
         // called on both host and client when the set of peers is updated
         protected virtual void OnPeersUpdated(PeerListMessage peers)
         {
             if (LogFilter.logDev) { Debug.Log("NetworkMigrationManager NumPeers "  + peers.peers.Length); }
         }
 
+        /// <summary>
+        /// A virtual function that is called when the authority of a non-player object changes.
+        /// <para>This is called on the host and on clients when the AssignClientAuthority, RemoveClientAuthority and NetworkServer.SpawnWithClientAuthority are used.</para>
+        /// </summary>
+        /// <param name="go">The game object whose authority has changed.</param>
+        /// <param name="connectionId">The id of the connection whose authority changed for this object.</param>
+        /// <param name="authorityState">The new authority state for the object.</param>
         // called on both host and client when authority changes on a non-player object
         protected virtual void OnAuthorityUpdated(GameObject go, int connectionId, bool authorityState)
         {
             if (LogFilter.logDev) { Debug.Log("NetworkMigrationManager OnAuthorityUpdated for " + go + " conn:" + connectionId + " state:" + authorityState); }
         }
 
+        /// <summary>
+        /// This is a utility function to pick one of the peers in the game as the new host.
+        /// <para>This function implements the default host-choosing strategy of picking the peer with the lowest connectionId on the server.</para>
+        /// <para>Applications are not required to use this function to choose the new host. They can use any method they want. The choice does not have to be made synchronously, so it is possible to communicate with an external service to choose the new host.</para>
+        /// <para>However, the default UI of the NetworkMigrationManager calls into this function.</para>
+        /// </summary>
+        /// <param name="newHostInfo">Information about the new host, including the IP address.</param>
+        /// <param name="youAreNewHost">True if this client is to be the new host.</param>
+        /// <returns>True if able to pick a new host.</returns>
         // utility function called by the default UI on client after connection to host was lost, to pick a new host.
         public virtual bool FindNewHost(out NetworkSystem.PeerInfoMessage newHostInfo, out bool youAreNewHost)
         {
@@ -928,5 +1143,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-
-#endif

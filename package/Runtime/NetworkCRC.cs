@@ -1,4 +1,3 @@
-#if ENABLE_UNET
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -6,6 +5,10 @@ using UnityEngine.Networking.NetworkSystem;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// This class holds information about which networked scripts use which QoS channels for updates.
+    /// <para>This channel information is used to ensure that clients and servers are using compatible HLAPI script configurations.</para>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkCRC
     {
@@ -25,8 +28,16 @@ namespace UnityEngine.Networking
                 return s_Singleton;
             }
         }
+        /// <summary>
+        /// A dictionary of script QoS channels.
+        /// <para>This is used to compare script network configurations between clients and servers.</para>
+        /// </summary>
         public Dictionary<string, int> scripts { get { return m_Scripts; } }
 
+        /// <summary>
+        /// Enables a CRC check between server and client that ensures the <see cref="NetworkBehaviour">NetworkBehaviour</see> scripts match.
+        /// <para>This may not be appropriate in some cases, such a when the client and server are different Unity projects.</para>
+        /// </summary>
         static public bool scriptCRCCheck
         {
             get
@@ -39,6 +50,11 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This can be used to reinitialize the set of script CRCs.
+        /// <para>This is very rarely required - only when NetworkBehaviour scripts are dynamically loaded.</para>
+        /// </summary>
+        /// <param name="callingAssembly"></param>
         // The NetworkCRC cache contain entries from
         static public void ReinitializeScriptCRCs(Assembly callingAssembly)
         {
@@ -59,6 +75,11 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This is used to setup script network settings CRC data.
+        /// </summary>
+        /// <param name="name">Script name.</param>
+        /// <param name="channel">QoS Channel.</param>
         static public void RegisterBehaviour(string name, int channel)
         {
             singleton.m_Scripts[name] = channel;
@@ -119,4 +140,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif //ENABLE_UNET

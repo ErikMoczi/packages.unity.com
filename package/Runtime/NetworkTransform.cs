@@ -1,39 +1,101 @@
-#if ENABLE_UNET
 using System;
 using UnityEngine;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// A component to synchronize the position and rotation of networked objects.
+    /// <para>The movement of game objects can be networked by this component. There are two models of authority for networked movement:</para>
+    /// <para>If the object has authority on the client, then it should be controlled locally on the owning client, then movement state information will be sent from the owning client to the server, then broadcast to all of the other clients. This is common for player objects.</para>
+    /// <para>If the object has authority on the server, then it should be controlled on the server and movement state information will be sent to all clients. This is common for objects not related to a specific client, such as an enemy unit.</para>
+    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/NetworkTransform")]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkTransform : NetworkBehaviour
     {
+        /// <summary>
+        /// How to synchronize an object's position.
+        /// </summary>
         public enum TransformSyncMode
         {
+            /// <summary>
+            /// Dont synchronize.
+            /// </summary>
             SyncNone = 0,
+            /// <summary>
+            /// Sync using the game object's base transform.
+            /// </summary>
             SyncTransform = 1,
+            /// <summary>
+            /// Sync using the Rigidbody2D component.
+            /// </summary>
             SyncRigidbody2D = 2,
+            /// <summary>
+            /// Sync using the Rigidbody component.
+            /// </summary>
             SyncRigidbody3D = 3,
+            /// <summary>
+            /// Sync using the CharacterController component.
+            /// </summary>
             SyncCharacterController = 4
         }
 
+        /// <summary>
+        /// An axis or set of axis.
+        /// </summary>
         public enum AxisSyncMode
         {
+            /// <summary>
+            /// Do not sync.
+            /// </summary>
             None,
+            /// <summary>
+            /// Only x axis.
+            /// </summary>
             AxisX,
+            /// <summary>
+            /// Only the y axis.
+            /// </summary>
             AxisY,
+            /// <summary>
+            /// Only the z axis.
+            /// </summary>
             AxisZ,
+            /// <summary>
+            /// The x and y axis.
+            /// </summary>
             AxisXY,
+            /// <summary>
+            /// The x and z axis.
+            /// </summary>
             AxisXZ,
+            /// <summary>
+            /// The y and z axis.
+            /// </summary>
             AxisYZ,
+            /// <summary>
+            /// The x, y and z axis.
+            /// </summary>
             AxisXYZ
         }
 
+        /// <summary>
+        /// How much to compress sync data.
+        /// </summary>
         public enum CompressionSyncMode
         {
+            /// <summary>
+            /// Do not compress.
+            /// </summary>
             None,
+            /// <summary>
+            /// A low amount of compression that preserves accuracy.
+            /// </summary>
             Low,
+            /// <summary>
+            /// High Compression - sacrificing accuracy.
+            /// </summary>
             High
         }
 
@@ -89,32 +151,172 @@ namespace UnityEngine.Networking
 
         // settings
 
+        /// <summary>
+        /// What method to use to sync the object's position.
+        /// </summary>
         public TransformSyncMode    transformSyncMode { get { return m_TransformSyncMode; } set { m_TransformSyncMode = value; } }
+        /// <summary>
+        /// The sendInterval controls how often state updates are sent for this object.
+        /// <para>Unlike most NetworkBehaviour scripts, for NetworkTransform this is implemented at a per-object level rather than at the per-script level. This allows more flexibility as this component is used in various situation.</para>
+        /// <para>If sendInterval is non-zero, then transform state updates are send at most once every sendInterval seconds. However, if an object is stationary, no updates are sent.</para>
+        /// <para>If sendInterval is zero, then no automatic updates are sent. In this case, calling SetDirtyBits() on the NetworkTransform will cause an updates to be sent. This could be used for objects like bullets that have a predictable trajectory.</para>
+        /// </summary>
         public float                sendInterval { get { return m_SendInterval; } set { m_SendInterval = value; } }
+        /// <summary>
+        /// Which axis should rotation by synchronized for.
+        /// </summary>
         public AxisSyncMode         syncRotationAxis { get { return m_SyncRotationAxis; } set { m_SyncRotationAxis = value; } }
+        /// <summary>
+        /// How much to compress rotation sync updates.
+        /// </summary>
         public CompressionSyncMode  rotationSyncCompression { get { return m_RotationSyncCompression; } set { m_RotationSyncCompression = value; } }
         public bool                 syncSpin { get { return m_SyncSpin; }  set { m_SyncSpin = value; } }
+        /// <summary>
+        /// The distance that an object can move without sending a movement synchronization update.
+        /// </summary>
         public float                movementTheshold { get { return m_MovementTheshold; } set { m_MovementTheshold = value; } }
+        /// <summary>
+        /// The minimum velocity difference that will be synchronized over the network.
+        /// </summary>
         public float                velocityThreshold { get { return m_VelocityThreshold; } set { m_VelocityThreshold = value; } }
+        /// <summary>
+        /// If a movement update puts an object further from its current position that this value, it will snap to the position instead of moving smoothly.
+        /// </summary>
         public float                snapThreshold { get { return m_SnapThreshold; } set { m_SnapThreshold = value; } }
+        /// <summary>
+        /// Enables interpolation of the synchronized rotation.
+        /// <para>If this is not set, object will snap to the new rotation. The larger this number is, the faster the object will interpolate to the target facing direction.</para>
+        /// </summary>
         public float                interpolateRotation { get { return m_InterpolateRotation; } set { m_InterpolateRotation = value; } }
+        /// <summary>
+        /// Enables interpolation of the synchronized movement.
+        /// <para>The larger this number is, the faster the object will interpolate to the target position.</para>
+        /// </summary>
         public float                interpolateMovement { get { return m_InterpolateMovement; } set { m_InterpolateMovement = value; } }
+        /// <summary>
+        /// A callback that can be used to validate on the server, the movement of client authoritative objects.
+        /// <para>This version of the callback works with objects that use 3D physics. The callback function may return false to reject the movement request completely. It may also modify the movement parameters - which are passed by reference.</para>
+        /// <para>The example below set the callback in OnStartServer, and will disconnect a client that moves an object into an invalid position after a number of failures.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class MyMover : NetworkManager
+        /// {
+        ///    public int cheatCount = 0;
+        ///
+        ///    public bool ValidateMove(ref Vector3 position, ref Vector3 velocity, ref Quaternion rotation)
+        ///    {
+        ///        Debug.Log("pos:" + position);
+        ///        if (position.y &gt; 9)
+        ///        {
+        ///            position.y = 9;
+        ///            cheatCount += 1;
+        ///            if (cheatCount == 10)
+        ///            {
+        ///                Invoke("DisconnectCheater", 0.1f);
+        ///            }
+        ///        }
+        ///        return true;
+        ///    }
+        ///
+        ///    void DisconnectCheater()
+        ///    {
+        ///        GetComponent&lt;<see cref="NetworkIdentity">NetworkIdentity</see>&gt;().connectionToClient.Disconnect();
+        ///    }
+        ///
+        ///    public override void OnStartServer()
+        ///    {
+        ///        GetComponent&lt;<see cref="NetworkTransform">NetworkTransform</see>&gt;().clientMoveCallback3D = ValidateMove;
+        ///    }
+        /// }
+        /// </code>
+        /// This kind of server-side movement validation should be used in conjunction with client side movement validation. The callback should only detect a failure if a client is by-passing client side movement checks - by cheating.
+        /// </summary>
         public ClientMoveCallback3D clientMoveCallback3D { get { return m_ClientMoveCallback3D; } set { m_ClientMoveCallback3D = value; } }
+        /// <summary>
+        /// A callback that can be used to validate on the server, the movement of client authoritative objects.
+        /// <para>This version of the callback works with objects that use 2D physics. The callback function may return false to reject the movement request completely. It may also modify the movement parameters - which are passed by reference.</para>
+        /// <para>The example below set the callback in OnStartServer, and will disconnect a client that moves an object into an invalid position after a number of failures.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// 
+        /// public class MyMover : NetworkManager
+        /// {
+        ///    public int cheatCount = 0;
+        /// 
+        ///    public bool ValidateMove(ref Vector2 position, ref Vector2 velocity, ref float rotation)
+        ///    {
+        ///        Debug.Log("pos:" + position);
+        ///        if (position.y > 9)
+        ///        {
+        ///            position.y = 9;
+        ///            cheatCount += 1;
+        ///            if (cheatCount == 10)
+        ///            {
+        ///                Invoke("DisconnectCheater", 0.1f);
+        ///            }
+        ///        }
+        ///        return true;
+        ///    }
+        ///
+        ///    void DisconnectCheater()
+        ///    {
+        ///        GetComponent&lt;<see cref="NetworkIdentity">NetworkIdentity</see>&gt;().connectionToClient.Disconnect();
+        ///    }
+        ///
+        ///    public override void OnStartServer()
+        ///    {
+        ///        GetComponent&lt;<see cref="NetworkTransform">NetworkTransform</see>&gt;().clientMoveCallback2D = ValidateMove;
+        ///    }
+        /// }
+        /// </code>
+        /// This kind of server-side movement validation should be used in conjunction with client side movement validation. The callback should only detect a failure if a client is by-passing client side movement checks - by cheating.
+        /// </summary>
         public ClientMoveCallback2D clientMoveCallback2D { get { return m_ClientMoveCallback2D; } set { m_ClientMoveCallback2D = value; } }
 
         // runtime data
 
+        /// <summary>
+        /// Cached CharacterController.
+        /// </summary>
         public CharacterController  characterContoller { get { return m_CharacterController; } }
+        /// <summary>
+        /// Cached Rigidbody.
+        /// </summary>
         public Rigidbody            rigidbody3D { get { return m_RigidBody3D; } }
 #if !PLATFORM_WINRT || ENABLE_DOTNET
         new
 #endif
+        /// <summary>
+        /// Cached Rigidbody2D.
+        /// </summary>
         public Rigidbody2D          rigidbody2D { get { return m_RigidBody2D; } }
+        /// <summary>
+        /// The most recent time when a movement synchronization packet arrived for this object.
+        /// </summary>
         public float                lastSyncTime { get { return m_LastClientSyncTime; } }
+        /// <summary>
+        /// The target position interpolating towards.
+        /// </summary>
         public Vector3              targetSyncPosition { get { return m_TargetSyncPosition; } }
+        /// <summary>
+        /// The velocity send for synchronization.
+        /// </summary>
         public Vector3              targetSyncVelocity { get { return m_TargetSyncVelocity; } }
+        /// <summary>
+        /// The target position interpolating towards.
+        /// </summary>
         public Quaternion           targetSyncRotation3D { get { return m_TargetSyncRotation3D; } }
+        /// <summary>
+        /// The target rotation interpolating towards.
+        /// </summary>
         public float                targetSyncRotation2D { get { return m_TargetSyncRotation2D; } }
+        /// <summary>
+        /// Tells the NetworkTransform that it is on a surface (this is the default).
+        /// <para>Object that are NOT grounded will not interpolate their vertical velocity. This avoid the problem of interpolation fighting with gravity on non-authoritative objects. This only works for RigidBody2D physics objects.</para>
+        /// </summary>
         public bool                 grounded { get { return m_Grounded; } set { m_Grounded = value; } }
 
         void OnValidate()
@@ -1590,4 +1792,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif //ENABLE_UNET

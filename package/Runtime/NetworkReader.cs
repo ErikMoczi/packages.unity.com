@@ -1,10 +1,71 @@
-#if ENABLE_UNET
 using System;
 using System.Text;
 using UnityEngine;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// General purpose serializer for UNET (for reading byte arrays).
+    /// <para>This class works with NetworkWriter and is used for serializing data for UNet commands, RPC calls, events and low level messages.</para>
+    /// <code>
+    /// using UnityEngine;
+    /// using UnityEngine.Networking;
+    ///
+    /// public class ExampleScript : MonoBehaviour
+    /// {
+    ///    // Writing data to a NetworkWriter and then
+    ///    // Converting this to a NetworkReader.
+    ///    void Start()
+    ///    {
+    ///        // The data you add to your writer must be prefixed with a message type.
+    ///        // This is in the form of a short.
+    ///        short myMsgType = 143;
+    ///        NetworkWriter writer = new NetworkWriter();
+    ///        // You start the message in your writer by passing in the message type.
+    ///        // This is a short meaning that it will take up 2 bytes at the start of
+    ///        // your message.
+    ///        writer.StartMessage(myMsgType);
+    ///        // You can now begin your message. In this case we will just use strings.
+    ///        writer.Write("Test data 1");
+    ///        writer.Write("Test data 2");
+    ///        writer.Write("Test data 3");
+    ///        // Make sure to end your message with FinishMessage()
+    ///        writer.FinishMessage();
+    ///        // You can now access the data in your writer. ToArray() returns a copy
+    ///        // of the bytes that the writer is using and AsArray() returns the
+    ///        // internal array of bytes, not a copy.
+    ///        byte[] writerData = writer.ToArray();
+    ///        CreateNetworkReader(writerData);
+    ///    }
+    ///
+    ///    void CreateNetworkReader(byte[] data)
+    ///    {
+    ///        // We will create the NetworkReader using the data from our previous
+    ///        // NetworkWriter.
+    ///        NetworkReader networkReader = new NetworkReader(data);
+    ///        // The first two bytes in the buffer represent the size
+    ///        // of the message. This is equal to the NetworkReader.Length
+    ///        // minus the size of the prefix.
+    ///        byte[] readerMsgSizeData = networkReader.ReadBytes(2);
+    ///        short readerMsgSize = (short)((readerMsgSizeData[1] &lt;&lt; 8) + readerMsgSizeData[0]);
+    ///        Debug.Log(readerMsgSize);
+    ///        // The message type added in NetworkWriter.StartMessage
+    ///        // is to be read now. It is a short and so consists of
+    ///        // two bytes. It is the second two bytes on the buffer.
+    ///        byte[] readerMsgTypeData = networkReader.ReadBytes(2);
+    ///        short readerMsgType = (short)((readerMsgTypeData[1] &lt;&lt; 8) + readerMsgTypeData[0]);
+    ///        Debug.Log(readerMsgType);
+    ///        // If all of your data is of the same type (in this case the
+    ///        // data on our buffer is comprised of only strings) you can
+    ///        // read all the data from the buffer using a loop like so.
+    ///        while (networkReader.Position &lt; networkReader.Length)
+    ///        {
+    ///            Debug.Log(networkReader.ReadString());
+    ///        }
+    ///    }
+    /// }
+    /// </code>
+    /// </summary>
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkReader
     {
@@ -15,12 +76,19 @@ namespace UnityEngine.Networking
         static byte[] s_StringReaderBuffer;
         static Encoding s_Encoding;
 
+        /// <summary>
+        /// Creates a new NetworkReader object.
+        /// </summary>
         public NetworkReader()
         {
             m_buf = new NetBuffer();
             Initialize();
         }
 
+        /// <summary>
+        /// Creates a new NetworkReader object.
+        /// </summary>
+        /// <param name="writer">A buffer to construct the reader with, this buffer is NOT copied.</param>
         public NetworkReader(NetworkWriter writer)
         {
             m_buf = new NetBuffer(writer.AsArray());
@@ -42,9 +110,20 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// The current position within the buffer.
+        /// <para>See <see cref="NetworkReader">NetworkReader</see> for a code example.</para>
+        /// </summary>
         public uint Position { get { return m_buf.Position; } }
+        /// <summary>
+        /// The current length of the buffer.
+        /// <para>See <see cref="NetworkReader">NetworkReader</see> for a code example.</para>
+        /// </summary>
         public int Length { get { return m_buf.Length; } }
 
+        /// <summary>
+        /// Sets the current position of the reader's stream to the start of the stream.
+        /// </summary>
         public void SeekZero()
         {
             m_buf.SeekZero();
@@ -58,6 +137,10 @@ namespace UnityEngine.Networking
         // http://sqlite.org/src4/doc/trunk/www/varint.wiki
         // NOTE: big endian.
 
+        /// <summary>
+        /// Reads a 32-bit variable-length-encoded value.
+        /// </summary>
+        /// <returns>The 32 bit value read.</returns>
         public UInt32 ReadPackedUInt32()
         {
             byte a0 = ReadByte();
@@ -88,6 +171,10 @@ namespace UnityEngine.Networking
             throw new IndexOutOfRangeException("ReadPackedUInt32() failure: " + a0);
         }
 
+        /// <summary>
+        /// Reads a 64-bit variable-length-encoded value.
+        /// </summary>
+        /// <returns>The 64 bit value read.</returns>
         public UInt64 ReadPackedUInt64()
         {
             byte a0 = ReadByte();
@@ -146,26 +233,46 @@ namespace UnityEngine.Networking
             throw new IndexOutOfRangeException("ReadPackedUInt64() failure: " + a0);
         }
 
+        /// <summary>
+        /// Reads a NetworkInstanceId from the stream.
+        /// </summary>
+        /// <returns>The NetworkInstanceId read.</returns>
         public NetworkInstanceId ReadNetworkId()
         {
             return new NetworkInstanceId(ReadPackedUInt32());
         }
 
+        /// <summary>
+        /// Reads a NetworkSceneId from the stream.
+        /// </summary>
+        /// <returns>The NetworkSceneId read.</returns>
         public NetworkSceneId ReadSceneId()
         {
             return new NetworkSceneId(ReadPackedUInt32());
         }
 
+        /// <summary>
+        /// Reads a byte from the stream.
+        /// </summary>
+        /// <returns>The value read.</returns>
         public byte ReadByte()
         {
             return m_buf.ReadByte();
         }
 
+        /// <summary>
+        /// Reads a signed byte from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public sbyte ReadSByte()
         {
             return (sbyte)m_buf.ReadByte();
         }
 
+        /// <summary>
+        /// Reads a signed 16 bit integer from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public short ReadInt16()
         {
             ushort value = 0;
@@ -174,6 +281,10 @@ namespace UnityEngine.Networking
             return (short)value;
         }
 
+        /// <summary>
+        /// Reads an unsigned 16 bit integer from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public ushort ReadUInt16()
         {
             ushort value = 0;
@@ -182,6 +293,10 @@ namespace UnityEngine.Networking
             return value;
         }
 
+        /// <summary>
+        /// Reads a signed 32bit integer from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public int ReadInt32()
         {
             uint value = 0;
@@ -192,6 +307,10 @@ namespace UnityEngine.Networking
             return (int)value;
         }
 
+        /// <summary>
+        /// Reads an unsigned 32 bit integer from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public uint ReadUInt32()
         {
             uint value = 0;
@@ -202,6 +321,10 @@ namespace UnityEngine.Networking
             return value;
         }
 
+        /// <summary>
+        /// Reads a signed 64 bit integer from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public long ReadInt64()
         {
             ulong value = 0;
@@ -233,6 +356,10 @@ namespace UnityEngine.Networking
             return (long)value;
         }
 
+        /// <summary>
+        /// Reads an unsigned 64 bit integer from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public ulong ReadUInt64()
         {
             ulong value = 0;
@@ -262,6 +389,10 @@ namespace UnityEngine.Networking
             return value;
         }
 
+        /// <summary>
+        /// Reads a decimal from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public decimal ReadDecimal()
         {
             Int32[] bits = new Int32[4];
@@ -274,18 +405,31 @@ namespace UnityEngine.Networking
             return new decimal(bits);
         }
 
+        /// <summary>
+        /// Reads a float from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public float ReadSingle()
         {
             uint value = ReadUInt32();
             return FloatConversion.ToSingle(value);
         }
 
+        /// <summary>
+        /// Reads a double from the stream.
+        /// </summary>
+        /// <returns>Value read</returns>
         public double ReadDouble()
         {
             ulong value = ReadUInt64();
             return FloatConversion.ToDouble(value);
         }
 
+        /// <summary>
+        /// Reads a string from the stream. (max of 32k bytes).
+        /// <para>See <see cref="NetworkReader">NetworkReader</see> for a code example.</para>
+        /// </summary>
+        /// <returns>Value read.</returns>
         public string ReadString()
         {
             UInt16 numBytes = ReadUInt16();
@@ -308,17 +452,31 @@ namespace UnityEngine.Networking
             return new string(chars);
         }
 
+        /// <summary>
+        /// Reads a char from the stream.
+        /// </summary>
+        /// <returns>Value read.</returns>
         public char ReadChar()
         {
             return (char)m_buf.ReadByte();
         }
 
+        /// <summary>
+        /// Reads a boolean from the stream.
+        /// </summary>
+        /// <returns>The value read.</returns>
         public bool ReadBoolean()
         {
             int value = m_buf.ReadByte();
             return value == 1;
         }
 
+        /// <summary>
+        /// Reads a number of bytes from the stream.
+        /// <para>See <see cref="NetworkReader">NetworkReader</see> for a code example.</para>
+        /// </summary>
+        /// <param name="count">Number of bytes to read.</param>
+        /// <returns>Bytes read. (this is a copy).</returns>
         public byte[] ReadBytes(int count)
         {
             if (count < 0)
@@ -331,6 +489,11 @@ namespace UnityEngine.Networking
             return value;
         }
 
+        /// <summary>
+        /// This read a 16-bit byte count and a array of bytes of that size from the stream.
+        /// <para>The format used by this function is the same as NetworkWriter.WriteBytesAndSize().</para>
+        /// </summary>
+        /// <returns>The bytes read from the stream.</returns>
         public byte[] ReadBytesAndSize()
         {
             ushort sz = ReadUInt16();
@@ -340,51 +503,91 @@ namespace UnityEngine.Networking
             return ReadBytes(sz);
         }
 
+        /// <summary>
+        /// Reads a Unity Vector2 object.
+        /// </summary>
+        /// <returns>The vector read from the stream.</returns>
         public Vector2 ReadVector2()
         {
             return new Vector2(ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a Unity Vector3 objects.
+        /// </summary>
+        /// <returns>The vector read from the stream.</returns>
         public Vector3 ReadVector3()
         {
             return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a Unity Vector4 object.
+        /// </summary>
+        /// <returns>The vector read from the stream</returns>
         public Vector4 ReadVector4()
         {
             return new Vector4(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a unity Color objects.
+        /// </summary>
+        /// <returns>The color read from the stream.</returns>
         public Color ReadColor()
         {
             return new Color(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a unity color32 objects.
+        /// </summary>
+        /// <returns>The color read from the stream.</returns>
         public Color32 ReadColor32()
         {
             return new Color32(ReadByte(), ReadByte(), ReadByte(), ReadByte());
         }
 
+        /// <summary>
+        /// Reads a Unity Quaternion object.
+        /// </summary>
+        /// <returns>The quaternion read from the stream.</returns>
         public Quaternion ReadQuaternion()
         {
             return new Quaternion(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a Unity Rect object.
+        /// </summary>
+        /// <returns>The rect read from the stream.</returns>
         public Rect ReadRect()
         {
             return new Rect(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a unity Plane object.
+        /// </summary>
+        /// <returns>The plane read from the stream.</returns>
         public Plane ReadPlane()
         {
             return new Plane(ReadVector3(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a Unity Ray object.
+        /// </summary>
+        /// <returns>The ray read from the stream.</returns>
         public Ray ReadRay()
         {
             return new Ray(ReadVector3(), ReadVector3());
         }
 
+        /// <summary>
+        /// Reads a unity Matrix4x4 object.
+        /// </summary>
+        /// <returns>The matrix read from the stream.</returns>
         public Matrix4x4 ReadMatrix4x4()
         {
             Matrix4x4 m = new Matrix4x4();
@@ -407,6 +610,10 @@ namespace UnityEngine.Networking
             return m;
         }
 
+        /// <summary>
+        /// Reads a NetworkHash128 assetId.
+        /// </summary>
+        /// <returns>The assetId object read from the stream.</returns>
         public NetworkHash128 ReadNetworkHash128()
         {
             NetworkHash128 hash;
@@ -429,6 +636,11 @@ namespace UnityEngine.Networking
             return hash;
         }
 
+        /// <summary>
+        /// Reads a reference to a Transform from the stream.
+        /// <para>The game object of this Transform must have a NetworkIdentity.</para>
+        /// </summary>
+        /// <returns>The transform object read.</returns>
         public Transform ReadTransform()
         {
             NetworkInstanceId netId = ReadNetworkId();
@@ -446,6 +658,10 @@ namespace UnityEngine.Networking
             return go.transform;
         }
 
+        /// <summary>
+        /// Reads a reference to a GameObject from the stream.
+        /// </summary>
+        /// <returns>The GameObject referenced.</returns>
         public GameObject ReadGameObject()
         {
             NetworkInstanceId netId = ReadNetworkId();
@@ -471,6 +687,10 @@ namespace UnityEngine.Networking
             return go;
         }
 
+        /// <summary>
+        /// Reads a reference to a NetworkIdentity from the stream.
+        /// </summary>
+        /// <returns>The NetworkIdentity object read.</returns>
         public NetworkIdentity ReadNetworkIdentity()
         {
             NetworkInstanceId netId = ReadNetworkId();
@@ -496,11 +716,20 @@ namespace UnityEngine.Networking
             return go.GetComponent<NetworkIdentity>();
         }
 
+        /// <summary>
+        /// Returns a string representation of the reader's buffer.
+        /// </summary>
+        /// <returns>Buffer contents.</returns>
         public override string ToString()
         {
             return m_buf.ToString();
         }
 
+        /// <summary>
+        /// This is a utility function to read a typed network message from the stream.
+        /// </summary>
+        /// <typeparam name="TMsg">The type of the Network Message, must be derived from MessageBase.</typeparam>
+        /// <returns></returns>
         public TMsg ReadMessage<TMsg>() where TMsg : MessageBase, new()
         {
             var msg = new TMsg();
@@ -509,4 +738,3 @@ namespace UnityEngine.Networking
         }
     };
 }
-#endif //ENABLE_UNET

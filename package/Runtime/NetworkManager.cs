@@ -1,4 +1,3 @@
-#if ENABLE_UNET
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -9,12 +8,52 @@ using UnityEngine.SceneManagement;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// Enumeration of methods of where to spawn player objects in multiplayer games.
+    /// <code>
+    /// using UnityEngine;
+    /// using UnityEngine.Networking;
+    ///
+    /// public class PlayerSpawnMethodExample : MonoBehaviour
+    /// {
+    ///    void Update()
+    ///    {
+    ///        //Press the space key to switch to spawning on a random spawn point
+    ///        if (Input.GetKeyDown(KeyCode.Space))
+    ///        {
+    ///            //Check that the PlayerSpawnMethod is currently RoundRobin
+    ///            if (NetworkManager.singleton.playerSpawnMethod == PlayerSpawnMethod.RoundRobin)
+    ///                //Switch it to Random spawning if it is
+    ///                NetworkManager.singleton.playerSpawnMethod = PlayerSpawnMethod.Random;
+    ///            //Otherwise switch it to RoundRobin
+    ///            else NetworkManager.singleton.playerSpawnMethod = PlayerSpawnMethod.RoundRobin;
+    ///        }
+    ///    }
+    /// }
+    /// </code>
+    /// </summary>
     public enum PlayerSpawnMethod
     {
         Random,
         RoundRobin
     };
 
+    /// <summary>
+    /// The NetworkManager is a convenience class for the HLAPI for managing networking systems.
+    /// <para>For simple network applications the NetworkManager can be used to control the HLAPI. It provides simple ways to start and stop client and servers, to manage scenes, and has virtual functions that user code can use to implement handlers for network events. The NetworkManager deals with one client at a time. The example below shows a minimal network setup.</para>
+    /// <code>
+    /// using UnityEngine;
+    /// using UnityEngine.Networking;
+    ///
+    /// public class Manager : NetworkManager
+    /// {
+    ///    public override void OnServerConnect(NetworkConnection conn)
+    ///    {
+    ///        Debug.Log("OnPlayerConnected");
+    ///    }
+    /// }
+    /// </code>
+    /// </summary>
     [AddComponentMenu("Network/NetworkManager")]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkManager : MonoBehaviour
@@ -53,7 +92,14 @@ namespace UnityEngine.Networking
         // matchmaking configuration
         [SerializeField] string m_MatchHost = "mm.unet.unity3d.com";
         [SerializeField] int m_MatchPort = 443;
+        /// <summary>
+        /// The name of the current match.
+        /// <para>A text string indicating the name of the current match in progress.</para>
+        /// </summary>
         [SerializeField] public string matchName = "default";
+        /// <summary>
+        /// The maximum number of players in the current match.
+        /// </summary>
         [SerializeField] public uint matchSize = 4;
 
 
@@ -65,47 +111,193 @@ namespace UnityEngine.Networking
         static INetworkTransport s_ActiveTransport = new DefaultNetworkTransport();
 
         // properties
+        /// <summary>
+        /// The network port currently in use.
+        /// <para>For clients, this is the port of the server connected to. For servers, this is the listen port.</para>
+        /// </summary>
         public int networkPort               { get { return m_NetworkPort; } set { m_NetworkPort = value; } }
+        /// <summary>
+        /// Flag to tell the server whether to bind to a specific IP address.
+        /// <para>If this is false, then no specific IP address is bound to (IP_ANY).</para>
+        /// </summary>
         public bool serverBindToIP           { get { return m_ServerBindToIP; } set { m_ServerBindToIP = value; }}
+        /// <summary>
+        /// The IP address to bind the server to.
+        /// <para>This is only used if serverBindToIP is set to true.</para>
+        /// </summary>
         public string serverBindAddress  { get { return m_ServerBindAddress; } set { m_ServerBindAddress = value; }}
+        /// <summary>
+        /// The network address currently in use.
+        /// <para>For clients, this is the address of the server that is connected to. For servers, this is the local address.</para>
+        /// </summary>
         public string networkAddress         { get { return m_NetworkAddress; }  set { m_NetworkAddress = value; } }
+        /// <summary>
+        /// A flag to control whether the NetworkManager object is destroyed when the scene changes.
+        /// <para>This should be set if your game has a single NetworkManager that exists for the lifetime of the process. If there is a NetworkManager in each scene, then this should not be set.</para>
+        /// </summary>
         public bool dontDestroyOnLoad        { get { return m_DontDestroyOnLoad; }  set { m_DontDestroyOnLoad = value; } }
+        /// <summary>
+        /// Controls whether the program runs when it is in the background.
+        /// <para>This is required when multiple instances of a program using networking are running on the same machine, such as when testing using localhost. But this is not recommended when deploying to mobile platforms.</para>
+        /// </summary>
         public bool runInBackground          { get { return m_RunInBackground; }  set { m_RunInBackground = value; } }
+        /// <summary>
+        /// Flag for using the script CRC check between server and clients.
+        /// <para>Enables a CRC check between server and client that ensures the NetworkBehaviour scripts match. This may not be appropriate in some cases, such a when the client and server are different Unity projects.</para>
+        /// </summary>
         public bool scriptCRCCheck           { get { return m_ScriptCRCCheck; } set { m_ScriptCRCCheck = value;  }}
 
         [Obsolete("moved to NetworkMigrationManager")]
         public bool sendPeerInfo             { get { return false; } set {} }
 
+        /// <summary>
+        /// The maximum delay before sending packets on connections.
+        /// <para>In seconds. The default of 0.01 seconds means packets will be delayed at most by 10 milliseconds. Setting this to zero will disable HLAPI connection buffering.</para>
+        /// </summary>
         public float maxDelay                { get { return m_MaxDelay; }  set { m_MaxDelay = value; } }
+        /// <summary>
+        /// The log level specifically to user for network log messages.
+        /// </summary>
         public LogFilter.FilterLevel logLevel { get { return m_LogLevel; }  set { m_LogLevel = value; LogFilter.currentLogLevel = (int)value; } }
+        /// <summary>
+        /// The default prefab to be used to create player objects on the server.
+        /// <para>Player objects are created in the default handler for AddPlayer() on the server. Implementing OnServerAddPlayer overrides this behaviour.</para>
+        /// </summary>
         public GameObject playerPrefab       { get { return m_PlayerPrefab; }  set { m_PlayerPrefab = value; } }
+        /// <summary>
+        /// A flag to control whether or not player objects are automatically created on connect, and on scene change.
+        /// </summary>
         public bool autoCreatePlayer         { get { return m_AutoCreatePlayer; } set { m_AutoCreatePlayer = value; } }
+        /// <summary>
+        /// The current method of spawning players used by the NetworkManager.
+        /// <code>
+        /// //Attach this script to a GameObject
+        /// //This script switches the Player spawn method between Round Robin spawning and Random spawning when you press the space key in Play Mode.
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class Example : NetworkManager
+        /// {
+        ///    void Start()
+        ///    {
+        ///        //Change the Player Spawn Method to be Round Robin (spawn at the spawn points in order)
+        ///        playerSpawnMethod = PlayerSpawnMethod.RoundRobin;
+        ///    }
+        ///    
+        ///    void Update()
+        ///    {
+        ///        //Press the space key to switch the spawn method
+        ///        if (Input.GetKeyDown(KeyCode.Space))
+        ///        {
+        ///            //Press the space key to switch from RoundRobin method to Random method (spawn at the spawn points in a random order)
+        ///            if (playerSpawnMethod == PlayerSpawnMethod.RoundRobin)
+        ///                playerSpawnMethod = PlayerSpawnMethod.Random;
+        ///            //Otherwise switch back to RoundRobin at the press of the space key
+        ///            else playerSpawnMethod = PlayerSpawnMethod.RoundRobin;
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
         public PlayerSpawnMethod playerSpawnMethod { get { return m_PlayerSpawnMethod; } set { m_PlayerSpawnMethod = value; } }
+        /// <summary>
+        /// The scene to switch to when offline.
+        /// <para>Setting this makes the NetworkManager do scene management. This scene will be switched to when a network session is completed - such as a client disconnect, or a server shutdown.</para>
+        /// </summary>
         public string offlineScene           { get { return m_OfflineScene; }  set { m_OfflineScene = value; } }
+        /// <summary>
+        /// The scene to switch to when online.
+        /// <para>Setting this makes the NetworkManager do scene management. This scene will be switched to when a network session is started - such as a client connect, or a server listen.</para>
+        /// </summary>
         public string onlineScene            { get { return m_OnlineScene; }  set { m_OnlineScene = value; } }
+        /// <summary>
+        /// List of prefabs that will be registered with the spawning system.
+        /// <para>For each of these prefabs, ClientManager.RegisterPrefab() will be automatically invoke.</para>
+        /// </summary>
         public List<GameObject> spawnPrefabs { get { return m_SpawnPrefabs; }}
 
+        /// <summary>
+        /// The list of currently registered player start positions for the current scene.
+        /// </summary>
         public List<Transform> startPositions { get { return s_StartPositions; }}
 
+        /// <summary>
+        /// Flag to enable custom network configuration.
+        /// </summary>
         public bool customConfig             { get { return m_CustomConfig; } set { m_CustomConfig = value; } }
+        /// <summary>
+        /// The custom network configuration to use.
+        /// <para>This will be used to configure the network transport layer.</para>
+        /// </summary>
         public ConnectionConfig connectionConfig { get { if (m_ConnectionConfig == null) { m_ConnectionConfig = new ConnectionConfig(); } return m_ConnectionConfig; } }
+        /// <summary>
+        /// The transport layer global configuration to be used.
+        /// <para>This defines global settings for the operation of the transport layer.</para>
+        /// </summary>
         public GlobalConfig globalConfig     { get { if (m_GlobalConfig == null) { m_GlobalConfig = new GlobalConfig(); } return m_GlobalConfig; } }
+        /// <summary>
+        /// The maximum number of concurrent network connections to support.
+        /// <para>The effects the memory usage of the network layer.</para>
+        /// </summary>
         public int maxConnections            { get { return m_MaxConnections; } set { m_MaxConnections = value; } }
+        /// <summary>
+        /// The Quality-of-Service channels to use for the network transport layer.
+        /// </summary>
         public List<QosType> channels        { get { return m_Channels; } }
 
+        /// <summary>
+        /// Allows you to specify an EndPoint object instead of setting networkAddress and networkPort (required for some platforms such as Xbox One).
+        /// <para>Setting this object overrides the networkAddress and networkPort fields, and will be used instead of making connections.</para>
+        /// </summary>
         public EndPoint secureTunnelEndpoint { get { return m_EndPoint; } set { m_EndPoint = value; } }
 
+        /// <summary>
+        /// This makes the NetworkServer listen for WebSockets connections instead of normal transport layer connections.
+        /// <para>This allows WebGL clients to connect to the server.</para>
+        /// </summary>
         public bool useWebSockets            { get { return m_UseWebSockets; } set { m_UseWebSockets = value; } }
+        /// <summary>
+        /// Flag that control whether clients started by this NetworkManager will use simulated latency and packet loss.
+        /// </summary>
         public bool useSimulator             { get { return m_UseSimulator; } set { m_UseSimulator = value; }}
+        /// <summary>
+        /// The delay in milliseconds to be added to incoming and outgoing packets for clients.
+        /// <para>This is only used when useSimulator is set.</para>
+        /// </summary>
         public int simulatedLatency          { get { return m_SimulatedLatency; } set { m_SimulatedLatency = value; } }
+        /// <summary>
+        /// The percentage of incoming and outgoing packets to be dropped for clients.
+        /// <para>This is only used when useSimulator is set.</para>
+        /// </summary>
         public float packetLossPercentage    { get { return m_PacketLossPercentage; } set { m_PacketLossPercentage = value; } }
 
+        /// <summary>
+        /// The hostname of the matchmaking server.
+        /// <para>The default address for the MatchMaker is mm.unet.unity3d.com That will connect a client to the nearest datacenter geographically. However because data centers are siloed from each other, players will only see matches occurring inside the data center they are currently connected to. If a player of your game is traveling to another part of the world, for instance, they may interact with a different set of players that are in that data center. You can override this behavior by specifying a particular data center. Keep in mind generally as distance grows so does latency, which is why we run data centers spread out over the world.</para>
+        /// <para>To connect to a specific data center use one of the following addresses:</para>
+        /// <para>United States: us1-mm.unet.unity3d.com Europe: eu1-mm.unet.unity3d.com Singapore: ap1-mm.unet.unity3d.com.</para>
+        /// </summary>
         public string matchHost              { get { return m_MatchHost; } set { m_MatchHost = value; } }
+        /// <summary>
+        /// The port of the matchmaking service.
+        /// </summary>
         public int matchPort                 { get { return m_MatchPort; } set { m_MatchPort = value; } }
+        /// <summary>
+        /// This is true if the client loaded a new scene when connecting to the server.
+        /// <para>This is set before OnClientConnect is called, so it can be checked there to perform different logic if a scene load occurred.</para>
+        /// </summary>
         public bool clientLoadedScene        { get { return m_ClientLoadedScene; } set { m_ClientLoadedScene = value; } }
 
+        /// <summary>
+        /// The migration manager being used with the NetworkManager.
+        /// </summary>
         public NetworkMigrationManager migrationManager { get { return m_MigrationManager; }}
 
+        /// <summary>
+        /// NumPlayers is the number of active player objects across all connections on the server.
+        /// <para>This is only valid on the host / server.</para>
+        /// </summary>
         // only really valid on the server
         public int numPlayers
         {
@@ -161,16 +353,66 @@ namespace UnityEngine.Networking
         }
 
         // runtime data
+        /// <summary>
+        /// The name of the current network scene.
+        /// <para>This is populated if the NetworkManager is doing scene management. This should not be changed directly. Calls to ServerChangeScene() cause this to change. New clients that connect to a server will automatically load this scene.</para>
+        /// </summary>
         static public string networkSceneName = "";
+        /// <summary>
+        /// True if the NetworkServer or NetworkClient isactive.
+        /// <para>This is read-only. Calling StopServer() or StopClient() turns this off.</para>
+        /// </summary>
         public bool isNetworkActive;
+        /// <summary>
+        /// The current NetworkClient being used by the manager.
+        /// <para>This is populated when StartClient or StartLocalClient are called.</para>
+        /// </summary>
         public NetworkClient client;
         static List<Transform> s_StartPositions = new List<Transform>();
         static int s_StartPositionIndex;
 
+        /// <summary>
+        /// A MatchInfo instance that will be used when StartServer() or StartClient() are called.
+        /// <para>This should be populated from the data handed to the callback for NetworkMatch.CreateMatch or NetworkMatch.JoinMatch. It contains all the information necessary to connect to the match in question.</para>
+        /// </summary>
         // matchmaking runtime data
         public MatchInfo matchInfo;
+        /// <summary>
+        /// The UMatch MatchMaker object.
+        /// <para>This is populated if StartMatchMaker() has been called. It is used to communicate with the matchmaking service. This should be shut down after the match is complete to clean up its internal state. If this object is null then the client is not setup to communicate with MatchMaker yet.</para>
+        /// </summary>
         public NetworkMatch matchMaker;
+        /// <summary>
+        /// The list of matches that are available to join.
+        /// <para>This will be populated if UMatch.ListMatches() has been called. It will contain the most recent set of results from calling ListMatches.</para>
+        /// </summary>
         public List<MatchInfoSnapshot> matches;
+        /// <summary>
+        /// The NetworkManager singleton object.
+        /// <code>
+        /// //Create a GameObject and attach this script
+        /// //Create two buttons. To do this, go to Create>UI>Button for each.
+        /// //Click each Button in the Hierarchy, and navigate to the Inspector window. Scroll down to the On Click() section and press the + button to add an action
+        /// //Attach your GameObject to access the appropriate function you want your Button to do.
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class Example : NetworkManager
+        /// {
+        ///    public void StartHostButton()
+        ///    {
+        ///        singleton.StartHost();
+        ///    }
+        ///
+        ///    //Press the "Disconnect" Button to stop the Host
+        ///    public void StopHostButton()
+        ///    {
+        ///        singleton.StopHost();
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
         public static NetworkManager singleton;
 
         // static message objects to avoid runtime-allocations
@@ -297,6 +539,11 @@ namespace UnityEngine.Networking
             NetworkServer.RegisterHandler(MsgType.Error, OnServerErrorInternal);
         }
 
+        /// <summary>
+        /// This sets up a NetworkMigrationManager object to work with this NetworkManager.
+        /// <para>The NetworkManager will automatically call functions on the migration manager, such as NetworkMigrationManager.LostHostOnClient when network events happen.</para>
+        /// </summary>
+        /// <param name="man">The migration manager object to use with the NetworkManager.</param>
         public void SetupMigrationManager(NetworkMigrationManager man)
         {
             m_MigrationManager = man;
@@ -307,6 +554,71 @@ namespace UnityEngine.Networking
             return StartServer(null, config, maxConnections);
         }
 
+        /// <summary>
+        /// This starts a new server.
+        /// <para>This uses the networkPort property as the listen port.</para>
+        /// <code>
+        /// //This is a script that creates a Toggle that you enable to start the Server.
+        /// //Attach this script to an empty GameObject
+        /// //Create a Toggle GameObject by going to <b>Create&gt;UI&gt;Toggle</b>.
+        /// //Click on your empty GameObject.
+        /// //Click and drag the Toggle GameObject from the Hierarchy to the Toggle section in the Inspector window.
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.UI;
+        /// using UnityEngine.Networking;
+        ///
+        /// //This makes the GameObject a NetworkManager GameObject
+        /// public class Example : NetworkManager
+        /// {
+        ///    public Toggle m_Toggle;
+        ///    Text m_ToggleText;
+        ///
+        ///    void Start()
+        ///    {
+        ///        //Fetch the Text of the Toggle to allow you to change it later
+        ///        m_ToggleText = m_Toggle.GetComponentInChildren&lt;Text&gt;();
+        ///        OnOff(false);
+        ///    }
+        ///
+        ///    //Connect this function to the Toggle to start and stop the Server
+        ///    public void OnOff(bool change)
+        ///    {
+        ///        //Detect when the Toggle returns false
+        ///        if (change == false)
+        ///        {
+        ///            //Stop the Server
+        ///            StopServer();
+        ///            //Change the text of the Toggle
+        ///            m_ToggleText.text = "Connect Server";
+        ///        }
+        ///        //Detect when the Toggle returns true
+        ///        if (change == true)
+        ///        {
+        ///            //Start the Server
+        ///            StartServer();
+        ///            //Change the Toggle Text
+        ///            m_ToggleText.text = "Disconnect Server";
+        ///        }
+        ///    }
+        ///
+        ///    //Detect when the Server starts and output the status
+        ///    public override void OnStartServer()
+        ///    {
+        ///        //Output that the Server has started
+        ///        Debug.Log("Server Started!");
+        ///    }
+        ///
+        ///    //Detect when the Server stops
+        ///    public override void OnStopServer()
+        ///    {
+        ///        //Output that the Server has stopped
+        ///        Debug.Log("Server Stopped!");
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <returns>True is the server was started.</returns>
         public bool StartServer()
         {
             return StartServer(null);
@@ -419,6 +731,12 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// This allows the NetworkManager to use a client object created externally to the NetworkManager instead of using StartClient().
+        /// <para>The StartClient() function creates a client object, but this is not always what is desired. UseExternalClient allows a NetworkClient object to be created by other code and used with the NetworkManager.</para>
+        /// <para>The client object will have the standard NetworkManager message handlers registered on it.</para>
+        /// </summary>
+        /// <param name="externalClient">The NetworkClient object to use.</param>
         public void UseExternalClient(NetworkClient externalClient)
         {
             if (m_RunInBackground)
@@ -532,6 +850,11 @@ namespace UnityEngine.Networking
             return StartClient(matchInfo, null);
         }
 
+        /// <summary>
+        /// This starts a network client. It uses the networkAddress and networkPort properties as the address to connect to.
+        /// <para>This makes the newly created client connect to the server immediately.</para>
+        /// </summary>
+        /// <returns>The client object created.</returns>
         public NetworkClient StartClient()
         {
             return StartClient(null, null);
@@ -568,6 +891,11 @@ namespace UnityEngine.Networking
             return null;
         }
 
+        /// <summary>
+        /// This starts a network "host" - a server and client in the same application.
+        /// <para>The client returned from StartHost() is a special "local" client that communicates to the in-process server using a message queue instead of the real network. But in almost all other cases, it can be treated as a normal client.</para>
+        /// </summary>
+        /// <returns>The client object created - this is a "local client".</returns>
         public virtual NetworkClient StartHost()
         {
             OnStartHost();
@@ -594,6 +922,9 @@ namespace UnityEngine.Networking
             return client;
         }
 
+        /// <summary>
+        /// This stops both the client and the server that the manager is using.
+        /// </summary>
         public void StopHost()
         {
             var serverWasActive = NetworkServer.active;
@@ -611,6 +942,9 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Stops the server that the manager is using.
+        /// </summary>
         public void StopServer()
         {
             if (!NetworkServer.active)
@@ -629,6 +963,9 @@ namespace UnityEngine.Networking
             CleanupNetworkIdentities();
         }
 
+        /// <summary>
+        /// Stops the client that the manager is using.
+        /// </summary>
         public void StopClient()
         {
             OnStopClient();
@@ -652,6 +989,11 @@ namespace UnityEngine.Networking
             CleanupNetworkIdentities();
         }
 
+        /// <summary>
+        /// This causes the server to switch scenes and sets the networkSceneName.
+        /// <para>Clients that connect to this server will automatically switch to this scene. This is called autmatically if onlineScene or offlineScene are set, but it can be called from user code to switch scenes again while the game is in progress. This automatically sets clients to be not-ready. The clients must call NetworkClient.Ready() again to participate in the new scene.</para>
+        /// </summary>
+        /// <param name="newSceneName">The name of the scene to change to. The server will change scene immediately, and a message will be sent to connected clients to ask them to change scene also.</param>
         public virtual void ServerChangeScene(string newSceneName)
         {
             if (string.IsNullOrEmpty(newSceneName))
@@ -788,23 +1130,62 @@ namespace UnityEngine.Networking
             if (LogFilter.logDev) { Debug.Log("NetworkManager destroyed"); }
         }
 
+        /// <summary>
+        /// Registers the transform of a game object as a player spawn location.
+        /// <para>This is done automatically by NetworkStartPosition components, but can be done manually from user script code.</para>
+        /// </summary>
+        /// <param name="start">Transform to register.</param>
         static public void RegisterStartPosition(Transform start)
         {
             if (LogFilter.logDebug) { Debug.Log("RegisterStartPosition: (" + start.gameObject.name + ") " + start.position); }
             s_StartPositions.Add(start);
         }
 
+        /// <summary>
+        /// Unregisters the transform of a game object as a player spawn location.
+        /// <para>This is done automatically by the <see cref="NetworkStartPosition">NetworkStartPosition</see> component, but can be done manually from user code.</para>
+        /// </summary>
+        /// <param name="start"></param>
         static public void UnRegisterStartPosition(Transform start)
         {
             if (LogFilter.logDebug) { Debug.Log("UnRegisterStartPosition: (" + start.gameObject.name + ") " + start.position); }
             s_StartPositions.Remove(start);
         }
 
+        /// <summary>
+        /// This checks if the NetworkManager has a client and that it is connected to a server.
+        /// <para>This is more specific than NetworkClient.isActive, which will be true if there are any clients active, rather than just the NetworkManager's client.</para>
+        /// </summary>
+        /// <returns>True if the NetworkManagers client is connected to a server.</returns>
         public bool IsClientConnected()
         {
             return client != null && client.isConnected;
         }
 
+        /// <summary>
+        /// Shuts down the NetworkManager completely and destroy the singleton.
+        /// <para>This is required if a new NetworkManager instance needs to be created after the original one was destroyed. The example below has a reference to the GameObject with the NetworkManager on it and destroys the instance before calling Shutdown() and switching scenes.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        ///
+        /// public class SwitchToEmptyScene : MonoBehaviour
+        /// {
+        ///    public GameObject NetworkManagerGameObject;
+        ///
+        ///    void OnGUI()
+        ///    {
+        ///        if (GUI.Button(new Rect(10, 10, 200, 20), "Switch"))
+        ///        {
+        ///            Destroy(NetworkManagerGameObject);
+        ///            NetworkManager.Shutdown();
+        ///            Application.LoadLevel("empty");
+        ///        }
+        ///    }
+        /// }
+        /// </code>
+        /// <para>This cleanup allows a new scene with a new NetworkManager to be loaded.</para>
+        /// </summary>
         // this is the only way to clear the singleton, so another instance can be created.
         static public void Shutdown()
         {
@@ -1001,10 +1382,72 @@ namespace UnityEngine.Networking
 
         // ----------------------------- Server System Callbacks --------------------------------
 
+        /// <summary>
+        /// Called on the server when a new client connects.
+        /// <para>Unity calls this on the Server when a Client connects to the Server. Use an override to tell the NetworkManager what to do when a client connects to the server.</para>
+        /// <code>
+        /// //Attach this script to a GameObject and add a NetworkHUD component to the GameObject.
+        /// //Create a Text GameObject (Create>UI>Text) and attach it in the Text field in the Inspector.
+        /// //This script changes Text on the screen when a client connects to the server
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.UI;
+        ///
+        /// public class OnServerConnectExample : NetworkManager
+        /// {
+        ///    //Assign a Text component in the GameObject's Inspector
+        ///    public Text m_Text;
+        ///
+        ///    //Detect when a client connects to the Server
+        ///    public override void OnServerConnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the connection and the client's ID
+        ///        m_Text.text = "Client " + connection.connectionId + " Connected!";
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="conn">Connection from client.</param>
         public virtual void OnServerConnect(NetworkConnection conn)
         {
         }
 
+        /// <summary>
+        /// Called on the server when a client disconnects.
+        /// <para>This is called on the Server when a Client disconnects from the Server. Use an override to decide what should happen when a disconnection is detected.</para>
+        /// <code>
+        /// //This script outputs a message when a client connects or disconnects from the server
+        /// //Attach this script to your GameObject.
+        /// //Attach a NetworkManagerHUD to your by clicking Add Component in the Inspector window of the GameObject. Then go to Network>NetworkManagerHUD.
+        /// //Create a Text GameObject and attach it to the Text field in the Inspector.
+        /// 
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.UI;
+        /// 
+        /// public class Example : NetworkManager
+        /// {
+        ///    //Assign a Text component in the GameObject's Inspector
+        ///    public Text m_Text;
+        ///
+        ///    //Detect when a client connects to the Server
+        ///    public override void OnServerConnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the connection
+        ///        m_Text.text = "Client " + connection.connectionId + " Connected!";
+        ///    }
+        /// 
+        ///    //Detect when a client disconnects from the Server
+        ///    public override void OnServerDisconnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the loss of connection
+        ///        m_Text.text = "Client " + connection.connectionId + "Connection Lost!";
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="conn">Connection from client.</param>
         public virtual void OnServerDisconnect(NetworkConnection conn)
         {
             NetworkServer.DestroyPlayersForConnection(conn);
@@ -1014,6 +1457,11 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Called on the server when a client is ready.
+        /// <para>The default implementation of this function calls NetworkServer.SetClientReady() to continue the network setup process.</para>
+        /// </summary>
+        /// <param name="conn">Connection from client.</param>
         public virtual void OnServerReady(NetworkConnection conn)
         {
             if (conn.playerControllers.Count == 0)
@@ -1024,6 +1472,31 @@ namespace UnityEngine.Networking
             NetworkServer.SetClientReady(conn);
         }
 
+        /// <summary>
+        /// Called on the server when a client adds a new player with ClientScene.AddPlayer.
+        /// <para>The default implementation for this function creates a new player object from the playerPrefab.</para>
+        /// <code>
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.Networking.NetworkSystem;
+        ///
+        /// class MyManager : NetworkManager
+        /// {
+        ///    public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId, NetworkReader extraMessageReader)
+        ///    {
+        ///        if (extraMessageReader != null)
+        ///        {
+        ///            var s = extraMessageReader.ReadMessage&lt;StringMessage&gt;();
+        ///            Debug.Log("my name is " + s.value);
+        ///        }
+        ///        OnServerAddPlayer(conn, playerControllerId, extraMessageReader);
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="conn">Connection from client.</param>
+        /// <param name="playerControllerId">Id of the new player.</param>
+        /// <param name="extraMessageReader">An extra message object passed for the new player.</param>
         public virtual void OnServerAddPlayer(NetworkConnection conn, short playerControllerId, NetworkReader extraMessageReader)
         {
             OnServerAddPlayerInternal(conn, playerControllerId);
@@ -1068,6 +1541,11 @@ namespace UnityEngine.Networking
             NetworkServer.AddPlayerForConnection(conn, player, playerControllerId);
         }
 
+        /// <summary>
+        /// This finds a spawn position based on NetworkStartPosition objects in the scene.
+        /// <para>This is used by the default implementation of OnServerAddPlayer.</para>
+        /// </summary>
+        /// <returns>Returns the transform to spawn a player at, or null.</returns>
         public Transform GetStartPosition()
         {
             // first remove any dead transforms
@@ -1100,6 +1578,12 @@ namespace UnityEngine.Networking
             return null;
         }
 
+        /// <summary>
+        /// Called on the server when a client removes a player.
+        /// <para>The default implementation of this function destroys the corresponding player object.</para>
+        /// </summary>
+        /// <param name="conn">The connection to remove the player from.</param>
+        /// <param name="player">The player controller to remove.</param>
         public virtual void OnServerRemovePlayer(NetworkConnection conn, PlayerController player)
         {
             if (player.gameObject != null)
@@ -1108,16 +1592,59 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Called on the server when a network error occurs for a client connection.
+        /// </summary>
+        /// <param name="conn">Connection from client.</param>
+        /// <param name="errorCode">Error code.</param>
         public virtual void OnServerError(NetworkConnection conn, int errorCode)
         {
         }
 
+        /// <summary>
+        /// Called on the server when a scene is completed loaded, when the scene load was initiated by the server with ServerChangeScene().
+        /// </summary>
+        /// <param name="sceneName">The name of the new scene.</param>
         public virtual void OnServerSceneChanged(string sceneName)
         {
         }
 
         // ----------------------------- Client System Callbacks --------------------------------
 
+        /// <summary>
+        /// Called on the client when connected to a server.
+        /// <para>The default implementation of this function sets the client as ready and adds a player. Override the function to dictate what happens when the client connects.</para>
+        /// <code>
+        /// //Attach this script to a GameObject
+        /// //Create a Text GameObject(Create>UI>Text) and attach it to the Text field in the Inspector window
+        /// //This script changes the Text depending on if a client connects or disconnects to the server
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.UI;
+        ///
+        /// public class Example : NetworkManager
+        /// {
+        ///    //Assign a Text component in the GameObject's Inspector
+        ///    public Text m_ClientText;
+        ///
+        ///    //Detect when a client connects to the Server
+        ///    public override void OnClientConnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the connection on the client side
+        ///        m_ClientText.text =  " " + connection.connectionId + " Connected!";
+        ///    }
+        ///
+        ///    //Detect when a client connects to the Server
+        ///    public override void OnClientDisconnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the connection loss on the client side
+        ///        m_ClientText.text = "Connection" + connection.connectionId + " Lost!";
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="conn">Connection to the server.</param>
         public virtual void OnClientConnect(NetworkConnection conn)
         {
             if (!clientLoadedScene)
@@ -1131,6 +1658,40 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Called on clients when disconnected from a server.
+        /// <para>This is called on the client when it disconnects from the server. Override this function to decide what happens when the client disconnects.</para>
+        /// <code>
+        /// //Attach this script to a GameObject
+        /// //Create a Text GameObject(Create>UI>Text) and attach it to the Text field in the Inspector window
+        /// //This script changes the Text depending on if a client connects or disconnects to the server
+        ///
+        /// using UnityEngine;
+        /// using UnityEngine.Networking;
+        /// using UnityEngine.UI;
+        ///
+        /// public class OnClientConnectExample : NetworkManager
+        /// {
+        ///    //Assign a Text component in the GameObject's Inspector
+        ///    public Text m_ClientText;
+        ///
+        ///    //Detect when a client connects to the Server
+        ///    public override void OnClientConnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the connection on the client side
+        ///        m_ClientText.text =  " " + connection.connectionId + " Connected!";
+        ///    }
+        ///
+        ///    //Detect when a client connects to the Server
+        ///    public override void OnClientDisconnect(NetworkConnection connection)
+        ///    {
+        ///        //Change the text to show the connection loss on the client side
+        ///        m_ClientText.text = "Connection" + connection.connectionId + " Lost!";
+        ///    }
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="conn">	Connection to the server.</param>
         public virtual void OnClientDisconnect(NetworkConnection conn)
         {
             StopClient();
@@ -1140,14 +1701,29 @@ namespace UnityEngine.Networking
             }
         }
 
+        /// <summary>
+        /// Called on clients when a network error occurs.
+        /// </summary>
+        /// <param name="conn">Connection to a server.</param>
+        /// <param name="errorCode">Error code.</param>
         public virtual void OnClientError(NetworkConnection conn, int errorCode)
         {
         }
 
+        /// <summary>
+        /// Called on clients when a servers tells the client it is no longer ready.
+        /// <para>This is commonly used when switching scenes.</para>
+        /// </summary>
+        /// <param name="conn">Connection to a server.</param>
         public virtual void OnClientNotReady(NetworkConnection conn)
         {
         }
 
+        /// <summary>
+        /// Called on clients when a scene has completed loaded, when the scene load was initiated by the server.
+        /// <para>Scene changes can cause player objects to be destroyed. The default implementation of OnClientSceneChanged in the NetworkManager is to add a player object for the connection if no player object exists.</para>
+        /// </summary>
+        /// <param name="conn">The network connection that the scene change message arrived on.</param>
         public virtual void OnClientSceneChanged(NetworkConnection conn)
         {
             // always become ready.
@@ -1181,12 +1757,20 @@ namespace UnityEngine.Networking
 
         // ----------------------------- Matchmaker --------------------------------
 
+        /// <summary>
+        /// This starts MatchMaker for the NetworkManager.
+        /// <para>This uses the matchHost and matchPort properties as the address of the MatchMaker service to connect to. Please call SetMatchHost prior to calling this function if you are not using the default MatchMaker address.</para>
+        /// </summary>
         public void StartMatchMaker()
         {
             if (LogFilter.logDebug) { Debug.Log("NetworkManager StartMatchMaker"); }
             SetMatchHost(m_MatchHost, m_MatchPort, m_MatchPort == 443);
         }
 
+        /// <summary>
+        /// Stops the MatchMaker that the NetworkManager is using.
+        /// <para>This should be called after a match is complete and before starting or joining a new match.</para>
+        /// </summary>
         public void StopMatchMaker()
         {
             // If we have a valid connection here drop the client in the matchmaker before shutting down below
@@ -1204,6 +1788,15 @@ namespace UnityEngine.Networking
             matches = null;
         }
 
+        /// <summary>
+        /// This sets the address of the MatchMaker service.
+        /// <para>The default address for the MatchMaker is mm.unet.unity3d.com That will connect a client to the nearest datacenter geographically. However because data centers are siloed from each other, players will only see matches occurring inside the data center they are currently connected to. If a player of your game is traveling to another part of the world, for instance, they may interact with a different set of players that are in that data center. You can override this behavior by specifying a particular data center. Keep in mind generally as distance grows so does latency, which is why we run data centers spread out over the world.</para>
+        /// <para>To connect to a specific data center use one of the following addresses:</para>
+        /// <para>United States: us1-mm.unet.unity3d.com Europe: eu1-mm.unet.unity3d.com Singapore: ap1-mm.unet.unity3d.com.</para>
+        /// </summary>
+        /// <param name="newHost">Hostname of MatchMaker service.</param>
+        /// <param name="port">Port of MatchMaker service.</param>
+        /// <param name="https">Protocol used by MatchMaker service.</param>
         public void SetMatchHost(string newHost, int port, bool https)
         {
             if (matchMaker == null)
@@ -1243,32 +1836,60 @@ namespace UnityEngine.Networking
         // their functionality, users would need override all the versions. Instead these callbacks are invoked
         // from all versions, so users only need to implement this one case.
 
+        /// <summary>
+        /// This hook is invoked when a host is started.
+        /// <para>StartHost has multiple signatures, but they all cause this hook to be called.</para>
+        /// </summary>
         public virtual void OnStartHost()
         {
         }
 
+        /// <summary>
+        /// This hook is invoked when a server is started - including when a host is started.
+        /// StartServer has multiple signatures, but they all cause this hook to be called.
+        /// </summary>
         public virtual void OnStartServer()
         {
         }
 
+        /// <summary>
+        /// This is a hook that is invoked when the client is started.
+        /// <para>StartClient has multiple signatures, but they all cause this hook to be called.</para>
+        /// </summary>
+        /// <param name="client">The NetworkClient object that was started.</param>
         public virtual void OnStartClient(NetworkClient client)
         {
         }
 
+        /// <summary>
+        /// This hook is called when a server is stopped - including when a host is stopped.
+        /// </summary>
         public virtual void OnStopServer()
         {
         }
 
+        /// <summary>
+        /// This hook is called when a client is stopped.
+        /// </summary>
         public virtual void OnStopClient()
         {
         }
 
+        /// <summary>
+        /// This hook is called when a host is stopped.
+        /// </summary>
         public virtual void OnStopHost()
         {
         }
 
         //------------------------------ Matchmaker callbacks -----------------------------------
 
+        /// <summary>
+        /// Callback that happens when a NetworkMatch.CreateMatch request has been processed on the server.
+        /// </summary>
+        /// <param name="success">Indicates if the request succeeded.</param>
+        /// <param name="extendedInfo">A text description for the error if success is false.</param>
+        /// <param name="matchInfo">The information about the newly created match.</param>
         public virtual void OnMatchCreate(bool success, string extendedInfo, MatchInfo matchInfo)
         {
             if (LogFilter.logDebug) { Debug.LogFormat("NetworkManager OnMatchCreate Success:{0}, ExtendedInfo:{1}, matchInfo:{2}", success, extendedInfo, matchInfo); }
@@ -1277,6 +1898,12 @@ namespace UnityEngine.Networking
                 StartHost(matchInfo);
         }
 
+        /// <summary>
+        /// Callback that happens when a NetworkMatch.ListMatches request has been processed on the server.
+        /// </summary>
+        /// <param name="success">Indicates if the request succeeded.</param>
+        /// <param name="extendedInfo">A text description for the error if success is false.</param>
+        /// <param name="matchList">A list of matches corresponding to the filters set in the initial list request.</param>
         public virtual void OnMatchList(bool success, string extendedInfo, List<MatchInfoSnapshot> matchList)
         {
             if (LogFilter.logDebug) { Debug.LogFormat("NetworkManager OnMatchList Success:{0}, ExtendedInfo:{1}, matchList.Count:{2}", success, extendedInfo, matchList.Count); }
@@ -1284,6 +1911,12 @@ namespace UnityEngine.Networking
             matches = matchList;
         }
 
+        /// <summary>
+        /// Callback that happens when a NetworkMatch.JoinMatch request has been processed on the server.
+        /// </summary>
+        /// <param name="success">Indicates if the request succeeded.</param>
+        /// <param name="extendedInfo">A text description for the error if success is false.</param>
+        /// <param name="matchInfo">The info for the newly joined match.</param>
         public virtual void OnMatchJoined(bool success, string extendedInfo, MatchInfo matchInfo)
         {
             if (LogFilter.logDebug) { Debug.LogFormat("NetworkManager OnMatchJoined Success:{0}, ExtendedInfo:{1}, matchInfo:{2}", success, extendedInfo, matchInfo); }
@@ -1292,20 +1925,33 @@ namespace UnityEngine.Networking
                 StartClient(matchInfo);
         }
 
+        /// <summary>
+        /// Callback that happens when a NetworkMatch.DestroyMatch request has been processed on the server.        /// </summary>
+        /// <param name="success">Indicates if the request succeeded.</param>
+        /// <param name="extendedInfo">A text description for the error if success is false.</param>
         public virtual void OnDestroyMatch(bool success, string extendedInfo)
         {
             if (LogFilter.logDebug) { Debug.LogFormat("NetworkManager OnDestroyMatch Success:{0}, ExtendedInfo:{1}", success, extendedInfo); }
         }
 
+        /// <summary>
+        /// Callback that happens when a NetworkMatch.DropConnection match request has been processed on the server.
+        /// </summary>
+        /// <param name="success">Indicates if the request succeeded.</param>
+        /// <param name="extendedInfo">A text description for the error if success is false.</param>
         public virtual void OnDropConnection(bool success, string extendedInfo)
         {
             if (LogFilter.logDebug) { Debug.LogFormat("NetworkManager OnDropConnection Success:{0}, ExtendedInfo:{1}", success, extendedInfo); }
         }
 
+        /// <summary>
+        /// Callback that happens when a NetworkMatch.SetMatchAttributes has been processed on the server.
+        /// </summary>
+        /// <param name="success">Indicates if the request succeeded.</param>
+        /// <param name="extendedInfo">A text description for the error if success is false.</param>
         public virtual void OnSetMatchAttributes(bool success, string extendedInfo)
         {
             if (LogFilter.logDebug) { Debug.LogFormat("NetworkManager OnSetMatchAttributes Success:{0}, ExtendedInfo:{1}", success, extendedInfo); }
         }
     }
 }
-#endif //ENABLE_UNET

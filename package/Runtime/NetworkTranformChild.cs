@@ -1,9 +1,12 @@
-#if ENABLE_UNET
 using System;
 using UnityEngine;
 
 namespace UnityEngine.Networking
 {
+    /// <summary>
+    /// A component to synchronize the position of child transforms of networked objects.
+    /// <para>There must be a NetworkTransform on the root object of the hierarchy. There can be multiple NetworkTransformChild components on an object. This does not use physics for synchronization, it simply synchronizes the localPosition and localRotation of the child transform and lerps towards the recieved values.</para>
+    /// </summary>
     [AddComponentMenu("Network/NetworkTransformChild")]
     [Obsolete("The high level API classes are deprecated and will be removed in the future.")]
     public class NetworkTransformChild : NetworkBehaviour
@@ -42,19 +45,58 @@ namespace UnityEngine.Networking
         NetworkWriter   m_LocalTransformWriter;
 
         // settings
+        /// <summary>
+        /// The child transform to be synchronized.
+        /// </summary>
         public Transform                            target { get {return m_Target; } set { m_Target = value; OnValidate(); } }
+        /// <summary>
+        /// A unique Identifier for this NetworkTransformChild component on this root object.
+        /// </summary>
         public uint                                 childIndex { get { return m_ChildIndex; }}
+        /// <summary>
+        /// The sendInterval controls how often state updates are sent for this object.
+        /// </summary>
         public float                                sendInterval { get { return m_SendInterval; } set { m_SendInterval = value; } }
+        /// <summary>
+        /// Which axis should rotation by synchronized for.
+        /// </summary>
         public NetworkTransform.AxisSyncMode        syncRotationAxis { get { return m_SyncRotationAxis; } set { m_SyncRotationAxis = value; } }
+        /// <summary>
+        /// How much to compress rotation sync updates.
+        /// </summary>
         public NetworkTransform.CompressionSyncMode rotationSyncCompression { get { return m_RotationSyncCompression; } set { m_RotationSyncCompression = value; } }
+        /// <summary>
+        /// The distance that an object can move without sending a movement synchronization update.
+        /// <para>This applies to the child object's localPosition, not it's world position.</para>
+        /// </summary>
         public float                                movementThreshold { get { return m_MovementThreshold; } set { m_MovementThreshold = value; } }
+        /// <summary>
+        /// The rate to interpolate to the target rotation.
+        /// <para>A value of 1 will snap to the position, and lower positive values will interpolate more slowly.</para>
+        /// </summary>
         public float                                interpolateRotation { get { return m_InterpolateRotation; } set { m_InterpolateRotation = value; } }
+        /// <summary>
+        /// The rate to interpolate towards the target position.
+        /// <para>A value of 1 will snap to the position, and lower positive values will interpolate more slowly.</para>
+        /// </summary>
         public float                                interpolateMovement { get { return m_InterpolateMovement; } set { m_InterpolateMovement = value; } }
+        /// <summary>
+        /// A callback function to allow server side validation of the movement of the child object.
+        /// </summary>
         public NetworkTransform.ClientMoveCallback3D clientMoveCallback3D { get { return m_ClientMoveCallback3D; } set { m_ClientMoveCallback3D = value; } }
 
         // runtime data
+        /// <summary>
+        /// The most recent time when a movement synchronization packet arrived for this object.
+        /// </summary>
         public float                lastSyncTime { get { return m_LastClientSyncTime; } }
+        /// <summary>
+        /// The target position interpolating towards.
+        /// </summary>
         public Vector3              targetSyncPosition { get { return m_TargetSyncPosition; } }
+        /// <summary>
+        /// The target rotation interpolating towards.
+        /// </summary>
         public Quaternion           targetSyncRotation3D { get { return m_TargetSyncRotation3D; } }
 
         void OnValidate()
@@ -476,4 +518,3 @@ namespace UnityEngine.Networking
         }
     }
 }
-#endif //ENABLE_UNET
