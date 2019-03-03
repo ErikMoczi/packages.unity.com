@@ -1,7 +1,7 @@
 {
   "name": "com.unity.template.lightweightvr",
   "displayName": "VR Lightweight RP (Preview)",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "type": "template",
   "unity": "2019.1",
   "description": "This template utilizes the Lightweight Render Pipeline and has settings tuned for virtual reality applications. \n\nThis project also includes \n▪ Shadergraph \n▪ Post-processing V2 Stack  \n▪ Presets \n▪ Example content",
@@ -49,6 +49,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/upm-package-template-LightweightVR.git",
-    "revision": "228a4e0f34476f6126221eb4ce9970052c3abbc4"
+    "revision": "bbe25b750179e7032e9e2a1e116a2b9c446687c6"
   }
 }
