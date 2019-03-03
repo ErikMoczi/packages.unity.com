@@ -32,6 +32,7 @@ namespace Burst.Compiler.IL
         public const string OptionDisableVectors = "disable-vectors";
         public const string OptionDebug = "debug";
         public const string OptionDisableDebugSymbols = "disable-load-debug-symbols";
+        public const string OptionStaticLinkage = "generate-static-linkage-methods";
 
         // -------------------------------------------------------
         // Options used by the Jit compiler

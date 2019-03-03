@@ -53,7 +53,8 @@ namespace Unity.Burst.Editor
 
         internal static BurstPlatformAotSettings GetOrCreateSettings(BuildTarget target)
         {
-            BurstPlatformAotSettings settings = new BurstPlatformAotSettings(target);
+            BurstPlatformAotSettings settings = ScriptableObject.CreateInstance<BurstPlatformAotSettings>();
+            settings.InitialiseDefaults(target);
             string path = GetPath(target);
 
             if (File.Exists(path))

@@ -15,6 +15,7 @@ namespace Unity.Burst.Editor
         private const string BurstInspectorText = "Jobs/Burst Inspector";
         private const string EnableBurstCompilationText = "Jobs/Enable Burst Compilation";
         private const string ShowBurstTimingsText = "Jobs/Show Burst Timings";
+        private const string ForceSynchronousCompilesText = "Jobs/Force Syncronous Compiles";
 
         [MenuItem(UseBurstText, false)]
         private static void UseBurst()
@@ -74,6 +75,19 @@ namespace Unity.Burst.Editor
         private static bool ShowBurstTimingsValidate()
         {
             Menu.SetChecked(ShowBurstTimingsText, BurstEditorOptions.EnableShowBurstTimings);
+            return BurstCompilerService.IsInitialized;
+        }
+
+        [MenuItem(ForceSynchronousCompilesText, false)]
+        private static void ForceSynchronousCompiles()
+        {
+            BurstEditorOptions.EnableBurstCompileSynchronously = !BurstEditorOptions.EnableBurstCompileSynchronously;
+        }
+
+        [MenuItem(ForceSynchronousCompilesText, true)]
+        private static bool ForceSynchronousCompilesValidate()
+        {
+            Menu.SetChecked(ForceSynchronousCompilesText, BurstEditorOptions.EnableBurstCompileSynchronously);
             return BurstCompilerService.IsInitialized;
         }
     }

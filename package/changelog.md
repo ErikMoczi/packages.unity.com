@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4-preview.46
+
+- iOS player builds now use static linkage (to support TestFlight)  - Minimum supported Unity versions are 2018.3.6f1 or 2019.1.0b4
+- Fix a warning in Burst AOT settings
+- Enable forcing synchronous job compilation from menu
+
 ## 0.2.4-preview.45
 
 - Disable Burst AOT settings support for unity versions before 2019.1

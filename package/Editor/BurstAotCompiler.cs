@@ -1,6 +1,7 @@
 #if ENABLE_BURST_AOT
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -11,6 +12,7 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Compilation;
 using UnityEditor.Scripting.Compilers;
+using UnityEditor.Callbacks;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -33,7 +35,91 @@ namespace Unity.Burst.Editor
         }
     }
 
+    internal class StaticPostProcessor
+    {
+        private const string TempSourceLibrary = @"Temp/StagingArea/StaticLibraries";
+        [PostProcessBuildAttribute(1)]
+        public static void OnPostProcessBuild(BuildTarget target, string path)
+        {
+            if (target == BuildTarget.iOS)
+            {
+                PostAddStaticLibraries(path);
+            }
+        }
 
+        private static void PostAddStaticLibraries(string path)
+        {
+            var assm = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(assembly =>
+                assembly.GetName().Name == "UnityEditor.iOS.Extensions.Xcode");
+            Type PBXType = assm?.GetType("UnityEditor.iOS.Xcode.PBXProject");
+            Type PBXSourceTree = assm?.GetType("UnityEditor.iOS.Xcode.PBXSourceTree");
+            if (PBXType != null && PBXSourceTree!=null)
+            {
+                var project = Activator.CreateInstance(PBXType, null);
+
+                var _sGetPBXProjectPath = PBXType.GetMethod("GetPBXProjectPath");
+                var _ReadFromFile = PBXType.GetMethod("ReadFromFile");
+                var _sGetUnityTargetName = PBXType.GetMethod("GetUnityTargetName");
+                var _TargetGuidByName = PBXType.GetMethod("TargetGuidByName");
+                var _AddFileToBuild = PBXType.GetMethod("AddFileToBuild");
+                var _AddFile = PBXType.GetMethod("AddFile");
+                var _WriteToString = PBXType.GetMethod("WriteToString");
+
+                var sourcetree = new EnumConverter(PBXSourceTree).ConvertFromString("Source");
+
+                string sPath = (string)_sGetPBXProjectPath?.Invoke(null, new object[] {path});
+                _ReadFromFile?.Invoke(project, new object[] {sPath});
+
+                string tn = (string) _sGetUnityTargetName?.Invoke(null, null);
+                string g = (string) _TargetGuidByName?.Invoke(project, new object[] {tn});
+
+                string srcPath = TempSourceLibrary;
+                string dstPath = "Libraries";
+                string dstCopyPath = Path.Combine(path, dstPath);
+
+                string burstCppLinkFile = "lib_burst_generated.cpp";
+                string libName = DefaultLibraryName + "32.a";
+                if (File.Exists(Path.Combine(srcPath, libName)))
+                {
+                    File.Copy(Path.Combine(srcPath, libName), Path.Combine(dstCopyPath, libName));
+                    string fg = (string) _AddFile?.Invoke(project,
+                        new object[] {Path.Combine(dstPath, libName), Path.Combine(dstPath, libName), sourcetree});
+                    _AddFileToBuild?.Invoke(project, new object[] {g, fg});
+                }
+
+                libName = DefaultLibraryName + "64.a";
+                if (File.Exists(Path.Combine(srcPath, libName)))
+                {
+                    File.Copy(Path.Combine(srcPath, libName), Path.Combine(dstCopyPath, libName));
+                    string fg = (string) _AddFile?.Invoke(project,
+                        new object[] {Path.Combine(dstPath, libName), Path.Combine(dstPath, libName), sourcetree});
+                    _AddFileToBuild?.Invoke(project, new object[] {g, fg});
+                }
+
+                // Additionally we need a small cpp file (weak symbols won't unfortunately override directly from the libs
+                //presumably due to link order?
+                string cppPath = Path.Combine(dstCopyPath, burstCppLinkFile);
+                File.WriteAllText(cppPath, @"
+extern ""C""
+{
+    void Staticburst_initialize(void* );
+    void* StaticBurstStaticMethodLookup(void* );
+
+    int burst_enable_static_linkage = 1;
+    void burst_initialize(void* i) { Staticburst_initialize(i); }
+    void* BurstStaticMethodLookup(void* i) { return StaticBurstStaticMethodLookup(i); }
+}
+");
+                cppPath = Path.Combine(dstPath, burstCppLinkFile);
+                string fileg = (string) _AddFile?.Invoke(project, new object[] {cppPath,cppPath,sourcetree});
+                _AddFileToBuild?.Invoke(project, new object[] {g, fileg});
+
+                string pstring = (string) _WriteToString?.Invoke(project, null);
+                File.WriteAllText(sPath, pstring);
+            }
+        }
+    }
+    
     internal class BurstAotCompiler : IPostBuildPlayerScriptDLLs
     {
         private const string BurstAotCompilerExecutable = "bcl.exe";
@@ -156,30 +242,17 @@ namespace Unity.Burst.Editor
             }
             else if (targetPlatform == TargetPlatform.iOS)
             {
-                // Check if we are under il2cpp as we may have to force a CPU backend for it
-                // TODO: Should use report.summary.platformGroup instead?
-                bool isUsingIL2CPP = PlayerSettings.GetScriptingBackend(BuildTargetGroup.Standalone) == ScriptingImplementation.IL2CPP;
-
-                if (!isUsingIL2CPP)
+                var targetArchitecture = (IOSArchitecture)UnityEditor.PlayerSettings.GetArchitecture(report.summary.platformGroup);
+                if (targetArchitecture == IOSArchitecture.ARMv7 || targetArchitecture == IOSArchitecture.Universal)
                 {
-                    var targetArchitecture = (IOSArchitecture)UnityEditor.PlayerSettings.GetArchitecture(report.summary.platformGroup);
-                    switch (targetArchitecture)
-                    {
-                        case IOSArchitecture.ARMv7:
-                            targetCpu = TargetCpu.ARMV7A_NEON32;
-                            break;
-                        case IOSArchitecture.ARM64:
-                            targetCpu = TargetCpu.ARMV8A_AARCH64;
-                            break;
-                        case IOSArchitecture.Universal:
-                            // TODO: How do we proceed here?
-                            targetCpu = TargetCpu.ARMV7A_NEON32;
-                            break;
-                    }
+                    // PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs
+                    combinations.Add(new BurstOutputCombination("StaticLibraries", TargetCpu.ARMV7A_NEON32, DefaultLibraryName+"32"));
                 }
-
-                // PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs
-                combinations.Add(new BurstOutputCombination("Frameworks", targetCpu));
+                if (targetArchitecture == IOSArchitecture.ARM64 || targetArchitecture == IOSArchitecture.Universal)
+                {
+                    // PlatformDependent\iPhonePlayer\Extensions\Common\BuildPostProcessor.cs
+                    combinations.Add(new BurstOutputCombination("StaticLibraries", TargetCpu.ARMV8A_AARCH64, DefaultLibraryName+"64"));
+                }
             }
             else if (targetPlatform == TargetPlatform.Android)
             {
@@ -224,7 +297,7 @@ namespace Unity.Burst.Editor
             {
                 // Gets the output folder
                 var stagingOutputFolder = Path.GetFullPath(Path.Combine(TempStaging, combination.OutputPath));
-                var outputFilePrefix = Path.Combine(stagingOutputFolder, DefaultLibraryName);
+                var outputFilePrefix = Path.Combine(stagingOutputFolder, combination.LibraryName);
 
                 var options = new List<string>(commonOptions);
                 options.Add(GetOption(OptionAotOutputPath, outputFilePrefix));
@@ -236,6 +309,11 @@ namespace Unity.Burst.Editor
                     options.Add(GetOption(OptionDisableSafetyChecks));
                 else
                     options.Add(GetOption(OptionSafetyChecks));
+
+                if (targetPlatform == TargetPlatform.iOS)
+                {
+                    options.Add(GetOption(OptionStaticLinkage));
+                }
 
                 var responseFile = Path.GetTempFileName();
                 File.WriteAllLines(responseFile, options);
@@ -339,11 +417,13 @@ namespace Unity.Burst.Editor
         {
             public readonly TargetCpu TargetCpu;
             public readonly string OutputPath;
+            public readonly string LibraryName;
 
-            public BurstOutputCombination(string outputPath, TargetCpu targetCpu)
+            public BurstOutputCombination(string outputPath, TargetCpu targetCpu, string libraryName = DefaultLibraryName)
             {
                 TargetCpu = targetCpu;
                 OutputPath = outputPath;
+                LibraryName = libraryName;
             }
         }
 

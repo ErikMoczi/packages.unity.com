@@ -181,8 +181,10 @@ namespace Unity.Burst.Editor
             if (attr == null)
                 return false;
 
-            if (attr.CompileSynchronously || BurstGlobalCompilerOptions.ForceSynchronousCompilation)
+            if (attr.CompileSynchronously || BurstGlobalCompilerOptions.ForceSynchronousCompilation || BurstEditorOptions.EnableBurstCompileSynchronously)
+            {
                 AddOption(flagsOut, GetOption(OptionJitEnableSynchronousCompilation));
+            }
 
             if (attr.FloatMode != FloatMode.Default)
                 AddOption(flagsOut, GetOption(OptionFloatMode, attr.FloatMode));
