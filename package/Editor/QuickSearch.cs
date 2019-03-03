@@ -12,21 +12,28 @@ namespace Unity.QuickSearch
 {
     internal class FilterWindow : EditorWindow
     {
-        static class Styles
+        private static class Styles
         {
-            public static float indent = 10f;
             public static Vector2 windowSize = new Vector2(200, 250);
             public static readonly GUIStyle filterHeader = new GUIStyle(EditorStyles.boldLabel)
             {
                 name = "quick-search-filter-header",
-                margin = new RectOffset(4, 4, 0, 4)
+                margin = new RectOffset(4, 4, 3, 2)
+            };
+
+            public static readonly GUIStyle filterToggle = new GUIStyle("OL Toggle")
+            {
+                name = "quick-search-filter-toggle",
+                margin = new RectOffset(4, 4, 4, 0)
             };
 
             public static readonly GUIStyle filterEntry = new GUIStyle(EditorStyles.label) { name = "quick-search-filter-entry" };
             public static readonly GUIStyle panelBorder = new GUIStyle("grey_border") { name = "quick-search-filter-panel-border" };
-            public static readonly GUIStyle filterToggle = new GUIStyle("OL Toggle") { name = "quick-search-filter-toggle" };
             public static readonly GUIStyle filterExpanded = new GUIStyle("IN Foldout") { name = "quick-search-filter-expanded" };
-            public static readonly GUIStyle separator = "sv_iconselector_sep";
+            public static readonly GUIStyle separator = new GUIStyle("sv_iconselector_sep")
+            {
+                margin = new RectOffset(1, 1, 0, 0)
+            };
 
             public static float foldoutIndent = filterExpanded.fixedWidth + 6;
         }
@@ -77,7 +84,6 @@ namespace Unity.QuickSearch
             }
 
             GUI.Box(new Rect(0, 0, position.width, position.height), GUIContent.none, Styles.panelBorder);
-            GUILayout.Space(Styles.indent);
             DrawHeader();
             GUILayout.Label(GUIContent.none, Styles.separator);
 
@@ -90,11 +96,10 @@ namespace Unity.QuickSearch
                     DrawSubCategories(providerDesc);
             }
 
-            GUILayout.Space(Styles.indent);
             GUILayout.EndScrollView();
         }
 
-        void DrawHeader()
+        private void DrawHeader()
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Search Providers", Styles.filterHeader);
@@ -113,7 +118,7 @@ namespace Unity.QuickSearch
             GUILayout.EndHorizontal();
         }
 
-        void DrawSectionHeader(SearchFilter.ProviderDesc desc)
+        private void DrawSectionHeader(SearchFilter.ProviderDesc desc)
         {
             // filterHeader
             GUILayout.BeginHorizontal();
@@ -146,7 +151,7 @@ namespace Unity.QuickSearch
             GUILayout.EndHorizontal();
         }
 
-        void DrawSubCategories(SearchFilter.ProviderDesc desc)
+        private void DrawSubCategories(SearchFilter.ProviderDesc desc)
         {
             foreach (var cat in desc.categories)
             {
@@ -168,7 +173,7 @@ namespace Unity.QuickSearch
         }
     }
 
-    internal static class Icons
+    public static class Icons
     {
         public static string iconFolder = "Packages/com.unity.quicksearch/Editor/Icons";
         public static Texture2D shortcut = (Texture2D)EditorGUIUtility.Load($"{iconFolder}/shortcut.png");
@@ -240,6 +245,7 @@ namespace Unity.QuickSearch
         private double m_RequestRepaintAfterTime = 0;
         private double m_NextBlinkTime = 0;
         private bool m_PrepareDrag;
+        private string m_CycledSearch;
 
         private const string k_QuickSearchBoxName = "QuickSearchBox";
 
@@ -484,11 +490,25 @@ namespace Unity.QuickSearch
         [UsedImplicitly]
         internal void OnEnable()
         {
-            m_Context = new SearchContext() { searchBoxText = SearchService.LastSearch, focusedWindow = lastFocusedWindow };
+            m_Context = new SearchContext { searchBoxText = SearchService.LastSearch, focusedWindow = lastFocusedWindow };
             SearchService.SearchTextChanged(m_Context);
             m_SearchBoxFocus = true;
             lastFocusedWindow = s_FocusedWindow;
             UpdateWindowTitle();
+
+            SearchService.asyncItemReceived += items =>
+            {
+                if (m_SelectedIndex == -1)
+                {
+                    m_FilteredItems.AddRange(items);
+                    SearchService.SortItemList(m_FilteredItems);
+                }
+                else
+                {
+                    m_FilteredItems.InsertRange(m_SelectedIndex+1, items);
+                }
+                Repaint();
+            };
         }
 
         [UsedImplicitly]
@@ -568,12 +588,20 @@ namespace Unity.QuickSearch
                 }
                 else if (evt.keyCode == KeyCode.UpArrow)
                 {
-                    m_SelectedIndex = Math.Max(-1, m_SelectedIndex - 1);
-                    if (m_SelectedIndex == -1)
-                        m_SearchBoxFocus = true;
-                    Event.current.Use();
+                    if (m_SelectedIndex >= 0)
+                    {
+                        m_SelectedIndex = Math.Max(-1, m_SelectedIndex - 1);
+                        if (m_SelectedIndex == -1)
+                            m_SearchBoxFocus = true;
+                        Event.current.Use();
+                    }
+                    else if (evt.modifiers.HasFlag(EventModifiers.Alt))
+                    {
+                        m_CycledSearch = SearchService.CyclePreviousSearch();
+                        GUI.FocusControl(null);
+                    }
                 }
-                else if (evt.keyCode == KeyCode.RightArrow)
+                else if (evt.keyCode == KeyCode.RightArrow && evt.modifiers.HasFlag(EventModifiers.Alt))
                 {
                     if (m_SelectedIndex != -1)
                     {
@@ -583,27 +611,34 @@ namespace Unity.QuickSearch
                         Event.current.Use();
                     }
                 }
-                else if (m_SelectedIndex >= 0 && (evt.keyCode == KeyCode.KeypadEnter || evt.keyCode == KeyCode.Space || evt.keyCode == KeyCode.Return))
+                else if (evt.keyCode == KeyCode.KeypadEnter || evt.keyCode == KeyCode.Return)
                 {
-                    int actionIndex = 0;
-                    if (evt.modifiers.HasFlag(EventModifiers.Alt))
-                    {
-                        actionIndex = 1;
-                        if (evt.modifiers.HasFlag(EventModifiers.Control))
-                        {
-                            actionIndex = 2;
-                            if (evt.modifiers.HasFlag(EventModifiers.Shift))
-                                actionIndex = 3;
-                        }
-                    }
-                    var item = m_FilteredItems.ElementAt(m_SelectedIndex);
-                    if (item.provider.actions.Any())
-                    {
-                        Event.current.Use();
-                        actionIndex = Math.Max(0, Math.Min(actionIndex, item.provider.actions.Count - 1));
+                    var selectedIndex = m_SelectedIndex;
+                    if (selectedIndex == -1 && m_FilteredItems != null && m_FilteredItems.Count > 0)
+                        selectedIndex = 0;
 
-                        ExecuteAction(item.provider.actions[actionIndex], item, context);
-                        GUIUtility.ExitGUI();
+                    if (selectedIndex != -1 && m_FilteredItems != null)
+                    {
+                        int actionIndex = 0;
+                        if (evt.modifiers.HasFlag(EventModifiers.Alt))
+                        {
+                            actionIndex = 1;
+                            if (evt.modifiers.HasFlag(EventModifiers.Control))
+                            {
+                                actionIndex = 2;
+                                if (evt.modifiers.HasFlag(EventModifiers.Shift))
+                                    actionIndex = 3;
+                            }
+                        }
+                        var item = m_FilteredItems.ElementAt(selectedIndex);
+                        if (item.provider.actions.Any())
+                        {
+                            Event.current.Use();
+                            actionIndex = Math.Max(0, Math.Min(actionIndex, item.provider.actions.Count - 1));
+
+                            ExecuteAction(item.provider.actions[actionIndex], item, context);
+                            GUIUtility.ExitGUI();
+                        }
                     }
                 }
                 else if (evt.keyCode == KeyCode.Escape)
@@ -808,8 +843,17 @@ namespace Unity.QuickSearch
 
                 using (new BlinkCursorScope(m_CursorBlinking, new Color(0, 0, 0, 0.01f)))
                 {
+                    var userSearchQuery = context.searchBoxText;
+                    if (!String.IsNullOrEmpty(m_CycledSearch) && Event.current.type == EventType.Repaint)
+                    {
+                        userSearchQuery = m_CycledSearch;
+                        m_CycledSearch = null;
+                        m_SearchBoxFocus = true;
+                        GUI.changed = true;
+                    }
+
                     GUI.SetNextControlName(k_QuickSearchBoxName);
-                    context.searchBoxText = EditorGUILayout.TextField(context.searchBoxText, Styles.searchField, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                    context.searchBoxText = EditorGUILayout.TextField(userSearchQuery, Styles.searchField, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                 }
 
                 if (String.IsNullOrEmpty(context.searchBoxText))
@@ -896,11 +940,6 @@ namespace Unity.QuickSearch
                 menu.DropDown(position);
         }
 
-       /* internal void OnLostFocus()
-        {
-            Close();
-        }*/
-
         public static void ShowWindow(bool saveSearchStateOnExit = true)
         {
             s_FocusedWindow = focusedWindow;
@@ -916,7 +955,6 @@ namespace Unity.QuickSearch
             qsWindow.m_SaveStateOnExit = saveSearchStateOnExit;
             qsWindow.autoRepaintOnSceneChange = true;
             qsWindow.ShowDropDown(new Vector2(550, 400));
-            //qsWindow.ShowDropDown(Rect.zero, qsWindow.minSize, new []{ Utils.PopupLocation.Above}, Utils.ShowMode.PopupMenu, true);
             #endif
         }
 

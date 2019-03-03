@@ -27,12 +27,12 @@ namespace Unity.QuickSearch
             return result.ToArray();
         }
 
-        public static Type GetProjectBrowserWindowType()
+        internal static Type GetProjectBrowserWindowType()
         {
             return GetAllEditorWindowTypes().FirstOrDefault(t => t.Name == "ProjectBrowser");
         }
 
-        public static string GetNameFromPath(string path)
+        internal static string GetNameFromPath(string path)
         {
             var lastSep = path.LastIndexOf('/');
             if (lastSep == -1)
@@ -41,7 +41,7 @@ namespace Unity.QuickSearch
             return path.Substring(lastSep + 1);
         }
 
-        public static Type[] GetAllDerivedTypes(this AppDomain aAppDomain, Type aType)
+        internal static Type[] GetAllDerivedTypes(this AppDomain aAppDomain, Type aType)
         {
             var result = new List<Type>();
             var assemblies = aAppDomain.GetAssemblies();
@@ -57,7 +57,7 @@ namespace Unity.QuickSearch
             return result.ToArray();
         }
 
-        public static Rect GetEditorMainWindowPos()
+        internal static Rect GetEditorMainWindowPos()
         {
             var containerWinType = AppDomain.CurrentDomain.GetAllDerivedTypes(typeof(ScriptableObject)).FirstOrDefault(t => t.Name == "ContainerWindow");
             if (containerWinType == null)
@@ -157,7 +157,7 @@ namespace Unity.QuickSearch
     #if UNITY_EDITOR
     [InitializeOnLoad]
     #endif
-    public static class UnityVersion
+    internal static class UnityVersion
     {
         enum Candidate
         {

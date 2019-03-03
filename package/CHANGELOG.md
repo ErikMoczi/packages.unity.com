@@ -1,3 +1,9 @@
+## [0.9.9-preview.4] - 2019-02-22
+- Add support for async results
+- Add search provider examples
+- Select first item by default
+- Cycle too previous search query using ALT+UpArrow
+
 ## [0.9.9-preview.2] - 2019-02-21
 - Added drag and drop support. You can drag an item from the quick search tool to a drop target.
 - Open the item contextual menu by pressing the keyboard right arrow of the selected item.
