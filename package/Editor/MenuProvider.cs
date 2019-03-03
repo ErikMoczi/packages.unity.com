@@ -29,7 +29,7 @@ namespace Unity.QuickSearch
                         GetMenuInfo(itemNames, shortcuts);
 
                         items.AddRange(itemNames.Where(menuName =>
-                            SearchProvider.MatchSearchGroups(context.searchText, menuName))
+                            SearchProvider.MatchSearchGroups(context.searchQuery, menuName))
                             .Select(menuName => provider.CreateItem(menuName, Utils.GetNameFromPath(menuName), menuName)));
                     },
 
@@ -53,12 +53,12 @@ namespace Unity.QuickSearch
             }
 
             #if UNITY_2019_1_OR_NEWER
-            [UsedImplicitly, Shortcut("Window/Quick Search/Menu", KeyCode.M, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+            [UsedImplicitly, Shortcut("Help/Quick Search/Menu", KeyCode.M, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
             public static void PopQuickSearch()
             {
                 SearchService.Filter.ResetFilter(false);
                 SearchService.Filter.SetFilter(true, type);
-                QuickSearchTool.ShowWindow();
+                QuickSearchTool.ShowWindow(false);
             }
 
             #endif

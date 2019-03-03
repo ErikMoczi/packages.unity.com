@@ -1,3 +1,10 @@
+## [0.9.6-preview.1] - 2019-02-20
+- Moved menu items under Help/
+- Added a warning when all filters are disabled.
+- Added search field cursor blinking.
+- Added search field placeholder text when not search is made yet.
+- Fixed a layout scoping issue when scrolling.
+
 ## [0.9.5-preview.1] - 2019-02-19
 ### First Version
 - Search menu items

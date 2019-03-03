@@ -28,7 +28,7 @@ namespace Unity.QuickSearch
                     fetchItems = (context, items, provider) =>
                     {
                         items.AddRange(providers.Where(settings =>
-                            SearchProvider.MatchSearchGroups(context.searchText, settings.settingsPath))
+                            SearchProvider.MatchSearchGroups(context.searchQuery, settings.settingsPath))
                             .Select(settings => provider.CreateItem(settings.settingsPath, Utils.GetNameFromPath(settings.settingsPath), settings.settingsPath)));
                     },
 

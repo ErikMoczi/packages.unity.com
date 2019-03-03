@@ -37,7 +37,7 @@ namespace Unity.QuickSearch
 
             public static SearchItem GetSearchItem(SearchProvider provider, string title, SearchContext context)
             {
-                return provider.CreateItem("Search " + title, null, "Search for: " + context.searchText);
+                return provider.CreateItem("Search " + title, null, "Search for: " + context.searchQuery);
             }
         }
 
@@ -77,7 +77,7 @@ namespace Unity.QuickSearch
                             var query = new List<Tuple<string, string>>();
                             query.Add(Tuple.Create("type", "question"));
                             query.Add(Tuple.Create("sort", "relevance"));
-                            query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchText)));
+                            query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
                             SearchUtility.Goto(searchUrl, query);
                         }
                     }
@@ -98,7 +98,7 @@ namespace Unity.QuickSearch
             {
                 return new SearchProvider(type, displayName)
                 {
-                    priority = 10000,
+                    priority = 9999,
                     filterId = "ud:",
                     fetchItems = (context, items, provider) =>
                     {
@@ -118,7 +118,7 @@ namespace Unity.QuickSearch
                         {
                             // ex: https://docs.unity3d.com/Manual/30_search.html?q=Visual+Scripting
                             var query = new List<Tuple<string, string>>();
-                            query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchText)));
+                            query.Add(Tuple.Create("q", string.Join("+", context.tokenizedSearchQuery)));
                             SearchUtility.Goto(searchUrl, query);
                         }
                     }
@@ -157,10 +157,10 @@ namespace Unity.QuickSearch
                             // ex: https://docs.unity3d.com/Manual/30_search.html?q=Visual+Scripting
                             var query = new List<Tuple<string, string>>();
 
-                            foreach (var token in context.tokenizedSearchText)
+                            foreach (var token in context.tokenizedSearchQuery)
                                 query.Add(Tuple.Create("q", token));
 
-                            query.Add(Tuple.Create("k", string.Join(" ", context.tokenizedSearchText)));
+                            query.Add(Tuple.Create("k", string.Join(" ", context.tokenizedSearchQuery)));
                             SearchUtility.Goto(searchUrl, query);
                         }
                     }

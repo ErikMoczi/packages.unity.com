@@ -299,10 +299,10 @@ namespace Unity.QuickSearch
     [DebuggerDisplay("{searchText}")]
     public class SearchContext
     {
-        public string searchText;
-        public string originalSearchText;
+        public string searchBoxText;
+        public string searchQuery;
         public EditorWindow focusedWindow;
-        public string[] tokenizedSearchText;
+        public string[] tokenizedSearchQuery;
         public string[] textFilters;
         public List<SearchFilter.Entry> categories;
         public int totalItemCount;
@@ -340,17 +340,23 @@ namespace Unity.QuickSearch
             Filter = new SearchFilter();
             TextFilter = new SearchFilter();
             var settingsValid = FetchProviders();
-            settingsValid = LoadFilters() || settingsValid;
+            settingsValid = LoadSettings() || settingsValid;
             LastSearch = EditorPrefs.GetString(k_LastSearchPrefKey, "");
 
             if (!settingsValid)
             {
                 // Override all settings
-                SaveAll();
+                SaveSettings();
             }
         }
 
-        public static void SaveAll()
+        public static bool LoadSettings()
+        {
+            LastSearch = EditorPrefs.GetString(k_LastSearchPrefKey, "");
+            return LoadFilters();
+        }
+
+        public static void SaveSettings()
         {
             SaveFilters();
             SaveLastSearch();
@@ -365,7 +371,7 @@ namespace Unity.QuickSearch
 
         public static List<SearchItem> GetItems(SearchContext context)
         {
-            if (!string.IsNullOrEmpty(context.searchText))
+            if (!string.IsNullOrEmpty(context.searchQuery))
             {
                 if (TextFilter.filteredProviders.Count > 0)
                 {
@@ -384,25 +390,24 @@ namespace Unity.QuickSearch
 
         public static void SearchTextChanged(SearchContext context)
         {
-            context.originalSearchText = context.searchText;
-            
+            context.searchQuery = context.searchBoxText;
             string providerFilterOverride = null;
             foreach (var textFilter in ProviderTextFilters)
             {
-                if (context.searchText.StartsWith(textFilter))
+                if (context.searchQuery.StartsWith(textFilter))
                 {
                     providerFilterOverride = textFilter;
-                    context.searchText = context.searchText.Remove(0, textFilter.Length);
+                    context.searchQuery = context.searchQuery.Remove(0, textFilter.Length);
                     break;
                 }
             }
 
-            var tokens = context.searchText.Split(' ');
-            context.tokenizedSearchText = tokens.Where(t => !t.Contains(":")).ToArray();
+            var tokens = context.searchQuery.Split(' ');
+            context.tokenizedSearchQuery = tokens.Where(t => !t.Contains(":")).ToArray();
             context.textFilters = tokens.Where(t => t.Contains(":")).ToArray();
 
             // Reformat search text so it only contains text filter that are specific to providers and ensure those filters are at the beginning of the search text.
-            context.searchText = string.Join(" ", context.textFilters.Concat(context.tokenizedSearchText));
+            context.searchQuery = string.Join(" ", context.textFilters.Concat(context.tokenizedSearchQuery));
 
             if (providerFilterOverride != null)
             {

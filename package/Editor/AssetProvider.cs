@@ -69,7 +69,7 @@ namespace Unity.QuickSearch
                     filterId = "p:",
                     fetchItems = (context, items, _provider) =>
                     {
-                        var filter = context.searchText;
+                        var filter = context.searchQuery;
 
                         // Check if folder should be filtered or not then remove the a: find tag
                         bool findFolders = !context.categories.Any(c => c.name.displayName == "folders" && c.isEnabled == false);
@@ -102,9 +102,9 @@ namespace Unity.QuickSearch
                                                     .Take(1001)
                                                     .Select(path => _provider.CreateItem(path, Path.GetFileName(path))));
 
-                        if (context.searchText.Contains('*'))
+                        if (context.searchQuery.Contains('*'))
                         {
-                            var safeFilter = string.Join("_", context.searchText.Split(k_InvalidSearchFileChars));
+                            var safeFilter = string.Join("_", context.searchQuery.Split(k_InvalidSearchFileChars));
                             items.AddRange(Directory.GetFiles(Application.dataPath + "/", safeFilter, SearchOption.AllDirectories)
                                 .Select(path => _provider.CreateItem(path.Replace(Application.dataPath, "Assets").Replace("\\", "/"), Path.GetFileName(path))));
                         }
@@ -124,7 +124,7 @@ namespace Unity.QuickSearch
                         if (item.thumbnail)
                             return item.thumbnail;
 
-                        if (context.totalItemCount < 100)
+                        if (context.totalItemCount < 200)
                         {
                             var obj = AssetDatabase.LoadAssetAtPath<Object>(item.id);
                             if (obj != null)
@@ -169,8 +169,8 @@ namespace Unity.QuickSearch
                             if (asset != null)
                             {
                                 Selection.activeObject = asset;
-                                EditorGUIUtility.PingObject(asset);
                                 EditorWindow.FocusWindowIfItsOpen(Utils.GetProjectBrowserWindowType());
+                                EditorGUIUtility.PingObject(asset);
                             }
                             else
                             {
@@ -194,13 +194,13 @@ namespace Unity.QuickSearch
             }
 
             #if UNITY_2019_1_OR_NEWER
-            [UsedImplicitly, Shortcut("Window/Quick Search/Assets", KeyCode.A, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+            [UsedImplicitly, Shortcut("Help/Quick Search/Assets", KeyCode.A, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
             public static void PopQuickSearch()
             {
                 SearchService.Filter.ResetFilter(false);
                 SearchService.Filter.SetFilter(true, type);
                 SearchService.Filter.SetFilter(false, type, "a:" + areaFilter[1]);
-                QuickSearchTool.ShowWindow();
+                QuickSearchTool.ShowWindow(false);
             }
             #endif
         }

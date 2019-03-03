@@ -27,7 +27,7 @@ namespace Unity.QuickSearch
                     {
                         items.AddRange(
                             Resources.FindObjectsOfTypeAll(typeof(GameObject)).Cast<GameObject>()
-                                .Where(go => SearchProvider.MatchSearchGroups(context.searchText, go.name))
+                                .Where(go => SearchProvider.MatchSearchGroups(context.searchQuery, go.name))
                                 .Select(go =>
                                      {
                                          var id = go.GetInstanceID().ToString();
@@ -41,9 +41,14 @@ namespace Unity.QuickSearch
                         if (item.thumbnail)
                             return item.thumbnail;
 
-                        var obj = ObjectFromItem(item);
+                        GameObject obj = ObjectFromItem(item);
                         if (obj != null)
+                        {
+                            item.thumbnail = PrefabUtility.GetIconForGameObject(obj);
+                            if (item.thumbnail)
+                                return item.thumbnail;
                             item.thumbnail = EditorGUIUtility.ObjectContent(obj, obj.GetType()).image as Texture2D;
+                        }
 
                         return item.thumbnail;
                     },
@@ -86,12 +91,12 @@ namespace Unity.QuickSearch
             }
 
             #if UNITY_2019_1_OR_NEWER
-            [UsedImplicitly, Shortcut("Window/Quick Search/Scene", KeyCode.S, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+            [UsedImplicitly, Shortcut("Help/Quick Search/Scene", KeyCode.S, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
             public static void PopQuickSearch()
             {
                 SearchService.Filter.ResetFilter(false);
                 SearchService.Filter.SetFilter(true, type);
-                QuickSearchTool.ShowWindow();
+                QuickSearchTool.ShowWindow(false);
             }
 
             #endif
