@@ -15,40 +15,35 @@ MonoBehaviour:
   title: Lightweight RP for VR (Preview)
   sections:
   - heading: Lightweight Render Pipeline for VR
-    text: 'The Lightweight Scriptable Render Pipeline is currently still in development.
-      At this stage we are seeking feedback on the feature, but it should be considered
-      incomplete and subject to changes (API, UX, scope). As such, it is not covered
-      by regular Unity support. Please direct any questions to the:'
-    linkText: Preview Forum
-    url: 'https://forum.unity.com/categories/betas-experimental-features.86/'
-  - heading: 
     text: 'This template is a good starting point for developers focused on performance
       and VR projects that use a primarily baked lighting solution. This template
-      utilizes the Lightweight Scriptable Render Pipeline, a single-pass forward renderer.
-      Note that this project is designed to be used with a Virtual Reality device.
-      Make sure you have the correct SDKs for the device you are using before using
-      this template. '
+      uses the Lightweight Scriptable Render Pipeline, a single-pass forward renderer.
+      This project is designed to be used with a Virtual Reality device.
+      Before you use this template, ensure that you have the correct SDKs for the device you are using. '
     linkText: 
     url: 
+  - heading: 
+    text: 'The Lightweight Render Pipeline is currently still in development, so subject to changes (API, UX, scope). 
+	  As such, it is not covered by regular Unity support. Please direct any questions to the:'
+    linkText: Preview Forum
+    url: 'https://forum.unity.com/categories/betas-experimental-features.86/'
   - heading: 
     text: 'Visit the Unity XR manual pages for more information about VR: '
     linkText: VR Overview
     url: 'https://docs.unity3d.com/Manual/VROverview.html'
   - heading: 
-    text: 'To read more about the Lightweight Render Pipeline check out the Scriptable
-      Render Pipeline wiki here:'
-    linkText: Scriptable Render Pipeline
-    url: https://github.com/Unity-Technologies/ScriptableRenderPipeline/wiki
+    text: 'To read more about the Lightweight Render Pipeline, see this LWRP documentation site:'
+    linkText: LWRP documentation site
+    url: https://docs.unity3d.com/Packages/com.unity.render-pipelines.lightweight@5.2/manual/index.html
   - heading: 
-    text: 'This project also includes the new shader graph tool. This tool allows
-      users to create shaders using a visual node editor instead of writing code.
-      Read more about the shader graph here:'
+    text: 'This project also includes the new Shader Graph tool. With this tool, you can create shaders with a visual node editor instead of writing code.
+      Read more about the Shader Graph here:'
     linkText: Shader Graph
     url: https://github.com/Unity-Technologies/ShaderGraph/wiki
   - heading: 
-    text: 'This project also includes the new Post-Processing stack, several presets
-      to jump start development, and example content. To learn more about Post-Processing
+    text: 'This project also includes the new Post-processing stack, several presets
+      to jump-start development, and example content. To learn more about Post-processing
       please refer to the wiki page located here:'
-    linkText: Post Processing
+    linkText: Post-processing
     url: https://github.com/Unity-Technologies/PostProcessing/wiki
   loadedLayout: 1
