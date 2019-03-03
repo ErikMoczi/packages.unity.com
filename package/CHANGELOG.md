@@ -1,11 +1,19 @@
 # Changelog
-All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [0.2.3-preview] - 2018-12-17
 
-## [0.1.0] - 2017-MM-DD
+### This is the first release of the *Unity Multiplayer HLAPI \<com.unity.multiplayer-hlapi\>*.
 
-### This is the first release of *Unity Package \<Your package name\>*.
+Initial release of the Unity Multiplayer HLAPI (or UNet HLAPI) moved into a package. This will
+work with Unity 2019.1.0a12 and onwards.
 
-*Short description of this release*
+This was previously an extension DLL but the layout has been moved from the extension style to a package format. Also all
+parts which existed in the Unity engine (native code) have been moved out and utilize public API instead. Mostly
+this involved
+- Update bump is now created with a hidden game object, instead of registering in the player loop internally
+- Domain reloads are detected with public APIs
+- Weaver invocation (used for code generation) registers with the compiliation pipeline API and receives callbacks
+  every time compilation finishes so it can parse the DLLs.
+- Profiler panel functionality was made possible by making some internal APIs puplic for now.
+
+Also, some runtime tests have been moved to the package as playmode tests.

@@ -468,7 +468,7 @@ namespace UnityEngine.Networking
             return s_NetworkScene.FindLocalObject(netId);
         }
 
-        static void ApplySpawnPayload(NetworkIdentity uv, Vector3 position, byte[] payload, NetworkInstanceId netId, GameObject newGameObject)
+        static void ApplySpawnPayload(NetworkIdentity uv, Vector3 position, byte[] payload, NetworkInstanceId netId, GameObject newGameObject, NetworkMessage netMsg)
         {
             if (!uv.gameObject.activeSelf)
             {
@@ -478,7 +478,7 @@ namespace UnityEngine.Networking
             if (payload != null && payload.Length > 0)
             {
                 var payloadReader = new NetworkReader(payload);
-                uv.OnUpdateVars(payloadReader, true);
+                uv.OnUpdateVars(payloadReader, true, netMsg);
             }
             if (newGameObject == null)
             {
@@ -516,7 +516,7 @@ namespace UnityEngine.Networking
             if (s_NetworkScene.GetNetworkIdentity(s_ObjectSpawnMessage.netId, out localNetworkIdentity))
             {
                 // this object already exists (was in the scene), just apply the update to existing object
-                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnMessage.position, s_ObjectSpawnMessage.payload, s_ObjectSpawnMessage.netId, null);
+                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnMessage.position, s_ObjectSpawnMessage.payload, s_ObjectSpawnMessage.netId, null, netMsg);
                 return;
             }
 
@@ -537,7 +537,7 @@ namespace UnityEngine.Networking
                     return;
                 }
                 localNetworkIdentity.Reset();
-                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnMessage.position, s_ObjectSpawnMessage.payload, s_ObjectSpawnMessage.netId, obj);
+                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnMessage.position, s_ObjectSpawnMessage.payload, s_ObjectSpawnMessage.netId, obj, netMsg);
             }
             // lookup registered factory for type:
             else if (NetworkScene.GetSpawnHandler(s_ObjectSpawnMessage.assetId, out handler))
@@ -556,7 +556,7 @@ namespace UnityEngine.Networking
                 }
                 localNetworkIdentity.Reset();
                 localNetworkIdentity.SetDynamicAssetId(s_ObjectSpawnMessage.assetId);
-                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnMessage.position, s_ObjectSpawnMessage.payload, s_ObjectSpawnMessage.netId, obj);
+                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnMessage.position, s_ObjectSpawnMessage.payload, s_ObjectSpawnMessage.netId, obj, netMsg);
             }
             else
             {
@@ -579,7 +579,7 @@ namespace UnityEngine.Networking
             if (s_NetworkScene.GetNetworkIdentity(s_ObjectSpawnSceneMessage.netId, out localNetworkIdentity))
             {
                 // this object already exists (was in the scene)
-                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnSceneMessage.position, s_ObjectSpawnSceneMessage.payload, s_ObjectSpawnSceneMessage.netId, localNetworkIdentity.gameObject);
+                ApplySpawnPayload(localNetworkIdentity, s_ObjectSpawnSceneMessage.position, s_ObjectSpawnSceneMessage.payload, s_ObjectSpawnSceneMessage.netId, localNetworkIdentity.gameObject, netMsg);
                 return;
             }
 
@@ -591,7 +591,7 @@ namespace UnityEngine.Networking
             }
 
             if (LogFilter.logDebug) { Debug.Log("Client spawn for [netId:" + s_ObjectSpawnSceneMessage.netId + "] [sceneId:" + s_ObjectSpawnSceneMessage.sceneId + "] obj:" + spawnedId.gameObject.name); }
-            ApplySpawnPayload(spawnedId, s_ObjectSpawnSceneMessage.position, s_ObjectSpawnSceneMessage.payload, s_ObjectSpawnSceneMessage.netId, spawnedId.gameObject);
+            ApplySpawnPayload(spawnedId, s_ObjectSpawnSceneMessage.position, s_ObjectSpawnSceneMessage.payload, s_ObjectSpawnSceneMessage.netId, spawnedId.gameObject, netMsg);
         }
 
         static void OnObjectSpawnFinished(NetworkMessage netMsg)
@@ -702,7 +702,7 @@ namespace UnityEngine.Networking
             NetworkIdentity localObject;
             if (s_NetworkScene.GetNetworkIdentity(netId, out localObject))
             {
-                localObject.OnUpdateVars(netMsg.reader, false);
+                localObject.OnUpdateVars(netMsg.reader, false, netMsg);
             }
             else
             {

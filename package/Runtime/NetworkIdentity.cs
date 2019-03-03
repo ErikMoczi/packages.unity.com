@@ -713,7 +713,7 @@ namespace UnityEngine.Networking
             }
         }
 
-        internal void OnUpdateVars(NetworkReader reader, bool initialState)
+        internal void OnUpdateVars(NetworkReader reader, bool initialState, NetworkMessage netMsg)
         {
             if (initialState && m_NetworkBehaviours == null)
             {
@@ -723,6 +723,11 @@ namespace UnityEngine.Networking
             {
                 NetworkBehaviour comp = m_NetworkBehaviours[i];
 
+                if (!netMsg.channelId.Equals(comp.GetNetworkChannel()))
+                {
+                    // if the bahaviour network channel is not same as the netMsg channel
+                    continue;
+                }
 
 #if UNITY_EDITOR
                 var oldReadPos = reader.Position;
