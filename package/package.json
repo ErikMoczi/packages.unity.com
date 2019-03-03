@@ -1,11 +1,20 @@
 {
-	"name": "com.unity.multiplayer-hlapi",
-	"displayName":"Multiplayer High-level API",
-	"version": "0.2.0",
-	"unity": "2019.1",
-	"description": "The high level API component of the Unity Multiplayer system.",
-	"keywords": ["multiplayer", "networking", "hlapi", "high-level", "api"],
-	"dependencies": {
-        
-	}
+  "name": "com.unity.multiplayer-hlapi",
+  "displayName": "Multiplayer HLAPI",
+  "version": "0.2.1-preview",
+  "unity": "2019.1",
+  "description": "The high level API component of the Unity Multiplayer system.",
+  "keywords": [
+    "multiplayer",
+    "networking",
+    "hlapi",
+    "high-level",
+    "api"
+  ],
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/multiplayer/com.unity.multiplayer-hlapi.git",
+    "revision": "87c7d4d961e69447aa1476443da1ac5f6cc73d3d"
+  }
 }

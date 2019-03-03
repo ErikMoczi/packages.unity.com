@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using Mono.Cecil;
 using UnityEditor.Compilation;
 using UnityEngine;
+using Assembly = System.Reflection.Assembly;
 
 namespace UnityEditor.Networking
 {
@@ -56,6 +54,7 @@ namespace UnityEditor.Networking
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             bool usesUnet = false;
             bool foundThisAssembly = false;
+            List<string> depenencyPaths = new List<string>();
             foreach (var assembly in assemblies)
             {
                 // Find the assembly currently being compiled from domain assembly list and check if it's using unet
@@ -64,6 +63,8 @@ namespace UnityEditor.Networking
                     foundThisAssembly = true;
                     foreach (var dependency in assembly.GetReferencedAssemblies())
                     {
+                        var location = Assembly.Load(dependency).Location;
+                        depenencyPaths.Add(Path.GetDirectoryName(location));
                         if (dependency.Name.Contains(k_HlapiRuntimeAssemblyName))
                         {
                             usesUnet = true;
@@ -114,7 +115,7 @@ namespace UnityEditor.Networking
 
             //Debug.Log("Package invoking weaver with " + unityEngine + " " + unetAssemblyPath + " " + outputDirectory + " " + assemblyPath + " " + assemblyResolver);
 
-            Unity.UNetWeaver.Program.Process(unityEngine, unetAssemblyPath, outputDirectory, new[] { assemblyPath }, new string[] { }, null, (value) => { Debug.LogWarning(value); }, (value) => { Debug.LogError(value); });
+            Unity.UNetWeaver.Program.Process(unityEngine, unetAssemblyPath, outputDirectory, new[] { assemblyPath }, depenencyPaths.ToArray(), null, (value) => { Debug.LogWarning(value); }, (value) => { Debug.LogError(value); });
         }
     }
 }
