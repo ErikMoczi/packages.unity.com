@@ -1,3 +1,6 @@
+## [0.9.100-preview.1] - 2019-02-25
+- Update style to work better with the Northstar branch
+
 ## [0.9.95-preview] - 2019-02-25
 - Add AssetStoreProvider example
 - Add HTTP asynchronous item loading by querying the asset store.

@@ -30,7 +30,11 @@ namespace Unity.QuickSearch
 
             public static readonly GUIStyle filterEntry = new GUIStyle(EditorStyles.label) { name = "quick-search-filter-entry" };
             public static readonly GUIStyle panelBorder = new GUIStyle("grey_border") { name = "quick-search-filter-panel-border" };
-            public static readonly GUIStyle filterExpanded = new GUIStyle("IN Foldout") { name = "quick-search-filter-expanded" };
+            public static readonly GUIStyle filterExpanded = new GUIStyle("IN Foldout")
+            {
+                name = "quick-search-filter-expanded",
+                margin = new RectOffset(1, 1, 2, 0)
+            };
             public static readonly GUIStyle separator = new GUIStyle("sv_iconselector_sep")
             {
                 margin = new RectOffset(1, 1, 0, 0)
@@ -367,6 +371,9 @@ namespace Unity.QuickSearch
             {
                 name = "quick-search-no-result",
                 fontSize = 20,
+                fixedHeight = 0,
+                fixedWidth = 0,
+                wordWrap = true,
                 alignment = TextAnchor.MiddleCenter,
                 margin = marginNone,
                 padding = paddingNone
@@ -999,17 +1006,19 @@ namespace Unity.QuickSearch
         {
             s_FocusedWindow = focusedWindow;
 
+            var windowSize = new Vector2(550, 400);
+
             #if QUICKSEARCH_DEBUG_WINDOW
             var qsWindow = GetWindow<QuickSearchTool>();
             qsWindow.m_SaveStateOnExit = saveSearchStateOnExit;
-            qsWindow.CenterOnMainWin();
+            qsWindow.position = Utils.GetMainWindowCenteredPosition(windowSize);
             qsWindow.Show(true);
             qsWindow.Focus();
             #else
             var qsWindow = CreateInstance<QuickSearchTool>();
             qsWindow.m_SaveStateOnExit = saveSearchStateOnExit;
             qsWindow.autoRepaintOnSceneChange = true;
-            qsWindow.ShowDropDown(new Vector2(550, 400));
+            qsWindow.ShowDropDown(windowSize);
             qsWindow.Focus();
             #endif
         }
