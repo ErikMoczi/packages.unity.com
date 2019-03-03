@@ -1,6 +1,6 @@
 {
     "name": "Unity.Animation.Rigging",
-    "references": [],
+    "references": ["Unity.Burst"],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],

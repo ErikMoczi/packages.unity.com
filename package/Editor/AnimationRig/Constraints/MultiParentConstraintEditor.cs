@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEditorInternal;
+using System.Reflection;
 
 namespace UnityEditor.Animations.Rigging
 {
@@ -22,6 +23,8 @@ namespace UnityEditor.Animations.Rigging
         SerializedProperty m_SourceObjectsToggle;
         SerializedProperty m_SettingsToggle;
         ReorderableList m_ReorderableList;
+        MultiParentConstraint m_Constraint;
+        WeightedTransformArray m_SourceObjectsArray;
 
         void OnEnable()
         {
@@ -37,13 +40,24 @@ namespace UnityEditor.Animations.Rigging
             m_MaintainPositionOffset = data.FindPropertyRelative("m_MaintainPositionOffset");
             m_MaintainRotationOffset = data.FindPropertyRelative("m_MaintainRotationOffset");
 
-            m_ReorderableList = ReorderableListHelper.Create(serializedObject, m_SourceObjects);
-            if (m_ReorderableList.count == 0)
-                ((MultiParentConstraint)serializedObject.targetObject).data.sourceObjects.Add(WeightedTransform.Default(1f));
+            m_Constraint = (MultiParentConstraint)serializedObject.targetObject;
+            m_SourceObjectsArray = m_Constraint.data.sourceObjects;
 
-            m_ReorderableList.onAddCallback = (ReorderableList list) =>
+            var dataType = m_Constraint.data.GetType();
+            var fieldInfo = dataType.GetField("m_SourceObjects", BindingFlags.NonPublic | BindingFlags.Instance);
+            var range = fieldInfo.GetCustomAttribute<RangeAttribute>();
+
+            if (m_SourceObjectsArray.Count == 0)
             {
-                ((MultiParentConstraint)serializedObject.targetObject).data.sourceObjects.Add(WeightedTransform.Default(1f));
+                m_SourceObjectsArray.Add(WeightedTransform.Default(1f));
+                m_Constraint.data.sourceObjects = m_SourceObjectsArray;
+            }
+
+            m_ReorderableList = WeightedTransformHelper.CreateReorderableList(m_SourceObjects, ref m_SourceObjectsArray, range);
+
+            m_ReorderableList.onChangedCallback = (ReorderableList reorderableList) =>
+            {
+                m_Constraint.data.sourceObjects = (WeightedTransformArray)reorderableList.list;
             };
         }
 
@@ -57,6 +71,9 @@ namespace UnityEditor.Animations.Rigging
             m_SourceObjectsToggle.boolValue = EditorGUILayout.Foldout(m_SourceObjectsToggle.boolValue, k_SourceObjectsLabel);
             if (m_SourceObjectsToggle.boolValue)
             {
+                // Sync list with sourceObjects.
+                m_ReorderableList.list = m_Constraint.data.sourceObjects;
+
                 EditorGUI.indentLevel++;
                 m_ReorderableList.DoLayoutList();
                 EditorGUI.indentLevel--;

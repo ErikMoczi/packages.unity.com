@@ -1,41 +1,23 @@
-﻿using System.Collections.Generic;
 
 namespace UnityEngine.Animations.Rigging
 {
-    using RuntimeConstraints;
-
     [System.Serializable]
     public struct MultiPositionConstraintData : IAnimationJobData, IMultiPositionConstraintData
     {
         [SerializeField] Transform m_ConstrainedObject;
 
-        [SyncSceneToStream, SerializeField] List<WeightedTransform> m_SourceObjects;
+        [SyncSceneToStream, SerializeField, Range(0, 1)] WeightedTransformArray m_SourceObjects;
         [SyncSceneToStream, SerializeField] Vector3 m_Offset;
 
         [NotKeyable, SerializeField] Vector3Bool m_ConstrainedAxes;
         [NotKeyable, SerializeField] bool m_MaintainOffset;
 
-        // Since source weights can be updated at runtime keep a local cache instead of
-        // extracting these constantly
-        private WeightCache m_SrcWeightCache;
-
         public Transform constrainedObject { get => m_ConstrainedObject; set => m_ConstrainedObject = value; }
 
-        public List<WeightedTransform> sourceObjects
+        public WeightedTransformArray sourceObjects
         {
-            get
-            {
-                if (m_SourceObjects == null)
-                    m_SourceObjects = new List<WeightedTransform>();
-
-                return m_SourceObjects;
-            }
-
-            set
-            {
-                m_SourceObjects = value;
-                m_SrcWeightCache.MarkDirty();
-            }
+            get => m_SourceObjects;
+            set => m_SourceObjects = value;
         }
 
         public bool maintainOffset { get => m_MaintainOffset; set => m_MaintainOffset = value; }
@@ -45,13 +27,12 @@ namespace UnityEngine.Animations.Rigging
         public bool constrainedYAxis { get => m_ConstrainedAxes.y; set => m_ConstrainedAxes.y = value; }
         public bool constrainedZAxis { get => m_ConstrainedAxes.z; set => m_ConstrainedAxes.z = value; }
 
-        Transform[] IMultiPositionConstraintData.sourceObjects => ConstraintDataUtils.GetTransforms(m_SourceObjects);
-        float[] IMultiPositionConstraintData.sourceWeights => m_SrcWeightCache.GetWeights(m_SourceObjects);
         string IMultiPositionConstraintData.offsetVector3Property => PropertyUtils.ConstructConstraintDataPropertyName(nameof(m_Offset));
+        string IMultiPositionConstraintData.sourceObjectsProperty => PropertyUtils.ConstructConstraintDataPropertyName(nameof(m_SourceObjects));
 
         bool IAnimationJobData.IsValid()
         {
-            if (m_ConstrainedObject == null || m_SourceObjects == null || m_SourceObjects.Count == 0)
+            if (m_ConstrainedObject == null || m_SourceObjects.Count == 0)
                 return false;
 
             foreach (var src in m_SourceObjects)
@@ -65,12 +46,10 @@ namespace UnityEngine.Animations.Rigging
         {
             m_ConstrainedObject = null;
             m_ConstrainedAxes = new Vector3Bool(true);
-            m_SourceObjects = new List<WeightedTransform>();
+            m_SourceObjects.Clear();
             m_MaintainOffset = true;
             m_Offset = Vector3.zero;
         }
-
-        public void MarkSourceWeightsDirty() => m_SrcWeightCache.MarkDirty();
     }
 
     [DisallowMultipleComponent, AddComponentMenu("Animation Rigging/Multi-Position Constraint")]
@@ -85,10 +64,5 @@ namespace UnityEngine.Animations.Rigging
         [NotKeyable, SerializeField, HideInInspector] bool m_SourceObjectsGUIToggle;
         [NotKeyable, SerializeField, HideInInspector] bool m_SettingsGUIToggle;
     #endif
-
-        void OnValidate()
-        {
-            m_Data.MarkSourceWeightsDirty();
-        }
     }
 }

@@ -1,9 +1,10 @@
-﻿using Unity.Collections;
+using Unity.Collections;
 
 namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct MultiRotationConstraintJob : IWeightedAnimationJob
     {
         const float k_Epsilon = 1e-5f;
@@ -12,13 +13,13 @@ namespace UnityEngine.Animations.Rigging
         public ReadOnlyTransformHandle drivenParent;
         public Vector3Property drivenOffset;
 
-        public NativeArray<ReadOnlyTransformHandle> sources;
+        public NativeArray<ReadOnlyTransformHandle> sourceTransforms;
+        public NativeArray<PropertyStreamHandle> sourceWeights;
         public NativeArray<Quaternion> sourceOffsets;
-        public CacheIndex sourceWeightStartIdx;
+
+        public NativeArray<float> weightBuffer;
 
         public Vector3 axesMask;
-
-        public AnimationJobCache cache;
 
         public FloatProperty jobWeight { get; set; }
 
@@ -29,7 +30,9 @@ namespace UnityEngine.Animations.Rigging
             float w = jobWeight.Get(stream);
             if (w > 0f)
             {
-                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeightStartIdx, sources.Length);
+                AnimationStreamHandleUtility.ReadFloats(stream, sourceWeights, weightBuffer);
+
+                float sumWeights = AnimationRuntimeUtils.Sum(weightBuffer);
                 if (sumWeights < k_Epsilon)
                     return;
 
@@ -37,15 +40,18 @@ namespace UnityEngine.Animations.Rigging
 
                 Quaternion currentWRot = driven.GetRotation(stream);
                 Quaternion accumRot = currentWRot;
-                for (int i = 0; i < sources.Length; ++i)
+                for (int i = 0; i < sourceTransforms.Length; ++i)
                 {
-                    var normalizedWeight = cache.GetRaw(sourceWeightStartIdx, i) * weightScale;
+                    var normalizedWeight = weightBuffer[i] * weightScale;
                     if (normalizedWeight < k_Epsilon)
                         continue;
 
-                    var src = sources[i];
-                    accumRot = Quaternion.Lerp(accumRot, src.GetRotation(stream) * sourceOffsets[i], normalizedWeight);
-                    sources[i] = src;
+                    ReadOnlyTransformHandle sourceTransform = sourceTransforms[i];
+
+                    accumRot = Quaternion.Lerp(accumRot, sourceTransform.GetRotation(stream) * sourceOffsets[i], normalizedWeight);
+
+                    // Required to update handles with binding info.
+                    sourceTransforms[i] = sourceTransform;
                 }
 
                 // Convert accumRot to local space
@@ -70,11 +76,11 @@ namespace UnityEngine.Animations.Rigging
     public interface IMultiRotationConstraintData
     {
         Transform constrainedObject { get; }
-        Transform[] sourceObjects { get; }
-        float[] sourceWeights { get; }
+        WeightedTransformArray sourceObjects { get; }
         bool maintainOffset { get; }
 
         string offsetVector3Property { get; }
+        string sourceObjectsProperty { get; }
 
         bool constrainedXAxis { get; }
         bool constrainedYAxis { get; }
@@ -87,25 +93,25 @@ namespace UnityEngine.Animations.Rigging
         public override MultiRotationConstraintJob Create(Animator animator, ref T data, Component component)
         {
             var job = new MultiRotationConstraintJob();
-            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = ReadWriteTransformHandle.Bind(animator, data.constrainedObject);
             job.drivenParent = ReadOnlyTransformHandle.Bind(animator, data.constrainedObject.parent);
             job.drivenOffset = Vector3Property.Bind(animator, component, data.offsetVector3Property);
 
-            var src = data.sourceObjects;
-            var srcWeights = data.sourceWeights;
-            job.sources = new NativeArray<ReadOnlyTransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceOffsets = new NativeArray<Quaternion>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceWeightStartIdx = cacheBuilder.AllocateChunk(srcWeights.Length);
+            WeightedTransformArray sourceObjects = data.sourceObjects;
+
+            WeightedTransformArrayBinder.BindReadOnlyTransforms(animator, component, sourceObjects, out job.sourceTransforms);
+            WeightedTransformArrayBinder.BindWeights(animator, component, sourceObjects, data.sourceObjectsProperty, out job.sourceWeights);
+
+            job.sourceOffsets = new NativeArray<Quaternion>(sourceObjects.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
+            job.weightBuffer = new NativeArray<float>(sourceObjects.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
             Quaternion drivenRot = data.constrainedObject.rotation;
-            for (int i = 0; i < src.Length; ++i)
+            for (int i = 0; i < sourceObjects.Count; ++i)
             {
-                job.sources[i] = ReadOnlyTransformHandle.Bind(animator, src[i]);
-                cacheBuilder.SetValue(job.sourceWeightStartIdx, i, srcWeights[i]);
                 job.sourceOffsets[i] = data.maintainOffset ?
-                    (Quaternion.Inverse(src[i].rotation) * drivenRot) : Quaternion.identity;
+                    (Quaternion.Inverse(sourceObjects[i].transform.rotation) * drivenRot) : Quaternion.identity;
             }
 
             job.axesMask = new Vector3(
@@ -113,21 +119,20 @@ namespace UnityEngine.Animations.Rigging
                 System.Convert.ToSingle(data.constrainedYAxis),
                 System.Convert.ToSingle(data.constrainedZAxis)
                 );
-            job.cache = cacheBuilder.Build();
 
             return job;
         }
 
         public override void Destroy(MultiRotationConstraintJob job)
         {
-            job.sources.Dispose();
+            job.sourceTransforms.Dispose();
+            job.sourceWeights.Dispose();
             job.sourceOffsets.Dispose();
-            job.cache.Dispose();
+            job.weightBuffer.Dispose();
         }
 
         public override void Update(MultiRotationConstraintJob job, ref T data)
         {
-            job.cache.SetArray(data.sourceWeights, job.sourceWeightStartIdx);
         }
     }
 }

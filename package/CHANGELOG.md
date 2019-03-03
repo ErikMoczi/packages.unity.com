@@ -2,9 +2,20 @@
 All notable changes to this package will be documented in this file.
 
 <!--
-## [0.2.1] - 2019-02-XX
+## [0.2.2] - 2019-02-XX
 ### Patch Update of *Unity Package Animation Rigging*.
+- Added dependency on Burst package to optimize all rigging constraint jobs.
 -->
+
+## [0.2.1] - 2019-02-28
+### Patch Update of *Unity Package Animation Rigging*.
+- Added Burst support to existing constraints.  The Animation Rigging package now depends on com.unity.burst.
+- Upgraded weighted transform arrays in order for weights to be animatable.  The following constraints were modified and will require a manual update:
+	- MultiAimConstraint
+	- MultiParentConstraint
+	- MultiPositionConstraint
+	- MultiReferentialConstraint
+	- TwistCorrection
 
 ## [0.2.0] - 2019-02-12
 

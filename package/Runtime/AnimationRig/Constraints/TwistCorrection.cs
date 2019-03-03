@@ -1,27 +1,6 @@
-﻿using System.Collections.Generic;
 
 namespace UnityEngine.Animations.Rigging
 {
-    using RuntimeConstraints;
-
-    [System.Serializable]
-    public class TwistNode : ITransformProvider, IWeightProvider
-    {
-        public Transform transform;
-
-        [Range(-1f, 1f)]
-        public float weight;
-
-        public TwistNode(Transform transform, float weight = 0f)
-        {
-            this.transform = transform;
-            this.weight = Mathf.Clamp(weight, -1f, 1f);
-        }
-
-        Transform ITransformProvider.transform { get => transform; set => transform = value; }
-        float IWeightProvider.weight { get => weight; set => weight = value; }
-    }
-
     [System.Serializable]
     public struct TwistCorrectionData : IAnimationJobData, ITwistCorrectionData
     {
@@ -30,37 +9,22 @@ namespace UnityEngine.Animations.Rigging
         [SyncSceneToStream, SerializeField] Transform m_Source;
 
         [NotKeyable, SerializeField] Axis m_TwistAxis;
-        [SerializeField] List<TwistNode> m_TwistNodes;
-
-        // Since twist node weights can be updated at runtime keep a local cache instead of
-        // extracting these constantly
-        private WeightCache m_TwistNodeWeightCache;
+        [SyncSceneToStream, SerializeField, Range(-1, 1)] WeightedTransformArray m_TwistNodes;
 
         public Transform sourceObject { get => m_Source; set => m_Source = value; }
 
-        public List<TwistNode> twistNodes
+        public WeightedTransformArray twistNodes
         {
-            get
-            {
-                if (m_TwistNodes == null)
-                    m_TwistNodes = new List<TwistNode>();
-
-                return m_TwistNodes;
-            }
-
-            set
-            {
-                m_TwistNodes = value;
-                m_TwistNodeWeightCache.MarkDirty();
-            }
+            get => m_TwistNodes;
+            set => m_TwistNodes = value;
         }
 
         public Axis twistAxis { get => m_TwistAxis; set => m_TwistAxis = value; }
 
         Transform ITwistCorrectionData.source => m_Source.transform;
-        Transform[] ITwistCorrectionData.twistNodes => ConstraintDataUtils.GetTransforms(m_TwistNodes);
-        float[] ITwistCorrectionData.twistNodeWeights => m_TwistNodeWeightCache.GetWeights(m_TwistNodes);
         Vector3 ITwistCorrectionData.twistAxis => Convert(m_TwistAxis);
+
+        string ITwistCorrectionData.twistNodesProperty => PropertyUtils.ConstructConstraintDataPropertyName(nameof(m_TwistNodes));
 
         static Vector3 Convert(Axis axis)
         {
@@ -89,10 +53,8 @@ namespace UnityEngine.Animations.Rigging
         {
             m_Source = null;
             m_TwistAxis = Axis.X;
-            m_TwistNodes = new List<TwistNode>();
+            m_TwistNodes.Clear();
         }
-
-        public void MarkTwistNodeWeightsDirty() => m_TwistNodeWeightCache.MarkDirty();
     }
 
     [DisallowMultipleComponent, AddComponentMenu("Animation Rigging/Twist Correction")]
@@ -109,7 +71,6 @@ namespace UnityEngine.Animations.Rigging
 
         void OnValidate()
         {
-            m_Data.MarkTwistNodeWeightsDirty();
         }
     }
 }

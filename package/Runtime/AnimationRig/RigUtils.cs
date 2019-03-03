@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -66,25 +66,12 @@ namespace UnityEngine.Animations.Rigging
                 if (value != null && value.IsChildOf(animator.transform))
                     syncableTransforms.Add(value);
             }
-            else if (fieldType == typeof(WeightedTransform))
-            {
-                var value = ((WeightedTransform)field.GetValue(data)).transform;
-                if (value != null && value.IsChildOf(animator.transform))
-                    syncableTransforms.Add(value);
-            }
             else if (fieldType == typeof(Transform[]) || fieldType == typeof(List<Transform>))
             {
                 var list = (IEnumerable<Transform>)field.GetValue(data);
                 foreach (var element in list)
                     if (element != null && element.IsChildOf(animator.transform))
                         syncableTransforms.Add(element);
-            }
-            else if (fieldType == typeof(WeightedTransform[]) || fieldType == typeof(List<WeightedTransform>))
-            {
-                var list = (IEnumerable<WeightedTransform>)field.GetValue(data);
-                foreach (var element in list)
-                    if (element.transform != null && element.transform.IsChildOf(animator.transform))
-                        syncableTransforms.Add(element.transform);
             }
             else
                 handled = false;
@@ -106,6 +93,48 @@ namespace UnityEngine.Animations.Rigging
                 );
 
             return true;
+        }
+
+        private static bool ExtractWeightedTransforms(
+                Animator animator,
+                FieldInfo field,
+                ref IAnimationJobData data,
+                List<Transform> syncableTransforms,
+                List<Property> syncableProperties)
+        {
+            bool handled = true;
+
+            Type fieldType = field.FieldType;
+            if (fieldType == typeof(WeightedTransform))
+            {
+                var value = ((WeightedTransform)field.GetValue(data)).transform;
+                if (value != null && value.IsChildOf(animator.transform))
+                    syncableTransforms.Add(value);
+
+                syncableProperties.Add(
+                    new Property { name = PropertyUtils.ConstructConstraintDataPropertyName(field.Name + ".weight"), descriptor = s_SupportedPropertyTypeToDescriptor[typeof(float)] }
+                    );
+            }
+            else if (fieldType == typeof(WeightedTransformArray))
+            {
+                var list = (IEnumerable<WeightedTransform>)field.GetValue(data);
+                int index = 0;
+                foreach (var element in list)
+                {
+                    if (element.transform != null && element.transform.IsChildOf(animator.transform))
+                        syncableTransforms.Add(element.transform);
+
+                    syncableProperties.Add(
+                        new Property { name = PropertyUtils.ConstructConstraintDataPropertyName(field.Name + ".m_Item" + index + ".weight"), descriptor = s_SupportedPropertyTypeToDescriptor[typeof(float)] }
+                        );
+
+                    ++index;
+                }
+            }
+            else
+                handled = false;
+
+            return handled;
         }
 
         private static void ExtractAllSyncableData(Animator animator, Rig[] rigs, out List<Transform> syncableTransforms, out List<SyncableProperties> syncableProperties)
@@ -141,6 +170,8 @@ namespace UnityEngine.Animations.Rigging
                     List<Property> properties = new List<Property>(syncableFields.Length);
                     foreach (var field in syncableFields)
                     {
+                        if (ExtractWeightedTransforms(animator, field, ref data, syncableTransforms, properties))
+                            continue;
                         if (ExtractTransformType(animator, field, ref data, syncableTransforms))
                             continue;
                         if (ExtractPropertyType(field, ref data, properties))
@@ -248,7 +279,7 @@ namespace UnityEngine.Animations.Rigging
                 rigStates = null;
             }
         }
- 
+
         public static IAnimationJobData CreateSyncSceneToStreamData(Animator animator, Rig[] rigs)
         {
             ExtractAllSyncableData(animator, rigs, out List<Transform> syncableTransforms, out List<SyncableProperties> syncableProperties);

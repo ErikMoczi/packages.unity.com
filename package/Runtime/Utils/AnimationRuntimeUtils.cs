@@ -1,4 +1,4 @@
-﻿using Unity.Collections;
+using Unity.Collections;
 
 namespace UnityEngine.Animations.Rigging
 {
@@ -100,8 +100,8 @@ namespace UnityEngine.Animations.Rigging
         // Implementation of unconstrained FABRIK solver : Forward and Backward Reaching Inverse Kinematic
         // Aristidou A, Lasenby J. FABRIK: a fast, iterative solver for the inverse kinematics problem. Graphical Models 2011; 73(5): 243–260.
         public static bool SolveFABRIK(
-            NativeArray<Vector3> linkPositions,
-            NativeArray<float> linkLengths,
+            ref NativeArray<Vector3> linkPositions,
+            ref NativeArray<float> linkLengths,
             Vector3 target,
             float tolerance,
             float maxReach,
@@ -174,6 +174,20 @@ namespace UnityEngine.Animations.Rigging
             float sum = 0f;
             for (int i = 0; i < count; ++i)
                 sum += cache.GetRaw(index, i);
+
+            return sum;
+        }
+
+        public static float Sum(NativeArray<float> floatBuffer)
+        {
+            if (floatBuffer.Length == 0)
+                return 0f;
+
+            float sum = 0f;
+            for (int i = 0; i< floatBuffer.Length; ++i)
+            {
+                sum += floatBuffer[i];
+            }
 
             return sum;
         }

@@ -1,9 +1,10 @@
-﻿using Unity.Collections;
+using Unity.Collections;
 
 namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct MultiPositionConstraintJob : IWeightedAnimationJob
     {
         const float k_Epsilon = 1e-5f;
@@ -11,14 +12,14 @@ namespace UnityEngine.Animations.Rigging
         public ReadWriteTransformHandle driven;
         public ReadOnlyTransformHandle drivenParent;
         public Vector3Property drivenOffset;
- 
-        public NativeArray<ReadOnlyTransformHandle> sources;
+
+        public NativeArray<ReadOnlyTransformHandle> sourceTransforms;
+        public NativeArray<PropertyStreamHandle> sourceWeights;
         public NativeArray<Vector3> sourceOffsets;
-        public CacheIndex sourceWeightStartIdx;
+
+        public NativeArray<float> weightBuffer;
 
         public Vector3 axesMask;
-
-        public AnimationJobCache cache;
 
         public FloatProperty jobWeight { get; set; }
 
@@ -29,7 +30,9 @@ namespace UnityEngine.Animations.Rigging
             float w = jobWeight.Get(stream);
             if (w > 0f)
             {
-                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeightStartIdx, sources.Length);
+                AnimationStreamHandleUtility.ReadFloats(stream, sourceWeights, weightBuffer);
+
+                float sumWeights = AnimationRuntimeUtils.Sum(weightBuffer);
                 if (sumWeights < k_Epsilon)
                     return;
 
@@ -37,15 +40,17 @@ namespace UnityEngine.Animations.Rigging
 
                 Vector3 currentWPos = driven.GetPosition(stream);
                 Vector3 accumPos = currentWPos;
-                for (int i = 0; i < sources.Length; ++i)
+                for (int i = 0; i < sourceTransforms.Length; ++i)
                 {
-                    var normalizedWeight = cache.GetRaw(sourceWeightStartIdx, i) * weightScale;
+                    var normalizedWeight = weightBuffer[i] * weightScale;
                     if (normalizedWeight < k_Epsilon)
                         continue;
 
-                    var src = sources[i];
-                    accumPos += (src.GetPosition(stream) + sourceOffsets[i] - currentWPos) * normalizedWeight;
-                    sources[i] = src;
+                    ReadOnlyTransformHandle sourceTransform = sourceTransforms[i];
+                    accumPos += (sourceTransform.GetPosition(stream) + sourceOffsets[i] - currentWPos) * normalizedWeight;
+
+                    // Required to update handles with binding info.
+                    sourceTransforms[i] = sourceTransform;
                 }
 
                 // Convert accumPos to local space
@@ -70,11 +75,11 @@ namespace UnityEngine.Animations.Rigging
     public interface IMultiPositionConstraintData
     {
         Transform constrainedObject { get; }
-        Transform[] sourceObjects { get; }
-        float[] sourceWeights { get; }
+        WeightedTransformArray sourceObjects { get; }
         bool maintainOffset { get; }
 
         string offsetVector3Property { get; }
+        string sourceObjectsProperty { get; }
 
         bool constrainedXAxis { get; }
         bool constrainedYAxis { get; }
@@ -87,24 +92,24 @@ namespace UnityEngine.Animations.Rigging
         public override MultiPositionConstraintJob Create(Animator animator, ref T data, Component component)
         {
             var job = new MultiPositionConstraintJob();
-            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = ReadWriteTransformHandle.Bind(animator, data.constrainedObject);
             job.drivenParent = ReadOnlyTransformHandle.Bind(animator, data.constrainedObject.parent);
             job.drivenOffset = Vector3Property.Bind(animator, component, data.offsetVector3Property);
 
-            var src = data.sourceObjects;
-            var srcWeights = data.sourceWeights;
-            job.sources = new NativeArray<ReadOnlyTransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceOffsets = new NativeArray<Vector3>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceWeightStartIdx = cacheBuilder.AllocateChunk(src.Length);
+            WeightedTransformArray sourceObjects = data.sourceObjects;
+
+            WeightedTransformArrayBinder.BindReadOnlyTransforms(animator, component, sourceObjects, out job.sourceTransforms);
+            WeightedTransformArrayBinder.BindWeights(animator, component, sourceObjects, data.sourceObjectsProperty, out job.sourceWeights);
+
+            job.sourceOffsets = new NativeArray<Vector3>(sourceObjects.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
+            job.weightBuffer = new NativeArray<float>(sourceObjects.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
             Vector3 drivenPos = data.constrainedObject.position;
-            for (int i = 0; i < src.Length; ++i)
+            for (int i = 0; i < sourceObjects.Count; ++i)
             {
-                job.sources[i] = ReadOnlyTransformHandle.Bind(animator, src[i]);
-                cacheBuilder.SetValue(job.sourceWeightStartIdx, i, srcWeights[i]);
-                job.sourceOffsets[i] = data.maintainOffset ? (drivenPos - src[i].position) : Vector3.zero;
+                job.sourceOffsets[i] = data.maintainOffset ? (drivenPos - sourceObjects[i].transform.position) : Vector3.zero;
             }
 
             job.axesMask = new Vector3(
@@ -112,21 +117,20 @@ namespace UnityEngine.Animations.Rigging
                 System.Convert.ToSingle(data.constrainedYAxis),
                 System.Convert.ToSingle(data.constrainedZAxis)
                 );
-            job.cache = cacheBuilder.Build();
 
             return job;
         }
 
         public override void Destroy(MultiPositionConstraintJob job)
         {
-            job.sources.Dispose();
+            job.sourceTransforms.Dispose();
+            job.sourceWeights.Dispose();
             job.sourceOffsets.Dispose();
-            job.cache.Dispose();
+            job.weightBuffer.Dispose();
         }
 
         public override void Update(MultiPositionConstraintJob job, ref T data)
         {
-            job.cache.SetArray(data.sourceWeights, job.sourceWeightStartIdx);
         }
     }
 }

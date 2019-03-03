@@ -4,6 +4,7 @@ namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct MultiReferentialConstraintJob : IWeightedAnimationJob
     {
         public IntProperty driver;

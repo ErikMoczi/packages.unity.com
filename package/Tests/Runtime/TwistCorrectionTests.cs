@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Animations.Rigging;
 using NUnit.Framework;
@@ -44,15 +44,15 @@ class TwistCorrectionTests
         twistCorrection.data.twistAxis = TwistCorrectionData.Axis.X;
         data.restLocalRotation = leftHand.localRotation;
 
-        List<TwistNode> twistNodes = new List<TwistNode>(2);
+        var twistNodes = new WeightedTransformArray();
         var twistNode0GO = new GameObject("twistNode0");
         var twistNode1GO = new GameObject("twistNode1");
         twistNode0GO.transform.parent = leftForeArm;
         twistNode1GO.transform.parent = leftForeArm;
         twistNode0GO.transform.SetPositionAndRotation(Vector3.Lerp(leftForeArm.position, leftHand.position, 0.25f), leftHand.rotation);
         twistNode1GO.transform.SetPositionAndRotation(Vector3.Lerp(leftForeArm.position, leftHand.position, 0.75f), leftHand.rotation);
-        twistNodes.Add(new TwistNode(twistNode0GO.transform));
-        twistNodes.Add(new TwistNode(twistNode1GO.transform));
+        twistNodes.Add(new WeightedTransform(twistNode0GO.transform, 0f));
+        twistNodes.Add(new WeightedTransform(twistNode1GO.transform, 0f));
         twistCorrection.data.twistNodes = twistNodes;
 
         data.rigData.rootGO.GetComponent<RigBuilder>().Build();
@@ -84,9 +84,9 @@ class TwistCorrectionTests
         Assert.AreEqual(twistNodes[1].transform.localRotation, Quaternion.identity);
 
         // twistNode0.w = 1f, twistNode1.w = 1f [twist nodes should be equal to source]
-        twistNodes[0].weight = 1f;
-        twistNodes[1].weight = 1f;
-        constraint.data.MarkTwistNodeWeightsDirty();
+        twistNodes.SetWeight(0, 1f);
+        twistNodes.SetWeight(1, 1f);
+        constraint.data.twistNodes = twistNodes;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         // Verify twist on X axis
@@ -96,9 +96,9 @@ class TwistCorrectionTests
         Assert.AreEqual(twistNodes[1].transform.localRotation.x, sourceObject.localRotation.x, k_Epsilon);
 
         // twistNode0.w = -1f, twistNode1.w = -1f [twist nodes should be inverse to source]
-        twistNodes[0].weight = -1f;
-        twistNodes[1].weight = -1f;
-        constraint.data.MarkTwistNodeWeightsDirty();
+        twistNodes.SetWeight(0, -1f);
+        twistNodes.SetWeight(1, -1f);
+        constraint.data.twistNodes = twistNodes;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         var invTwist = Quaternion.Inverse(sourceObject.localRotation);
@@ -114,14 +114,14 @@ class TwistCorrectionTests
     {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
-        
+
         var sourceObject = constraint.data.sourceObject;
         var twistNodes = constraint.data.twistNodes;
 
         // Apply rotation to source object
         sourceObject.localRotation = sourceObject.localRotation * Quaternion.AngleAxis(90, Vector3.left);
-        twistNodes[0].weight = 1f;
-        constraint.data.MarkTwistNodeWeightsDirty();
+        twistNodes.SetWeight(0, 1f);
+        constraint.data.twistNodes = twistNodes;
 
         for (int i = 0; i <= 5; ++i)
         {

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Animations.Rigging;
 using NUnit.Framework;
@@ -35,7 +35,7 @@ class MultiPositionConstraintTests
         multiPosition.data.constrainedObject = data.rigData.hipsGO.transform;
         data.constrainedObjectRestPosition = multiPosition.data.constrainedObject.position;
 
-        List<WeightedTransform> sources = new List<WeightedTransform>(2);
+        var sources = new WeightedTransformArray();
         var src0GO = new GameObject("source0");
         var src1GO = new GameObject("source1");
         src0GO.transform.parent = multiPositionGO.transform;
@@ -59,7 +59,7 @@ class MultiPositionConstraintTests
     {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
-        
+
         var constrainedObject = constraint.data.constrainedObject;
         var sources = constraint.data.sourceObjects;
 
@@ -75,24 +75,24 @@ class MultiPositionConstraintTests
         sources[1].transform.position += Vector3.left;
 
         // src0.w = 1, src1.w = 0
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreEqual(constrainedObject.position, sources[0].transform.position);
 
         // src0.w = 0, src1.w = 1
-        sources[0].weight = 0f;
-        sources[1].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 0f);
+        sources.SetWeight(1, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreEqual(constrainedObject.position, sources[1].transform.position);
 
         // src0.w = 1, src1.w = 1
         // since source object positions are mirrored, we should simply evaluate to the original rest pos.
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreEqual(constrainedObject.position, data.constrainedObjectRestPosition);
@@ -103,13 +103,13 @@ class MultiPositionConstraintTests
     {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
-        
+
         var constrainedObject = constraint.data.constrainedObject;
         var sources = constraint.data.sourceObjects;
 
         sources[0].transform.position += Vector3.forward;
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 1f);
+        constraint.data.sourceObjects = sources;
 
         for (int i = 0; i <= 5; ++i)
         {

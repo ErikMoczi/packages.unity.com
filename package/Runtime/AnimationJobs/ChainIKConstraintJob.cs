@@ -5,6 +5,7 @@ namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct ChainIKConstraintJob : IWeightedAnimationJob
     {
         public NativeArray<ReadWriteTransformHandle> chain;
@@ -40,7 +41,7 @@ namespace UnityEngine.Animations.Rigging
                 }
 
                 int tipIndex = chain.Length - 1;
-                if (AnimationRuntimeUtils.SolveFABRIK(linkPositions, linkLengths, target.GetPosition(stream) + targetOffset.translation,
+                if (AnimationRuntimeUtils.SolveFABRIK(ref linkPositions, ref linkLengths, target.GetPosition(stream) + targetOffset.translation,
                     cache.GetRaw(toleranceIdx), maxReach, (int)cache.GetRaw(maxIterationsIdx)))
                 {
                     var chainRWeight = chainRotationWeight.Get(stream) * w;

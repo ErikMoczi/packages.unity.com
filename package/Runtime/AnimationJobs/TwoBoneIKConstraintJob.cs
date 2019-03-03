@@ -2,6 +2,7 @@
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct TwoBoneIKConstraintJob : IWeightedAnimationJob
     {
         public ReadWriteTransformHandle root;

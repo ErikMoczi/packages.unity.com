@@ -2,6 +2,7 @@ namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct DampedTransformJob : IWeightedAnimationJob
     {
         const float k_FixedDt = 0.01667f; // 60Hz simulation step

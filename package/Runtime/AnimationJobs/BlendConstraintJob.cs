@@ -2,6 +2,7 @@
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct BlendConstraintJob : IWeightedAnimationJob
     {
         public const int k_BlendTranslationMask = 1 << 0;

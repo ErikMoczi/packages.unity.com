@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEditorInternal;
+using System.Reflection;
 
 namespace UnityEditor.Animations.Rigging
 {
@@ -16,6 +17,8 @@ namespace UnityEditor.Animations.Rigging
 
         SerializedProperty m_TwistNodesToggle;
         ReorderableList m_ReorderableList;
+        TwistCorrection m_Constraint;
+        WeightedTransformArray m_TwistNodesArray;
 
         void OnEnable()
         {
@@ -27,13 +30,24 @@ namespace UnityEditor.Animations.Rigging
             m_TwistAxis = data.FindPropertyRelative("m_TwistAxis");
             m_TwistNodes = data.FindPropertyRelative("m_TwistNodes");
 
-            m_ReorderableList = ReorderableListHelper.Create(serializedObject, m_TwistNodes, false);
-            if (m_ReorderableList.count == 0)
-                ((TwistCorrection)serializedObject.targetObject).data.twistNodes.Add(new TwistNode(null));
+            m_Constraint = (TwistCorrection)serializedObject.targetObject;
+            m_TwistNodesArray = m_Constraint.data.twistNodes;
 
-            m_ReorderableList.onAddCallback = (ReorderableList list) =>
+            var dataType = m_Constraint.data.GetType();
+            var fieldInfo = dataType.GetField("m_TwistNodes", BindingFlags.NonPublic | BindingFlags.Instance);
+            var range = fieldInfo.GetCustomAttribute<RangeAttribute>();
+
+            if (m_TwistNodesArray.Count == 0)
             {
-                ((TwistCorrection)serializedObject.targetObject).data.twistNodes.Add(new TwistNode(null));
+                m_TwistNodesArray.Add(WeightedTransform.Default(0f));
+                m_Constraint.data.twistNodes = m_TwistNodesArray;
+            }
+
+            m_ReorderableList = WeightedTransformHelper.CreateReorderableList(m_TwistNodes, ref m_TwistNodesArray, range);
+
+            m_ReorderableList.onChangedCallback = (ReorderableList reorderableList) =>
+            {
+                m_Constraint.data.twistNodes = (WeightedTransformArray)reorderableList.list;
             };
         }
 

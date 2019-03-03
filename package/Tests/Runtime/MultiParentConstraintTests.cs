@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Animations.Rigging;
 using NUnit.Framework;
@@ -38,7 +38,7 @@ class MultiParentConstraintTests
             multiParent.data.constrainedObject.rotation
             );
 
-        List<WeightedTransform> sources = new List<WeightedTransform>(2);
+        var sources = new WeightedTransformArray();
         var src0GO = new GameObject("source0");
         var src1GO = new GameObject("source1");
         src0GO.transform.parent = multiParentGO.transform;
@@ -64,7 +64,7 @@ class MultiParentConstraintTests
     {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
-        
+
         var constrainedObject = constraint.data.constrainedObject;
         var sources = constraint.data.sourceObjects;
 
@@ -83,17 +83,17 @@ class MultiParentConstraintTests
         sources[1].transform.rotation *= Quaternion.AngleAxis(90, Vector3.up);
 
         // src0.w = 1, src1.w = 0
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreEqual(constrainedObject.position, sources[0].transform.position);
         Assert.AreEqual(constrainedObject.rotation, sources[0].transform.rotation);
 
         // src0.w = 0, src1.w = 1
-        sources[0].weight = 0f;
-        sources[1].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 0f);
+        sources.SetWeight(1, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreEqual(constrainedObject.position, sources[1].transform.position);
@@ -111,8 +111,9 @@ class MultiParentConstraintTests
 
         sources[0].transform.position += Vector3.right;
         sources[0].transform.rotation *= Quaternion.AngleAxis(-90, Vector3.up);
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 1f);
+
+        constraint.data.sourceObjects = sources;
 
         for (int i = 0; i <= 5; ++i)
         {

@@ -1,4 +1,4 @@
-﻿using Unity.Collections;
+using Unity.Collections;
 
 namespace UnityEngine.Animations.Rigging
 {
@@ -7,6 +7,7 @@ namespace UnityEngine.Animations.Rigging
     using TransformSyncer = RigSyncSceneToStreamJob.TransformSyncer;
     using PropertySyncer  = RigSyncSceneToStreamJob.PropertySyncer;
 
+    [Unity.Burst.BurstCompile]
     public struct RigSyncSceneToStreamJob : IAnimationJob
     {
         public struct TransformSyncer : System.IDisposable

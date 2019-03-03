@@ -1,4 +1,6 @@
-﻿namespace UnityEngine.Animations.Rigging
+using System;
+
+namespace UnityEngine.Animations.Rigging
 {
     public interface ITransformProvider
     {
@@ -11,11 +13,9 @@
     }
 
     [System.Serializable]
-    public class WeightedTransform : ITransformProvider, IWeightProvider
+    public struct WeightedTransform : ITransformProvider, IWeightProvider, IEquatable<WeightedTransform>
     {
         public Transform transform;
-
-        [Range(0f, 1f)]
         public float weight;
 
         public WeightedTransform(Transform transform, float weight)
@@ -25,6 +25,14 @@
         }
 
         public static WeightedTransform Default(float weight) => new WeightedTransform(null, weight);
+
+        public bool Equals(WeightedTransform other)
+        {
+            if (transform == other.transform && weight == other.weight)
+                return true;
+
+            return false;
+        }
 
         Transform ITransformProvider.transform { get => transform; set => transform = value; }
         float IWeightProvider.weight { get => weight; set => weight = Mathf.Clamp01(value); }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Animations.Rigging;
 using NUnit.Framework;
@@ -35,7 +35,7 @@ class MultiRotationConstraintTests
         multiRotation.data.constrainedObject = data.rigData.hipsGO.transform;
         data.constrainedObjectRestRotation = multiRotation.data.constrainedObject.rotation;
 
-        List<WeightedTransform> sources = new List<WeightedTransform>(2);
+        var sources = new WeightedTransformArray();
         var src0GO = new GameObject("source0");
         var src1GO = new GameObject("source1");
         src0GO.transform.parent = multiRotationGO.transform;
@@ -75,16 +75,16 @@ class MultiRotationConstraintTests
         sources[1].transform.rotation *= Quaternion.AngleAxis(-90, Vector3.up);
 
         // src0.w = 1, src1.w = 0
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources[0] = new WeightedTransform(sources[0].transform, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreEqual(constrainedObject.rotation, sources[0].transform.rotation);
 
         // src0.w = 0, src1.w = 1
-        sources[0].weight = 0f;
-        sources[1].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources[0] = new WeightedTransform(sources[0].transform, 0f);
+        sources[1] = new WeightedTransform(sources[1].transform, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Assert.AreEqual(constrainedObject.rotation, sources[1].transform.rotation);
@@ -95,13 +95,13 @@ class MultiRotationConstraintTests
     {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
-        
+
         var constrainedObject = constraint.data.constrainedObject;
         var sources = constraint.data.sourceObjects;
 
         sources[0].transform.rotation *= Quaternion.AngleAxis(90, Vector3.up);
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources[0] = new WeightedTransform(sources[0].transform, 1f);
+        constraint.data.sourceObjects = sources;
 
         for (int i = 0; i <= 5; ++i)
         {

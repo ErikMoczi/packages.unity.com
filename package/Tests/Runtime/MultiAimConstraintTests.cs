@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Animations.Rigging;
 using NUnit.Framework;
@@ -33,7 +33,7 @@ class MultiAimConstraintTests
         var head = data.rigData.hipsGO.transform.Find("Chest/Head");
         multiAim.data.constrainedObject = head;
 
-        List<WeightedTransform> sources = new List<WeightedTransform>(2);
+        var sources = new WeightedTransformArray();
         var src0GO = new GameObject("source0");
         var src1GO = new GameObject("source1");
         src0GO.transform.parent = multiAimGO.transform;
@@ -75,8 +75,8 @@ class MultiAimConstraintTests
         Assert.AreEqual(constrainedObject.rotation, data.constrainedObjectRestTx.rotation);
 
         // src0.w = 1, src1.w = 0
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         Vector3 currAim = constrainedObject.rotation * Vector3.forward;
@@ -86,9 +86,9 @@ class MultiAimConstraintTests
         Assert.AreNotEqual(0f, Vector3.Angle(currAim, src1Dir));
 
         // src0.w = 0, src1.w = 1
-        sources[0].weight = 0f;
-        sources[1].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 0f);
+        sources.SetWeight(1, 1f);
+        constraint.data.sourceObjects = sources;
         yield return RuntimeRiggingTestFixture.YieldTwoFrames();
 
         currAim = constrainedObject.rotation * Vector3.forward;
@@ -103,7 +103,7 @@ class MultiAimConstraintTests
     {
         var data = SetupConstraintRig();
         var constraint = data.constraint;
-        
+
         var constrainedObject = constraint.data.constrainedObject;
         var sources = constraint.data.sourceObjects;
 
@@ -111,8 +111,8 @@ class MultiAimConstraintTests
         Assert.Zero(sources[1].weight);
 
         sources[0].transform.position += Vector3.left;
-        sources[0].weight = 1f;
-        constraint.data.MarkSourceWeightsDirty();
+        sources.SetWeight(0, 1f);
+        constraint.data.sourceObjects = sources;
 
         var src0Pos = sources[0].transform.position;
 

@@ -1,9 +1,10 @@
-﻿using Unity.Collections;
+using Unity.Collections;
 
 namespace UnityEngine.Animations.Rigging
 {
     using Experimental.Animations;
 
+    [Unity.Burst.BurstCompile]
     public struct MultiParentConstraintJob : IWeightedAnimationJob
     {
         const float k_Epsilon = 1e-5f;
@@ -11,14 +12,14 @@ namespace UnityEngine.Animations.Rigging
         public ReadWriteTransformHandle driven;
         public ReadOnlyTransformHandle drivenParent;
 
-        public NativeArray<ReadOnlyTransformHandle> sources;
+        public NativeArray<ReadOnlyTransformHandle> sourceTransforms;
+        public NativeArray<PropertyStreamHandle> sourceWeights;
         public NativeArray<AffineTransform> sourceOffsets;
-        public CacheIndex sourceWeightStartIdx;
+
+        public NativeArray<float> weightBuffer;
 
         public Vector3 positionAxesMask;
         public Vector3 rotationAxesMask;
-
-        public AnimationJobCache cache;
 
         public FloatProperty jobWeight { get; set; }
 
@@ -29,7 +30,9 @@ namespace UnityEngine.Animations.Rigging
             float w = jobWeight.Get(stream);
             if (w > 0f)
             {
-                float sumWeights = AnimationRuntimeUtils.Sum(cache, sourceWeightStartIdx, sources.Length);
+                AnimationStreamHandleUtility.ReadFloats(stream, sourceWeights, weightBuffer);
+
+                float sumWeights = AnimationRuntimeUtils.Sum(weightBuffer);
                 if (sumWeights < k_Epsilon)
                     return;
 
@@ -37,20 +40,23 @@ namespace UnityEngine.Animations.Rigging
 
                 driven.GetGlobalTR(stream, out Vector3 currentWPos, out Quaternion currentWRot);
                 var accumTx = new AffineTransform(currentWPos, currentWRot);
-                for (int i = 0; i < sources.Length; ++i)
+                for (int i = 0; i < sourceTransforms.Length; ++i)
                 {
-                    var normalizedWeight = cache.GetRaw(sourceWeightStartIdx, i) * weightScale;
+                    ReadOnlyTransformHandle sourceTransform = sourceTransforms[i];
+                    var normalizedWeight = weightBuffer[i] * weightScale;
+
                     if (normalizedWeight < k_Epsilon)
                         continue;
 
-                    var src = sources[i];
-                    src.GetGlobalTR(stream, out Vector3 srcWPos, out Quaternion srcWRot);
+                    sourceTransform.GetGlobalTR(stream, out Vector3 srcWPos, out Quaternion srcWRot);
                     var sourceTx = new AffineTransform(srcWPos, srcWRot);
                     sourceTx *= sourceOffsets[i];
 
                     accumTx.rotation = Quaternion.Lerp(accumTx.rotation, sourceTx.rotation, normalizedWeight);
                     accumTx.translation += (sourceTx.translation - currentWPos) * normalizedWeight;
-                    sources[i] = src;
+
+                    // Required to update handles with binding info.
+                    sourceTransforms[i] = sourceTransform;
                 }
 
                 // Convert accumTx to local space
@@ -82,8 +88,7 @@ namespace UnityEngine.Animations.Rigging
     public interface IMultiParentConstraintData
     {
         Transform constrainedObject { get; }
-        Transform[] sourceObjects { get; }
-        float[] sourceWeights { get; }
+        WeightedTransformArray sourceObjects { get; }
         bool maintainPositionOffset { get; }
         bool maintainRotationOffset { get; }
 
@@ -93,6 +98,8 @@ namespace UnityEngine.Animations.Rigging
         bool constrainedRotationXAxis { get; }
         bool constrainedRotationYAxis { get; }
         bool constrainedRotationZAxis { get; }
+
+        string sourceObjectsProperty { get; }
     }
 
     public class MultiParentConstraintJobBinder<T> : AnimationJobBinder<MultiParentConstraintJob, T>
@@ -101,24 +108,25 @@ namespace UnityEngine.Animations.Rigging
         public override MultiParentConstraintJob Create(Animator animator, ref T data, Component component)
         {
             var job = new MultiParentConstraintJob();
-            var cacheBuilder = new AnimationJobCacheBuilder();
 
             job.driven = ReadWriteTransformHandle.Bind(animator, data.constrainedObject);
             job.drivenParent = ReadOnlyTransformHandle.Bind(animator, data.constrainedObject.parent);
 
-            var src = data.sourceObjects;
-            var srcWeights = data.sourceWeights;
-            job.sources = new NativeArray<ReadOnlyTransformHandle>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceOffsets = new NativeArray<AffineTransform>(src.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            job.sourceWeightStartIdx = cacheBuilder.AllocateChunk(srcWeights.Length);
+            WeightedTransformArray sourceObjects = data.sourceObjects;
+
+            WeightedTransformArrayBinder.BindReadOnlyTransforms(animator, component, sourceObjects, out job.sourceTransforms);
+            WeightedTransformArrayBinder.BindWeights(animator, component, sourceObjects, data.sourceObjectsProperty, out job.sourceWeights);
+
+            job.sourceOffsets = new NativeArray<AffineTransform>(sourceObjects.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
+            job.weightBuffer = new NativeArray<float>(sourceObjects.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
             var drivenTx = new AffineTransform(data.constrainedObject.position, data.constrainedObject.rotation);
-            for (int i = 0; i < src.Length; ++i)
+            for (int i = 0; i < sourceObjects.Count; ++i)
             {
-                job.sources[i] = ReadOnlyTransformHandle.Bind(animator, src[i]);
-                cacheBuilder.SetValue(job.sourceWeightStartIdx, i, srcWeights[i]);
+                var sourceTransform = sourceObjects[i].transform;
 
-                var srcTx = new AffineTransform(src[i].position, src[i].rotation);
+                var srcTx = new AffineTransform(sourceTransform.position, sourceTransform.rotation);
                 var srcOffset = AffineTransform.identity;
                 var tmp = srcTx.InverseMul(drivenTx);
 
@@ -140,21 +148,20 @@ namespace UnityEngine.Animations.Rigging
                 System.Convert.ToSingle(data.constrainedRotationYAxis),
                 System.Convert.ToSingle(data.constrainedRotationZAxis)
                 );
-            job.cache = cacheBuilder.Build();
 
             return job;
         }
 
         public override void Destroy(MultiParentConstraintJob job)
         {
-            job.sources.Dispose();
+            job.sourceTransforms.Dispose();
+            job.sourceWeights.Dispose();
             job.sourceOffsets.Dispose();
-            job.cache.Dispose();
+            job.weightBuffer.Dispose();
         }
 
         public override void Update(MultiParentConstraintJob job, ref T data)
         {
-            job.cache.SetArray(data.sourceWeights, job.sourceWeightStartIdx);
         }
     }
 }
