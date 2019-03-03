@@ -14,12 +14,9 @@ namespace UnityEditor.U2D
         private static class Contents
         {
             public static readonly GUIContent fillTextureLabel = new GUIContent("Texture", "Fill texture used for Shape Fill.");
-            public static readonly GUIContent fillPixelPerUnitLabel = new GUIContent("Pixel Per Unit", "Pixel Per Unit for Fill Texture.");
             public static readonly GUIContent fillScaleLabel = new GUIContent("Offset", "Determines Border Offset for Shape.");
             public static readonly GUIContent useSpriteBorderLabel = new GUIContent("Use Sprite Borders", "Draw Sprite Borders on discontinuities");
             public static readonly GUIContent cornerTypeLabel = new GUIContent("Corner Type", "Corner type sprite used.");
-            public static readonly GUIContent bevelSizeLabel = new GUIContent("Bevel Size", "Length of the curve around the corners.");
-            public static readonly GUIContent bevelCutoffLabel = new GUIContent("Bevel Cutoff", "Angle at which corners turn to bevels.");
             public static readonly GUIContent controlPointsLabel = new GUIContent("Control Points");
             public static readonly GUIContent fillLabel = new GUIContent("Fill");
             public static readonly GUIContent cornerLabel = new GUIContent("Corners");
@@ -39,32 +36,25 @@ namespace UnityEditor.U2D
             public static readonly Color defaultBackgroundColor = new Color32(64, 92, 136, 255);
         }
 
-        EditorWindow m_CurrentInspectorWindow;
-
         private SerializedProperty m_FillTextureProp;
-        private SerializedProperty m_WorldSpaceUVProp;
         private SerializedProperty m_AngleRangesProp;
         private SerializedProperty m_CornerSpritesProp;
-        private SerializedProperty m_BevelCutoffProp;
-        private SerializedProperty m_BevelSizeProp;
         private SerializedProperty m_FillOffsetProp;
-        private SerializedProperty m_FillPixelPerUnitProp;
         private SerializedProperty m_UseSpriteBordersProp;
 
         private ReorderableList m_AngleRangeSpriteList = null;
+        private ReorderableList m_EmptySpriteList = null;
 
         SpriteShape m_SpriteShape;
         [SerializeField]
         private float m_PreviewAngle = 0f;
         [SerializeField]
         private int m_SelectedIndex;
-        private AnimBool m_FadeControlPoint;
-        private AnimBool m_FadeAngleRange;
         private const int kInvalidMinimum = -1;
-        private  Rect m_AngleRangeRect;
-        private int m_OldNearestControl;
+        private Rect m_AngleRangeRect;
         private AngleRangeController controller;
         private AngleRange m_CurrentAngleRange;
+        private Dictionary<int, int> m_SpriteSelection = new Dictionary<int, int>();
 
 
         private Sprite m_PreviewSprite;
@@ -102,7 +92,11 @@ namespace UnityEditor.U2D
         public float previewAngle
         {
             get { return m_PreviewAngle; }
-            set { m_PreviewAngle = value; }
+            set
+            {
+                m_PreviewAngle = value;
+                SessionState.SetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), value);
+            }
         }
 
         public void RegisterUndo(string name)
@@ -114,29 +108,26 @@ namespace UnityEditor.U2D
 
         public void OnEnable()
         {
+            m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), m_PreviewAngle);
+
             m_SpriteShape = target as SpriteShape;
 
             m_FillTextureProp = this.serializedObject.FindProperty("m_FillTexture");
-            m_WorldSpaceUVProp = this.serializedObject.FindProperty("m_WorldSpaceUV");
             m_UseSpriteBordersProp = serializedObject.FindProperty("m_UseSpriteBorders");
             m_AngleRangesProp = this.serializedObject.FindProperty("m_Angles");
             m_CornerSpritesProp = this.serializedObject.FindProperty("m_CornerSprites");
-            m_BevelCutoffProp = this.serializedObject.FindProperty("m_BevelCutoff");
-            m_BevelSizeProp = this.serializedObject.FindProperty("m_BevelSize");
             m_FillOffsetProp = this.serializedObject.FindProperty("m_FillOffset");
-            m_FillPixelPerUnitProp = this.serializedObject.FindProperty("m_FillPixelPerUnit");
-
-            m_FadeControlPoint = new AnimBool(false);
-            m_FadeControlPoint.valueChanged.AddListener(Repaint);
-
-            m_FadeAngleRange = new AnimBool(false);
-            m_FadeAngleRange.valueChanged.AddListener(Repaint);
 
             selectedIndex = SpriteShapeEditorUtility.GetRangeIndexFromAngle(angleRanges, m_PreviewAngle);
 
             SetupAngleRangeController();
 
             Undo.undoRedoPerformed += UndoRedoPerformed;
+        }
+
+        public override bool RequiresConstantRepaint()
+        {
+            return true;
         }
 
         private void SetupAngleRangeController()
@@ -161,7 +152,7 @@ namespace UnityEditor.U2D
             controller.gradientMid = color2;
             controller.gradientMax = color1;
             controller.snap = true;
-            controller.OnSelectionChange += OnSelectionChange;
+            controller.selectionChanged += OnSelectionChange;
 
             OnSelectionChange();
         }
@@ -178,12 +169,6 @@ namespace UnityEditor.U2D
 
         private void OnDestroy()
         {
-            m_FadeControlPoint.valueChanged.RemoveListener(Repaint);
-            m_FadeAngleRange.valueChanged.RemoveListener(Repaint);
-
-            if (m_CurrentInspectorWindow)
-                m_CurrentInspectorWindow.wantsMouseMove = false;
-
             if (m_PreviewSpriteMesh)
                 Object.DestroyImmediate(m_PreviewSpriteMesh);
 
@@ -199,7 +184,7 @@ namespace UnityEditor.U2D
         {
             if (selectedIndex >= 0)
             {
-                SetPreviewSpriteIndexToSessionState(selectedIndex, list.index);
+                SetPreviewSpriteIndex(selectedIndex, list.index);
             }
         }
 
@@ -210,7 +195,7 @@ namespace UnityEditor.U2D
 
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
 
-            if(list.count < count && list.count > 0)
+            if (list.count < count && list.count > 0)
             {
                 list.index = Mathf.Clamp(index, 0, list.count - 1);
                 OnSelelectSpriteCallback(list);
@@ -230,7 +215,7 @@ namespace UnityEditor.U2D
             var sprite = m_AngleRangesProp.GetArrayElementAtIndex(selectedIndex).FindPropertyRelative("m_Sprites").GetArrayElementAtIndex(index);
             EditorGUI.BeginChangeCheck();
             EditorGUI.PropertyField(rect, sprite, GUIContent.none);
-            if(EditorGUI.EndChangeCheck())
+            if (EditorGUI.EndChangeCheck())
             {
                 m_AngleRangeSpriteList.index = index;
                 OnSelelectSpriteCallback(m_AngleRangeSpriteList);
@@ -242,37 +227,31 @@ namespace UnityEditor.U2D
             EditorGUILayout.LabelField(content, EditorStyles.boldLabel);
         }
 
-        private void SetPreviewSpriteIndexToSessionState(int rangeIndex, int index)
+        private void SetPreviewSpriteIndex(int rangeIndex, int index)
         {
-            SessionState.SetInt(m_CurrentInspectorWindow.GetInstanceID() + "/" + target.GetInstanceID() + "/" + rangeIndex, index);
+            m_SpriteSelection[rangeIndex] = index;
         }
 
-        private int GetPreviewSpriteIndexFromSessionState(int rangeIndex)
+        private int GetPreviewSpriteIndex(int rangeIndex)
         {
-            return SessionState.GetInt(m_CurrentInspectorWindow.GetInstanceID() + "/" + target.GetInstanceID() + "/" + rangeIndex, 0);
+            int index;
+            m_SpriteSelection.TryGetValue(rangeIndex, out index);
+
+            return index;
         }
 
         public override void OnInspectorGUI()
         {
-            m_CurrentInspectorWindow = InternalEditorBridge.GetCurrentInspectorWindow();
-
-            if (m_CurrentInspectorWindow)
-                m_CurrentInspectorWindow.wantsMouseMove = GUIUtility.hotControl == 0;
-
             serializedObject.Update();
 
             EditorGUILayout.Space();
             DrawHeader(Contents.controlPointsLabel);
             EditorGUILayout.PropertyField(m_UseSpriteBordersProp, Contents.useSpriteBorderLabel);
-            EditorGUILayout.Slider(m_BevelCutoffProp, 0f, 180f, Contents.bevelCutoffLabel);
-            EditorGUILayout.Slider(m_BevelSizeProp, 0.0f, 0.5f, Contents.bevelSizeLabel);
 
 
             EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);
             EditorGUILayout.PropertyField(m_FillTextureProp, Contents.fillTextureLabel);
-            EditorGUILayout.PropertyField(m_FillPixelPerUnitProp, Contents.fillPixelPerUnitLabel);
-            EditorGUILayout.PropertyField(m_WorldSpaceUVProp);
             EditorGUILayout.Slider(m_FillOffsetProp, -0.5f, 0.5f, Contents.fillScaleLabel);
 
 
@@ -280,7 +259,7 @@ namespace UnityEditor.U2D
             {
                 var fillTex = m_FillTextureProp.objectReferenceValue as Texture2D;
                 if (fillTex.wrapModeU != TextureWrapMode.Repeat || fillTex.wrapModeV != TextureWrapMode.Repeat)
-                    EditorGUILayout.HelpBox(Contents.wrapModeErrorLabel.text, MessageType.Info);
+                    EditorGUILayout.HelpBox(Contents.wrapModeErrorLabel.text, MessageType.Warning);
             }
 
             EditorGUILayout.Space();
@@ -289,20 +268,31 @@ namespace UnityEditor.U2D
 
             if (targets.Length == 1)
             {
-                m_FadeAngleRange.target = m_CurrentAngleRange != null;
-                if (EditorGUILayout.BeginFadeGroup(m_FadeAngleRange.faded))
-                {
-                    if (m_FadeAngleRange.target)
-                        DoRangeInspector();
-                }
-
-                EditorGUILayout.EndFadeGroup();
-
+                DoRangeInspector();
                 DoCreateRangeButton();
             }
 
             EditorGUILayout.Space();
             DrawHeader(Contents.cornerLabel);
+
+            HashSet<Sprite> tightMeshSprites = new HashSet<Sprite>();
+
+            for (int i = 0; i < angleRanges.Count; ++i)
+            {
+                AngleRange angleRange = angleRanges[i];
+                foreach (Sprite sprite in angleRange.sprites)
+                {
+                    if (sprite != null)
+                    {
+                        string assetPath = AssetDatabase.GetAssetPath(sprite);
+                        TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                        TextureImporterSettings textureSettings = new TextureImporterSettings();
+                        importer.ReadTextureSettings(textureSettings);
+                        if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
+                            tightMeshSprites.Add(sprite);
+                    }
+                }
+            }
 
             EditorGUIUtility.labelWidth = EditorGUIUtility.labelWidth + 20f;
 
@@ -313,47 +303,81 @@ namespace UnityEditor.U2D
                 var m_CornerSprite = m_CornerProp.FindPropertyRelative("m_Sprites").GetArrayElementAtIndex(0);
 
                 EditorGUILayout.PropertyField(m_CornerSprite, new GUIContent(m_CornerType.enumDisplayNames[m_CornerType.intValue]));
+
+                var sprite = m_CornerSprite.objectReferenceValue as Sprite;
+                if (sprite != null)
+                {
+                    string assetPath = AssetDatabase.GetAssetPath(sprite);
+                    TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                    TextureImporterSettings textureSettings = new TextureImporterSettings();
+                    importer.ReadTextureSettings(textureSettings);
+                    if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
+                        tightMeshSprites.Add(sprite);
+                }
             }
+
 
             EditorGUIUtility.labelWidth = 0;
 
             serializedObject.ApplyModifiedProperties();
 
-            HandleRepaintOnHover();
+            if (tightMeshSprites.Count > 0)
+            {
+                int i = 0;
+                string tightSpriteWarning = "The following sprites ( ";
+                foreach (var sprite in tightMeshSprites)
+                {
+                    string appendString = (i < tightMeshSprites.Count - 1) ? ", " : " ) ";
+                    tightSpriteWarning += (sprite.name + appendString);
+                    ++i;
+                }
+                tightSpriteWarning += "are imported as Sprites using Tight mesh. This can lead to Rendering Artifacts. Please use Full Rect.";
+                EditorGUILayout.HelpBox(tightSpriteWarning, MessageType.Warning);
+            }
 
             controller.view.DoCreateRangeTooltip();
         }
 
         private void DoRangeInspector()
         {
-            Debug.Assert(m_CurrentAngleRange != null);
+            var start = 0f;
+            var end = 0f;
+            var order = 0;
 
-            var start = m_CurrentAngleRange.start;
-            var end = m_CurrentAngleRange.end;
-            var order = m_CurrentAngleRange.order;
-
-            DrawHeader(new GUIContent(string.Format(Contents.angleRangeLabel.text, (end - start))));
-
-            EditorGUIUtility.labelWidth = 0f;
-            EditorGUI.BeginChangeCheck();
-
-            RangeField(ref start, ref end, ref order);
-
-            if (EditorGUI.EndChangeCheck())
+            if (m_CurrentAngleRange != null)
             {
-                RegisterUndo("Set Range");
-
-                m_CurrentAngleRange.order = order;
-                controller.SetRange(m_CurrentAngleRange, start, end);
-
-                if (start >= end)
-                    controller.RemoveInvalidRanges();
+                start = m_CurrentAngleRange.start;
+                end = m_CurrentAngleRange.end;
+                order = m_CurrentAngleRange.order;
             }
 
-            EditorGUILayout.Space();
+            using (new EditorGUI.DisabledGroupScope(m_CurrentAngleRange == null))
+            {
+                DrawHeader(new GUIContent(string.Format(Contents.angleRangeLabel.text, (end - start))));
 
-            if (m_AngleRangeSpriteList != null)
-                m_AngleRangeSpriteList.DoLayoutList();
+                EditorGUIUtility.labelWidth = 0f;
+                EditorGUI.BeginChangeCheck();
+
+                RangeField(ref start, ref end, ref order);
+
+                if (EditorGUI.EndChangeCheck() && m_CurrentAngleRange != null)
+                {
+                    RegisterUndo("Set Range");
+
+                    m_CurrentAngleRange.order = order;
+                    controller.SetRange(m_CurrentAngleRange, start, end);
+
+                    if (start >= end)
+                        controller.RemoveInvalidRanges();
+                }
+
+                EditorGUILayout.Space();
+
+                if (m_AngleRangeSpriteList != null)
+                    m_AngleRangeSpriteList.DoLayoutList();
+                else
+                    m_EmptySpriteList.DoLayoutList();
+            }
         }
 
         private void DoCreateRangeButton()
@@ -377,7 +401,7 @@ namespace UnityEditor.U2D
         private void RangeField(ref float start, ref float end, ref int order)
         {
             var values = new int[] { Mathf.RoundToInt(-start), Mathf.RoundToInt(-end), order };
-            var labels = new GUIContent[] { new GUIContent("Start"), new GUIContent("End"), new GUIContent("Order")  };
+            var labels = new GUIContent[] { new GUIContent("Start"), new GUIContent("End"), new GUIContent("Order") };
 
             var position = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
             EditorGUI.BeginChangeCheck();
@@ -416,14 +440,18 @@ namespace UnityEditor.U2D
                         {
                             if (obj is Sprite)
                             {
-                                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                                if (currentEvent.type == EventType.DragPerform)
+                                Sprite spr = obj as Sprite;
+                                if (spr.texture != null)
                                 {
-                                    sprites.InsertArrayElementAtIndex(sprites.arraySize);
-                                    var spriteProp = sprites.GetArrayElementAtIndex(sprites.arraySize - 1);
-                                    spriteProp.objectReferenceValue = obj;
-                                    didAcceptDrag = true;
-                                    DragAndDrop.activeControlID = 0;
+                                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                                    if (currentEvent.type == EventType.DragPerform)
+                                    {
+                                        sprites.InsertArrayElementAtIndex(sprites.arraySize);
+                                        var spriteProp = sprites.GetArrayElementAtIndex(sprites.arraySize - 1);
+                                        spriteProp.objectReferenceValue = obj;
+                                        didAcceptDrag = true;
+                                        DragAndDrop.activeControlID = 0;
+                                    }
                                 }
                             }
                         }
@@ -442,19 +470,6 @@ namespace UnityEditor.U2D
 
             if (usedEvent)
                 currentEvent.Use();
-        }
-
-        private void HandleRepaintOnHover()
-        {
-            bool canRepaint = m_CurrentInspectorWindow && m_CurrentInspectorWindow.wantsMouseMove && GUIUtility.hotControl == 0 && m_AngleRangeRect.Contains(Event.current.mousePosition);
-
-            if (canRepaint && Event.current.type == EventType.Layout)
-            {
-                if (HandleUtility.nearestControl != m_OldNearestControl)
-                    HandleUtility.Repaint();
-            }
-
-            m_OldNearestControl = HandleUtility.nearestControl;
         }
 
         private void DoRangesGUI()
@@ -490,7 +505,7 @@ namespace UnityEditor.U2D
             {
                 {   //Draw fill texture and sprite preview
                     SpriteShapeHandleUtility.DrawTextureArc(
-                        m_FillTextureProp.objectReferenceValue as Texture, m_FillPixelPerUnitProp.floatValue,
+                        m_FillTextureProp.objectReferenceValue as Texture, 100.0f,
                         rect.center, Vector3.forward, Quaternion.AngleAxis(m_PreviewAngle, Vector3.forward) * Vector3.right, 180f,
                         radius - AngleRangeGUI.kRangeWidth);
 
@@ -511,6 +526,14 @@ namespace UnityEditor.U2D
 
         private void CreateReorderableSpriteList()
         {
+            if (m_EmptySpriteList == null)
+            {
+                m_EmptySpriteList = new ReorderableList(new List<Sprite>(), typeof(Sprite), false, true, false, false)
+                {
+                    drawHeaderCallback = (Rect rect) => { EditorGUI.LabelField(rect, Contents.spritesLabel); }
+                };
+            }
+
             m_AngleRangeSpriteList = null;
 
             serializedObject.UpdateIfRequiredOrScript();
@@ -545,7 +568,7 @@ namespace UnityEditor.U2D
             if (sprites.Count == 0)
                 return;
 
-            var selectedSpriteIndex = GetPreviewSpriteIndexFromSessionState(selectedIndex);
+            var selectedSpriteIndex = GetPreviewSpriteIndex(selectedIndex);
 
             if (selectedSpriteIndex == kInvalidMinimum)
                 return;
@@ -576,7 +599,7 @@ namespace UnityEditor.U2D
 
             Debug.Assert(m_AngleRangeSpriteList != null);
 
-            var spriteIndex = GetPreviewSpriteIndexFromSessionState(selectedIndex);
+            var spriteIndex = GetPreviewSpriteIndex(selectedIndex);
             var sprites = angleRanges[selectedIndex].sprites;
 
             var ev = Event.current;
@@ -584,7 +607,7 @@ namespace UnityEditor.U2D
                 ContainsPosition(rect, ev.mousePosition, m_PreviewAngle) && spriteIndex != kInvalidMinimum && sprites.Count > 0)
             {
                 spriteIndex = Mathf.RoundToInt(Mathf.Repeat(spriteIndex + 1f, sprites.Count));
-                SetPreviewSpriteIndexToSessionState(selectedIndex, spriteIndex);
+                SetPreviewSpriteIndex(selectedIndex, spriteIndex);
 
                 m_AngleRangeSpriteList.GrabKeyboardFocus();
                 m_AngleRangeSpriteList.index = spriteIndex;

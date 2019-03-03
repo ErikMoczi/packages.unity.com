@@ -16,7 +16,7 @@ namespace UnityEditor.U2D
 
     public class AngleRangeController
     {
-        public event Action OnSelectionChange = () => {};
+        public event Action selectionChanged = () => { };
         public IAngleRangeCache cache { get; set; }
         public IAngleRangeView view { get; set; }
         public float angleOffset { get; set; }
@@ -188,7 +188,7 @@ namespace UnityEditor.U2D
                 return;
 
             cache.selectedIndex = index;
-            OnSelectionChange();
+            selectionChanged();
         }
 
         private void ClampPreviewAngle(float start, float end, float prevStart, float prevEnd)

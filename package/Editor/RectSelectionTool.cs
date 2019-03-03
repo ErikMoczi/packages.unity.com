@@ -52,7 +52,7 @@ namespace UnityEditor.U2D
 
             EditorGUI.BeginChangeCheck();
 
-            worldPoint = Handles.Slider2D(controlId, worldPoint, forward, up, right, 1f, (int cid, Vector3 p, Quaternion q, float s, EventType et) => {}, Vector2.zero);
+            worldPoint = Handles.Slider2D(controlId, worldPoint, forward, up, right, 1f, (int cid, Vector3 p, Quaternion q, float s, EventType et) => { }, Vector2.zero);
 
             if (EditorGUI.EndChangeCheck())
                 m_Rect = FromToRect(HandleUtility.WorldToGUIPoint(m_StartPoint), HandleUtility.WorldToGUIPoint(worldPoint));

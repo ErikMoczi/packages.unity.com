@@ -1,12 +1,10 @@
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor;
 using UnityEditorInternal;
+using System.Linq;
+using System.Collections.Generic;
 using Object = UnityEngine.Object;
-using UnityTexture2D = UnityEngine.Texture2D;
 
 namespace UnityEditor.U2D
 {
@@ -15,7 +13,12 @@ namespace UnityEditor.U2D
     {
         static SceneDragAndDrop()
         {
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui += OnSceneGUI;
+            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
+#else
             SceneView.onSceneGUIDelegate += OnSceneGUI;
+#endif
         }
 
         static class Contents
@@ -32,6 +35,25 @@ namespace UnityEditor.U2D
         static void OnSceneGUI(SceneView sceneView)
         {
             HandleSceneDrag(sceneView, Event.current, DragAndDrop.objectReferences, DragAndDrop.paths);
+        }
+
+        public static GameObject Create(SpriteShape shape, Vector3 position, SceneView sceneView)
+        {
+            string name = string.IsNullOrEmpty(shape.name) ? "New SpriteShapeController" : shape.name;
+            name = GameObjectUtility.GetUniqueNameForSibling(null, name);
+            GameObject go = new GameObject(name);
+
+            SpriteShapeController shapeController = go.AddComponent<SpriteShapeController>();
+            shapeController.spriteShape = shape;
+            go.transform.position = position;
+            go.hideFlags = HideFlags.HideAndDontSave;
+
+            return go;
+        }
+
+        static void OnHierarchyGUI(int instanceID, Rect rect)
+        {
+            HandleSceneDrag(null, Event.current, DragAndDrop.objectReferences, null);
         }
 
         static List<SpriteShape> GetSpriteShapeFromPathsOrObjects(Object[] objects, string[] paths, EventType currentEventType)
@@ -57,73 +79,75 @@ namespace UnityEditor.U2D
             switch (evt.type)
             {
                 case EventType.DragUpdated:
-                {
-                    DragType newDragType = DragType.CreateMultiple;
-
-                    if (s_DragType != newDragType || s_SceneDragObjects == null)
-                    // Either this is first time we are here OR evt.alt changed during drag
                     {
-                        if (ExistingAssets(objectReferences))     // External drag with images that are not in the project
+                        DragType newDragType = DragType.CreateMultiple;
+
+                        if (s_DragType != newDragType || s_SceneDragObjects == null)
+                        // Either this is first time we are here OR evt.alt changed during drag
                         {
-                            List<SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths,
-                                    evt.type);
+                            if (ExistingAssets(objectReferences))     // External drag with images that are not in the project
+                            {
+                                List<SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths,
+                                        evt.type);
 
-                            if (assets.Count == 0)
-                                return;
+                                if (assets.Count == 0)
+                                    return;
 
-                            if (s_DragType != DragType.NotInitialized)
-                                // evt.alt changed during drag, so we need to cleanup and start over
-                                CleanUp(true);
+                                if (s_DragType != DragType.NotInitialized)
+                                    // evt.alt changed during drag, so we need to cleanup and start over
+                                    CleanUp(true);
 
-                            s_DragType = newDragType;
-                            CreateSceneDragObjects(assets);
+                                s_DragType = newDragType;
+                                CreateSceneDragObjects(assets);
+                            }
+                        }
+
+                        if (s_SceneDragObjects != null)
+                        {
+                            if (sceneView != null)
+                                PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
+
+                            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                            evt.Use();
                         }
                     }
-
-                    if (s_SceneDragObjects != null)
-                    {
-                        PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
-
-                        DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                        evt.Use();
-                    }
-                }
-                break;
+                    break;
                 case EventType.DragPerform:
-                {
-                    List<SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths, evt.type);
-
-                    if (assets.Count > 0 && s_SceneDragObjects != null)
                     {
-                        // For external drags, we have delayed all creation to DragPerform because only now we have the imported sprite assets
-                        if (s_SceneDragObjects.Count == 0)
+                        List<SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths, evt.type);
+
+                        if (assets.Count > 0 && s_SceneDragObjects != null)
                         {
-                            CreateSceneDragObjects(assets);
-                            PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
+                            // For external drags, we have delayed all creation to DragPerform because only now we have the imported sprite assets
+                            if (s_SceneDragObjects.Count == 0)
+                            {
+                                CreateSceneDragObjects(assets);
+                                if (sceneView != null)
+                                    PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
+                            }
+
+                            foreach (GameObject dragGO in s_SceneDragObjects)
+                            {
+                                Undo.RegisterCreatedObjectUndo(dragGO, "Create Shape");
+                                dragGO.hideFlags = HideFlags.None;
+                            }
+
+                            Selection.objects = s_SceneDragObjects.ToArray();
+
+                            CleanUp(false);
+                            evt.Use();
                         }
-
-                        foreach (GameObject dragGO in s_SceneDragObjects)
-                        {
-                            Undo.RegisterCreatedObjectUndo(dragGO, "Create Shape");
-                            dragGO.hideFlags = HideFlags.None;
-                        }
-
-                        Selection.objects = s_SceneDragObjects.ToArray();
-
-                        CleanUp(false);
-                        evt.Use();
                     }
-                }
-                break;
+                    break;
                 case EventType.DragExited:
-                {
-                    if (s_SceneDragObjects != null)
                     {
-                        CleanUp(true);
-                        evt.Use();
+                        if (s_SceneDragObjects != null)
+                        {
+                            CleanUp(true);
+                            evt.Use();
+                        }
                     }
-                }
-                break;
+                    break;
             }
         }
 
@@ -197,7 +221,7 @@ namespace UnityEditor.U2D
 
         static GameObject CreateDragGO(SpriteShape spriteShape, Vector3 position)
         {
-            SpriteShapeController spriteShapeController = SpriteShapeEditorUtility.CreateSpriteShapeController();
+            SpriteShapeController spriteShapeController = SpriteShapeEditorUtility.CreateSpriteShapeController(spriteShape);
             GameObject gameObject = spriteShapeController.gameObject;
             gameObject.transform.position = position;
             gameObject.hideFlags = HideFlags.HideAndDontSave;

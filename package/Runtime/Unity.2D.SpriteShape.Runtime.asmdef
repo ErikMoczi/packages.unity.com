@@ -1,8 +1,11 @@
 {
     "name": "Unity.2D.SpriteShape.Runtime",
     "references": [
-        "Unity.2D.Common.Runtime"
+        "Unity.2D.Common.Runtime",
+        "Unity.Mathematics",
+        "Unity.Burst"
     ],
     "includePlatforms": [],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+	"allowUnsafeCode": true
 }

@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Experimental.U2D;
 
 namespace UnityEngine.U2D
 {
@@ -56,7 +53,7 @@ namespace UnityEngine.U2D
         {
             if (!IsPositionValid(index, index, point))
                 throw new ArgumentException("Internal error: Point too close to neighbor");
-            m_ControlPoints.Insert(index, new ShapeControlPoint { position = point, height = 1.0f });
+            m_ControlPoints.Insert(index, new ShapeControlPoint { position = point, height = 1.0f, corner = true });
         }
 
         public void RemovePointAt(int index)
@@ -143,26 +140,6 @@ namespace UnityEngine.U2D
         public void SetHeight(int index, float value)
         {
             m_ControlPoints[index].height = value;
-        }
-
-        public float GetBevelCutoff(int index)
-        {
-            return m_ControlPoints[index].bevelCutoff;
-        }
-
-        public void SetBevelCutoff(int index, float value)
-        {
-            m_ControlPoints[index].bevelCutoff = value;
-        }
-
-        public float GetBevelSize(int index)
-        {
-            return m_ControlPoints[index].bevelSize;
-        }
-
-        public void SetBevelSize(int index, float value)
-        {
-            m_ControlPoints[index].bevelSize = value;
         }
 
         public int GetSpriteIndex(int index)

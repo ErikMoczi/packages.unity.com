@@ -17,7 +17,7 @@ namespace UnityEditor.U2D
                         continue;
                     SpriteShapeController sc = go.GetComponent<SpriteShapeController>();
                     if (sc != null)
-                        sc.ResetHash();
+                        sc.RefreshSpriteShape();
                 }
             }
         }

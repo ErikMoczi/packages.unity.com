@@ -100,6 +100,8 @@ namespace UnityEditor.U2D
             }
 
             Texture spriteTexture = GetOriginalSpriteTexture(sprite);
+            if (spriteTexture == null)
+                return;
 
             if (forceQuad)
             {

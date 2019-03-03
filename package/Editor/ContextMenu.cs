@@ -19,31 +19,21 @@ namespace UnityEditor.U2D
             return angleRange;
         }
 
-        [MenuItem("Assets/Create/Sprite Shape Profile/Empty")]
-        public static void CreateNewEmptySpriteShape()
-        {
-            SpriteShapeEditorUtility.CreateSpriteShapeAsset();
-        }
-
-        [MenuItem("Assets/Create/Sprite Shape Profile/Strip")]
+        [MenuItem("Assets/Create/Sprite Shape Profile/Open Shape", false, 358)]
         public static void CreateNewSpriteStrip()
         {
             SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
             newSpriteShape.angleRanges.Add(CreateAngleRange(-180.0f, 180.0f, 0));
         }
 
-        [MenuItem("Assets/Create/Sprite Shape Profile/Shape")]
+        [MenuItem("Assets/Create/Sprite Shape Profile/Closed Shape", false, 359)]
         public static void CreateNewSpriteShape()
         {
             SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
-            newSpriteShape.angleRanges.Add(CreateAngleRange(-22.5f, 22.5f, 7));
-            newSpriteShape.angleRanges.Add(CreateAngleRange(22.5f, 67.5f, 6));
-            newSpriteShape.angleRanges.Add(CreateAngleRange(67.5f, 112.5f, 4));
-            newSpriteShape.angleRanges.Add(CreateAngleRange(112.5f, 157.5f, 2));
-            newSpriteShape.angleRanges.Add(CreateAngleRange(157.5f, 202.5f, 8));
-            newSpriteShape.angleRanges.Add(CreateAngleRange(-157.5f, -112.5f, 1));
-            newSpriteShape.angleRanges.Add(CreateAngleRange(-112.5f, -67.5f, 3));
-            newSpriteShape.angleRanges.Add(CreateAngleRange(-67.5f, -22.5f, 5));
+            newSpriteShape.angleRanges.Add(CreateAngleRange(-45.0f, 45.0f, 4));
+            newSpriteShape.angleRanges.Add(CreateAngleRange(-135.0f, -45.0f, 3));
+            newSpriteShape.angleRanges.Add(CreateAngleRange(135.0f, 225.0f, 2));
+            newSpriteShape.angleRanges.Add(CreateAngleRange(45.0f, 135.0f, 1));
         }
 
         [MenuItem("GameObject/2D Object/Sprite Shape")]

@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEditor.U2D;
 using UnityEditor.Experimental.U2D.Common;
 
-namespace UnityEditor.U2D
+namespace UnityEditor.U2D.SpriteShapeTest
 {
     public class AngleRangeControllerTests
     {

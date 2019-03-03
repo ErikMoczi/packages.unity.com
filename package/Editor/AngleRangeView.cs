@@ -171,7 +171,7 @@ namespace UnityEditor.U2D
 
             //Extra Layout from handles
             if (Event.current.type == EventType.Layout &&
-                (HandleUtility.nearestControl == leftHandleId ||  HandleUtility.nearestControl == rightHandleId))
+                (HandleUtility.nearestControl == leftHandleId || HandleUtility.nearestControl == rightHandleId))
             {
                 m_HoveredRangeIndex = index;
                 m_HoveredRangeID = controlID;

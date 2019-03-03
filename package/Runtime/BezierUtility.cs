@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace UnityEngine.U2D
+﻿namespace UnityEngine.U2D
 {
     public static class BezierUtility
     {

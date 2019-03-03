@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace UnityEngine.U2D
 {
@@ -23,13 +21,6 @@ namespace UnityEngine.U2D
         InnerBottomLeft,
         InnerBottomRight,
     };
-
-    public enum ColliderCornerType
-    {
-        Square,
-        Round,
-        Sharp
-    }
 
     public enum QualityDetail
     {
@@ -57,8 +48,6 @@ namespace UnityEngine.U2D
                 (leftTangent.GetHashCode() << 2) ^
                 (rightTangent.GetHashCode() >> 2) ^
                 ((int)mode).GetHashCode() ^
-                bevelCutoff.GetHashCode() ^
-                bevelSize.GetHashCode() ^
                 height.GetHashCode() ^
                 spriteIndex.GetHashCode() ^
                 corner.GetHashCode();
@@ -215,6 +204,7 @@ namespace UnityEngine.U2D
         }
     }
 
+    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@1.0/manual/index.html")]
     public class SpriteShape : ScriptableObject
     {
         public List<AngleRange> angleRanges
@@ -235,34 +225,10 @@ namespace UnityEngine.U2D
             set { m_CornerSprites = value; }
         }
 
-        public float fillPixelsPerUnit
-        {
-            get { return m_FillPixelPerUnit; }
-            set { m_FillPixelPerUnit = value; }
-        }
-
         public float fillOffset
         {
             get { return m_FillOffset; }
             set { m_FillOffset = value; }
-        }
-
-        public float bevelSize
-        {
-            get { return m_BevelSize; }
-            set { m_BevelSize = value; }
-        }
-
-        public float bevelCutoff
-        {
-            get { return m_BevelCutoff; }
-            set { m_BevelCutoff = value; }
-        }
-
-        public bool worldSpaceUVs
-        {
-            get { return m_WorldSpaceUV; }
-            set { m_WorldSpaceUV = value; }
         }
 
         public bool useSpriteBorders
@@ -278,15 +244,8 @@ namespace UnityEngine.U2D
         [SerializeField]
         List<CornerSprite> m_CornerSprites = new List<CornerSprite>();
         [SerializeField]
-        float m_FillPixelPerUnit = 100.0f;
-        [SerializeField]
-        float m_BevelSize;
-        [SerializeField]
-        float m_BevelCutoff;
-        [SerializeField]
         float m_FillOffset;
-        [SerializeField]
-        bool m_WorldSpaceUV;
+
         [SerializeField]
         bool m_UseSpriteBorders = true;
 
@@ -319,8 +278,6 @@ namespace UnityEngine.U2D
 
         void Reset()
         {
-            m_FillPixelPerUnit = 100f;
-
             ResetCornerList();
         }
     }
