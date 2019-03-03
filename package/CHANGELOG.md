@@ -1,3 +1,6 @@
+## [1.0.1-preview] - 2019-02-27
+- Fix ReflectionTypeLoadException exception for certain user with invalid project assemblies
+
 ## [1.0.0-preview.2] - 2019-02-26
 - Update style to work better with the Northstar branch.
 - Use Alt+Left to open the filter window box.
