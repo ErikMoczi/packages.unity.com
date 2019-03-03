@@ -2,8 +2,7 @@
     "name": "Unity.VisualEffectGraph.Editor",
     "references": [
         "Unity.VisualEffectGraph.Runtime",
-        "Unity.Timeline",
-        "Unity.RenderPipelines.HighDefinition.Runtime"
+        "Unity.Timeline"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [
@@ -25,11 +24,6 @@
             "name": "com.unity.timeline",
             "expression": "1.0.0",
             "define": "VFX_HAS_TIMELINE"
-        },
-        {
-            "name": "com.unity.render-pipelines.high-definition",
-            "expression": "1.0.0",
-            "define": "VFX_HAS_HDRP"
         }
     ]
 }
