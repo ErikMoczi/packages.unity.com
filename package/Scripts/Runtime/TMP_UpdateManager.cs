@@ -130,10 +130,10 @@ namespace TMPro
         /// Callback which occurs just before the Scriptable Render Pipeline (SRP) begins rendering.
         /// </summary>
         /// <param name="cameras"></param>
-        #if UNITY_2019_1_OR_NEWER
-        void OnBeginFrameRendering(ScriptableRenderContext renderContext, Camera[] cameras)
-        #elif UNITY_2018_1_OR_NEWER
+        #if UNITY_2018_1_OR_NEWER
         void OnBeginFrameRendering(Camera[] cameras)
+        #elif UNITY_2019_1_OR_NEWER
+        void OnBeginFrameRendering(ScriptableRenderContext renderContext, Camera[] cameras)
         #endif
         {
             // Exclude the PreRenderCamera

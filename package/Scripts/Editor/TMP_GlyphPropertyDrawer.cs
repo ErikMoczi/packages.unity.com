@@ -11,6 +11,12 @@ namespace TMPro.EditorUtilities
     [CustomPropertyDrawer(typeof(Glyph))]
     public class TMP_GlyphPropertyDrawer : PropertyDrawer
     {
+        //[SerializeField]
+        //static Material s_InternalSDFMaterial;
+
+        //[SerializeField]
+        //static Material s_InternalBitmapMaterial;
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             SerializedProperty prop_GlyphIndex = property.FindPropertyRelative("m_Index");
@@ -73,7 +79,6 @@ namespace TMPro.EditorUtilities
                     return;
 
                 mat.mainTexture = atlasTexture;
-                mat.SetColor("_Color", Color.white);
             }
             else
             {

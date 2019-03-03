@@ -1,12 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using System;
 using System.IO;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using TMPro.EditorUtilities;
 
 
@@ -46,37 +43,6 @@ namespace TMPro
             window.Focus();
         }
 
-        private static HashSet<Type> m_IgnoreAssetTypes = new HashSet<Type>()
-        {
-            typeof(AnimatorOverrideController),
-            typeof(AudioClip),
-            typeof(AvatarMask),
-            typeof(ComputeShader),
-            typeof(Cubemap),
-            typeof(DefaultAsset),
-            typeof(Flare),
-            typeof(Font),
-            typeof(GUISkin),
-            typeof(HumanTemplate),
-            typeof(LightingDataAsset),
-            typeof(Mesh),
-            typeof(MonoScript),
-            typeof(PhysicMaterial),
-            typeof(PhysicsMaterial2D),
-            typeof(RenderTexture),
-            typeof(Shader),
-            typeof(TerrainData),
-            typeof(TextAsset),
-            typeof(Texture2D),
-            typeof(Texture2DArray),
-            typeof(Texture3D),
-            typeof(UnityEditor.Animations.AnimatorController),
-            typeof(UnityEditorInternal.AssemblyDefinitionAsset),
-            typeof(UnityEngine.AI.NavMeshData),
-            typeof(UnityEngine.Tilemaps.Tile),
-            typeof(UnityEngine.U2D.SpriteAtlas),
-            typeof(UnityEngine.Video.VideoClip),
-        };
 
         /// <summary>
         /// 
@@ -87,35 +53,16 @@ namespace TMPro
             public string assetDataFile;
         }
 
-        struct AssetFileRecord
-        {
-            public string assetFilePath;
-            public string assetMetaFilePath;
-
-            public AssetFileRecord(string filePath, string metaFilePath)
-            {
-                this.assetFilePath = filePath;
-                this.assetMetaFilePath = metaFilePath;
-            }
-        }
-
-        private static string m_ProjectPath;
         private static string m_ProjectFolderToScan;
         private static bool m_IsAlreadyScanningProject;
         private static bool m_CancelScanProcess;
         private static string k_ProjectScanReportDefaultText = "<color=#FFFF80><b>Project Scan Results</b></color>\n";
-        private static string k_ProjectScanLabelPrefix = "Scanning: ";
         private static string m_ProjectScanResults = string.Empty;
         private static Vector2 m_ProjectScanResultScrollPosition;
         private static float m_ProgressPercentage = 0;
-
         private static int m_ScanningTotalFiles;
-        private static int m_RemainingFilesToScan;
         private static int m_ScanningCurrentFileIndex;
         private static string m_ScanningCurrentFileName;
-
-        private static AssetConversionData m_ConversionData;
-
         private static List<AssetModificationRecord> m_ModifiedAssetList = new List<AssetModificationRecord>();
 
 
@@ -150,8 +97,7 @@ namespace TMPro
                         // Make sure Asset Serialization mode is set to ForceText and Version Control mode to Visible Meta Files.
                         if (CheckProjectSerializationAndSourceControlModes() == true)
                         {
-                            m_ProjectPath = Path.GetFullPath("Assets/..");
-                            TMP_EditorCoroutine.StartCoroutine(ScanProjectFiles());
+                            EditorCoroutine.StartCoroutine(ScanProjectFiles());
                         }
                         else
                         {
@@ -172,7 +118,7 @@ namespace TMPro
                         {
                             m_CancelScanProcess = true;
                         }
-                        GUILayout.Label(k_ProjectScanLabelPrefix + m_ScanningCurrentFileName, TMP_UIStyleManager.label);
+                        GUILayout.Label("Scanning: " + m_ScanningCurrentFileName);
                     }
                     else
                         GUILayout.Label(string.Empty);
@@ -193,7 +139,7 @@ namespace TMPro
 
                 // Scan project files and resources
                 GUILayout.BeginVertical(EditorStyles.helpBox);
-                {
+                { 
                     GUILayout.Label("Save Modified Project Files", EditorStyles.boldLabel);
                     GUILayout.Label("Pressing the <i>Save Modified Project Files</i> button will update the files in the <i>Project Scan Results</i> listed above. <color=#FFFF80>Please make sure that you have created a backup of your project first</color> as these file modifications are permanent and cannot be undone.", TMP_UIStyleManager.label);
                     GUILayout.Space(5f);
@@ -231,169 +177,180 @@ namespace TMPro
         }
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="filePath"></param>
-        /// <returns></returns>
-        private static bool ShouldIgnoreFile(string filePath)
-        {
-            string fileExtension = Path.GetExtension(filePath);
-            Type fileType = AssetDatabase.GetMainAssetTypeAtPath(filePath);
-
-            if (m_IgnoreAssetTypes.Contains(fileType))
-                return true;
-
-            // Exclude FBX
-            if (fileType == typeof(GameObject) && fileExtension.ToLower() == ".fbx") { return true; }
-            return false;
-        }
-
-
         private IEnumerator ScanProjectFiles()
         {
             m_IsAlreadyScanningProject = true;
+            string projectPath = Path.GetFullPath("Assets/..");
             string packageFullPath = EditorUtilities.TMP_EditorUtility.packageFullPath;
 
             // List containing assets that have been modified.
-            m_ProjectScanResults = k_ProjectScanReportDefaultText;
+            string scanResults = k_ProjectScanReportDefaultText;
             m_ModifiedAssetList.Clear();
             m_ProgressPercentage = 0;
 
             // Read Conversion Data from Json file.
-            if (m_ConversionData == null)
-                m_ConversionData = JsonUtility.FromJson<AssetConversionData>(File.ReadAllText(packageFullPath + "/PackageConversionData.json"));
+            AssetConversionData conversionData = JsonUtility.FromJson<AssetConversionData>(File.ReadAllText(packageFullPath + "/PackageConversionData.json"));
+            AssetConversionData conversionData_Assets = JsonUtility.FromJson<AssetConversionData>(File.ReadAllText(packageFullPath + "/PackageConversionData_Assets.json"));
 
             // Get list of GUIDs for assets that might contain references to previous GUIDs that require updating.
             string searchFolder = string.IsNullOrEmpty(m_ProjectFolderToScan) ? "Assets" : ("Assets/" + m_ProjectFolderToScan);
-            string[] guids = AssetDatabase.FindAssets("t:Object", new string[] { searchFolder }).Distinct().ToArray();
+            string[] projectGUIDs = AssetDatabase.FindAssets("t:Object", new string[] { searchFolder }).Distinct().ToArray();
+            m_ScanningTotalFiles = projectGUIDs.Length;
 
-            k_ProjectScanLabelPrefix = "<b>Phase 1 - Filtering:</b> ";
-            m_ScanningTotalFiles = guids.Length;
-            m_ScanningCurrentFileIndex = 0;
+            bool cancelScanning = false;
 
-            List<AssetFileRecord> projectFilesToScan = new List<AssetFileRecord>();
-
-            foreach (var guid in guids)
+            // Iterate through projectGUIDs to search project assets of the types likely to reference GUIDs and FileIDs used by previous versions of TextMesh Pro. 
+            for (int i = 0; i < projectGUIDs.Length && cancelScanning == false; i++)
             {
                 if (m_CancelScanProcess)
-                    break;
+                {
+                    cancelScanning = true;
+                    ResetScanProcess();
 
+                    continue;
+                }
+
+                m_ScanningCurrentFileIndex = i + 1;
+
+                string guid = projectGUIDs[i];
                 string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
+                string assetFileExtension = Path.GetExtension(assetFilePath);
+                System.Type assetType = AssetDatabase.GetMainAssetTypeAtPath(assetFilePath);
 
-                m_ScanningCurrentFileIndex += 1;
-                m_ScanningCurrentFileName = assetFilePath;
-                m_ProgressPercentage = (float)m_ScanningCurrentFileIndex / m_ScanningTotalFiles;
-
-                // Filter out file types we have no interest in searching
-                if (ShouldIgnoreFile(assetFilePath))
+                // Filter out asset types that we can't read or have not interest in searching.
+                if (assetType == typeof(DefaultAsset) || assetType == typeof(MonoScript) || assetType == typeof(Texture2D) || assetType == typeof(Texture3D) || assetType == typeof(Cubemap) ||
+                    assetType == typeof(TextAsset) || assetType == typeof(Shader) || assetType == typeof(Font) || assetType == typeof(UnityEditorInternal.AssemblyDefinitionAsset) ||
+                    assetType == typeof(GUISkin) || assetType == typeof(PhysicsMaterial2D) || assetType == typeof(PhysicMaterial) || assetType == typeof(UnityEngine.U2D.SpriteAtlas) || assetType == typeof(UnityEngine.Tilemaps.Tile) ||
+                    assetType == typeof(AudioClip) || assetType == typeof(ComputeShader) || assetType == typeof(UnityEditor.Animations.AnimatorController) || assetType == typeof(UnityEngine.AI.NavMeshData) ||
+                    assetType == typeof(Mesh) || assetType == typeof(RenderTexture) || assetType == typeof(Texture2DArray) || assetType == typeof(LightingDataAsset) || assetType == typeof(AvatarMask) ||
+                    assetType == typeof(AnimatorOverrideController) || assetType == typeof(TerrainData) || assetType == typeof(HumanTemplate) || assetType == typeof(Flare) || assetType == typeof(UnityEngine.Video.VideoClip))
                     continue;
 
-                string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
+                // Exclude FBX
+                if (assetType == typeof(GameObject) && (assetFileExtension == ".FBX" || assetFileExtension == ".fbx"))
+                    continue;
 
-                projectFilesToScan.Add(new AssetFileRecord(assetFilePath, assetMetaFilePath));
+                m_ScanningCurrentFileName = assetFilePath;
+                //Debug.Log("Searching Asset: [" + assetFilePath + "] with file extension [" + assetFileExtension + "] of type [" + assetType + "]");
+
+                // Read the asset data file
+                string assetDataFile = string.Empty;
+                try
+                {
+                    assetDataFile = File.ReadAllText(projectPath + "/" + assetFilePath);
+                }
+                catch
+                {
+                    // Continue to the next asset if we can't read the current one.
+                    continue;
+                }
+
+                bool hasFileChanged = false;
+
+                // Special handling / optimization if assetType is null
+                if (assetType == null)
+                {
+                    foreach (AssetConversionRecord record in conversionData_Assets.assetRecords)
+                    {
+                        if (assetDataFile.Contains(record.target))
+                        {
+                            hasFileChanged = true;
+
+                            assetDataFile = assetDataFile.Replace(record.target, record.replacement);
+
+                            //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
+                        }
+                    }
+                }
+                else
+                {
+                foreach (AssetConversionRecord record in conversionData.assetRecords)
+                {
+                    if (assetDataFile.Contains(record.target))
+                    {
+                        hasFileChanged = true;
+
+                        assetDataFile = assetDataFile.Replace(record.target, record.replacement);
+
+                        //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetFilePath + "].");
+                    }
+                }
+                }
+
+                if (hasFileChanged)
+                {
+                    //Debug.Log("Adding [" + assetFilePath + "] to list of assets to be modified.");
+
+                    AssetModificationRecord modifiedAsset;
+                    modifiedAsset.assetFilePath = assetFilePath;
+                    modifiedAsset.assetDataFile = assetDataFile;
+
+                    m_ModifiedAssetList.Add(modifiedAsset);
+
+                    scanResults += assetFilePath + "\n";
+                }
+
+                m_ProjectScanResults = scanResults;
+                m_ProgressPercentage = (float)i / (projectGUIDs.Length * 2);
 
                 yield return null;
             }
 
-            m_RemainingFilesToScan = m_ScanningTotalFiles = projectFilesToScan.Count;
-
-            k_ProjectScanLabelPrefix = "<b>Phase 2 - Scanning:</b> ";
-
-            for (int i = 0; i < m_ScanningTotalFiles; i++)
+            // Iterate through projectGUIDs (again) to search project meta files which reference GUIDs used by previous versions of TextMesh Pro. 
+            for (int i = 0; i < projectGUIDs.Length && cancelScanning == false; i++)
             {
                 if (m_CancelScanProcess)
-                    break;
-
-                AssetFileRecord fileRecord = projectFilesToScan[i];
-
-                Task.Run(() =>
                 {
-                    ScanProjectFileAsync(fileRecord);
+                    cancelScanning = true;
+                    ResetScanProcess();
 
-                    m_ScanningCurrentFileName = fileRecord.assetFilePath;
+                    continue;
+                }
 
-                    int completedScans = m_ScanningTotalFiles - Interlocked.Decrement(ref m_RemainingFilesToScan);
+                string guid = projectGUIDs[i];
+                string assetFilePath = AssetDatabase.GUIDToAssetPath(guid);
+                string assetMetaFilePath = AssetDatabase.GetTextMetaFilePathFromAssetPath(assetFilePath);
 
-                    m_ScanningCurrentFileIndex = completedScans;
-                    m_ProgressPercentage = (float)completedScans / m_ScanningTotalFiles;
-                });
+                // Read the asset meta data file
+                string assetMetaFile = File.ReadAllText(projectPath + "/" + assetMetaFilePath);
 
-                if (i % 64 == 0)
-                    yield return new WaitForSeconds(2.0f);
+                bool hasFileChanged = false;
 
-            }
+                m_ScanningCurrentFileName = assetMetaFilePath;
 
-            while (m_RemainingFilesToScan > 0 && !m_CancelScanProcess)
+                foreach (AssetConversionRecord record in conversionData.assetRecords)
+                {
+                    if (assetMetaFile.Contains(record.target))
+                    {
+                        hasFileChanged = true;
+
+                        assetMetaFile = assetMetaFile.Replace(record.target, record.replacement);
+
+                        //Debug.Log("Replacing Reference to [" + record.referencedResource + "] using [" + record.target + "] with [" + record.replacement + "] in asset file: [" + assetMetaFilePath + "].");
+                    }
+                }
+
+                if (hasFileChanged)
+                {
+                    //Debug.Log("Adding [" + assetMetaFilePath + "] to list of meta files to be modified.");
+
+                    AssetModificationRecord modifiedAsset;
+                    modifiedAsset.assetFilePath = assetMetaFilePath;
+                    modifiedAsset.assetDataFile = assetMetaFile;
+
+                    m_ModifiedAssetList.Add(modifiedAsset);
+
+                    scanResults += assetMetaFilePath + "\n";
+                }
+
+                m_ProjectScanResults = scanResults;
+                m_ProgressPercentage = 0.5f + ((float)i / (projectGUIDs.Length * 2));
+
                 yield return null;
+            }
 
             m_IsAlreadyScanningProject = false;
             m_ScanningCurrentFileName = string.Empty;
-        }
-
-
-        static void ScanProjectFileAsync(AssetFileRecord fileRecord)
-        {
-            if (m_CancelScanProcess)
-                return;
-
-            // Read the asset data file
-            string assetDataFile = string.Empty;
-            bool hasFileChanged = false;
-
-            try
-            {
-                assetDataFile = File.ReadAllText(m_ProjectPath + "/" + fileRecord.assetFilePath);
-            }
-            catch
-            {
-                // Continue to the next asset if we can't read the current one.
-                return;
-            }
-
-            // Read the asset meta data file
-            string assetMetaFile = File.ReadAllText(m_ProjectPath + "/" + fileRecord.assetMetaFilePath);
-            bool hasMetaFileChanges = false;
-
-            foreach (AssetConversionRecord record in m_ConversionData.assetRecords)
-            {
-                if (assetDataFile.Contains(record.target))
-                {
-                    hasFileChanged = true;
-
-                    assetDataFile = assetDataFile.Replace(record.target, record.replacement);
-                }
-
-                //// Check meta file
-                if (assetMetaFile.Contains(record.target))
-                {
-                    hasMetaFileChanges = true;
-
-                    assetMetaFile = assetMetaFile.Replace(record.target, record.replacement);
-                }
-            }
-
-            if (hasFileChanged)
-            {
-                AssetModificationRecord modifiedAsset;
-                modifiedAsset.assetFilePath = fileRecord.assetFilePath;
-                modifiedAsset.assetDataFile = assetDataFile;
-
-                m_ModifiedAssetList.Add(modifiedAsset);
-
-                m_ProjectScanResults += fileRecord.assetFilePath + "\n";
-            }
-
-            if (hasMetaFileChanges)
-            {
-                AssetModificationRecord modifiedAsset;
-                modifiedAsset.assetFilePath = fileRecord.assetMetaFilePath;
-                modifiedAsset.assetDataFile = assetMetaFile;
-
-                m_ModifiedAssetList.Add(modifiedAsset);
-
-                m_ProjectScanResults += fileRecord.assetMetaFilePath + "\n";
-            }
         }
 
 
@@ -486,8 +443,8 @@ namespace TMPro
             GenerateNewPackageGUIDs();
         }
 
-
-        /// <summary>
+		
+		/// <summary>
         /// 
         /// </summary>
         [MenuItem("Window/TextMeshPro/Import TMP Essential Resources", false, 2050)]
@@ -496,7 +453,7 @@ namespace TMPro
             ImportProjectResources();
         }
 
-
+		
         /// <summary>
         /// 
         /// </summary>

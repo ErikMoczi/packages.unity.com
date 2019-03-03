@@ -1032,7 +1032,6 @@ namespace TMPro
                             m_textInfo.characterInfo[m_totalCharacterCount].fontAsset = m_currentFontAsset;
                             m_textInfo.characterInfo[m_totalCharacterCount].spriteAsset = m_currentSpriteAsset;
                             m_textInfo.characterInfo[m_totalCharacterCount].materialReferenceIndex = m_currentMaterialIndex;
-                            m_textInfo.characterInfo[m_totalCharacterCount].textElement = m_currentSpriteAsset.spriteCharacterTable[m_spriteIndex];
                             m_textInfo.characterInfo[m_totalCharacterCount].elementType = m_textElementType;
                             m_textInfo.characterInfo[m_totalCharacterCount].index = tagStartIndex;
                             m_textInfo.characterInfo[m_totalCharacterCount].stringLength = chars[i].stringIndex - tagStartIndex + 1;
@@ -1122,7 +1121,6 @@ namespace TMPro
                             m_textInfo.characterInfo[m_totalCharacterCount].spriteIndex = spriteIndex;
                             m_textInfo.characterInfo[m_totalCharacterCount].fontAsset = m_currentFontAsset;
                             m_textInfo.characterInfo[m_totalCharacterCount].spriteAsset = spriteAsset;
-                            m_textInfo.characterInfo[m_totalCharacterCount].textElement = spriteAsset.spriteCharacterTable[m_spriteIndex];
                             m_textInfo.characterInfo[m_totalCharacterCount].materialReferenceIndex = m_currentMaterialIndex;
                             m_textInfo.characterInfo[m_totalCharacterCount].index = chars[i].stringIndex;
                             m_textInfo.characterInfo[m_totalCharacterCount].stringLength = chars[i].length;
@@ -1178,7 +1176,6 @@ namespace TMPro
                             m_textInfo.characterInfo[m_totalCharacterCount].spriteIndex = spriteIndex;
                             m_textInfo.characterInfo[m_totalCharacterCount].fontAsset = m_currentFontAsset;
                             m_textInfo.characterInfo[m_totalCharacterCount].spriteAsset = spriteAsset;
-                            m_textInfo.characterInfo[m_totalCharacterCount].textElement = spriteAsset.spriteCharacterTable[m_spriteIndex];
                             m_textInfo.characterInfo[m_totalCharacterCount].materialReferenceIndex = m_currentMaterialIndex;
                             m_textInfo.characterInfo[m_totalCharacterCount].index = chars[i].stringIndex;
                             m_textInfo.characterInfo[m_totalCharacterCount].stringLength = chars[i].length;
@@ -1890,33 +1887,31 @@ namespace TMPro
 
                 // Handle Kerning if Enabled.
                 #region Handle Kerning
-                TMP_GlyphValueRecord glyphAdjustments = new TMP_GlyphValueRecord();
-                float characterSpacingAdjustment = m_characterSpacing;
+                GlyphValueRecord glyphAdjustments = new GlyphValueRecord();
+                float CharacterSpacingAdjustment = m_characterSpacing;
                 if (m_enableKerning)
                 {
                     if (m_characterCount < totalCharacterCount - 1)
                     {
-                        uint firstGlyphIndex = m_cached_TextElement.glyphIndex;
-                        uint secondGlyphIndex = m_textInfo.characterInfo[m_characterCount + 1].textElement.glyphIndex;
-                        long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
+                        uint nextGlyph = m_textInfo.characterInfo[m_characterCount + 1].character;
+                        KerningPairKey keyValue = new KerningPairKey((uint)charCode, nextGlyph);
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
+                        if (m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out KerningPair adjustmentPair))
                         {
-                            glyphAdjustments = adjustmentPair.firstAdjustmentRecord.glyphValueRecord;
-                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
+                            glyphAdjustments = adjustmentPair.firstGlyphAdjustments;
+                            CharacterSpacingAdjustment = adjustmentPair.ignoreSpacingAdjustments ? 0 : CharacterSpacingAdjustment;
                         }
                     }
 
                     if (m_characterCount >= 1)
                     {
-                        uint firstGlyphIndex = m_textInfo.characterInfo[m_characterCount - 1].textElement.glyphIndex;
-                        uint secondGlyphIndex = m_cached_TextElement.glyphIndex;
-                        long key = new GlyphPairKey(firstGlyphIndex, secondGlyphIndex).key;
+                        uint previousGlyph = m_textInfo.characterInfo[m_characterCount - 1].character;
+                        KerningPairKey keyValue = new KerningPairKey(previousGlyph, (uint)charCode);
 
-                        if (m_currentFontAsset.fontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.TryGetValue(key, out TMP_GlyphPairAdjustmentRecord adjustmentPair))
+                        if (m_currentFontAsset.kerningLookupDictionary.TryGetValue((int)keyValue.key, out KerningPair adjustmentPair))
                         {
-                            glyphAdjustments += adjustmentPair.secondAdjustmentRecord.glyphValueRecord;
-                            characterSpacingAdjustment = (adjustmentPair.featureLookupFlags & FontFeatureLookupFlags.IgnoreSpacingAdjustments) == FontFeatureLookupFlags.IgnoreSpacingAdjustments ? 0 : characterSpacingAdjustment;
+                            glyphAdjustments += adjustmentPair.secondGlyphAdjustments;
+                            CharacterSpacingAdjustment = adjustmentPair.ignoreSpacingAdjustments ? 0 : CharacterSpacingAdjustment;
                         }
                     }
                 }
@@ -1927,7 +1922,7 @@ namespace TMPro
                 #region Handle Right-to-Left
                 if (m_isRightToLeft)
                 {
-                    m_xAdvance -= ((m_cached_TextElement.glyph.metrics.horizontalAdvance * bold_xAdvance_multiplier + characterSpacingAdjustment + m_wordSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance -= ((m_cached_TextElement.glyph.metrics.horizontalAdvance * bold_xAdvance_multiplier + CharacterSpacingAdjustment + m_wordSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance -= m_wordSpacing * currentElementScale;
@@ -2030,7 +2025,7 @@ namespace TMPro
                 if (m_isFXMatrixSet)
                 {
                     // Apply scale matrix when simulating Condensed text.
-                    if (m_FXMatrix.lossyScale.x != 1)
+                    if (m_FXMatrix.m00 != 1)
                     {
                         //top_left = m_FXMatrix.MultiplyPoint3x4(top_left);
                         //bottom_left = m_FXMatrix.MultiplyPoint3x4(bottom_left);
@@ -2257,7 +2252,7 @@ namespace TMPro
 
                             //m_textInfo.lineInfo[m_lineNumber].alignment = m_lineJustification;
 
-                            m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance - (characterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale - m_cSpacing;
+                            m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance - (CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale - m_cSpacing;
 
                             m_textInfo.lineInfo[m_lineNumber].baseline = 0 - m_lineOffset;
                             m_textInfo.lineInfo[m_lineNumber].ascender = lineAscender;
@@ -2667,7 +2662,7 @@ namespace TMPro
                 }
                 else if (m_monoSpacing != 0)
                 {
-                    m_xAdvance += (m_monoSpacing - monoAdvance + ((characterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += (m_monoSpacing - monoAdvance + ((CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale) + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
@@ -2675,9 +2670,9 @@ namespace TMPro
                 else if (!m_isRightToLeft)
                 {
                     float scaleFXMultiplier = 1;
-                    if (m_isFXMatrixSet) scaleFXMultiplier = m_FXMatrix.lossyScale.x;
+                    if (m_isFXMatrixSet) scaleFXMultiplier = m_FXMatrix.m00;
 
-                    m_xAdvance += ((m_cached_TextElement.glyph.metrics.horizontalAdvance * scaleFXMultiplier * bold_xAdvance_multiplier + characterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
+                    m_xAdvance += ((m_cached_TextElement.glyph.metrics.horizontalAdvance * scaleFXMultiplier * bold_xAdvance_multiplier + CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset + glyphAdjustments.xAdvance) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
 
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance += m_wordSpacing * currentElementScale;
@@ -2747,9 +2742,9 @@ namespace TMPro
                         m_textInfo.lineInfo[m_lineNumber].alignment = m_lineJustification;
 
                     if (m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].isVisible)
-                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance - (characterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale - m_cSpacing;
+                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastVisibleCharacterOfLine].xAdvance - (CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale - m_cSpacing;
                     else
-                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastCharacterOfLine].xAdvance - (characterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale - m_cSpacing;
+                        m_textInfo.lineInfo[m_lineNumber].maxAdvance = m_textInfo.characterInfo[m_lastCharacterOfLine].xAdvance - (CharacterSpacingAdjustment + m_currentFontAsset.normalSpacingOffset) * currentElementScale - m_cSpacing;
 
                     m_textInfo.lineInfo[m_lineNumber].baseline = 0 - m_lineOffset;
                     m_textInfo.lineInfo[m_lineNumber].ascender = lineAscender;
