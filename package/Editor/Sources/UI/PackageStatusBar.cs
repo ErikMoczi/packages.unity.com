@@ -1,8 +1,7 @@
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -15,56 +14,45 @@ namespace UnityEditor.PackageManager.UI
         }
     }
 #endif
-
+    
     internal class PackageStatusBar : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<PackageStatusBar> {}
+        internal new class UxmlFactory : UxmlFactory<PackageStatusBar> { }
 #endif
 
         private readonly VisualElement root;
         private string LastErrorMessage;
-        private string LastUpdateTime;
 
         private List<IBaseOperation> operationsInProgress;
 
-        private enum StatusType { Normal, Loading, Error };
-
-        public event Action OnCheckInternetReachability = delegate {};
+        private enum StatusType {Normal, Loading, Error};  
 
         public PackageStatusBar()
         {
             root = Resources.GetTemplate("PackageStatusBar.uxml");
             Add(root);
-            Cache = new VisualElementCache(root);
+
+            MoreAddOptionsButton.clickable.clicked += OnMoreAddOptionsButtonClick;
 
             LastErrorMessage = string.Empty;
             operationsInProgress = new List<IBaseOperation>();
+
+            SetDefaultMessage();
+
+            PackageCollection.Instance.ListSignal.WhenOperation(OnListOrSearchOperation);
+            PackageCollection.Instance.SearchSignal.WhenOperation(OnListOrSearchOperation);
         }
 
-        public void Setup(PackageCollection collection)
+        private void SetDefaultMessage()
         {
-            LastUpdateTime = collection.lastUpdateTime;
-            UpdateStatusMessage();
-
-            StatusLabel.RegisterCallback<MouseDownEvent>(e =>
-            {
-                collection.FetchListOfflineCache(true);
-                collection.FetchListCache(true);
-                collection.FetchSearchCache(true);
-            });
-        }
-
-        public void SetUpdateTimeMessage(string lastUpdateTime)
-        {
-            LastUpdateTime = lastUpdateTime;
-            if (!string.IsNullOrEmpty(LastUpdateTime))
-                SetStatusMessage(StatusType.Normal, "Last update " + LastUpdateTime);
+            if(!string.IsNullOrEmpty(PackageCollection.Instance.lastUpdateTime))
+                SetStatusMessage(StatusType.Normal, "Last update " + PackageCollection.Instance.lastUpdateTime);
             else
                 SetStatusMessage(StatusType.Normal, string.Empty);
         }
 
-        internal void OnListOrSearchOperation(IBaseOperation operation)
+        private void OnListOrSearchOperation(IBaseOperation operation)
         {
             if (operation == null || operation.IsCompleted)
                 return;
@@ -78,63 +66,85 @@ namespace UnityEditor.PackageManager.UI
         private void OnOperationFinalized(IBaseOperation operation)
         {
             operationsInProgress.Remove(operation);
-            if (operationsInProgress.Any()) return;
-            UpdateStatusMessage();
-        }
 
-        private void UpdateStatusMessage()
-        {
+            if (operationsInProgress.Any()) return;
+
             var errorMessage = LastErrorMessage;
+
             if (Application.internetReachability == NetworkReachability.NotReachable)
             {
                 EditorApplication.update -= CheckInternetReachability;
                 EditorApplication.update += CheckInternetReachability;
-                errorMessage = "You seem to be offline";
+
+                errorMessage = "You seem to be offline.";
             }
 
             if (!string.IsNullOrEmpty(errorMessage))
                 SetStatusMessage(StatusType.Error, errorMessage);
             else
-                SetUpdateTimeMessage(LastUpdateTime);
+                SetDefaultMessage();
         }
 
         private void OnOperationError(Error error)
         {
-            LastErrorMessage = "Cannot load packages, see console";
+            LastErrorMessage = "Cannot load packages, see console.";
         }
 
         private void CheckInternetReachability()
         {
-            if (Application.internetReachability == NetworkReachability.NotReachable)
-                return;
+            if (Application.internetReachability == NetworkReachability.NotReachable) return;
 
-            OnCheckInternetReachability();
+            PackageCollection.Instance.FetchListCache(true);
+            PackageCollection.Instance.FetchSearchCache(true);
             EditorApplication.update -= CheckInternetReachability;
         }
 
         private void SetStatusMessage(StatusType status, string message)
         {
             if (status == StatusType.Loading)
-            {
-                LoadingSpinnerContainer.AddToClassList("loading");
                 LoadingSpinner.Start();
-            }
             else
-            {
                 LoadingSpinner.Stop();
-                LoadingSpinnerContainer.RemoveFromClassList("loading");
-            }
 
+            UIUtils.SetElementDisplay(LoadingIcon, status == StatusType.Error);
+            if (status == StatusType.Error)
+                LoadingText.AddToClassList("icon");
+            else
+                LoadingText.RemoveFromClassList("icon");
 
-            UIUtils.SetElementDisplay(ErrorIcon, status == StatusType.Error);
-            StatusLabel.text = message;
+            LoadingText.text = message;
         }
 
-        private VisualElementCache Cache { get; set; }
+        private void OnMoreAddOptionsButtonClick()
+        {
+            var menu = new GenericMenu();
 
-        private VisualElement LoadingSpinnerContainer { get { return Cache.Get<VisualElement>("loadingSpinnerContainer"); }}
-        private LoadingSpinner LoadingSpinner { get { return Cache.Get<LoadingSpinner>("packageSpinner"); }}
-        private Label ErrorIcon { get { return Cache.Get<Label>("errorIcon"); }}
-        private Label StatusLabel { get { return Cache.Get<Label>("statusLabel"); }}
+            var addPackageFromDiskItem = new GUIContent("Add package from disk...");
+
+            /* // Disable adding from url field before the feature is ready
+            var addPackageFromUrlItem = new GUIContent("Add package from URL...");
+            menu.AddItem(addPackageFromUrlItem, false, delegate
+            {
+                AddFromUrlField.Show(true);
+            });
+            */
+
+            menu.AddItem(addPackageFromDiskItem, false, delegate
+            {
+                var path = EditorUtility.OpenFilePanelWithFilters("Select package on disk", "", new[] { "package.json file", "json" });
+                if (!string.IsNullOrEmpty(path) && !Package.AddRemoveOperationInProgress)
+                    Package.AddFromLocalDisk(path);
+            });
+            var menuPosition = MoreAddOptionsButton.LocalToWorld(new Vector2(MoreAddOptionsButton.layout.width, 0));
+            var menuRect = new Rect(menuPosition, Vector2.zero);
+            menu.DropDown(menuRect);
+        }
+
+        private PackageAddFromUrlField AddFromUrlField { get { return root.Q<PackageAddFromUrlField>("packageAddFromUrlField");  }}
+        private VisualElement LoadingSpinnerContainer { get { return root.Q<VisualElement>("loadingSpinnerContainer");  }}
+        private LoadingSpinner LoadingSpinner { get { return root.Q<LoadingSpinner>("packageSpinner");  }}
+        private Label LoadingIcon { get { return root.Q<Label>("loadingIcon");  }}
+        private Label LoadingText { get { return root.Q<Label>("loadingText");  }}
+        private Button MoreAddOptionsButton{ get { return root.Q<Button>("moreAddOptionsButton");  }}
     }
 }

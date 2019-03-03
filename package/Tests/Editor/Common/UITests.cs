@@ -1,15 +1,15 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEditor.UIElements;
+using UnityEditor.Experimental.UIElements;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal abstract class UITests<TWindow> where TWindow : EditorWindow
     {
-        protected TWindow Window { get; set; }
-        protected VisualElement Container { get { return Window.rootVisualElement; } }
+        private TWindow Window { get; set; }
+        protected VisualElement Container { get { return Window.GetRootVisualContainer(); } }
         protected MockOperationFactory Factory { get; private set; }
 
         [OneTimeSetUp]
@@ -26,6 +26,24 @@ namespace UnityEditor.PackageManager.UI.Tests
         protected void OneTimeTearDown()
         {
             OperationFactory.Reset();
+            Window = null;
+
+            if (TestContext.CurrentContext.Result.FailCount <= 0)
+            {
+                PackageCollection.Instance.UpdatePackageCollection(true);
+            }
+        }
+
+        protected void SetSearchPackages(IEnumerable<PackageInfo> packages)
+        {
+            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
+            PackageCollection.Instance.FetchSearchCache(true);
+        }
+
+        protected void SetListPackages(IEnumerable<PackageInfo> packages)
+        {
+            Factory.Packages = packages;
+            PackageCollection.Instance.FetchListCache(true);
         }
 
         protected static Error MakeError(ErrorCode code, string message)

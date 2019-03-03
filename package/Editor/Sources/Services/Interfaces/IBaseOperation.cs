@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -8,7 +8,7 @@ namespace UnityEditor.PackageManager.UI
         event Action OnOperationFinalized;
 
         bool IsCompleted { get; }
-
+                
         void Cancel();
     }
 }

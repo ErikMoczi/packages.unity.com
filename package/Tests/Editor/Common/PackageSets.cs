@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -18,8 +18,8 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         private static readonly string[] Words = new[] { "lorem", "ipsum", "dolor", "sit", "amet", "consectetuer",
-                                                         "adipiscing", "elit", "sed", "diam", "nonummy", "nibh", "euismod",
-                                                         "tincidunt", "ut", "laoreet", "dolore", "magna", "aliquam", "erat" };
+            "adipiscing", "elit", "sed", "diam", "nonummy", "nibh", "euismod",
+            "tincidunt", "ut", "laoreet", "dolore", "magna", "aliquam", "erat" };
 
         private static string LoremIpsum(int numParagraphs, int minSentences, int maxSentences, int minWords, int maxWords)
         {
@@ -41,14 +41,14 @@ namespace UnityEditor.PackageManager.UI.Tests
                         {
                             if (w == 0)
                             {
-                                var firstWord = Words[Random.Next(Words.Length)];
-                                firstWord = char.ToUpper(firstWord[0]) + firstWord.Substring(1);
-                                result.Append(firstWord);
+                                var firstWord = Words [Random.Next (Words.Length)];
+                                firstWord = char.ToUpper (firstWord [0]) + firstWord.Substring (1);
+                                result.Append (firstWord);
                             }
                             else
                             {
-                                result.Append(" ");
-                                result.Append(Words[Random.Next(Words.Length)]);
+                                result.Append (" ");
+                                result.Append (Words [Random.Next (Words.Length)]);
                             }
                         }
                     }
@@ -65,11 +65,11 @@ namespace UnityEditor.PackageManager.UI.Tests
 
         public PackageInfo Single(string name = null, string version = null)
         {
-            var source = Random.NextDouble() > 0.5 ? PackageSource.Unknown : PackageSource.Registry;
-            return Single(source, name, version);
+            var type = Random.NextDouble() > 0.5 ? PackageSource.Unknown : PackageSource.Registry;
+            return Single(type, name, version);
         }
 
-        public PackageInfo Single(PackageSource source, string name = null, string version = null, bool isCurrent = true, bool isVerified = false, PackageType type = PackageType.package)
+        public PackageInfo Single(PackageSource type, string name = null, string version = null, bool isCurrent = true, bool isVerified = false)
         {
             if (name == null)
                 name = RandomString(Random.Next(5, 10));
@@ -80,12 +80,12 @@ namespace UnityEditor.PackageManager.UI.Tests
                     version += "-preview";
             }
 
-            var group = UpmBaseOperation.GroupName(source, type.ToString());
+            var group = UpmBaseOperation.GroupName(type);
             var package = new PackageInfo
             {
                 DisplayName = char.ToUpper(name[0]) + name.Substring(1),
                 Name = string.Format("com.unity.{0}", name),
-                Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                Description = LoremIpsum(Random.Next(3,5), 2, 10, 5, 20),
                 PackageId = string.Format("com.unity.{0}@{1}", name, version),
                 State = PackageState.UpToDate,
                 Group = group,
@@ -93,10 +93,8 @@ namespace UnityEditor.PackageManager.UI.Tests
                 IsVerified = isVerified,
                 IsCurrent = isCurrent,
                 IsLatest = false,
-                Origin = source,
-                Type = type.ToString(),
+                Origin = type,
                 Category = null,
-                HasFullFetch = true,
                 Errors = new List<Error>()
             };
 
@@ -158,6 +156,105 @@ namespace UnityEditor.PackageManager.UI.Tests
             packages[1].State = PackageState.Outdated;
             packages[2].State = PackageState.InProgress;
             packages[3].State = PackageState.Error;
+
+            return packages;
+        }
+
+        // Package that actually exist. Useful when using test package that will be added to manifest
+        public List<PackageInfo> RealPackages()
+        {
+            var packages = new List<PackageInfo>();
+
+            // Don't add this package if it exists
+            if (PackageCollection.Instance.GetPackageByName("a") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "A",
+                    Name = "a",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "a@1.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "1.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("b") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "B",
+                    Name = "b",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "b@1.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "1.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("c") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "C",
+                    Name = "c",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "c@1.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "1.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("d") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "NonExistingVersion(d)",
+                    Name = "d",
+                    Description = "Non existing package", //LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "d@4.0.0",
+                    State = PackageState.UpToDate,
+                    Version = "4.0.0",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
+
+            if (PackageCollection.Instance.GetPackageByName("nonexistingpackage") == null)
+            {
+                var package = new PackageInfo
+                {
+                    DisplayName = "NonExistingPackage",
+                    Name = "nonexistingpackage",
+                    Description = LoremIpsum(Random.Next(3, 5), 2, 10, 5, 20),
+                    PackageId = "nonexistingpackage@0.0.1",
+                    State = PackageState.UpToDate,
+                    Version = "0.0.1",
+                    Group = PackageGroupOrigins.Packages.ToString(),
+                    IsCurrent = true,
+                    IsLatest = true,
+                    Errors = new List<Error>()
+                };
+                packages.Add(package);
+            }
 
             return packages;
         }

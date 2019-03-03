@@ -1,4 +1,4 @@
-﻿// If you are using IntelliJ Rider, you can simply turn on the SCSS compiler, otherwise here is how to convert scss to uss
+// If you are using IntelliJ Rider, you can simply turn on the SCSS compiler, otherwise here is how to convert scss to uss
 //		# Install Sass
 //				gem install sass
 //
@@ -93,7 +93,7 @@
 	flex: 0 0 auto;
 
 	@include padding($top, $right, $bottom, $left);
-	@include slice(4px, 6px, 4px, 6px);
+	@include slice(4, 6, 4, 6);
 
 	&.display-none {
 		position: absolute;
@@ -130,11 +130,11 @@
 //--------------------------------------------------------------------------------------------------
 
 @mixin font-small() {
-	font-size: 9px;
+	font-size: 9;
 }
 
 @mixin font-normal() {
-	font-size: 12px;
+	font-size: 12;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -142,8 +142,8 @@
 //--------------------------------------------------------------------------------------------------
 
 #container {
-	position: absolute;
-	@include position(-2px, 0, 0, 0);
+	-unity-position: absolute;
+	@include position(0, 0, 0, 0);
 }
 
 .display-none {
@@ -166,7 +166,7 @@
 }
 
 .row {
-	//flex: 1 0 0;
+	flex: 1 0 0;
 	flex-direction: row;
 }
 
@@ -176,49 +176,48 @@
 }
 
 .tag {
-	@include border-box(1px);
-	@include padding(1px, 3px, 1px, 3px);
+	@include border-box(1);
+	@include padding(1, 3, 1, 3);
 	@include font-small();
-	border-radius: 5px;
+	border-radius: 5;
 	-unity-text-align: middle-center;
 
 	border-color: #000000;
 	color: #000000;
 }
 
-$spinner-large-size: 32px;
-$spinner-large-half-size: 16px;
-$spinner-normal-size: 14px;
-$spinner-normal-half-size: 7px;
-$toolbar-height: 18px;
-$text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
+$spinner-large-size: 32;
+$spinner-large-half-size: 16;
+$spinner-normal-size: 14;
+$spinner-normal-half-size: 7;
+$toolbar-height: 18;
 
 #toolbarContainer {
+	flex: 0 0 auto;
 	flex-direction: row;
 	align-items: flex-start;
 	height: $toolbar-height;
-	overflow: hidden;
 
 	#toolbarView {
 		flex: 1 0 0;
 		flex-direction: row;
 		align-items: flex-start;
 		background-image: $toolbar-background;
-		margin-top: -1px;
-		@include slice(1px, 1px, 1px, 1px);
+		margin-top: -1;
+		@include slice(1, 1, 1, 1);
 
 		.toolbarButton {
 			flex: 1 0 0;
-			font-size: 9px;
+			font-size: 9;
 			-unity-text-align: middle-center;
 			background-image: $toolbar-button-background;
 			@include button-box(0);
-			@include margin(0, -1px, 0, 0);
-			@include padding(0, 5px, 0, 5px);
-			height: 19px;
+			@include margin(0, -1, 0, 0);
+			@include padding(0, 5, 0, 5);
+			height: 19;
 
 			&.space {
-				margin-left: 7px;
+				margin-left: 7;
 			}
 
 			&.active {
@@ -237,12 +236,6 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			flex: 0 0 auto;
 			flex-direction: row;
 			align-items: flex-start;
-
-			#toolbarAddButton {
-				font-size: 13px;
-				@include padding(0, 8px, 4px, 8px);
-				margin-right: -8px;
-			}
 		}
 
 		#toolbarRight {
@@ -253,9 +246,9 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			#toolbarSearch {
 				flex: 1 0 0;
 				height: $toolbar-height;
-				max-width: 500px;
+				max-width: 500;
 				flex-direction: row;
-				@include margin(0, 5px, 0, 0);
+				@include margin(0, 5, 0, 0);
 			}
 		}
 	}
@@ -266,44 +259,34 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 	flex-direction: row;
 	align-items: center;
 	justify-content: flex-start;
-	height: 14px;
+	height: 14;
 	@include margin(0, 0, 0, 0);
 
-	.unity-base-field 
-	{
+	#searchTextField {
 		flex: 1 0 0;
-		margin-bottom: 0;
-		min-height: 15px;
-		height: unset;
-	}
-
-	.unity-base-text-field.placeholder .unity-base-field__input{
-		color: $unity-background-dark-contrast;
-	}
-
-	.unity-base-field__input {
-		flex: 1 0 0;
-		font-size: 9px;
+		font-size: 9;
 		background-image: $toolbar-search-textfield-background;
-		@include margin(1px, 5px, 1px, 5px);
-		@include padding(2px, 17px, 1px, 17px);
-		@include slice(1px, 0, 1px, 14px);
-		height: 15px;
+		@include margin(2, 5, 1, 5);
+		@include padding(2, 17, 1, 17);
+		@include slice(1, 0, 1, 14);
+		height: 14;
 
 		&:focus {
 			background-image: $toolbar-search-textfield-focus-background;
 		}
 
+		&.placeholder {
+			color: $unity-background-dark-contrast;
+		}
 	}
-	
+
 	#searchCancelButton {
-		width: 14px;
-		height: 15px;
-		min-height: 15px;
+		width: 14;
+		height: 15;
 		background-image: $toolbar-search-cancel-off-background;
 		@include button-box(0);
-		@include slice(1px, 14px, 1px, 0);
-		@include margin(1px, 0, 0, -10px);
+		@include slice(1, 14, 1, 0);
+		@include margin(3, 0, 2, -10);
 		@include padding-box(0);
 		@include border-box(0);
 
@@ -336,11 +319,11 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 		.title {
 			-unity-text-align: middle-center;
-			font-size: 14px;
+			font-size: 14;
 		}
 
 		.loading {
-			position: relative;
+			-unity-position: relative;
 			@include position($spinner-normal-half-size, auto, auto, $spinner-normal-half-size);
 
 			@include border-box(0);
@@ -357,32 +340,33 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 	#headerTitle {
 		flex: 1 0 0;
-		font-size: 12px;
+		font-size: 12;
 		-unity-font-style: bold;
 		color: $unity-text-color;
 	}
 
 	#headerCaret {
 		flex: 0 0 auto;
-		font-size: 12px;
+		font-size: 12;
 		-unity-font-style: bold;
 		color: $unity-text-color;
-		min-width: 16px;
+		min-width: 16;
 	}
 
 	#spinnerContainer {
-		width: 14px;
+		-unity-position: absolute;
+		@include position(3, 0, auto, 2);
+		width: 14;
 
 		flex: 0.1 0 0;
 		flex-direction: column;
 		align-items: center;
 	}
 
-	#loadingSpinnerContainer {
-	}
-
 	.loading {
+		-unity-position: relative;
 		@include position($spinner-normal-half-size, auto, auto, $spinner-normal-half-size);
+
 		@include border-box(0);
 		@include padding-box(0);
 		@include margin-box(0);
@@ -396,14 +380,14 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 	.combo {
 		@extend .row;
-		@include margin-box(3px);
-		@include padding-box(3px);
+		@include margin-box(3);
+		@include padding-box(3);
 
-		.popupField .unity-base-field__input {
-			@include padding(0, 0, 0, 8px);
+		.popup {
+			@include padding(0, 0, 0, 8);
 			@include margin-box(0);
-			border-top-left-radius: 0;
-			border-bottom-left-radius: 0;
+			border-top-width-left-radius: 0;
+			border-bottom-width-left-radius: 0;
 		}
 
 		.button {
@@ -412,8 +396,8 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			@include font-normal();
 			@include border-box(0);
 			@include margin-box(0);
-			@include padding(2px, 6px, 3px, 6px);
-			@include slice(4px, $background-button-slice-middle, 4px, $background-button-slice-middle);
+			@include padding(2, 6, 3, 6);
+			@include slice(4, $background-button-slice-middle, 4, $background-button-slice-middle);
 
 			-unity-text-align: middle-center;
 			border-left-width: 0;
@@ -422,10 +406,10 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			border-bottom-width: 0;
 			background-image: $background-mid-button;
 
-			border-top-right-radius: 0;
-			border-bottom-right-radius: 0;
-			border-top-left-radius: 0;
-			border-bottom-left-radius: 0;
+			border-top-width-right-radius: 0;
+			border-bottom-width-right-radius: 0;
+			border-top-width-left-radius: 0;
+			border-bottom-width-left-radius: 0;
 
 			&.selected {
 				background-image: $background-mid-button-selected;
@@ -433,7 +417,7 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			}
 
 			&.first {
-				@include slice(4px, $background-button-slice-right, 4px, 6px);
+				@include slice(4, $background-button-slice-right, 4, 6);
 				background-image: $background-left-button;
 
 				&.selected {
@@ -442,7 +426,7 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			}
 
 			&.last {
-				@include slice(4px, 6px, 4px, $background-button-slice-left);
+				@include slice(4, 6, 4, $background-button-slice-left);
 				background-image: $background-right-button;
 
 				&.selected {
@@ -462,9 +446,7 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 	// Package List
 	//--------------------------------------------------------------------------------------------------
 	#packageListGroup {
-		width: 300px;
-		border-right-width: 1px;
-		border-color: rgba(0,0,0, 0.5);
+		width: 270;
 
 		#listContainerOuter {
 			@extend .column;
@@ -480,7 +462,6 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 				#headerTitle {
 					height: 0;
-					min-height: 0;
 					@include margin-box(0);
 					@include padding-box(0);
 					@include border-box(0);
@@ -499,28 +480,27 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 		#scrollView {
 			@extend .column;
 
-			#unity-vertical-scroller {
+			#VerticalScroller {
 				bottom: 0;
 			}
 
-			#unity-horizontal-scroller {
+			#HorizontalScroller {
 				height: 0;
 			}
 
-			#unity-content-viewport {
+			#ContentViewport {
 				bottom: 0;
 
-				#unity-content-container {
+				#ContentView {
 					right: 0;
 					left: 0;
 				}
 			}
 		}
-		
+
 		#noResult {
 			#noResultText {
 				-unity-word-wrap: true;
-				white-space: normal;
 			}
 		}
 	}
@@ -528,121 +508,62 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 	//--------------------------------------------------------------------------------------------------
 	// Package Item
 	//--------------------------------------------------------------------------------------------------
-	.packageItem {
+	.package {
+		flex: 1 0 0;
+		flex-direction: row;
+		align-items: center;
 		@include margin(0, 0, 0, 0);
-		border-color: rgba(0, 0, 0, 0.5);
-		border-bottom-width: 1px;
+		border-color: rgba(0,0,0, 0.5);
+		border-bottom-width: 1;
 
-		#itemLabel {
-			//flex: 1 0 0;
-			flex-direction: row;
-			align-items: center;
+		&.selected {
+			@include selected-element();
 
-			.unity-label {
-				@include padding(1px, 2px, 2px, 2px);
-				@include margin(2px, 4px, 2px, 4px);
-				min-height: unset;
-			}
-			&.selected {
-				@include selected-element();
-
-				#packageName, #packageVersion {
-					color: $unity-text-color-highlight;
-				}
-			}
-
-			.status {
-				min-height:unset;
-				flex: 0 0 14;
-				width: 14px;
-				height: 14px;
-				@include padding(1px, 2px, 2px, 2px);
-				@include margin(2px, 0, auto, 2px);
-
-				&.installed {
-					background-image: $installed-package-background;
-					&.no-icon {
-						background-image: none;
-					}
-				}
-
-				&.outdated {
-					background-image: $background-status-outdated;
-					&.no-icon {
-						background-image: none;
-					}
-				}
-
-				&.inprogress {
-					background-image: none;
-				}
-
-				&.error {
-					background-image: $background-status-error;
-				}
-			}
-
-			.name {
-				flex: 1 0 0;
-				width: 160px;
-				@include font-normal();
-				@include margin(auto, 5px, auto, 0);
-				@include text-clip();
+			#packageName, #packageVersion {
+				color: $unity-text-color-highlight;
 			}
 		}
 
-		$package-item-padding-right: 5px;
+		.status {
+			flex: 0 0 14;
+			width: 14;
+			height: 14;
+			@include margin(auto, 0, auto, 2);
 
-		.endText {
-			padding-left: 0;
-			padding-right: $package-item-padding-right;
+			&.installed {
+				background-image: $installed-package-background;
+				&.no-icon {
+	 				background-image: none;
+				}
+			}
+
+			&.outdated {
+ 				background-image: $background-status-outdated;
+				&.no-icon {
+	 				background-image: none;
+				}
+			}
+
+			&.inprogress {
+ 				background-image: none;
+			}
+
+			&.error {
+ 				background-image: $background-status-error;
+			}
 		}
 
-		#itemVersions {
-			background-color: $unity-background-light-contrast;
+		.name {
+			flex: 1 0 0;
+			@include font-normal();
+			@include margin(auto, 5, auto, 0);
+			@include text-clip();
+		}
 
-			#versionList {
-				min-height: 75px;
-				max-height: 150px;
-				flex: 1 0 auto;
-
-				$padding-item-right: $package-item-padding-right + $text-normal-padding-horizontal + 15;
-				$scrollBar-size: 15;
-				&.hasScrollBar {
-					PackageVersionLabel {
-						padding-right: $padding-item-right - $scrollBar-size;
-					}
-				}
-
-				PackageVersionLabel {
-					min-height: unset;
-					overflow: hidden;
-					color: $unity-text-color;
-					padding-right: $padding-item-right;
-					padding-top: 4px;
-					padding-bottom: 4px;
-					-unity-text-align: middle-right;
-
-					&.selected {
-						@include selected-element();
-					}
-
-					@include margin-box(0);
-				}
-			}
-
-			#versionsToolbar {
-				align-items: flex-end;
-				border-top-width: 1px;
-				border-color: rgba(0, 0, 0, 0.5);
-
-				.unity-label {
-					@include padding(1px, 2px, 2px, 2px);
-					@include margin(2px, 4px, 2px, 4px);
-					min-height: unset;
-				}
-
-			}
+		.version {
+			flex: 0 0 auto;
+			@include margin(auto, 5, auto, 0);
+			@include font-small;
 		}
 	}
 
@@ -651,107 +572,178 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 	//--------------------------------------------------------------------------------------------------
 	#detailsGroup {
 		flex: 1 0 0;
+		border-left-width: 1px;
+		border-color: rgba(0,0,0, 0.5);
 
 		#detailsContainer {
 			flex: 1 0 0;
 			flex-direction: column;
-			position: relative;
+			-unity-position: relative;
 		}
 	}
 
 	#detailView {
 		flex: 1 0 0;
 
-		#unity-vertical-scroller {
+		#VerticalScroller {
 			bottom: 0;
 		}
 
-		#unity-content-viewport {
-			#unity-content-container {
-				position: absolute;
+		#ContentViewport {
+
+			#ContentView {
+				-unity-position: absolute;
 				@include position(0, 0, auto, 0);
 			}
 		}
 
 		.detail {
-			@include padding-box(5px);
+			flex: 1 0 0;
+			flex-direction: column;
+			@include padding-box(5);
 
 			.header {
+				flex: 1 0 0;
 				flex-direction: row;
 				align-items: flex-start;
-				justify-content: space-between;
 
-				margin-bottom: 8px;
+				margin-bottom: 8;
 
 				#titleContainer {
-					flex: 1 0 0;
+					flex: 0.9 0 0;
 
 					#detailTitle {
-						font-size: 18px;
+						font-size: 18;
 						-unity-font-style: bold;
 						-unity-word-wrap: true;
-						white-space: normal;
-						@include margin(0, 0, 0, 4px);
+						@include margin(0, 0, 0, 4);
 					}
+				}
+
+				$controls-height: 19;
+				#detailsControls {
+					flex: 1 0 0;
+					height: $controls-height;
+					flex-direction: row;
+					align-items: center;
+					flex-wrap: wrap;
+					@include margin(3, 0, 0, 0);
+				}
+
+				#updateCombo {
+					flex: 1 0 0;
+					height: $controls-height;
+					align-items: center;
+					@include margin(0, 0, 0, 0);
+					@include padding(0, 0, 0, 0);
+
+					#update {
+						flex: 0 0 auto;
+					}
+
+					#updateDropdownContainer {
+						min-width: 65;
+						max-width: 150;
+						height: $controls-height;
+						flex: 0 0 auto;
+
+						.popup {
+							@include font-normal();
+							height: $controls-height;
+
+							&:focus {
+								background-image: $popup-background;
+							}
+
+							&:hover {
+								.textElement {
+									color: $unity-text-color;
+								}
+							}
+
+							.textElement {
+								margin-top: 2;
+							}
+						}
+					}
+
+					.action {
+						flex: 0 0 auto;
+						@include margin-box(0);
+						@include font-normal();
+						@include padding(2, 4, 3, 4);
+						right: -3;
+						&:hover {
+							color: $unity-text-color;
+						}
+					}
+				}
+
+				#updateContainer {
+					height: $controls-height;
+					flex: 1 0 0;
+					align-items: flex-end;
+
+					@include padding-box(0);
+				}
+
+
+
+				.button {
+					height: $controls-height;
+					@include font-normal();
+					@include button(3,3,4,3);
 				}
 			}
 
-			.unity-button {
-				@include border(4px, 6px, 4px, 6px);
-
-				-unity-text-align: middle-center;
-			}
-			.unity-label {
-				@include margin(2px, 4px, 2px, 4px);
-				@include padding(1px, 2px, 2px, 2px);
-			}
-			
 			#detailVersion {
-				font-size: 16px;
-				max-height: 30px;
+				font-size: 16;
+				max-height: 30;
 			}
 
 			#detailName {
-				max-height: 20px;
+				flex: 1 0 0;
+				max-height: 20;
 				-unity-font-style: italic;
 			}
 
 			#detailPackageStatus {
+				flex: 1 0 0;
 				-unity-font-style: bold;
 				-unity-word-wrap: true;
-				white-space: normal;
 			}
 
 			#detailTag {
-				width: 60px;
+				width: 60;
 				@include font-normal();
-				border-radius: 5px;
+				border-radius: 5;
 				border-color: rgb(180, 180, 180);
-				@include border-box(2px);
+				@include border-box(2);
 				-unity-text-align: middle-center;
 			}
 
 			#detailDesc, #detailModuleReference {
+				flex: 1 0 0;
 				@include font-normal();
 				-unity-word-wrap: true;
-				white-space: normal;
-				
+
 				&.empty {
 					-unity-font-style: italic;
 				}
 			}
 
 			#detailAuthor {
+				flex: 1 0 0;
 				@include font-normal();
 				-unity-word-wrap: true;
-				white-space: normal;
 			}
 
 			#detailCategory {
+				flex: 1 0 0;
 				@include font-normal();
 				-unity-word-wrap: true;
-				white-space: normal;
-				@include margin(auto, auto, 5px, auto);
+
+				@include margin(auto, auto, 5, auto);
 			}
 
 			#changeLogContainer, #viewLicensesContainer {
@@ -762,15 +754,15 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 			#detailActions, .detailActions {
 				flex: 0 0 auto;
 				flex-direction: row;
-				margin-left: 2px;
+				margin-left: 2;
 
 				@extend .row;
 
 				.detailAction {
 					@include margin(auto, 0, auto, 0);
-					@include padding(auto, 2px, auto, 2px);
-					border-left-width: 2px;
-					border-right-width: 2px;
+					@include padding(auto, 2, auto, 2);
+					border-left-width: 2;
+					border-right-width: 2;
 				}
 
 				.detailActionSeparator {
@@ -781,10 +773,9 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 				}
 
 				#thirdPartyNoticeLabel {
-					@include margin(4px, 0, 4px, 0);
+					@include margin(4, 0, 4, 0);
 					@include padding-box(0);
 					-unity-word-wrap: true;
-					white-space: normal;
 				}
 
 				#viewThirdParty {
@@ -799,50 +790,6 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 				#detailVersion {
 					flex: 0 0 auto;
-				}
-			}
-
-			#samplesHeaderLabel {
-				margin-top: 10px;
-				-unity-font-style: bold;
-			}
-
-			#samplesContainer {
-				@extend .row;
-
-				#importStatusContainer {
-					Label {
-						width: 16px;
-						height: 16px;
-						@include margin(6px, 2px, 6px, 2px);
-						&.imported {
-							background-image: $installed-package-background;
-						}
-					}
-				}
-
-				#nameLabelContainer {
-					Label {
-						@include margin(2px, 12px, 2px, 4px);
-						height: 24px;
-						-unity-text-align: middle-left;
-					}
-				}
-
-				#sizeLabelContainer {
-					Label {
-						@include margin(2px, 12px, 2px, 8px);
-						height: 24px;
-						-unity-text-align: middle-left;
-					}
-				}
-
-				#importButtonContainer {
-					Button {
-						overflow: visible;
-						@include margin(4px, 12px, 4px, 8px);
-						height: 20px;
-					}
 				}
 			}
 
@@ -866,21 +813,15 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 
 			.tagContainer {
 			}
-
-			#detailDependencies {
-				flex: 1 0 0;
-				margin-top: 10px;
-			}
 		}
 	}
 
 	#detailError {
-		position: absolute;
-		@include position(5px, 5px, auto, 5px);
-		min-height: 200px;
+		-unity-position: absolute;
+		@include position(5, 5, auto, 5);
+		min-height: 200;
 		-unity-word-wrap: true;
-		white-space: normal;
-		
+
 		&.display-none {
 			@include position(0, 0, 0, 0);
 			width: 0;
@@ -893,193 +834,82 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 		}
 	}
 
-	$toolbar-height: 30px;
-
-	#packageToolBar {
-		position: relative;
-
-		@include margin(2px, 0, 0, 0);
-
-		border-color: rgba(0, 0, 0, 0.5);
-		@include border(1px, 0, 0, 0);
-
-		min-height: $toolbar-height;
-		max-height: $toolbar-height;
-
-		#toolbarContainer {
-			flex-direction: row;
-			align-items: center;
-			justify-content: space-between;
-			min-height: $toolbar-height;
-			max-height: $toolbar-height;
-
-			#leftItems {
-				flex-shrink: 1;
-			}
-
-			#rightItems {
-				flex-grow: 1;
-				flex-direction: row;
-				align-items: center;
-				justify-content: flex-end;
-			}
-
-			.unity-label {
-				@include margin(2px, 4px, 2px, 4px);
-				@include padding(1px, 2px, 2px, 2px);
-			}
-			Button {
-				flex: 0 0 auto;
-				height: 20px;
-				@include margin(3px, 4px, 3px, 4px);
-				@include padding(0px, 6px, 3px, 6px);
-				@include border(4px, 6px, 4px, 6px);
-				overflow: visible;
-				-unity-text-align:middle-center;
-
-				&:hover {
-					color: $unity-text-color;
-				}
-			}
-		}
-	}
-
 	#packageStatusBar {
-		position: relative;
+		-unity-position: relative;
 
-		@include margin(2px, 0, 0, 0);
+		flex: 0 0 auto;
+		@include margin(2, 0, 0, 0);
 
 		border-color: rgba(0, 0, 0, 0.5);
-		@include border(1px, 0, 0, 0);
-
-		min-height: $toolbar-height;
-		max-height: $toolbar-height;
+		@include border(1, 0, 0, 0);
 	}
 
 	#statusBarContainer {
 		flex-direction: row;
 		align-items: center;
-		justify-content: flex-start;
-		min-height: $toolbar-height;
-		max-height: $toolbar-height;
-		margin-left: 2px;
+		justify-content: space-between;
 
-		#errorIcon {
-			background-image: $background-status-error;
-			width: 16px;
-			height: 16px;
-			margin-left: 2px;
-			margin-right: 0;
-		}
-
-		#statusLabel {
-			padding-left: 2px;
-			-unity-font-style: italic;
-			@include margin(2px, 4px, 2px, 4px);
+		#loadingContainer{
 			
-			&.icon {
-				margin-left: 0;
+			flex-direction: row;
+			align-items: center;
+			justify-content: flex-start;
+
+			margin-left: 2;
+
+			#loadingIcon {
+				background-image: $background-status-error;
+				width: 16;
+				height: 16;
+				margin-left: -12;
+				margin-right: 0;
+			}
+	
+			#loadingText {
+				padding-left: 2;
+				-unity-font-style: italic;
+	
+				&.icon {
+					margin-left: 0;
+				}
 			}
 		}
+
+		#moreAddOptionsButton {
+			font-size: 16;
+			background-image: none;
+			@include margin(0, 0, -2, 0);
+			@include padding(3, 6, 6, 6);
+			border-color: rgba(0, 0, 0, 0.5);
+			@include border(0, 1, 0, 0);
+		}
 	}
 
-	#packageAddFromIdField {
-		position: absolute;
-		@include position(0, 0, 0, 0);
+	#packageAddFromUrlField {
+		-unity-position: absolute;
+		@include position(-35, 0, 0, 0);
 	}
 
-	#addFromIdFieldContainer {
+	#addFromUrlFieldContainer {
 		border-color: rgba(0, 0, 0, 0.5);
-		@include border(1px, 0, 1px, 0);
+		@include border(1, 0, 1, 0);
 
 		flex-direction: row;
 		justify-content: space-between;
 		align-items: center;
 
-		height: 35px;
+		height: 35;
 		background-color: $unity-background;
 
-		#idTextField {
+		#urlTextField {
 			flex: 1 0 0;
-			height: 20px;
+			height: 20;
 			-unity-text-align: middle-left;
 		}
 
-		#addFromIdButton {
+		#addFromUrlButton {
 			flex: 0 0 auto;
-			height: 25px;
-			background-image: $background-button;
-			-unity-text-align: middle-center;
-			@include padding(2px, auto, 2px, auto);
-			@include border(4px, 6px, 4px, 6px);
-			@include slice(4px, 6px, 4px, 6px);			
-		}
-	}
-
-	#dependenciesOuterContainer {
-		flex: 0 0 auto;
-		flex-direction: row;
-
-		@extend .row;
-
-		#dependenciesInnerContainer {
-			flex: 0 0 auto;
-			flex-direction: column;
-
-			@extend .column;
-
-			#dependenciesHeaderLabel {
-				flex: 0 0 auto;
-				flex-direction: row;
-				font-style: bold;
-
-				@include padding(auto, auto, auto, 6px);
-				@include margin(0, 0, 4px, 0);
-			}
-
-			#dependenciesContainer {
-				flex: 0 0 auto;
-				flex-direction: row;
-				margin-left: 6px;
-				margin-right: 6px;
-
-				#noDependencies {
-					flex: 0 0 auto;
-					@include padding(auto, 0, auto, 0);
-					@include margin(auto, 0, auto, 0);
-
-					.display-none {
-						overflow: hidden;
-						@include position(0, 0, 0, 0);
-						width: 0;
-						height: 0;
-						min-height: 0;
-						max-height: 0;
-						@include border-box(0);
-						@include padding-box(0);
-						@include margin-box(0);
-						visibility: hidden;
-					}
-				}
-
-				.text {
-					font-style: normal;
-					height: 14px;
-					@include padding(0, 2px, 0, 0);
-				}
-
-				#dependenciesNames {
-					@include margin(auto, 8px, 3px, -4px);
-				}
-
-				#dependenciesVersions {
-					@include margin(auto, 2px, 3px, 2px);
-				}
-
-				#dependenciesVersions {
-					@include margin(auto, 2px, 3px, 2px);
-				}
-			}
+			height: 20;
 		}
 	}
 }
@@ -1089,22 +919,21 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 	border-color: #FF0000;
 	flex-direction: row;
 
-	@include border-box(1px);
-	@include padding(5px, 10px, 5px, 10px);
+	@include border-box(1);
+	@include padding(5, 10, 5, 10);
 
 	#alertMessage {
 		flex: 1 0 0;
 		color: $unity-text-color-highlight;
 		-unity-word-wrap: true;
-		white-space: normal;
 		@include text-clip();
 	}
 
 	#close {
 		flex: 0 0 auto;
-		max-height: 30px;
-		@include position(auto, auto, auto, 5px);
-		@include button(3px,3px,4px,3px);
+		max-height: 30;
+		@include position(auto, auto, auto, 5);
+		@include button(3,3,4,3);
 	}
 }
 
@@ -1128,13 +957,4 @@ $text-normal-padding-horizontal: 6px; // 2 padding + 4 margin
 	max-width: $spinner-large-size;
 	max-height: $spinner-large-size;
 	background-image: $background-spinner-large;
-}
-
-.arrow {
-	@include padding(3px, 2px, 0, 2px);
-	opacity: 0.5;
-
-	&.expanded {
-		padding-right: 1px;
-	}
 }

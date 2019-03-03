@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Linq;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal class MockRemoveOperation : MockOperation, IRemoveOperation
     {
-        public new event Action<Error> OnOperationError = delegate {};
-        public new event Action OnOperationFinalized = delegate {};
-        public event Action<PackageInfo> OnOperationSuccess = delegate {};
+        public new event Action<Error> OnOperationError = delegate { };
+        public new event Action OnOperationFinalized = delegate { };
+        public event Action<PackageInfo> OnOperationSuccess = delegate { };
 
         public PackageInfo PackageInfo { get; set; }
 
@@ -39,12 +39,12 @@ namespace UnityEditor.PackageManager.UI.Tests
             OnOperationSuccess(packageInfo);
             OnOperationFinalized();
         }
-
+        
         internal void ResetEvents()
         {
-            OnOperationError = delegate {};
-            OnOperationFinalized = delegate {};
-            OnOperationSuccess = delegate {};
+            OnOperationError = delegate { };
+            OnOperationFinalized = delegate { };
+            OnOperationSuccess = delegate { };
         }
     }
 }

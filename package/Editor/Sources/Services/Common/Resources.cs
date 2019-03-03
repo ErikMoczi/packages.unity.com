@@ -1,4 +1,4 @@
-﻿using UnityEngine.UIElements;
+﻿using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -13,7 +13,7 @@ namespace UnityEditor.PackageManager.UI
 
         public static VisualElement GetTemplate(string templateFilename)
         {
-            return AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath(templateFilename)).CloneTree();
+            return AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath(templateFilename)).CloneTree(null);
         }
     }
 }

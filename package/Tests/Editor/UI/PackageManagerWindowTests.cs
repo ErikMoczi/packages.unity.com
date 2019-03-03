@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 using NUnit.Framework;
 
 namespace UnityEditor.PackageManager.UI.Tests
@@ -9,7 +9,7 @@ namespace UnityEditor.PackageManager.UI.Tests
     internal class PackageManagerWindowTests : UITests<PackageManagerWindow>
     {
         // Filter change shows correct result
-        private Action<PackageFilter, IEnumerable<Package>> onPackageChangedEvent;    // TODO: We need to have a discussion on event de-registration
+        private Action<IEnumerable<Package>> onPackageChangedEvent;    // TODO: We need to have a discussion on event de-registration
         private bool showPreviewPackagesPreviousValue;
 
         [SetUp]
@@ -17,43 +17,31 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             showPreviewPackagesPreviousValue = PackageManagerPrefs.ShowPreviewPackages;
             PackageManagerPrefs.ShowPreviewPackages = true;
-            Window.Collection.SetFilter(PackageFilter.Local);
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);
             SetListPackages(Enumerable.Empty<PackageInfo>());
             SetSearchPackages(Enumerable.Empty<PackageInfo>());
-            Window.SelectionManager.ClearAll();
             Factory.ResetOperations();
         }
 
         [TearDown]
         public void TearDown()
         {
-            Window.Collection.OnPackagesChanged -= onPackageChangedEvent;
+            PackageCollection.Instance.OnPackagesChanged -= onPackageChangedEvent;
             PackageManagerPrefs.ShowPreviewPackages = showPreviewPackagesPreviousValue;
-        }
-
-        private void SetSearchPackages(IEnumerable<PackageInfo> packages)
-        {
-            Factory.SearchOperation = new MockSearchOperation(Factory, packages);
-            Window.Collection.FetchSearchCache(true);
-        }
-
-        private void SetListPackages(IEnumerable<PackageInfo> packages)
-        {
-            Factory.Packages = packages;
-            Window.Collection.FetchListCache(true);
         }
 
         [Test]
         public void When_Default_FirstPackageUIElement_HasSelectedClass()
         {
-            onPackageChangedEvent = (filter, packages) =>
+            onPackageChangedEvent = packages =>
             {
-                Container.Query(null, "packageItem").ToList()
-                    .Select(p => p.Query("itemLabel").First()).ToList()
-                    .Any(label => label.ClassListContains(ApplicationUtil.SelectedClassName));
-            };
+                var package = Container.Query(null, "package").First();
 
-            Window.Collection.OnPackagesChanged += onPackageChangedEvent;
+                Assert.NotNull(package);
+                Assert.IsTrue(package.ClassListContains(PackageItem.SelectedClassName));
+            };
+            
+            PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
             SetListPackages(PackageSets.Instance.Many(5, true));
         }
 
@@ -67,15 +55,15 @@ namespace UnityEditor.PackageManager.UI.Tests
             SetListPackages(packages);
             Factory.AddOperation = new MockAddOperation(Factory, latest);
 
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
 
-            onPackageChangedEvent = (filter, newpackages) =>
+            onPackageChangedEvent = newpackages =>
             {
-                package = Window.Collection.GetPackageByName(current.Name);
+                package = PackageCollection.Instance.GetPackageByName(current.Name);
 
                 Assert.IsTrue(package.Current.PackageId == latest.PackageId);
 
-                var packageItem = Container.Query(null, "packageItem").Build().First();
+                var packageItem = Container.Query(null, "package").Build().First();
                 var label = packageItem.Q<Label>("packageName");
                 var version = packageItem.Q<Label>("packageVersion");
                 var state = packageItem.Q<Label>("packageState");
@@ -84,12 +72,12 @@ namespace UnityEditor.PackageManager.UI.Tests
                 Assert.IsTrue(latest.Version == version.text);
                 Assert.IsFalse(hasOutdatedClass);
             };
-
+            
             package.AddSignal.OnOperation += operation =>
             {
                 operation.OnOperationSuccess += packageInfo =>
                 {
-                    Window.Collection.OnPackagesChanged += onPackageChangedEvent;
+                    PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
                 };
             };
 
@@ -109,7 +97,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             Factory.AddOperation = new MockAddOperation(Factory, latest);
             Factory.AddOperation.ForceError = error;
 
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
 
             package.AddSignal.OnOperation += operation =>
             {
@@ -117,9 +105,9 @@ namespace UnityEditor.PackageManager.UI.Tests
                 operation.OnOperationFinalized += () =>
                 {
                     Assert.IsTrue(package.Current.PackageId ==
-                        current.PackageId);           // Make sure package hasn't been upgraded
+                                  current.PackageId); // Make sure package hasn't been upgraded
 
-                    var packageItem = Container.Query(null, "packageItem").Build().First();
+                    var packageItem = Container.Query(null, "package").Build().First();
                     var label = packageItem.Q<Label>("packageName");
                     var version = packageItem.Q<Label>("packageVersion");
                     var state = packageItem.Q<Label>("packageState");
@@ -140,19 +128,19 @@ namespace UnityEditor.PackageManager.UI.Tests
             var current = packages.ToList().First();
 
             SetListPackages(packages);
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
 
-            onPackageChangedEvent = (filter, allPackages) =>
+            onPackageChangedEvent = allPackages =>
             {
-                package = Window.Collection.GetPackageByName(current.Name);
+                package = PackageCollection.Instance.GetPackageByName(current.Name);
                 Assert.IsNull(package);
             };
 
-            Window.Collection.OnPackagesChanged += onPackageChangedEvent;
+            PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
 
             package.Remove();
-            Window.Collection.FetchListOfflineCache(true);
+            PackageCollection.Instance.FetchListOfflineCache(true);
         }
 
         [Test]
@@ -164,7 +152,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             var error = MakeError(ErrorCode.Unknown, "Fake error");
             Factory.RemoveOperation = new MockRemoveOperation(Factory) {ForceError = error};
             SetListPackages(packages);
-            var package = Window.Collection.GetPackageByName(current.Name);
+            var package = PackageCollection.Instance.GetPackageByName(current.Name);
             Assert.IsNotNull(package);
 
             package.RemoveSignal.OnOperation += operation =>
@@ -172,15 +160,15 @@ namespace UnityEditor.PackageManager.UI.Tests
                 operation.OnOperationError += operationError => { Assert.AreEqual(error, operationError); };
                 operation.OnOperationFinalized += () =>
                 {
-                    package = Window.Collection.GetPackageByName(current.Name);
+                    package = PackageCollection.Instance.GetPackageByName(current.Name);
                     Assert.IsNotNull(package);
                 };
             };
 
             package.Remove();
         }
-
-        [Test]
+        
+        [Test] 
         public void When_Filter_Changes_Shows_Correct_List()
         {
             var packagesLocal = PackageSets.Instance.Many(2);
@@ -189,7 +177,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             SetListPackages(packagesLocal);
             SetSearchPackages(packagesAll);
 
-            onPackageChangedEvent = (filter, packages) =>
+            onPackageChangedEvent = packages =>
             {
                 foreach (var package in packagesAll)
                 {
@@ -197,34 +185,27 @@ namespace UnityEditor.PackageManager.UI.Tests
                 }
             };
 
-            Window.Collection.OnPackagesChanged += onPackageChangedEvent;
-
-            Window.Collection.SetFilter(PackageFilter.All);
+            PackageCollection.Instance.OnPackagesChanged += onPackageChangedEvent;
+            
+            PackageCollection.Instance.SetFilter(PackageFilter.All);
         }
 
         [Test]
         public void ListPackages_UsesCache()
         {
-            Window.Collection.SetFilter(PackageFilter.Local);                            // Set filter to use list
+            PackageCollection.Instance.SetFilter(PackageFilter.Local);                            // Set filter to use list
             SetListPackages(PackageSets.Instance.Many(2));
-
-            Assert.IsTrue(Window.Collection.LatestListPackages.Any());            // Make sure packages are cached
+            
+            Assert.IsTrue(PackageCollection.Instance.LatestListPackages.Any());            // Make sure packages are cached
         }
 
         [Test]
         public void SearchPackages_UsesCache()
         {
-            Window.Collection.SetFilter(PackageFilter.All);                                // Set filter to use search
+            PackageCollection.Instance.SetFilter(PackageFilter.All);                                // Set filter to use search
             SetSearchPackages(PackageSets.Instance.Many(2));
-
-            Assert.IsTrue(Window.Collection.LatestSearchPackages.Any());     // Make sure packages are cached
-        }
-
-        [Test]
-        public void Ensure_ResetPackageToDefaultsMenu_StillExits()
-        {
-            // Make sure menu doesn't change name since we call it by name in the code
-            Assert.That(EditorGUIUtility.SerializeMainMenuToString().Contains(ApplicationUtil.ResetPackagesMenuName));
+            
+            Assert.IsTrue(PackageCollection.Instance.LatestSearchPackages.Any());     // Make sure packages are cached
         }
     }
 }

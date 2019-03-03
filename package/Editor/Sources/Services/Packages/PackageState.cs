@@ -1,7 +1,6 @@
-namespace UnityEditor.PackageManager.UI
+﻿namespace UnityEditor.PackageManager.UI
 {
-    internal enum PackageState
-    {
+    internal enum PackageState {
         UpToDate,
         Outdated,
         InProgress,

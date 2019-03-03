@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine.UIElements;
+﻿using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -13,7 +10,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (element == null)
                 return;
-
+            
             if (value)
                 element.RemoveFromClassList(DisplayNone);
             else
@@ -21,7 +18,7 @@ namespace UnityEditor.PackageManager.UI
 
             element.visible = value;
         }
-
+        
         public static void SetElementDisplayNonEmpty(Label element)
         {
             if (element == null)
@@ -53,51 +50,6 @@ namespace UnityEditor.PackageManager.UI
         public static bool IsElementVisible(VisualElement element)
         {
             return element.visible && !element.ClassListContains(DisplayNone);
-        }
-
-        public static void ScrollIfNeeded(ScrollView container, VisualElement target)
-        {
-            if (target == null || container == null)
-                return;
-
-            var minY = container.worldBound.yMin;
-            var maxY = container.worldBound.yMax;
-            var itemMinY = target.worldBound.yMin;
-            var itemMaxY = target.worldBound.yMax;
-            var scroll = container.scrollOffset;
-
-            if (itemMinY < minY)
-            {
-                scroll.y -= Math.Max(0, minY - itemMinY);
-                container.scrollOffset = scroll;
-            }
-            else if (itemMaxY > maxY)
-            {
-                scroll.y += itemMaxY - maxY;
-                container.scrollOffset = scroll;
-            }
-        }
-
-        public static IEnumerable<T> GetParentsOfType<T>(VisualElement element) where T : VisualElement
-        {
-            var result = new List<T>();
-
-            var parent = element;
-            while (parent != null)
-            {
-                var selected = parent as T;
-                if (selected != null)
-                    result.Add(selected);
-
-                parent = parent.parent;
-            }
-
-            return result;
-        }
-
-        public static T GetParentOfType<T>(VisualElement element) where T : VisualElement
-        {
-            return GetParentsOfType<T>(element).FirstOrDefault();
         }
     }
 }

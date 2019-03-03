@@ -1,9 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<engine:UXML
-        xmlns:engine="UnityEngine.UIElements"
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML 
+        xmlns:engine="UnityEngine.Experimental.UIElements" 
         xmlns:upm="UnityEditor.PackageManager.UI"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="UnityEngine.UIElements UIElementsSchema/UnityEngine.UIElements.xsd
+        xsi:schemaLocation="UnityEngine.Experimental.UIElements UIElementsSchema/UnityEngine.Experimental.UIElements.xsd
                             UnityEditor.PackageManager.UI UIElementsSchema/UnityEditor.PackageManager.UI.xsd">
     <engine:VisualElement name="detailsContainer">
         <engine:ScrollView name="detailView">
@@ -12,14 +12,21 @@
                     <engine:VisualElement name="titleContainer">
                         <engine:Label name="detailTitle"/>
                     </engine:VisualElement>
+                    <engine:VisualElement name="detailsControls">
+                        <engine:VisualElement name="updateContainer">
+                            <engine:VisualElement name="updateCombo" class="combo">
+                                <engine:Button name="update" text="Update" class="action"/>
+                                <engine:VisualElement name="updateDropdownContainer" class="button last"/>
+                            </engine:VisualElement>
+                        </engine:VisualElement>
+                        <engine:Button name="updateBuiltIn" text="Enable" class="button"/>
+                        <engine:Button name="remove" text="Remove" class="button"/>
+                    </engine:VisualElement>
                 </engine:VisualElement>
                 <engine:VisualElement class="versionContainer">
                     <engine:Label name="detailVersion"/>
                     <engine:VisualElement name="tag-inDevelopment" class="tagLine display-none">
                       <engine:Label name="tag" class="tag" text="in development"/>
-                    </engine:VisualElement>
-                    <engine:VisualElement name="tag-git" class="tagLine display-none">
-                        <engine:Label name="tag" class="tag" text="git"/>
                     </engine:VisualElement>
                     <engine:VisualElement name="tag-local" class="tagLine display-none">
                         <engine:Label name="tag" class="tag" text="local"/>
@@ -52,13 +59,9 @@
                 <engine:Label name="detailAuthor"/>
                 <engine:Label name="detailModuleReference"/>
                 <engine:Label name="detailDesc"/>
-                <upm:PackageDependencies name="detailDependencies"/>
 
-                <upm:PackageSampleList name="detailSampleList"/>
             </engine:VisualElement>
         </engine:ScrollView>
-        <upm:PackageToolbar name="packageToolBar"/>
-
         <upm:Alert name="detailError" class="display-none"/>
     </engine:VisualElement>
 </engine:UXML>

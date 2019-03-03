@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -19,7 +19,7 @@ namespace UnityEditor.PackageManager.UI
         internal new class UxmlFactory : UxmlFactory<LoadingSpinner, UxmlTraits>
         {
         }
-
+        
         // This works around an issue with UXML instantiation
         // See https://fogbugz.unity3d.com/f/cases/1046459/
         internal new class UxmlTraits : VisualElement.UxmlTraits
@@ -63,11 +63,8 @@ namespace UnityEditor.PackageManager.UI
             // Weird hack to make sure loading spinner doesn't generate an error every frame.
             // Cannot put in constructor as it give really strange result.
             if (parent != null && parent.parent != null)
-            {
-                // TODO the "hack" has been upgraded according to UIElements API, but we should make sure it still is necessary
-                parent.parent.cacheAsBitmap = true;
-                parent.parent.style.overflow = Overflow.Hidden;
-            }
+                parent.parent.clippingOptions = ClippingOptions.ClipAndCacheContents;
+
             rotation = 0;
 
             EditorApplication.update += UpdateProgress;

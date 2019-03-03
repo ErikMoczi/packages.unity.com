@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Linq;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal class MockAddOperation : MockOperation, IAddOperation
     {
-        public new event Action<Error> OnOperationError = delegate {};
-        public new event Action OnOperationFinalized = delegate {};
-        public event Action<PackageInfo> OnOperationSuccess = delegate {};
+        public new event Action<Error> OnOperationError = delegate { };
+        public new event Action OnOperationFinalized = delegate { };
+        public event Action<PackageInfo> OnOperationSuccess = delegate { };
 
         public PackageInfo PackageInfo { get; set; }
 
@@ -17,7 +17,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         }
 
         public void AddPackageAsync(PackageInfo packageInfo, Action<PackageInfo> doneCallbackAction = null,
-            Action<Error> errorCallbackAction = null)
+                                    Action<Error> errorCallbackAction = null)
         {
             if (ForceError != null)
             {
@@ -48,16 +48,11 @@ namespace UnityEditor.PackageManager.UI.Tests
             OnOperationFinalized();
         }
 
-        public void AddPackageAsync(string packageId, Action<PackageInfo> doneCallbackAction = null, Action<Error> errorCallbackAction = null)
-        {
-            AddPackageAsync(new PackageInfo {PackageId = packageId}, doneCallbackAction, errorCallbackAction);
-        }
-
         internal void ResetEvents()
         {
-            OnOperationError = delegate {};
-            OnOperationFinalized = delegate {};
-            OnOperationSuccess = delegate {};
+            OnOperationError = delegate { };
+            OnOperationFinalized = delegate { };
+            OnOperationSuccess = delegate { };
         }
     }
 }

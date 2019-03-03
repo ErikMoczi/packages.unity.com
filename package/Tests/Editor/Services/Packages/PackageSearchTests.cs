@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace UnityEditor.PackageManager.UI.Tests
@@ -44,7 +44,7 @@ namespace UnityEditor.PackageManager.UI.Tests
         {
             Assert.IsTrue(PackageFiltering.FilterByText(testPackage, criteria));
         }
-
+        
         [TestCase(kPrerelease)]
         [TestCase(kUpperPrerelease)]
         [TestCase(kMixedPrerelease)]
@@ -114,7 +114,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             }
             return versions;
         }
-
+        
         private static IEnumerable<string> GetAllPartial(string str)
         {
             var names = new List<string>();

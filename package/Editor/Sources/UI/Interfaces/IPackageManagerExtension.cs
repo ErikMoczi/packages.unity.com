@@ -1,4 +1,4 @@
-﻿using UnityEngine.UIElements;
+﻿using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -12,19 +12,19 @@ namespace UnityEditor.PackageManager.UI
         /// </summary>
         /// <returns>A visual element that represents the UI or null if none</returns>
         VisualElement CreateExtensionUI();
-
+        
         /// <summary>
         /// Called by the Package Manager UI when the package selection changed.
         /// </summary>
         /// <param name="packageInfo">The newly selected package information (can be null)</param>
         void OnPackageSelectionChange(PackageManager.PackageInfo packageInfo);
-
+        
         /// <summary>
         /// Called by the Package Manager UI when a package is added or updated.
         /// </summary>
         /// <param name="packageInfo">The package information</param>
         void OnPackageAddedOrUpdated(PackageManager.PackageInfo packageInfo);
-
+        
         /// <summary>
         /// Called by the Package Manager UI when a package is removed.
         /// </summary>

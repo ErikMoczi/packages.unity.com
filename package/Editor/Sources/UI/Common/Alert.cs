@@ -1,5 +1,5 @@
 using System;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -16,7 +16,7 @@ namespace UnityEditor.PackageManager.UI
     internal class Alert : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<Alert> {}
+        internal new class UxmlFactory : UxmlFactory<Alert> { }
 #endif
 
         private const string TemplatePath = PackageManagerWindow.ResourcesPath + "Templates/Alert.uxml";
@@ -30,7 +30,7 @@ namespace UnityEditor.PackageManager.UI
         {
             UIUtils.SetElementDisplay(this, false);
 
-            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree();
+            root = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TemplatePath).CloneTree(null);
             Add(root);
             root.StretchToParentSize();
 
@@ -63,15 +63,12 @@ namespace UnityEditor.PackageManager.UI
         public void AdjustSize(bool verticalScrollerVisible)
         {
             if (verticalScrollerVisible)
-                style.right = originalPositionRight + positionRightWithScroll;
+                style.positionRight = originalPositionRight + positionRightWithScroll;
             else
-                style.right = originalPositionRight;
+                style.positionRight = originalPositionRight;
         }
 
-        private Label _alertMessage;
-        private Label AlertMessage { get { return _alertMessage ?? (_alertMessage = root.Q<Label>("alertMessage")); } }
-
-        private Button _closeButton;
-        private Button CloseButton { get { return _closeButton ?? (_closeButton = root.Q<Button>("close")); } }
+        private Label AlertMessage { get { return root.Q<Label>("alertMessage"); } }
+        private Button CloseButton { get { return root.Q<Button>("close"); } }
     }
 }

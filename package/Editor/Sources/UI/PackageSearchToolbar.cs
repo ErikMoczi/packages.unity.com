@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -17,13 +17,13 @@ namespace UnityEditor.PackageManager.UI
     internal class PackageSearchToolbar : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<PackageSearchToolbar> {}
+        internal new class UxmlFactory : UxmlFactory<PackageSearchToolbar> { }
 #endif
         private const string kPlaceHolder = "Search by package name, verified, preview or version number...";
-
-        public event Action OnFocusChange = delegate {};
-        public event Action<string> OnSearchChange = delegate {};
-
+        
+        public event Action OnFocusChange = delegate { };
+        public event Action<string> OnSearchChange = delegate { };
+        
         private string searchText;
         private bool showingPlaceHolder;
 
@@ -34,31 +34,16 @@ namespace UnityEditor.PackageManager.UI
             root = Resources.GetTemplate("PackageSearchToolbar.uxml");
             Add(root);
             root.StretchToParentSize();
-            Cache = new VisualElementCache(root);
 
-            SearchTextField.maxLength = 64;
-            SearchTextField.name = "";
+            SearchTextField.value = searchText;
+            SearchTextField.maxLength = 54;
             SearchCancelButton.clickable.clicked += SearchCancelButtonClick;
-
+            
             RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
-        }
 
-        public void GrabFocus()
-        {
-            SearchTextField.Focus();
-        }
-
-        public new void SetEnabled(bool enable)
-        {
-            base.SetEnabled(enable);
-            SearchTextField.SetEnabled(enable);
-            SearchCancelButton.SetEnabled(enable);
-        }
-
-        public void SetSearchText(string text)
-        {
-            searchText = text;
+            searchText = PackageSearchFilter.Instance.SearchText;
+            
             if (string.IsNullOrEmpty(searchText))
             {
                 showingPlaceHolder = true;
@@ -71,6 +56,18 @@ namespace UnityEditor.PackageManager.UI
                 SearchTextField.value = searchText;
                 SearchTextField.RemoveFromClassList("placeholder");
             }
+        }
+        
+        public void GrabFocus()
+        {
+            SearchTextField.Focus();
+        }
+
+        public new void SetEnabled(bool enable)
+        {
+            base.SetEnabled(enable);
+            SearchTextField.SetEnabled(enable);
+            SearchCancelButton.SetEnabled(enable);
         }
 
         private void OnSearchTextFieldChange(ChangeEvent<string> evt)
@@ -112,7 +109,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 SearchTextField.value = string.Empty;
             }
-
+            
             showingPlaceHolder = true;
             SearchTextField.AddToClassList("placeholder");
             SearchTextField.value = kPlaceHolder;
@@ -120,18 +117,18 @@ namespace UnityEditor.PackageManager.UI
 
         private void OnEnterPanel(AttachToPanelEvent evt)
         {
-            SearchTextField.Q("unity-text-input").RegisterCallback<FocusEvent>(OnSearchTextFieldFocus);
-            SearchTextField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(OnSearchTextFieldFocusOut);
+            SearchTextField.RegisterCallback<FocusEvent>(OnSearchTextFieldFocus);
+            SearchTextField.RegisterCallback<FocusOutEvent>(OnSearchTextFieldFocusOut);
             SearchTextField.RegisterCallback<ChangeEvent<string>>(OnSearchTextFieldChange);
-            SearchTextField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            SearchTextField.RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
         }
 
         private void OnLeavePanel(DetachFromPanelEvent evt)
         {
-            SearchTextField.Q("unity-text-input").UnregisterCallback<FocusEvent>(OnSearchTextFieldFocus);
-            SearchTextField.Q("unity-text-input").UnregisterCallback<FocusOutEvent>(OnSearchTextFieldFocusOut);
+            SearchTextField.UnregisterCallback<FocusEvent>(OnSearchTextFieldFocus);
+            SearchTextField.UnregisterCallback<FocusOutEvent>(OnSearchTextFieldFocusOut);
             SearchTextField.UnregisterCallback<ChangeEvent<string>>(OnSearchTextFieldChange);
-            SearchTextField.Q("unity-text-input").UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            SearchTextField.UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
         }
 
         private void OnKeyDownShortcut(KeyDownEvent evt)
@@ -143,17 +140,14 @@ namespace UnityEditor.PackageManager.UI
                 evt.StopImmediatePropagation();
                 return;
             }
-
+            
             if (evt.keyCode == KeyCode.Tab)
             {
                 OnFocusChange();
                 evt.StopImmediatePropagation();
             }
         }
-
-        private VisualElementCache Cache { get; set; }
-
-        private TextField SearchTextField { get { return Cache.Get<TextField>("searchTextField"); } }
-        private Button SearchCancelButton { get { return Cache.Get<Button>("searchCancelButton"); } }
+        private TextField SearchTextField { get { return root.Q<TextField>("searchTextField"); } }
+        private Button SearchCancelButton { get { return root.Q<Button>("searchCancelButton"); } }
     }
 }

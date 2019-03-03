@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal class MockSearchOperation : MockOperation, ISearchOperation
     {
-        public new event Action<Error> OnOperationError = delegate {};
-        public new event Action OnOperationFinalized = delegate {};
+        public new event Action<Error> OnOperationError = delegate { };
+        public new event Action OnOperationFinalized = delegate { };
 
         public IEnumerable<PackageInfo> Packages { get; set; }
 
@@ -15,7 +15,7 @@ namespace UnityEditor.PackageManager.UI.Tests
             Packages = packages;
         }
 
-        public void GetAllPackageAsync(string packageNameOrId = null, Action<IEnumerable<PackageInfo>> doneCallbackAction = null,  Action<Error> errorCallbackAction = null)
+        public void GetAllPackageAsync(Action<IEnumerable<PackageInfo>> doneCallbackAction = null,  Action<Error> errorCallbackAction = null)
         {
             if (ForceError != null)
             {

@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 
 namespace UnityEditor.PackageManager.UI
-{
+{    
     // History of a single package
     internal class Package : IEquatable<Package>
     {
-        public static bool ShouldProposeLatestVersions
+        static public bool ShouldProposeLatestVersions
         {
             get
             {
@@ -29,7 +29,7 @@ namespace UnityEditor.PackageManager.UI
 
         internal const string packageManagerUIName = "com.unity.package-manager-ui";
         private readonly string packageName;
-        private readonly IEnumerable<PackageInfo> source;
+        private IEnumerable<PackageInfo> source;
 
         internal Package(string packageName, IEnumerable<PackageInfo> infos)
         {
@@ -38,12 +38,19 @@ namespace UnityEditor.PackageManager.UI
 
             if (!infos.Any())
                 throw new ArgumentException("Cannot be empty", "infos");
-
+            
             this.packageName = packageName;
-            source = infos;
+            UpdateSource(infos);
         }
 
-        public Error Error { get; set; }
+        internal void UpdateSource(IEnumerable<PackageInfo> source)
+        {
+            this.source = source;
+#if UNITY_2018_3_OR_NEWER
+            if (IsPackageManagerUI)
+                this.source = this.source.Where(p => p != null && p.Version.Major >= 2);
+#endif
+        }
 
         public PackageInfo Current { get { return Versions.FirstOrDefault(package => package.IsCurrent); } }
 
@@ -74,7 +81,7 @@ namespace UnityEditor.PackageManager.UI
 
                 if (candidates.Contains(verified))
                     return verified;
-                if ((current == null || !current.IsVerified) && candidates.Contains(latestRelease))
+                if ((current == null || !current.IsVerified ) && candidates.Contains(latestRelease))
                     return latestRelease;
                 if ((current == null || current.IsPreview) && candidates.Contains(latestPreview))
                     return latestPreview;
@@ -90,7 +97,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 if (Current == null)
                     return null;
-
+                
                 // Get all version that have the same Major/Minor
                 var versions = Versions.Where(package => package.Version.Major == Current.Version.Major && package.Version.Minor == Current.Version.Minor);
 
@@ -112,25 +119,7 @@ namespace UnityEditor.PackageManager.UI
         {
             get { return Versions.Where(package => !package.IsPreRelease); }
         }
-
-        internal IEnumerable<PackageInfo> KeyVersions
-        {
-            get
-            {
-                //
-                // Get key versions -- Latest, Verified, LatestPatch, Current.
-                var keyVersions = new HashSet<PackageInfo>();
-                if (LatestRelease != null) keyVersions.Add(LatestRelease);
-                if (Current != null) keyVersions.Add(Current);
-                if (Verified != null && Verified != Current) keyVersions.Add(Verified);
-                if (LatestPatch != null && IsAfterCurrentVersion(LatestPatch)) keyVersions.Add(LatestPatch);
-                if (Current == null && LatestRelease == null && Latest != null) keyVersions.Add(Latest);
-                if (ShouldProposeLatestVersions && Latest != LatestRelease && Latest != null) keyVersions.Add(Latest);
-                keyVersions.Add(LatestUpdate);        // Make sure LatestUpdate is always in the list.
-
-                return keyVersions.OrderBy(package => package.Version);
-            }
-        }
+        
         internal PackageInfo LatestRelease { get {return ReleaseVersions.LastOrDefault();}}
         internal PackageInfo Verified { get {return Versions.FirstOrDefault(package => package.IsVerified);}}
 
@@ -144,12 +133,12 @@ namespace UnityEditor.PackageManager.UI
         {
             get { return Name == packageManagerUIName; }
         }
-
+        
         public bool Equals(Package other)
         {
-            if (other == null)
+            if (other == null) 
                 return false;
-
+            
             return packageName == other.packageName;
         }
 
@@ -157,12 +146,12 @@ namespace UnityEditor.PackageManager.UI
         {
             return packageName.GetHashCode();
         }
-
+        
         [SerializeField]
         internal readonly OperationSignal<IAddOperation> AddSignal = new OperationSignal<IAddOperation>();
 
         private Action OnAddOperationFinalizedEvent;
-
+        
         internal void Add(PackageInfo packageInfo)
         {
             if (packageInfo == Current || AddRemoveOperationInProgress)
@@ -174,7 +163,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 AddSignal.Operation = null;
                 operation.OnOperationFinalized -= OnAddOperationFinalizedEvent;
-                PackageManagerWindow.FetchListOfflineCacheForAllWindows();
+                PackageCollection.Instance.FetchListOfflineCache(true);
             };
 
             operation.OnOperationFinalized += OnAddOperationFinalizedEvent;
@@ -186,15 +175,6 @@ namespace UnityEditor.PackageManager.UI
         internal void Update()
         {
             Add(Latest);
-        }
-
-        internal static void AddFromId(string packageId)
-        {
-            if (AddRemoveOperationInProgress)
-                return;
-            var operation = OperationFactory.Instance.CreateAddOperation();
-            addRemoveOperationInstance = operation;
-            operation.AddPackageAsync(packageId);
         }
 
         internal static void AddFromLocalDisk(string path)
@@ -230,7 +210,7 @@ namespace UnityEditor.PackageManager.UI
             {
                 RemoveSignal.Operation = null;
                 operation.OnOperationFinalized -= OnRemoveOperationFinalizedEvent;
-                PackageManagerWindow.FetchListOfflineCacheForAllWindows();
+                PackageCollection.Instance.FetchListOfflineCache(true);
             };
 
             operation.OnOperationFinalized += OnRemoveOperationFinalizedEvent;

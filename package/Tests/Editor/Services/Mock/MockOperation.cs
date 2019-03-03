@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal class MockOperation : IBaseOperation
     {
-        public event Action<Error> OnOperationError { add {} remove {} }
-        public event Action OnOperationFinalized { add {} remove {} }
-        public event Action<string> OnOperationFailure { add {} remove {} }
-
+        public event Action<Error> OnOperationError { add { } remove { } }
+        public event Action OnOperationFinalized { add { } remove { } }
+        public event Action<string> OnOperationFailure { add { } remove { } }
+        
         public bool IsCompleted { get; protected set; }
         public bool RequireNetwork { get; set; }
 

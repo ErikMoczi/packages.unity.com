@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace UnityEditor.PackageManager.UI.Tests
 {
     internal class MockListOperation : MockOperation, IListOperation
     {
-        public new event Action<Error> OnOperationError = delegate {};
-        public new event Action OnOperationFinalized = delegate {};
+        public new event Action<Error> OnOperationError = delegate { };
+        public new event Action OnOperationFinalized = delegate { };
 
         public bool OfflineMode { get; set; }
 

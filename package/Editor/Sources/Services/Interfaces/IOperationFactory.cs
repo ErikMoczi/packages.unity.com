@@ -1,4 +1,4 @@
-namespace UnityEditor.PackageManager.UI
+﻿namespace UnityEditor.PackageManager.UI
 {
     /// <summary>
     /// This is the Interface we will use to create the facade we need for testing.

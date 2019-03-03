@@ -1,8 +1,6 @@
-using System;
-using System.Linq;
+﻿using System;
 using System.Text.RegularExpressions;
-using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -12,7 +10,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (info == null)
                 return false;
-
+            
             if (info.Name.IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
                 return true;
 
@@ -24,7 +22,7 @@ namespace UnityEditor.PackageManager.UI
                 var prerelease = text.StartsWith("-") ? text.Substring(1) : text;
                 if (info.Version != null && info.Version.Prerelease.IndexOf(prerelease, StringComparison.CurrentCultureIgnoreCase) >= 0)
                     return true;
-
+    
                 if (info.VersionWithoutTag.StartsWith(text, StringComparison.CurrentCultureIgnoreCase))
                     return true;
 
@@ -39,12 +37,6 @@ namespace UnityEditor.PackageManager.UI
                     if (PackageTag.verified.ToString().IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
                         return true;
                 }
-                
-                if (info.IsCore)
-                {
-                    if (PackageTag.builtin.ToString().IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                        return true;
-                }
             }
 
             return false;
@@ -54,7 +46,7 @@ namespace UnityEditor.PackageManager.UI
         {
             if (string.IsNullOrEmpty(text))
                 return true;
-
+            
             var trimText = text.Trim(' ', '\t');
             trimText = Regex.Replace(trimText, @"[ ]{2,}", " ");
             return string.IsNullOrEmpty(trimText) || FilterByText(package.Current ?? package.Latest, trimText);
@@ -68,29 +60,37 @@ namespace UnityEditor.PackageManager.UI
         public static void FilterPackageList(PackageList packageList)
         {
             PackageItem firstItem = null;
+            PackageItem lastItem = null;
             var selectedItemInFilter = false;
-            var selectedItem = packageList.SelectedItem;
+            var selectedItem = packageList.selectedItem;
             var packageItems = packageList.Query<PackageItem>().ToList();
             foreach (var item in packageItems)
             {
-                if (FilterByText(item, packageList.searchFilter.SearchText))
+                if (FilterByText(item, PackageSearchFilter.Instance.SearchText))
                 {
                     if (firstItem == null)
                         firstItem = item;
                     if (item == selectedItem)
                         selectedItemInFilter = true;
-
+                    
                     UIUtils.SetElementDisplay(item, true);
+                    
+                    if (lastItem != null)
+                        lastItem.nextItem = item;
+                
+                    item.previousItem = lastItem;
+                    item.nextItem = null;
+                    
+                    lastItem = item;
                 }
                 else
                     UIUtils.SetElementDisplay(item, false);
             }
 
-            if (packageItems.Any())
-                if (firstItem == null)
-                    packageList.ShowNoResults();
-                else
-                    packageList.ShowResults(selectedItemInFilter ? selectedItem : firstItem);
+            if (firstItem == null)
+                packageList.ShowNoResults();
+            else
+                packageList.ShowResults(selectedItemInFilter ? selectedItem : firstItem);
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.PackageManager.UI
 {
@@ -12,11 +12,11 @@ namespace UnityEditor.PackageManager.UI
         }
     }
 #endif
-
+    
     internal class PackageAddFromUrlField : VisualElement
     {
 #if UNITY_2018_3_OR_NEWER
-        internal new class UxmlFactory : UxmlFactory<PackageAddFromUrlField> {}
+        internal new class UxmlFactory : UxmlFactory<PackageAddFromUrlField> { }
 #endif
         private string urlText;
 
@@ -26,7 +26,6 @@ namespace UnityEditor.PackageManager.UI
         {
             root = Resources.GetTemplate("PackageAddFromUrlField.uxml");
             Add(root);
-            Cache = new VisualElementCache(root);
 
             UrlTextField.value = urlText;
 
@@ -67,10 +66,10 @@ namespace UnityEditor.PackageManager.UI
         {
             AddFromUrlFieldContainer.RegisterCallback<FocusEvent>(OnContainerFocus);
             AddFromUrlFieldContainer.RegisterCallback<FocusOutEvent>(OnContainerFocusOut);
-            UrlTextField.Q("unity-text-input").RegisterCallback<FocusEvent>(OnUrlTextFieldFocus);
-            UrlTextField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(OnUrlTextFieldFocusOut);
+            UrlTextField.RegisterCallback<FocusEvent>(OnUrlTextFieldFocus);
+            UrlTextField.RegisterCallback<FocusOutEvent>(OnUrlTextFieldFocusOut);
             UrlTextField.RegisterCallback<ChangeEvent<string>>(OnUrlTextFieldChange);
-            UrlTextField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            UrlTextField.RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
             Hide();
         }
 
@@ -78,10 +77,10 @@ namespace UnityEditor.PackageManager.UI
         {
             AddFromUrlFieldContainer.UnregisterCallback<FocusEvent>(OnContainerFocus);
             AddFromUrlFieldContainer.UnregisterCallback<FocusOutEvent>(OnContainerFocusOut);
-            UrlTextField.Q("unity-text-input").UnregisterCallback<FocusEvent>(OnUrlTextFieldFocus);
-            UrlTextField.Q("unity-text-input").UnregisterCallback<FocusOutEvent>(OnUrlTextFieldFocusOut);
+            UrlTextField.UnregisterCallback<FocusEvent>(OnUrlTextFieldFocus);
+            UrlTextField.UnregisterCallback<FocusOutEvent>(OnUrlTextFieldFocusOut);
             UrlTextField.UnregisterCallback<ChangeEvent<string>>(OnUrlTextFieldChange);
-            UrlTextField.Q("unity-text-input").UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            UrlTextField.UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
         }
 
         private void OnKeyDownShortcut(KeyDownEvent evt)
@@ -128,10 +127,8 @@ namespace UnityEditor.PackageManager.UI
             UrlTextField.Focus();
         }
 
-        private VisualElementCache Cache { get; set; }
-
-        private VisualElement AddFromUrlFieldContainer { get { return Cache.Get<VisualElement>("addFromUrlFieldContainer"); } }
-        private TextField UrlTextField { get { return Cache.Get<TextField>("urlTextField"); } }
-        private Button AddButton { get { return Cache.Get<Button>("addFromUrlButton"); } }
+        private VisualElement AddFromUrlFieldContainer { get { return root.Q<VisualElement>("addFromUrlFieldContainer");  }}
+        private TextField UrlTextField { get { return root.Q<TextField>("urlTextField"); } }
+        private Button AddButton{ get { return root.Q<Button>("addFromUrlButton");  }}
     }
 }
