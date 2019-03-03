@@ -1,7 +1,7 @@
 {
   "name": "com.unity.test-framework.tests",
   "displayName":  "Test Framework Tests",
-  "version": "0.0.30-preview",
+  "version": "1.0.0-preview1",
   "type": "tests",
   "unity": "2019.1",
   "description": "Tests for the Unity Test framework.",
@@ -13,7 +13,7 @@
     "revision": "6ae3a7d1d968a41554645409e39e9aa4afd47aab"
   }, 
   "dependencies": {
-    "com.unity.test-framework": "0.0.30-preview",
+    "com.unity.test-framework": "1.0.0-preview1",
     "nuget.moq": "0.1.11-preview"
   }
 }
