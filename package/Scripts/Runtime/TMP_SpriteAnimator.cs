@@ -44,10 +44,8 @@ namespace TMPro
 
         public void DoSpriteAnimation(int currentCharacter, TMP_SpriteAsset spriteAsset, int start, int end, int framerate)
         {
-            bool isPlaying = false;
-
             // Need to add tracking of coroutines that have been lunched for this text object.
-            if (!m_animations.TryGetValue(currentCharacter, out isPlaying))
+            if (!m_animations.TryGetValue(currentCharacter, out bool isPlaying))
             {
                 StartCoroutine(DoSpriteAnimationInternal(currentCharacter, spriteAsset, start, end, framerate));
                 m_animations.Add(currentCharacter, true);

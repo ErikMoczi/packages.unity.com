@@ -13,7 +13,6 @@ namespace TMPro.EditorUtilities
     [CustomPropertyDrawer(typeof(TMP_FontWeightPair))]
     public class FontWeightDrawer : PropertyDrawer
     {
-
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             SerializedProperty prop_regular = property.FindPropertyRelative("regularTypeface");
@@ -27,12 +26,12 @@ namespace TMPro.EditorUtilities
             int oldIndent = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
 
-            // NORMAL FACETYPE
+            // NORMAL TYPEFACE
             if (label.text[0] == '4') GUI.enabled = false;
             position.x += position.width; position.width = (width - position.width) / 2;
             EditorGUI.PropertyField(position, prop_regular, GUIContent.none);
 
-            // ITALIC FACETYPE
+            // ITALIC TYPEFACE
             GUI.enabled = true;
             position.x += position.width;
             EditorGUI.PropertyField(position, prop_italic, GUIContent.none);
@@ -40,8 +39,6 @@ namespace TMPro.EditorUtilities
             EditorGUI.indentLevel = oldIndent;
         }
     }
-
-
 
     [CustomEditor(typeof(TMP_FontAsset))]
     public class TMP_FontAssetEditor : Editor
@@ -55,7 +52,7 @@ namespace TMPro.EditorUtilities
             public static bool fallbackFontAssetPanel = true;
             public static bool glyphTablePanel = false;
             public static bool characterTablePanel = false;
-            public static bool kerningInfoPanel = false;
+            public static bool fontFeatureTablePanel = false;
         }
 
         private struct AtlasSettings
@@ -66,6 +63,46 @@ namespace TMPro.EditorUtilities
             public int atlasWidth;
             public int atlasHeight;
         }
+
+        /// <summary>
+        /// Material used to display SDF glyphs in the Character and Glyph tables.
+        /// </summary>
+        internal static Material internalSDFMaterial
+        {
+            get
+            {
+                if (s_InternalSDFMaterial == null)
+                {
+                    Shader shader = Shader.Find("Hidden/TextMeshPro/Internal/Distance Field SSD");
+
+                    if (shader != null)
+                        s_InternalSDFMaterial = new Material(shader);
+                }
+
+                return s_InternalSDFMaterial;
+            }
+        }
+        static Material s_InternalSDFMaterial;
+
+        /// <summary>
+        /// Material used to display Bitmap glyphs in the Character and Glyph tables.
+        /// </summary>
+        internal static Material internalBitmapMaterial
+        {
+            get
+            {
+                if (s_InternalBitmapMaterial == null)
+                {
+                    Shader shader = Shader.Find("Hidden/Internal-GUITextureClipText");
+
+                    if (shader != null)
+                        s_InternalBitmapMaterial = new Material(shader);
+                }
+
+                return s_InternalBitmapMaterial;
+            }
+        }
+        static Material s_InternalBitmapMaterial;
 
         private static string[] s_UiStateLabel = new string[] { "<i>(Click to collapse)</i> ", "<i>(Click to expand)</i> " };
         private GUIContent[] m_AtlasResolutionLabels = { new GUIContent("8"), new GUIContent("16"), new GUIContent("32"), new GUIContent("64"), new GUIContent("128"), new GUIContent("256"), new GUIContent("512"), new GUIContent("1024"), new GUIContent("2048"), new GUIContent("4096"), new GUIContent("8192") };
@@ -86,13 +123,17 @@ namespace TMPro.EditorUtilities
         private int m_SelectedAdjustmentRecord = -1;
 
         private string m_dstGlyphID;
-        private const string k_placeholderUnicodeHex = "<i>Unicode Hex ID</i>";
+        private string m_dstUnicode;
+        private const string k_placeholderUnicodeHex = "<i>New Unicode (Hex)</i>";
         private string m_unicodeHexLabel = k_placeholderUnicodeHex;
+        private const string k_placeholderGlyphID = "<i>New Glyph ID</i>";
+        private string m_GlyphIDLabel = k_placeholderGlyphID;
 
         private Warning m_AddGlyphWarning;
         private Warning m_AddCharacterWarning;
         private bool m_DisplayDestructiveChangeWarning;
         private AtlasSettings m_AtlasSettings;
+        private bool m_MaterialPresetsRequireUpdate;
 
         private string m_GlyphSearchPattern;
         private List<int> m_GlyphSearchList;
@@ -135,11 +176,12 @@ namespace TMPro.EditorUtilities
         private SerializedProperty m_GlyphTable_prop;
         private SerializedProperty m_CharacterTable_prop;
 
-        private SerializedProperty m_KerningTable_prop;
-        private KerningTable m_kerningTable;
-        private SerializedProperty m_kerningPairs_prop;
+        private TMP_FontFeatureTable m_FontFeatureTable;
+        private SerializedProperty m_FontFeatureTable_prop;
+        private SerializedProperty m_GlyphPairAdjustmentRecords_prop;
 
-        private SerializedProperty m_kerningPair_prop;
+        private TMP_SerializedPropertyHolder m_SerializedPropertyHolder;
+        private SerializedProperty m_EmptyGlyphPairAdjustmentRecord_prop;
 
         private TMP_FontAsset m_fontAsset;
 
@@ -150,6 +192,7 @@ namespace TMPro.EditorUtilities
         private int errorCode;
 
         private System.DateTime timeStamp;
+
 
         public void OnEnable()
         {
@@ -190,16 +233,26 @@ namespace TMPro.EditorUtilities
             font_italicStyle_prop = serializedObject.FindProperty("italicStyle");
             font_tabSize_prop = serializedObject.FindProperty("tabSize");
 
-            m_GlyphTable_prop = serializedObject.FindProperty("m_GlyphTable");
             m_CharacterTable_prop = serializedObject.FindProperty("m_CharacterTable");
+            m_GlyphTable_prop = serializedObject.FindProperty("m_GlyphTable");
 
-            m_KerningTable_prop = serializedObject.FindProperty("m_KerningTable");
-            m_kerningPair_prop = serializedObject.FindProperty("m_kerningPair");
-            m_kerningPairs_prop = m_KerningTable_prop.FindPropertyRelative("kerningPairs");
+            m_FontFeatureTable_prop = serializedObject.FindProperty("m_FontFeatureTable");
+            m_GlyphPairAdjustmentRecords_prop = m_FontFeatureTable_prop.FindPropertyRelative("m_GlyphPairAdjustmentRecords");
 
             m_fontAsset = target as TMP_FontAsset;
+            m_FontFeatureTable = m_fontAsset.fontFeatureTable;
 
-            m_kerningTable = m_fontAsset.kerningTable;
+            // Upgrade Font Feature Table if necessary
+            if (m_fontAsset.m_KerningTable != null && m_fontAsset.m_KerningTable.kerningPairs != null && m_fontAsset.m_KerningTable.kerningPairs.Count > 0)
+                m_fontAsset.ReadFontAssetDefinition();
+
+            // Create serialized object to allow us to use a serialized property of an empty kerning pair.
+            m_SerializedPropertyHolder = CreateInstance<TMP_SerializedPropertyHolder>();
+            m_SerializedPropertyHolder.fontAsset = m_fontAsset;
+            SerializedObject internalSerializedObject = new SerializedObject(m_SerializedPropertyHolder);
+            m_EmptyGlyphPairAdjustmentRecord_prop = internalSerializedObject.FindProperty("glyphPairAdjustmentRecord");
+
+            //m_EmptyGlyphPairAdjustmentRecord_prop = serializedObject.FindProperty("m_EmptyGlyphPairAdjustmentRecord");
 
             m_materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
 
@@ -308,9 +361,29 @@ namespace TMPro.EditorUtilities
                 {
                     serializedObject.ApplyModifiedProperties();
 
+                    bool isDatabaseRefreshRequired = false;
+
                     if (m_AtlasPopulationMode_prop.intValue == 0)
                     {
-                        m_fontAsset.m_SourceFontFile = null;
+                        m_fontAsset.sourceFontFile = null;
+
+                        // Set atlas textures to non readable.
+                        //for (int i = 0; i < m_fontAsset.atlasTextures.Length; i++)
+                        //{
+                        //    Texture2D tex = m_fontAsset.atlasTextures[i];
+
+                        //    if (tex != null && tex.isReadable)
+                        //    {
+                        //        string texPath = AssetDatabase.GetAssetPath(tex);
+                        //        var texImporter = AssetImporter.GetAtPath(texPath) as TextureImporter;
+                        //        if (texImporter != null)
+                        //        {
+                        //            texImporter.isReadable = false;
+                        //            AssetDatabase.ImportAsset(texPath);
+                        //            isDatabaseRefreshRequired = true;
+                        //        }
+                        //    }
+                        //}
 
                         Debug.Log("Atlas Population mode set to [Static].");
                     }
@@ -325,10 +398,34 @@ namespace TMPro.EditorUtilities
                         }
                         else
                         {
-                            m_fontAsset.m_SourceFontFile = m_fontAsset.m_SourceFontFile_EditorRef;
+                            m_fontAsset.sourceFontFile = m_fontAsset.m_SourceFontFile_EditorRef;
+
+                            /*
+                            // Set atlas textures to non readable.
+                            for (int i = 0; i < m_fontAsset.atlasTextures.Length; i++)
+                            {
+                                Texture2D tex = m_fontAsset.atlasTextures[i];
+
+                                if (tex != null && tex.isReadable == false)
+                                {
+                                    string texPath = AssetDatabase.GetAssetPath(tex.GetInstanceID());
+                                    Object[] paths = AssetDatabase.LoadAllAssetsAtPath(texPath);
+                                    var texImporter = AssetImporter.GetAtPath(texPath) as TextureImporter;
+                                    if (texImporter != null)
+                                    {
+                                        texImporter.isReadable = true;
+                                        AssetDatabase.ImportAsset(texPath);
+                                        isDatabaseRefreshRequired = true;
+                                    }
+                                }
+                            }
+                            */
                             Debug.Log("Atlas Population mode set to [Dynamic].");
                         }
                     }
+
+                    if (isDatabaseRefreshRequired)
+                        AssetDatabase.Refresh();
 
                     serializedObject.Update();
                     isAssetDirty = true;
@@ -346,11 +443,19 @@ namespace TMPro.EditorUtilities
                 // TODO: Switch shaders depending on GlyphRenderMode.
                 EditorGUILayout.PropertyField(m_AtlasRenderMode_prop);
                 EditorGUILayout.PropertyField(m_SamplingPointSize_prop, new GUIContent("Sampling Point Size"));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    m_DisplayDestructiveChangeWarning = true;
+                }
+
+                // Changes to these properties require updating Material Presets for this font asset.
+                EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(m_AtlasPadding_prop, new GUIContent("Padding"));
                 EditorGUILayout.IntPopup(m_AtlasWidth_prop, m_AtlasResolutionLabels, m_AtlasResolutions, new GUIContent("Atlas Width"));
                 EditorGUILayout.IntPopup(m_AtlasHeight_prop, m_AtlasResolutionLabels, m_AtlasResolutions, new GUIContent("Atlas Height"));
                 if (EditorGUI.EndChangeCheck())
                 {
+                    m_MaterialPresetsRequireUpdate = true;
                     m_DisplayDestructiveChangeWarning = true;
                 }
 
@@ -369,7 +474,7 @@ namespace TMPro.EditorUtilities
                         // Update face info is sampling point size was changed.
                         if (m_AtlasSettings.pointSize != m_SamplingPointSize_prop.intValue)
                         {
-                            FontEngine.LoadFontFace(m_fontAsset.m_SourceFontFile, m_SamplingPointSize_prop.intValue);
+                            FontEngine.LoadFontFace(m_fontAsset.sourceFontFile, m_SamplingPointSize_prop.intValue);
                             m_fontAsset.faceInfo = FontEngine.GetFaceInfo();
                         }
 
@@ -377,6 +482,22 @@ namespace TMPro.EditorUtilities
                         m_fontAsset.material.SetFloat(ShaderUtilities.ID_TextureWidth, m_AtlasWidth_prop.intValue);
                         m_fontAsset.material.SetFloat(ShaderUtilities.ID_TextureHeight, m_AtlasHeight_prop.intValue);
                         m_fontAsset.material.SetFloat(ShaderUtilities.ID_GradientScale, m_AtlasPadding_prop.intValue + 1);
+
+                        // Update material presets if any of the relevant properties have been changed.
+                        if (m_MaterialPresetsRequireUpdate)
+                        {
+                            m_MaterialPresetsRequireUpdate = false;
+
+                            Material[] materialPresets = TMP_EditorUtility.FindMaterialReferences(m_fontAsset);
+                            for (int i = 0; i < materialPresets.Length; i++)
+                            {
+                                Material mat = materialPresets[i];
+
+                                mat.SetFloat(ShaderUtilities.ID_TextureWidth, m_AtlasWidth_prop.intValue);
+                                mat.SetFloat(ShaderUtilities.ID_TextureHeight, m_AtlasHeight_prop.intValue);
+                                mat.SetFloat(ShaderUtilities.ID_GradientScale, m_AtlasPadding_prop.intValue + 1);
+                            }
+                        }
 
                         m_fontAsset.ClearFontAssetData();
                         GUIUtility.keyboardControl = 0;
@@ -613,13 +734,13 @@ namespace TMPro.EditorUtilities
                         if (!string.IsNullOrEmpty(m_CharacterSearchPattern))
                             elementIndex = m_CharacterSearchList[i];
 
-                        SerializedProperty characterInfo = m_CharacterTable_prop.GetArrayElementAtIndex(elementIndex);
+                        SerializedProperty characterProperty = m_CharacterTable_prop.GetArrayElementAtIndex(elementIndex);
 
                         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
                         EditorGUI.BeginDisabledGroup(i != m_SelectedCharacterRecord);
                         {
-                            EditorGUILayout.PropertyField(characterInfo);
+                            EditorGUILayout.PropertyField(characterProperty);
                         }
                         EditorGUI.EndDisabledGroup();
 
@@ -656,13 +777,13 @@ namespace TMPro.EditorUtilities
                             Rect position = new Rect(controlRect.x + controlRect.width * .4f, controlRect.y, btnWidth, controlRect.height);
 
                             // Copy Selected Glyph to Target Glyph ID
-                            GUI.enabled = !string.IsNullOrEmpty(m_dstGlyphID);
+                            GUI.enabled = !string.IsNullOrEmpty(m_dstUnicode);
                             if (GUI.Button(position, new GUIContent("Copy to")))
                             {
                                 GUIUtility.keyboardControl = 0;
 
                                 // Convert Hex Value to Decimal
-                                int dstGlyphID = TMP_TextUtilities.StringToInt(m_dstGlyphID);
+                                int dstGlyphID = TMP_TextUtilities.StringHexToInt(m_dstUnicode);
 
                                 //Add new glyph at target Unicode hex id.
                                 if (!AddNewCharacter(elementIndex, dstGlyphID))
@@ -671,7 +792,7 @@ namespace TMPro.EditorUtilities
                                     m_AddCharacterWarning.expirationTime = EditorApplication.timeSinceStartup + 1;
                                 }
 
-                                m_dstGlyphID = string.Empty;
+                                m_dstUnicode = string.Empty;
                                 m_isSearchDirty = true;
 
                                 TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, m_fontAsset);
@@ -682,7 +803,7 @@ namespace TMPro.EditorUtilities
                             position.x += btnWidth;
 
                             GUI.SetNextControlName("CharacterID_Input");
-                            m_dstGlyphID = EditorGUI.TextField(position, m_dstGlyphID);
+                            m_dstUnicode = EditorGUI.TextField(position, m_dstUnicode);
 
                             // Placeholder text
                             EditorGUI.LabelField(position, new GUIContent(m_unicodeHexLabel, "The Unicode (Hex) ID of the duplicated Character"), TMP_UIStyleManager.label);
@@ -700,7 +821,10 @@ namespace TMPro.EditorUtilities
                                 }
                             }
                             else
+                            {
                                 m_unicodeHexLabel = k_placeholderUnicodeHex;
+                                //m_dstUnicode = string.Empty;
+                            }
 
 
                             // Remove Glyph
@@ -738,6 +862,8 @@ namespace TMPro.EditorUtilities
             EditorGUIUtility.fieldWidth = fieldWidth;
             EditorGUI.indentLevel = 0;
             rect = EditorGUILayout.GetControlRect(false, 24);
+
+            GUIStyle glyphPanelStyle = new GUIStyle(EditorStyles.helpBox);
 
             if (GUI.Button(rect, new GUIContent("<b>Glyph Table</b>", "List of glyphs contained in this font asset."), TMP_UIStyleManager.sectionHeader))
                 UI_PanelState.glyphTablePanel = !UI_PanelState.glyphTablePanel;
@@ -806,23 +932,14 @@ namespace TMPro.EditorUtilities
                         if (!string.IsNullOrEmpty(m_GlyphSearchPattern))
                             elementIndex = m_GlyphSearchList[i];
 
-                        SerializedProperty glyphInfo = m_GlyphTable_prop.GetArrayElementAtIndex(elementIndex);
+                        SerializedProperty glyphProperty = m_GlyphTable_prop.GetArrayElementAtIndex(elementIndex);
 
-                        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                        
-                        EditorGUI.BeginDisabledGroup(i != m_SelectedGlyphRecord);
+                        EditorGUILayout.BeginVertical(glyphPanelStyle);
+
+                        using (new EditorGUI.DisabledScope(i != m_SelectedGlyphRecord))
                         {
-                            Undo.RecordObject(m_fontAsset, "Glyph properties");
-                            EditorGUI.BeginChangeCheck();
-                            EditorGUILayout.PropertyField(glyphInfo);
-                            if (EditorGUI.EndChangeCheck())
-                            {
-                                UpdateGlyphData(glyphInfo, elementIndex);
-                                serializedObject.Update();
-                                isAssetDirty = true;
-                            }
+                            EditorGUILayout.PropertyField(glyphProperty);
                         }
-                        EditorGUI.EndDisabledGroup();
 
                         EditorGUILayout.EndVertical();
 
@@ -863,7 +980,7 @@ namespace TMPro.EditorUtilities
                                 GUIUtility.keyboardControl = 0;
 
                                 // Convert Hex Value to Decimal
-                                int dstGlyphID = TMP_TextUtilities.StringToInt(m_dstGlyphID);
+                                int.TryParse(m_dstGlyphID, out int dstGlyphID);
 
                                 //Add new glyph at target Unicode hex id.
                                 if (!AddNewGlyph(elementIndex, dstGlyphID))
@@ -886,23 +1003,25 @@ namespace TMPro.EditorUtilities
                             m_dstGlyphID = EditorGUI.TextField(position, m_dstGlyphID);
 
                             // Placeholder text
-                            EditorGUI.LabelField(position, new GUIContent(m_unicodeHexLabel, "The Unicode (Hex) ID of the duplicated Glyph"), TMP_UIStyleManager.label);
+                            EditorGUI.LabelField(position, new GUIContent(m_GlyphIDLabel, "The Glyph ID of the duplicated Glyph"), TMP_UIStyleManager.label);
 
                             // Only filter the input when the destination glyph ID text field has focus.
                             if (GUI.GetNameOfFocusedControl() == "GlyphID_Input")
                             {
-                                m_unicodeHexLabel = string.Empty;
+                                m_GlyphIDLabel = string.Empty;
 
                                 //Filter out unwanted characters.
                                 char chr = Event.current.character;
-                                if ((chr < '0' || chr > '9') && (chr < 'a' || chr > 'f') && (chr < 'A' || chr > 'F'))
+                                if ((chr < '0' || chr > '9'))
                                 {
                                     Event.current.character = '\0';
                                 }
                             }
                             else
-                                m_unicodeHexLabel = k_placeholderUnicodeHex;
-
+                            {
+                                m_GlyphIDLabel = k_placeholderGlyphID;
+                                //m_dstGlyphID = string.Empty;
+                            }
 
                             // Remove Glyph
                             position.x += btnWidth;
@@ -933,21 +1052,21 @@ namespace TMPro.EditorUtilities
             }
             #endregion
 
-            // KERNING TABLE PANEL
-            #region Kerning Table
+            // FONT FEATURE TABLE
+            #region Font Feature Table
             EditorGUIUtility.labelWidth = labelWidth;
             EditorGUIUtility.fieldWidth = fieldWidth;
             EditorGUI.indentLevel = 0;
             rect = EditorGUILayout.GetControlRect(false, 24);
 
             if (GUI.Button(rect, new GUIContent("<b>Glyph Adjustment Table</b>", "List of glyph adjustment / advanced kerning pairs."), TMP_UIStyleManager.sectionHeader))
-                UI_PanelState.kerningInfoPanel = !UI_PanelState.kerningInfoPanel;
+                UI_PanelState.fontFeatureTablePanel = !UI_PanelState.fontFeatureTablePanel;
 
-            GUI.Label(rect, (UI_PanelState.kerningInfoPanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
+            GUI.Label(rect, (UI_PanelState.fontFeatureTablePanel ? "" : s_UiStateLabel[1]), TMP_UIStyleManager.rightLabel);
 
-            if (UI_PanelState.kerningInfoPanel)
+            if (UI_PanelState.fontFeatureTablePanel)
             {
-                int arraySize = m_kerningPairs_prop.arraySize;
+                int arraySize = m_GlyphPairAdjustmentRecords_prop.arraySize;
                 int itemsPerPage = 20;
 
                 // Display Kerning Pair Management Tools
@@ -993,20 +1112,6 @@ namespace TMPro.EditorUtilities
                 }
                 EditorGUILayout.EndVertical();
 
-
-                //Rect pos;
-                //pos = EditorGUILayout.GetControlRect(false, 20);
-
-                //pos.x += 5;
-                //EditorGUI.LabelField(pos, "First Glyph", TMP_UIStyleManager.TMP_GUISkin.label);
-                //pos.x += 100;
-                //EditorGUI.LabelField(pos, "Adjustment Values", TMP_UIStyleManager.TMP_GUISkin.label);
-
-                //pos.x = pos.width / 2 + 5;
-                //EditorGUI.LabelField(pos, "Second Glyph", TMP_UIStyleManager.TMP_GUISkin.label);
-                //pos.x += 100;
-                //EditorGUI.LabelField(pos, "Adjustment Values", TMP_UIStyleManager.TMP_GUISkin.label);
-
                 if (arraySize > 0)
                 {
                     // Display each GlyphInfo entry using the GlyphInfo property drawer.
@@ -1019,15 +1124,14 @@ namespace TMPro.EditorUtilities
                         if (!string.IsNullOrEmpty(m_KerningTableSearchPattern))
                             elementIndex = m_KerningTableSearchList[i];
 
-                        SerializedProperty kerningInfo = m_kerningPairs_prop.GetArrayElementAtIndex(elementIndex);
-                        
+                        SerializedProperty pairAdjustmentRecordProperty = m_GlyphPairAdjustmentRecords_prop.GetArrayElementAtIndex(elementIndex);
+
                         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-                        EditorGUI.BeginDisabledGroup(i != m_SelectedAdjustmentRecord);
+                        using (new EditorGUI.DisabledScope(i != m_SelectedAdjustmentRecord))
                         {
-                            EditorGUILayout.PropertyField(kerningInfo, new GUIContent("Selectable"));
+                            EditorGUILayout.PropertyField(pairAdjustmentRecordProperty, new GUIContent("Selectable"));
                         }
-                        EditorGUI.EndDisabledGroup();
 
                         EditorGUILayout.EndVertical();
 
@@ -1067,8 +1171,7 @@ namespace TMPro.EditorUtilities
                             {
                                 GUIUtility.keyboardControl = 0;
 
-                                m_kerningTable.RemoveKerningPair(i);
-                                m_fontAsset.ReadFontAssetDefinition();
+                                RemoveAdjustmentPairFromList(i);
 
                                 isAssetDirty = true;
                                 m_SelectedAdjustmentRecord = -1;
@@ -1086,25 +1189,44 @@ namespace TMPro.EditorUtilities
                 // Add new kerning pair
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 {
-                    EditorGUILayout.PropertyField(m_kerningPair_prop);
+                    EditorGUILayout.PropertyField(m_EmptyGlyphPairAdjustmentRecord_prop);
                 }
                 EditorGUILayout.EndVertical();
 
-                if (GUILayout.Button("Add New Kerning Pair"))
+                if (GUILayout.Button("Add New Glyph Adjustment Record"))
                 {
-                    int firstGlyph = m_kerningPair_prop.FindPropertyRelative("m_FirstGlyph").intValue;
-                    int secondGlyph = m_kerningPair_prop.FindPropertyRelative("m_SecondGlyph").intValue;
+                    SerializedProperty firstAdjustmentRecordProperty = m_EmptyGlyphPairAdjustmentRecord_prop.FindPropertyRelative("m_FirstAdjustmentRecord");
+                    SerializedProperty secondAdjustmentRecordProperty = m_EmptyGlyphPairAdjustmentRecord_prop.FindPropertyRelative("m_SecondAdjustmentRecord");
 
-                    GlyphValueRecord firstGlyphAdjustments = GetGlyphAdjustments(m_kerningPair_prop.FindPropertyRelative("m_FirstGlyphAdjustments"));
-                    GlyphValueRecord secondGlyphAdjustments = GetGlyphAdjustments(m_kerningPair_prop.FindPropertyRelative("m_SecondGlyphAdjustments"));
+                    uint firstGlyphIndex = (uint)firstAdjustmentRecordProperty.FindPropertyRelative("m_GlyphIndex").intValue;
+                    uint secondGlyphIndex = (uint)secondAdjustmentRecordProperty.FindPropertyRelative("m_GlyphIndex").intValue;
 
-                    errorCode = m_kerningTable.AddGlyphPairAdjustmentRecord((uint)firstGlyph, firstGlyphAdjustments, (uint)secondGlyph, secondGlyphAdjustments);
+                    TMP_GlyphValueRecord firstValueRecord = GetValueRecord(firstAdjustmentRecordProperty.FindPropertyRelative("m_GlyphValueRecord"));
+                    TMP_GlyphValueRecord secondValueRecord = GetValueRecord(secondAdjustmentRecordProperty.FindPropertyRelative("m_GlyphValueRecord"));
+
+                    errorCode = -1;
+                    long pairKey = (long)secondGlyphIndex << 32 | firstGlyphIndex;
+                    if (m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.ContainsKey(pairKey) == false)
+                    {
+                        TMP_GlyphPairAdjustmentRecord adjustmentRecord = new TMP_GlyphPairAdjustmentRecord(new TMP_GlyphAdjustmentRecord(firstGlyphIndex, firstValueRecord), new TMP_GlyphAdjustmentRecord(secondGlyphIndex, secondValueRecord));
+                        m_FontFeatureTable.m_GlyphPairAdjustmentRecords.Add(adjustmentRecord);
+                        m_FontFeatureTable.m_GlyphPairAdjustmentRecordLookupDictionary.Add(pairKey, adjustmentRecord);
+                        errorCode = 0;
+                    }
+
+                    // Add glyphs and characters
+                    uint firstCharacter = m_SerializedPropertyHolder.firstCharacter;
+                    if (!m_fontAsset.characterLookupTable.ContainsKey(firstCharacter))
+                        m_fontAsset.TryAddCharacterInternal(firstCharacter, out TMP_Character character);
+
+                    uint secondCharacter = m_SerializedPropertyHolder.secondCharacter;
+                    if (!m_fontAsset.characterLookupTable.ContainsKey(secondCharacter))
+                        m_fontAsset.TryAddCharacterInternal(secondCharacter, out TMP_Character character);
 
                     // Sort Kerning Pairs & Reload Font Asset if new kerning pair was added.
                     if (errorCode != -1)
                     {
-                        m_kerningTable.SortKerningPairs();
-                        m_fontAsset.ReadFontAssetDefinition();
+                        m_FontFeatureTable.SortGlyphPairAdjustmentRecords();
                         serializedObject.ApplyModifiedProperties();
                         isAssetDirty = true;
                         m_isSearchDirty = true;
@@ -1138,6 +1260,9 @@ namespace TMPro.EditorUtilities
                 if (m_DisplayDestructiveChangeWarning == false)
                     TMPro_EventManager.ON_FONT_PROPERTY_CHANGED(true, m_fontAsset);
 
+                if (m_fontAsset.m_IsFontAssetLookupTablesDirty || evt_cmd == k_UndoRedo)
+                    m_fontAsset.ReadFontAssetDefinition();
+
                 isAssetDirty = false;
                 EditorUtility.SetDirty(target);
             }
@@ -1168,6 +1293,7 @@ namespace TMPro.EditorUtilities
             m_AtlasHeight_prop.intValue = m_AtlasSettings.atlasHeight;
         }
 
+
         void UpdateFontAssetCreationSettings()
         {
             m_fontAsset.m_CreationSettings.pointSize = m_SamplingPointSize_prop.intValue;
@@ -1177,15 +1303,42 @@ namespace TMPro.EditorUtilities
             m_fontAsset.m_CreationSettings.atlasHeight = m_AtlasHeight_prop.intValue;
         }
 
+
+        void UpdateCharacterData(SerializedProperty property, int index)
+        {
+            TMP_Character character = m_fontAsset.characterTable[index];
+
+            character.unicode = (uint)property.FindPropertyRelative("m_Unicode").intValue;
+            character.scale = property.FindPropertyRelative("m_Scale").floatValue;
+
+            SerializedProperty glyphProperty = property.FindPropertyRelative("m_Glyph");
+            character.glyph.index = (uint)glyphProperty.FindPropertyRelative("m_Index").intValue;
+
+            SerializedProperty glyphRectProperty = glyphProperty.FindPropertyRelative("m_GlyphRect");
+            character.glyph.glyphRect = new GlyphRect(glyphRectProperty.FindPropertyRelative("m_X").intValue, glyphRectProperty.FindPropertyRelative("m_Y").intValue, glyphRectProperty.FindPropertyRelative("m_Width").intValue, glyphRectProperty.FindPropertyRelative("m_Height").intValue);
+
+            SerializedProperty glyphMetricsProperty = glyphProperty.FindPropertyRelative("m_Metrics");
+            character.glyph.metrics = new GlyphMetrics(glyphMetricsProperty.FindPropertyRelative("m_Width").floatValue, glyphMetricsProperty.FindPropertyRelative("m_Height").floatValue, glyphMetricsProperty.FindPropertyRelative("m_HorizontalBearingX").floatValue, glyphMetricsProperty.FindPropertyRelative("m_HorizontalBearingY").floatValue, glyphMetricsProperty.FindPropertyRelative("m_HorizontalAdvance").floatValue);
+
+            character.glyph.scale = glyphProperty.FindPropertyRelative("m_Scale").floatValue;
+
+            character.glyph.atlasIndex = glyphProperty.FindPropertyRelative("m_AtlasIndex").intValue;
+        }
+
+
         void UpdateGlyphData(SerializedProperty property, int index)
         {
             Glyph glyph = m_fontAsset.glyphTable[index];
+
+            glyph.index = (uint)property.FindPropertyRelative("m_Index").intValue;
 
             SerializedProperty glyphRect = property.FindPropertyRelative("m_GlyphRect");
             glyph.glyphRect = new GlyphRect(glyphRect.FindPropertyRelative("m_X").intValue, glyphRect.FindPropertyRelative("m_Y").intValue, glyphRect.FindPropertyRelative("m_Width").intValue, glyphRect.FindPropertyRelative("m_Height").intValue);
 
             SerializedProperty glyphMetrics = property.FindPropertyRelative("m_Metrics");
             glyph.metrics = new GlyphMetrics(glyphMetrics.FindPropertyRelative("m_Width").floatValue, glyphMetrics.FindPropertyRelative("m_Height").floatValue, glyphMetrics.FindPropertyRelative("m_HorizontalBearingX").floatValue, glyphMetrics.FindPropertyRelative("m_HorizontalBearingY").floatValue, glyphMetrics.FindPropertyRelative("m_HorizontalAdvance").floatValue);
+
+            glyph.scale = property.FindPropertyRelative("m_Scale").floatValue;
         }
 
 
@@ -1248,11 +1401,11 @@ namespace TMPro.EditorUtilities
             CopyGlyphSerializedProperty(sourceGlyph, ref targetGlyph);
 
             // Update the ID of the glyph
-            targetGlyph.FindPropertyRelative("id").intValue = dstGlyphID;
+            targetGlyph.FindPropertyRelative("m_Index").intValue = dstGlyphID;
 
             serializedObject.ApplyModifiedProperties();
 
-            m_fontAsset.SortGlyphs();
+            m_fontAsset.SortGlyphTable();
 
             m_fontAsset.ReadFontAssetDefinition();
 
@@ -1275,7 +1428,7 @@ namespace TMPro.EditorUtilities
             // Remove all characters referencing this glyph.
             for (int i = 0; i < m_CharacterTable_prop.arraySize; i++)
             {
-                int glyphIndex = m_CharacterTable_prop.GetArrayElementAtIndex(i).FindPropertyRelative("glyph").FindPropertyRelative("m_Index").intValue;
+                int glyphIndex = m_CharacterTable_prop.GetArrayElementAtIndex(i).FindPropertyRelative("m_GlyphIndex").intValue;
 
                 if (glyphIndex == targetGlyphIndex)
                 {
@@ -1309,11 +1462,11 @@ namespace TMPro.EditorUtilities
             CopyCharacterSerializedProperty(sourceCharacter, ref targetCharacter);
 
             // Update the ID of the glyph
-            targetCharacter.FindPropertyRelative("unicode").intValue = dstGlyphID;
+            targetCharacter.FindPropertyRelative("m_Unicode").intValue = dstGlyphID;
 
             serializedObject.ApplyModifiedProperties();
 
-            m_fontAsset.SortGlyphs();
+            m_fontAsset.SortCharacterTable();
 
             m_fontAsset.ReadFontAssetDefinition();
 
@@ -1353,65 +1506,37 @@ namespace TMPro.EditorUtilities
             return false;
         }
 
-        GlyphValueRecord GetGlyphAdjustments (SerializedProperty property)
+        TMP_GlyphValueRecord GetValueRecord(SerializedProperty property)
         {
-            GlyphValueRecord record;
-            record.xPlacement = property.FindPropertyRelative("xPlacement").floatValue;
-            record.yPlacement = property.FindPropertyRelative("yPlacement").floatValue;
-            record.xAdvance = property.FindPropertyRelative("xAdvance").floatValue;
-            record.yAdvance = property.FindPropertyRelative("yAdvance").floatValue;
+            TMP_GlyphValueRecord record = new TMP_GlyphValueRecord();
+            record.xPlacement = property.FindPropertyRelative("m_XPlacement").floatValue;
+            record.yPlacement = property.FindPropertyRelative("m_YPlacement").floatValue;
+            record.xAdvance = property.FindPropertyRelative("m_XAdvance").floatValue;
+            record.yAdvance = property.FindPropertyRelative("m_YAdvance").floatValue;
 
             return record;
         }
 
+        void RemoveAdjustmentPairFromList(int index)
+        {
+            if (index > m_GlyphPairAdjustmentRecords_prop.arraySize)
+                return;
+
+            m_GlyphPairAdjustmentRecords_prop.DeleteArrayElementAtIndex(index);
+
+            serializedObject.ApplyModifiedProperties();
+
+            m_fontAsset.ReadFontAssetDefinition();
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="source"></param>
-        /// <param name="target"></param>
-        void CopyGlyphSerializedProperty(SerializedProperty source, ref SerializedProperty target)
+        /// <param name="srcGlyph"></param>
+        /// <param name="dstGlyph"></param>
+        void CopyGlyphSerializedProperty(SerializedProperty srcGlyph, ref SerializedProperty dstGlyph)
         {
             // TODO : Should make a generic function which copies each of the properties.
-            target.FindPropertyRelative("id").intValue = source.FindPropertyRelative("id").intValue;
-            target.FindPropertyRelative("x").floatValue = source.FindPropertyRelative("x").floatValue;
-            target.FindPropertyRelative("y").floatValue = source.FindPropertyRelative("y").floatValue;
-            target.FindPropertyRelative("width").floatValue = source.FindPropertyRelative("width").floatValue;
-            target.FindPropertyRelative("height").floatValue = source.FindPropertyRelative("height").floatValue;
-            target.FindPropertyRelative("xOffset").floatValue = source.FindPropertyRelative("xOffset").floatValue;
-            target.FindPropertyRelative("yOffset").floatValue = source.FindPropertyRelative("yOffset").floatValue;
-            target.FindPropertyRelative("xAdvance").floatValue = source.FindPropertyRelative("xAdvance").floatValue;
-            target.FindPropertyRelative("scale").floatValue = source.FindPropertyRelative("scale").floatValue;
-        }
-
-        void CopyCharacterSerializedProperty(SerializedProperty source, ref SerializedProperty target)
-        {
-
-            SerializedProperty src = source.Copy();
-            SerializedProperty dst = target.Copy();
-
-            var endProperty = src.GetEndProperty();
-
-            while (src.NextVisible(true) && dst.NextVisible(true))
-            {
-                if (SerializedProperty.EqualContents(src, endProperty))
-                    break;
-
-                target.FindPropertyRelative(src.name).intValue = source.FindPropertyRelative(src.name).intValue;
-
-                Debug.Log("Name: " + dst.name + "   Type: " + dst.type);
-
-            }
-
-
-            // TODO : Should make a generic function which copies each of the properties.
-            target.FindPropertyRelative("unicode").intValue = source.FindPropertyRelative("unicode").intValue;
-
-            // Glyph
-            SerializedProperty srcGlyph = source.FindPropertyRelative("glyph");
-            SerializedProperty dstGlyph = target.FindPropertyRelative("glyph");
-
-            // Glyph -> Index
             dstGlyph.FindPropertyRelative("m_Index").intValue = srcGlyph.FindPropertyRelative("m_Index").intValue;
 
             // Glyph -> GlyphMetrics
@@ -1433,13 +1558,21 @@ namespace TMPro.EditorUtilities
             dstGlyphRect.FindPropertyRelative("m_Width").intValue = srcGlyphRect.FindPropertyRelative("m_Width").intValue;
             dstGlyphRect.FindPropertyRelative("m_Height").intValue = srcGlyphRect.FindPropertyRelative("m_Height").intValue;
 
-            // Glyph -> Scale
             dstGlyph.FindPropertyRelative("m_Scale").floatValue = srcGlyph.FindPropertyRelative("m_Scale").floatValue;
-
             dstGlyph.FindPropertyRelative("m_AtlasIndex").intValue = srcGlyph.FindPropertyRelative("m_AtlasIndex").intValue;
+        }
 
-            // Character Scale
-            target.FindPropertyRelative("scale").floatValue = source.FindPropertyRelative("scale").floatValue;
+
+        void CopyCharacterSerializedProperty(SerializedProperty source, ref SerializedProperty target)
+        {
+            // TODO : Should make a generic function which copies each of the properties.
+            int unicode = source.FindPropertyRelative("m_Unicode").intValue;
+            target.FindPropertyRelative("m_Unicode").intValue = unicode;
+
+            int srcGlyphIndex = source.FindPropertyRelative("m_GlyphIndex").intValue;
+            target.FindPropertyRelative("m_GlyphIndex").intValue = srcGlyphIndex;
+
+            target.FindPropertyRelative("m_Scale").floatValue = source.FindPropertyRelative("m_Scale").floatValue;
         }
 
 
@@ -1463,18 +1596,18 @@ namespace TMPro.EditorUtilities
                 int id = sourceGlyph.FindPropertyRelative("m_Index").intValue;
 
                 // Check for potential match against a character.
-                if (searchPattern.Length == 1 && id == searchPattern[0])
-                    searchResults.Add(i);
+                //if (searchPattern.Length == 1 && id == searchPattern[0])
+                //    searchResults.Add(i);
 
                 // Check for potential match against decimal id
                 if (id.ToString().Contains(searchPattern))
                     searchResults.Add(i);
 
-                if (id.ToString("x").Contains(searchPattern))
-                    searchResults.Add(i);
+                //if (id.ToString("x").Contains(searchPattern))
+                //    searchResults.Add(i);
 
-                if (id.ToString("X").Contains(searchPattern))
-                    searchResults.Add(i);
+                //if (id.ToString("X").Contains(searchPattern))
+                //    searchResults.Add(i);
             }
         }
 
@@ -1491,21 +1624,19 @@ namespace TMPro.EditorUtilities
             {
                 SerializedProperty sourceCharacter = m_CharacterTable_prop.GetArrayElementAtIndex(i);
 
-                int id = sourceCharacter.FindPropertyRelative("unicode").intValue;
+                int id = sourceCharacter.FindPropertyRelative("m_Unicode").intValue;
 
                 // Check for potential match against a character.
                 if (searchPattern.Length == 1 && id == searchPattern[0])
                     searchResults.Add(i);
-
+                else if (id.ToString("x").Contains(searchPattern))
+                    searchResults.Add(i);
+                else if (id.ToString("X").Contains(searchPattern))
+                    searchResults.Add(i);
+                
                 // Check for potential match against decimal id
-                if (id.ToString().Contains(searchPattern))
-                    searchResults.Add(i);
-
-                if (id.ToString("x").Contains(searchPattern))
-                    searchResults.Add(i);
-
-                if (id.ToString("X").Contains(searchPattern))
-                    searchResults.Add(i);
+                //if (id.ToString().Contains(searchPattern))
+                //    searchResults.Add(i);
             }
         }
 
@@ -1516,74 +1647,35 @@ namespace TMPro.EditorUtilities
 
             searchResults.Clear();
 
-            int arraySize = m_kerningPairs_prop.arraySize;
+            // Lookup glyph index of potential characters contained in the search pattern.
+            uint firstGlyphIndex = 0;
+            if (searchPattern.Length > 0 && m_fontAsset.characterLookupTable.TryGetValue(searchPattern[0], out TMP_Character firstCharacterSearch))
+                firstGlyphIndex = firstCharacterSearch.glyphIndex;
+
+            uint secondGlyphIndex = 0;
+            if (searchPattern.Length > 1 && m_fontAsset.characterLookupTable.TryGetValue(searchPattern[1], out TMP_Character secondCharacterSearch))
+                secondGlyphIndex = secondCharacterSearch.glyphIndex;
+
+            int arraySize = m_GlyphPairAdjustmentRecords_prop.arraySize;
 
             for (int i = 0; i < arraySize; i++)
             {
-                SerializedProperty sourceGlyph = m_kerningPairs_prop.GetArrayElementAtIndex(i);
+                SerializedProperty record = m_GlyphPairAdjustmentRecords_prop.GetArrayElementAtIndex(i);
 
-                int firstGlyph = sourceGlyph.FindPropertyRelative("m_FirstGlyph").intValue;
-                int secondGlyph = sourceGlyph.FindPropertyRelative("m_SecondGlyph").intValue;
+                SerializedProperty firstAdjustmentRecord = record.FindPropertyRelative("m_FirstAdjustmentRecord");
+                SerializedProperty secondAdjustmentRecord = record.FindPropertyRelative("m_SecondAdjustmentRecord");
 
-                if (searchPattern.Length == 1)
-                {
-                    if (firstGlyph == searchPattern[0])
-                    {
-                        searchResults.Add(i);
-                        continue;
-                    }
+                int firstGlyph = firstAdjustmentRecord.FindPropertyRelative("m_GlyphIndex").intValue;
+                int secondGlyph = secondAdjustmentRecord.FindPropertyRelative("m_GlyphIndex").intValue;
 
-                    if (secondGlyph == searchPattern[0])
-                    {
-                        searchResults.Add(i);
-                        continue;
-                    }
-                }
-
-                if (searchPattern.Length == 2)
-                {
-                    if (firstGlyph == searchPattern[0] && secondGlyph == searchPattern[1])
-                    {
-                        searchResults.Add(i);
-                        continue;
-                    }
-                }
-
-                if (firstGlyph.ToString().Contains(searchPattern))
-                {
+                if (firstGlyphIndex == firstGlyph && secondGlyphIndex == secondGlyph)
                     searchResults.Add(i);
-                    continue;
-                }
-
-                //if (firstGlyph.ToString("x").Contains(searchPattern))
-                //{
-                //    searchResults.Add(i);
-                //    continue;
-                //}
-
-                //if (firstGlyph.ToString("X").Contains(searchPattern))
-                //{
-                //    searchResults.Add(i);
-                //    continue;
-                //}
-
-                if (secondGlyph.ToString().Contains(searchPattern))
-                {
+                else if (searchPattern.Length == 1 && (firstGlyphIndex == firstGlyph || firstGlyphIndex == secondGlyph))
                     searchResults.Add(i);
-                    continue;
-                }
-
-                //if (secondGlyph.ToString("x").Contains(searchPattern))
-                //{
-                //    searchResults.Add(i);
-                //    continue;
-                //}
-
-                //if (secondGlyph.ToString("X").Contains(searchPattern))
-                //{
-                //    searchResults.Add(i);
-                //    continue;
-                //}
+                else if (firstGlyph.ToString().Contains(searchPattern))
+                    searchResults.Add(i);
+                else if (secondGlyph.ToString().Contains(searchPattern))
+                    searchResults.Add(i);
             }
         }
     }

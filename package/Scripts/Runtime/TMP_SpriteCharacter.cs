@@ -24,19 +24,23 @@ namespace TMPro
                 m_HashCode = TMP_TextParsingUtilities.GetHashCodeCaseSensitive(m_Name);
             }
         }
-        [SerializeField]
-        private string m_Name;
 
         /// <summary>
         /// The hashcode value which is computed from the name of the sprite element.
         /// This value is read-only and updated when the name of the text sprite is changed.
         /// </summary>
-        public uint hashCode
-        {
-            get { return m_HashCode; }
-        }
+        public int hashCode { get { return m_HashCode; } }
+
+
+        // =============================================
+        // Private backing fields for public properties.
+        // =============================================
+
         [SerializeField]
-        private uint m_HashCode;
+        private string m_Name;
+
+        [SerializeField]
+        private int m_HashCode;
 
 
         // ********************
@@ -51,11 +55,17 @@ namespace TMPro
             m_ElementType = TextElementType.Sprite;
         }
 
+        /// <summary>
+        /// Constructor for new sprite character.
+        /// </summary>
+        /// <param name="unicode">Unicode value of the sprite character.</param>
+        /// <param name="glyph">Glyph used by the sprite character.</param>
         public TMP_SpriteCharacter(uint unicode, TMP_SpriteGlyph glyph)
         {
             m_ElementType = TextElementType.Sprite;
 
             this.unicode = unicode;
+            this.glyphIndex = glyph.index;
             this.glyph = glyph;
             this.scale = 1.0f;
         }

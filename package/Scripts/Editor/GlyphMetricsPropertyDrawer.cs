@@ -21,23 +21,23 @@ namespace TMPro.EditorUtilities
             // We get Rect since a valid position may not be provided by the caller.
             Rect rect = new Rect(position.x, position.y, position.width, 49);
 
-            EditorGUI.LabelField(new Rect(rect.x + 5f, rect.y, rect.width, rect.height), new GUIContent("Glyph Metrics"));
+            EditorGUI.LabelField(rect, new GUIContent("Glyph Metrics"));
 
             EditorGUIUtility.labelWidth = 30f;
             EditorGUIUtility.fieldWidth = 10f;
 
             //GUI.enabled = false;
             float width = (rect.width - 75f) / 2;
-            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 0, rect.y + 20, width - 5f, 18), prop_Width, new GUIContent("W:"));
-            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 1, rect.y + 20, width - 5f, 18), prop_Height, new GUIContent("H:"));
+            EditorGUI.PropertyField(new Rect(rect.x + width * 0, rect.y + 20, width - 5f, 18), prop_Width, new GUIContent("W:"));
+            EditorGUI.PropertyField(new Rect(rect.x + width * 1, rect.y + 20, width - 5f, 18), prop_Height, new GUIContent("H:"));
 
             //GUI.enabled = true;
 
             width = (rect.width - 75f) / 3;
             EditorGUI.BeginChangeCheck();
-            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 0, rect.y + 40, width - 5f, 18), prop_HoriBearingX, new GUIContent("BX:"));
-            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 1, rect.y + 40, width - 5f, 18), prop_HoriBearingY, new GUIContent("BY:"));
-            EditorGUI.PropertyField(new Rect(rect.x + 5f + width * 2, rect.y + 40, width - 5f, 18), prop_HoriAdvance, new GUIContent("AD:"));
+            EditorGUI.PropertyField(new Rect(rect.x + width * 0, rect.y + 40, width - 5f, 18), prop_HoriBearingX, new GUIContent("BX:"));
+            EditorGUI.PropertyField(new Rect(rect.x + width * 1, rect.y + 40, width - 5f, 18), prop_HoriBearingY, new GUIContent("BY:"));
+            EditorGUI.PropertyField(new Rect(rect.x + width * 2, rect.y + 40, width - 5f, 18), prop_HoriAdvance, new GUIContent("AD:"));
             if (EditorGUI.EndChangeCheck())
             {
 

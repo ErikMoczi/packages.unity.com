@@ -6,9 +6,9 @@ using System.Collections;
 
 namespace TMPro
 {
-
     [RequireComponent(typeof(MeshRenderer))]
     [RequireComponent(typeof(MeshFilter))]
+    [ExecuteAlways]
     public class TMP_SubMesh : MonoBehaviour
     {
         /// <summary>

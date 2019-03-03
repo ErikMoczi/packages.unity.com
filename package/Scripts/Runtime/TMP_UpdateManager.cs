@@ -50,7 +50,7 @@ namespace TMPro
             Camera.onPreCull += OnCameraPreCull;
 
             #if UNITY_2019_1_OR_NEWER
-                RenderPipelineManager.onBeginFrameRendering += OnBeginFrameRendering;
+                RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
             #elif UNITY_2018_1_OR_NEWER
                 RenderPipeline.beginFrameRendering += OnBeginFrameRendering;
             #endif
@@ -125,11 +125,16 @@ namespace TMPro
             return true;
         }
 
+
         /// <summary>
         /// Callback which occurs just before the Scriptable Render Pipeline (SRP) begins rendering.
         /// </summary>
         /// <param name="cameras"></param>
+        #if UNITY_2019_1_OR_NEWER
+        void OnBeginFrameRendering(ScriptableRenderContext renderContext, Camera[] cameras)
+        #elif UNITY_2018_1_OR_NEWER
         void OnBeginFrameRendering(Camera[] cameras)
+        #endif
         {
             // Exclude the PreRenderCamera
             #if UNITY_EDITOR
@@ -227,7 +232,7 @@ namespace TMPro
             int id = textObject.GetInstanceID();
 
             TMP_UpdateManager.instance.m_InternalUpdateQueue.Remove(textObject);
-            m_LayoutQueueLookup.Remove(id);
+            m_InternalUpdateLookup.Remove(id);
         }
     }
 }
