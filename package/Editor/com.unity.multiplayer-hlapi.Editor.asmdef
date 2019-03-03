@@ -1,0 +1,10 @@
+{
+    "name": "com.unity.multiplayer-hlapi.Editor",
+    "references": [
+      "com.unity.multiplayer-hlapi.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

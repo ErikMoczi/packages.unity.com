@@ -1,0 +1,9 @@
+{
+    "name": "com.unity.multiplayer-weaver.Editor",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode" : true
+}
