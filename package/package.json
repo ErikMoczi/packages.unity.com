@@ -1,7 +1,7 @@
 {
   "name": "com.unity.template.3d",
   "displayName": "3D",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "template",
   "unity": "2019.1",
   "description": "This is an empty 3D project that uses Unity's built-in renderer.",
@@ -9,7 +9,6 @@
     "com.unity.ads": "2.0.8",
     "com.unity.analytics": "3.2.2",
     "com.unity.collab-proxy": "1.2.9",
-    "com.unity.package-manager-ui": "0.0.0-builtin",
     "com.unity.purchasing": "2.0.1",
     "com.unity.textmeshpro": "1.3.0",
     "com.unity.timeline": "0.0.0-builtin",
@@ -47,6 +46,6 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/project-template-3D.git",
-    "revision": "243fd409525d9e3f6d9b8c156ec6fca4edbbbcf6"
+    "revision": "9ff3c5e44ac499ba0eb31ccac2cb15f85134b4b3"
   }
 }
