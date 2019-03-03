@@ -1,3 +1,3 @@
-Search multiple areas of Unity: assets, scene objects, menu items, settings and event the asset store.
+Search multiple areas of Unity: assets, scene objects, menu items, settings, etc.
 
-On Windows simply press Press Alt+' to find anything or Option+' on Mac.
+On Windows simply press Alt+' to find anything or Option+' on Mac.
