@@ -23,6 +23,9 @@ namespace UnityEditor.Build.Pipeline.Tasks
             if (m_SpriteData == null || m_SpriteData.ImporterData.Count == 0)
                 return ReturnCode.SuccessNotRun;
 
+            if (EditorSettings.spritePackerMode == SpritePackerMode.Disabled)
+                return ReturnCode.SuccessNotRun;
+
             var unusedSources = new HashSet<ObjectIdentifier>();
             var textures = m_SpriteData.ImporterData.Values.Where(x => x.PackedSprite).Select(x => x.SourceTexture);
             unusedSources.UnionWith(textures);

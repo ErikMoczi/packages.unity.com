@@ -74,9 +74,13 @@ namespace UnityEditor.Build.Pipeline
             ReturnCode exitCode;
             result = new BundleBuildResults();
 
-        //    using (new SceneStateCleanup())
             using (new BuildInterfacesWrapper())
+#if !CI_TESTRUNNER_PROJECT
+            using (new SceneStateCleanup())
             using (var progressTracker = new ProgressTracker())
+#else
+            using (var progressTracker = new ProgressLoggingTracker())
+#endif
             using (var buildCache = new BuildCache(parameters.CacheServerHost, parameters.CacheServerPort))
             {
                 Directory.CreateDirectory(parameters.TempOutputFolder);

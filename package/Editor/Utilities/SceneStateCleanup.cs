@@ -31,8 +31,10 @@ namespace UnityEditor.Build.Utilities
 
             if (disposing)
             {
-                if (!m_Scenes.IsNullOrEmpty() && m_Scenes.All(s => !string.IsNullOrEmpty(s.path)))
-                    EditorSceneManager.RestoreSceneManagerSetup(m_Scenes);
+                // Test runner injects scenes, so we strip those here
+                var scenes = m_Scenes.Where(s => !string.IsNullOrEmpty(s.path)).ToArray();
+                if (!scenes.IsNullOrEmpty())
+                    EditorSceneManager.RestoreSceneManagerSetup(scenes);
                 else
                     EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
             }
