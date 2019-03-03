@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Moq;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.TestTools.TestRunner.GUI;
 using UnityEngine;
 using UnityEngine.TestTools;

@@ -1,7 +1,7 @@
 {
   "name": "com.unity.test-framework.tests",
   "displayName":  "Test Framework Tests",
-  "version": "1.0.0-preview1",
+  "version": "1.0.0",
   "type": "tests",
   "unity": "2019.1",
   "description": "Tests for the Unity Test framework.",
@@ -10,10 +10,10 @@
   "repository": {
     "type": "git",
     "url": "git@gitlab.cds.internal.unity3d.com/upm-packages/core/com.unity.test-framework.git",
-    "revision": "6ae3a7d1d968a41554645409e39e9aa4afd47aab"
+    "revision": "2c1a5da09dd8f4fa29da90f8f18256b2627991b3"
   }, 
   "dependencies": {
-    "com.unity.test-framework": "1.0.0-preview1",
+    "com.unity.test-framework": "1.0.0",
     "nuget.moq": "0.1.11-preview"
   }
 }
