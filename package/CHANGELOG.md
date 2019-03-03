@@ -4,6 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2019-02-22
+- Removing deprecated packages from manifest.
+
 ## [3.0.0] - 2019-02-12
 - Removing deprecated packages from manifest.
 
