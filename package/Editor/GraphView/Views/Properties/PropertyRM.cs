@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEditor.Experimental.UIElements;
 using UnityEditor.VFX;
 using UnityEditor.VFX.UIElements;
 using Object = UnityEngine.Object;
@@ -17,7 +18,6 @@ namespace UnityEditor.VFX.UI
     {
         bool expanded { get; }
         bool expandable { get; }
-        bool expandableIfShowsEverything { get; }
         object value { get; set; }
         bool spaceableAndMasterOfSpace { get; }
         VFXCoordinateSpace space { get; set; }
@@ -54,7 +54,6 @@ namespace UnityEditor.VFX.UI
 
         bool IPropertyRMProvider.expanded { get { return false; } }
         bool IPropertyRMProvider.expandable { get { return false; } }
-        bool IPropertyRMProvider.expandableIfShowsEverything { get { return false; } }
         object IPropertyRMProvider.value
         {
             get
@@ -143,14 +142,14 @@ namespace UnityEditor.VFX.UI
             if (m_Label.panel == null) return 40;
 
             VisualElement element = this;
-            while (element != null && element.resolvedStyle.unityFont == null)
+            while (element != null && element.style.font.value == null)
             {
                 element = element.parent;
             }
             if (element != null)
             {
-                m_Label.style.unityFont = element.resolvedStyle.unityFont;
-                return m_Label.MeasureTextSize(m_Label.text, -1, MeasureMode.Undefined, m_Label.resolvedStyle.height, MeasureMode.Exactly).x + m_Provider.depth * depthOffset;
+                m_Label.style.font = element.style.font;
+                return m_Label.MeasureTextSize(m_Label.text, -1, MeasureMode.Undefined, m_Label.style.height, MeasureMode.Exactly).x + m_Provider.depth * depthOffset;
             }
             return 40 + m_Provider.depth * depthOffset;
         }
@@ -172,11 +171,6 @@ namespace UnityEditor.VFX.UI
         {
             SetValue(m_Provider.value);
             UpdateGUI(true);
-        }
-
-        public IPropertyRMProvider provider
-        {
-            get { return m_Provider; }
         }
 
         public abstract void UpdateGUI(bool force);
@@ -236,7 +230,7 @@ namespace UnityEditor.VFX.UI
 
         void UpdateExpandable()
         {
-            if (m_Provider.expandable && (m_Provider.expandableIfShowsEverything || ! showsEverything))
+            if (m_Provider.expandable)
             {
                 if (!m_IconClickableAdded)
                 {
@@ -691,6 +685,6 @@ namespace UnityEditor.VFX.UI
         {
         }
 
-        public override bool showsEverything { get { return false; } }
+        public override bool showsEverything { get { return true; } }
     }
 }

@@ -3,16 +3,15 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEditor.Experimental.VFX;
 using UnityEngine.Experimental.VFX;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
 using UnityEngine.Profiling;
 using System.Reflection;
-
-using PositionType = UnityEngine.UIElements.Position;
 
 namespace UnityEditor.VFX.UI
 {
@@ -123,28 +122,10 @@ namespace UnityEditor.VFX.UI
 
             set
             {
-                if (m_ComponentBoard == null || m_ComponentBoard.parent == null)
+                if (m_ComponentBoard == null)
                     ShowComponentBoard();
                 if (m_ComponentBoard != null)
                     m_ComponentBoard.Attach(value);
-            }
-        }
-
-        public void RemoveAnchorEdges(VFXDataAnchor anchor)
-        {
-            foreach (var edge in dataEdges.Where(t => t.Value.input == anchor || t.Value.output == anchor).ToArray())
-            {
-                RemoveElement(edge.Value);
-                dataEdges.Remove(edge.Key);
-            }
-        }
-
-        public void RemoveNodeEdges(VFXNodeUI node)
-        {
-            foreach (var edge in dataEdges.Where(t => t.Value.input.node == node || t.Value.output.node == node).ToArray())
-            {
-                RemoveElement(edge.Value);
-                dataEdges.Remove(edge.Key);
             }
         }
 
@@ -219,13 +200,13 @@ namespace UnityEditor.VFX.UI
             this.AddManipulator(new RectangleSelector());
             this.AddManipulator(new FreehandSelector());
 
-            styleSheets.Add(Resources.Load<StyleSheet>("VFXView"));
+            AddStyleSheetPath("VFXView");
 
             AddLayer(-1);
             AddLayer(1);
             AddLayer(2);
 
-            focusable = true;
+            focusIndex = 0;
 
             m_Toolbar = new VisualElement();
             m_Toolbar.AddToClassList("toolbar");
@@ -250,15 +231,15 @@ namespace UnityEditor.VFX.UI
             toggleBlackboard.RegisterCallback<ChangeEvent<bool>>(ToggleBlackboard);
             m_Toolbar.Add(toggleBlackboard);
 
-            m_ToggleComponentBoard = new Toggle();
-            m_ToggleComponentBoard.text = "Target GameObject";
-            m_ToggleComponentBoard.AddToClassList("toolbarItem");
-            m_ToggleComponentBoard.RegisterCallback<ChangeEvent<bool>>(ToggleComponentBoard);
-            m_Toolbar.Add(m_ToggleComponentBoard);
+            Toggle toggleComponentBoard = new Toggle();
+            toggleComponentBoard.text = "Target GameObject";
+            toggleComponentBoard.AddToClassList("toolbarItem");
+            toggleComponentBoard.RegisterCallback<ChangeEvent<bool>>(ToggleComponentBoard);
+            m_Toolbar.Add(toggleComponentBoard);
 
 
             spacer = new VisualElement();
-            spacer.style.flexGrow = 1f;
+            spacer.style.flex = new Flex(1);
             m_Toolbar.Add(spacer);
 
             Toggle toggleRuntimeMode = new Toggle();
@@ -267,16 +248,6 @@ namespace UnityEditor.VFX.UI
             toggleRuntimeMode.RegisterCallback<ChangeEvent<bool>>(OnToggleRuntimeMode);
             m_Toolbar.Add(toggleRuntimeMode);
             toggleRuntimeMode.AddToClassList("toolbarItem");
-
-            if (VFXGraphCompiledData.k_FnVFXResource_SetCompileInitialVariants != null)
-            {
-                Toggle toogleForceShaderValidation = new Toggle();
-                toogleForceShaderValidation.text = "Force Shader Validation";
-                toogleForceShaderValidation.SetValueWithoutNotify(m_ForceShaderValidation);
-                toogleForceShaderValidation.RegisterCallback<ChangeEvent<bool>>(OnToggleForceShaderValidation);
-                m_Toolbar.Add(toogleForceShaderValidation);
-                toogleForceShaderValidation.AddToClassList("toolbarItem");
-            }
 
             Toggle toggleAutoCompile = new Toggle();
             toggleAutoCompile.text = "Auto Compile";
@@ -292,13 +263,13 @@ namespace UnityEditor.VFX.UI
 
 
             m_NoAssetLabel = new Label("Please Select An Asset");
-            m_NoAssetLabel.style.position = PositionType.Absolute;
-            m_NoAssetLabel.style.left = 0f;
-            m_NoAssetLabel.style.right = new StyleLength(0f);
-            m_NoAssetLabel.style.top = new StyleLength(0f);
-            m_NoAssetLabel.style.bottom = new StyleLength(0f);
+            m_NoAssetLabel.style.positionType = PositionType.Absolute;
+            m_NoAssetLabel.style.positionLeft = 0;
+            m_NoAssetLabel.style.positionRight = 0;
+            m_NoAssetLabel.style.positionTop = 0;
+            m_NoAssetLabel.style.positionBottom = 0;
             m_NoAssetLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-            m_NoAssetLabel.style.fontSize = new StyleLength(72f);
+            m_NoAssetLabel.style.fontSize = 72;
             m_NoAssetLabel.style.color = Color.white * 0.75f;
 
             Add(m_NoAssetLabel);
@@ -311,11 +282,11 @@ namespace UnityEditor.VFX.UI
                 Add(m_Blackboard);
             toggleBlackboard.value = blackboardVisible;
 
-            /*
+
             bool componentBoardVisible = BoardPreferenceHelper.IsVisible(BoardPreferenceHelper.Board.blackboard, false);
             if (componentBoardVisible)
                 ShowComponentBoard();
-            toggleComponentBoard.value = componentBoardVisible;*/
+            toggleComponentBoard.value = componentBoardVisible;
 
             Add(m_Toolbar);
 
@@ -330,7 +301,8 @@ namespace UnityEditor.VFX.UI
 
             Undo.undoRedoPerformed = OnUndoPerformed;
 
-            viewDataKey = "VFXView";
+            persistenceKey = "VFXView";
+
 
             RegisterCallback<GeometryChangedEvent>(OnFirstResize);
         }
@@ -356,7 +328,7 @@ namespace UnityEditor.VFX.UI
                 Insert(childCount - 1, m_Blackboard);
                 BoardPreferenceHelper.SetVisible(BoardPreferenceHelper.Board.blackboard, true);
                 m_Blackboard.RegisterCallback<GeometryChangedEvent>(OnFirstBlackboardGeometryChanged);
-                m_Blackboard.style.position = PositionType.Absolute;
+                m_Blackboard.style.positionType = PositionType.Absolute;
             }
             else
             {
@@ -378,8 +350,6 @@ namespace UnityEditor.VFX.UI
             BoardPreferenceHelper.SetVisible(BoardPreferenceHelper.Board.componentBoard, true);
 
             m_ComponentBoard.RegisterCallback<GeometryChangedEvent>(OnFirstComponentBoardGeometryChanged);
-
-            m_ToggleComponentBoard.SetValueWithoutNotify(true);
         }
 
         void OnFirstComponentBoardGeometryChanged(GeometryChangedEvent e)
@@ -413,7 +383,6 @@ namespace UnityEditor.VFX.UI
             UnregisterCallback<GeometryChangedEvent>(OnFirstResize);
         }
 
-        Toggle m_ToggleComponentBoard;
         void ToggleComponentBoard(ChangeEvent<bool> e)
         {
             if (m_ComponentBoard == null || m_ComponentBoard.parent == null)
@@ -424,7 +393,6 @@ namespace UnityEditor.VFX.UI
             {
                 m_ComponentBoard.RemoveFromHierarchy();
                 BoardPreferenceHelper.SetVisible(BoardPreferenceHelper.Board.componentBoard, false);
-                m_ToggleComponentBoard.SetValueWithoutNotify(false);
             }
         }
 
@@ -532,6 +500,12 @@ namespace UnityEditor.VFX.UI
                 Profiler.EndSample();
             }
             Profiler.EndSample();
+        }
+
+        public override void OnPersistentDataReady()
+        {
+            // warning : default could messes with view restoration from the VFXViewWindow (TODO : check this)
+            base.OnPersistentDataReady();
         }
 
         void NewControllerSet()
@@ -697,7 +671,7 @@ namespace UnityEditor.VFX.UI
         {
             if (graphElement.IsResizable())
             {
-                graphElement.hierarchy.Add(new Resizer());
+                graphElement.shadow.Add(new Resizer());
                 graphElement.style.borderBottomWidth = 6;
             }
 
@@ -976,18 +950,29 @@ namespace UnityEditor.VFX.UI
             controller.graph.SetCompilationMode(m_IsRuntimeMode ? VFXCompilationMode.Runtime : VFXCompilationMode.Edition);
         }
 
-        private bool m_ForceShaderValidation = false;
-        void OnToggleForceShaderValidation(ChangeEvent<bool> e)
-        {
-            m_ForceShaderValidation = e.newValue;
-            controller.graph.SetForceShaderValidation(m_ForceShaderValidation);
-        }
-
         public EventPropagation Compile()
         {
             OnCompile();
 
             return EventPropagation.Stop;
+        }
+
+        VFXContext AddVFXContext(Vector2 pos, VFXModelDescriptor<VFXContext> desc)
+        {
+            if (controller == null) return null;
+            return controller.AddVFXContext(pos, desc);
+        }
+
+        VFXOperator AddVFXOperator(Vector2 pos, VFXModelDescriptor<VFXOperator> desc)
+        {
+            if (controller == null) return null;
+            return controller.AddVFXOperator(pos, desc);
+        }
+
+        VFXParameter AddVFXParameter(Vector2 pos, VFXModelDescriptorParameters desc)
+        {
+            if (controller == null) return null;
+            return controller.AddVFXParameter(pos, desc);
         }
 
         void AddVFXParameter(Vector2 pos, VFXParameterController parameterController, VFXGroupNode groupNode)
@@ -1043,7 +1028,7 @@ namespace UnityEditor.VFX.UI
         {
             foreach (var layer in contentViewContainer.Children())
             {
-                foreach (var element in layer.Children())
+                foreach (var element in layer)
                 {
                     if (element is VFXContextUI)
                     {
@@ -1057,7 +1042,7 @@ namespace UnityEditor.VFX.UI
         {
             foreach (var layer in contentViewContainer.Children())
             {
-                foreach (var element in layer.Children())
+                foreach (var element in layer)
                 {
                     if (element is VFXNodeUI)
                     {
@@ -1141,6 +1126,11 @@ namespace UnityEditor.VFX.UI
                 controller.Remove(change.elementsToRemove.OfType<IControlledElement>().Where(t => t.controller != null).Select(t => t.controller));
             }
 
+            foreach (var groupNode in groupNodes.Values)
+            {
+                groupNode.UpdateControllerFromContent();
+            }
+
             return change;
         }
 
@@ -1189,7 +1179,7 @@ namespace UnityEditor.VFX.UI
         {
             foreach (var layer in contentViewContainer.Children())
             {
-                foreach (var element in layer.Children())
+                foreach (var element in layer)
                 {
                     if (element is VFXNodeUI)
                     {
@@ -1215,7 +1205,7 @@ namespace UnityEditor.VFX.UI
         {
             foreach (var layer in contentViewContainer.Children())
             {
-                foreach (var element in layer.Children())
+                foreach (var element in layer)
                 {
                     if (element is VFXDataEdge)
                     {
@@ -1226,6 +1216,32 @@ namespace UnityEditor.VFX.UI
                 }
             }
             return null;
+        }
+
+        public IEnumerable<VFXDataEdge> GetAllDataEdges()
+        {
+            foreach (var layer in contentViewContainer.Children())
+            {
+                foreach (var element in layer)
+                {
+                    if (element is VFXDataEdge)
+                    {
+                        yield return element as VFXDataEdge;
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<Port> GetAllPorts(bool input, bool output)
+        {
+            foreach (var anchor in GetAllDataAnchors(input, output))
+            {
+                yield return anchor;
+            }
+            foreach (var anchor in GetAllFlowAnchors(input, output))
+            {
+                yield return anchor;
+            }
         }
 
         public void UpdateGlobalSelection()
@@ -1511,7 +1527,7 @@ namespace UnityEditor.VFX.UI
             controller.AddStickyNote(position, group != null ? group.controller : null);
         }
 
-        void OnCreateNodeInGroupNode(DropdownMenuAction e)
+        void OnCreateNodeInGroupNode(DropdownMenu.MenuAction e)
         {
             //The targeted groupnode will be determined by a PickAll later
             VFXFilterWindow.Show(VFXViewWindow.currentWindow, e.eventInfo.mousePosition, ViewToScreenPosition(e.eventInfo.mousePosition), m_NodeProvider);
@@ -1519,43 +1535,41 @@ namespace UnityEditor.VFX.UI
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            if (evt.target is VFXGroupNode || evt.target is VFXSystemBorder) // Default behaviour only shows the OnCreateNode if the target is the view itself.
+            var targetSystem = evt.target as VFXSystemBorder;
+            if( evt.target is VFXGroupNode || evt.target is VFXSystemBorder) // Default behaviour only shows the OnCreateNode if the target is the view itself.
                 evt.target = this;
-
+            
             base.BuildContextualMenu(evt);
 
             Vector2 mousePosition = evt.mousePosition;
+            bool hasMenu = false;
 
             if (evt.target is VFXNodeUI)
             {
                 evt.menu.InsertAction(evt.target is VFXContextUI ? 1 : 0, "Group Selection", (e) => { GroupSelection(); },
-                    (e) => { return canGroupSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled; });
+                    (e) => { return canGroupSelection ? DropdownMenu.MenuAction.StatusFlags.Normal : DropdownMenu.MenuAction.StatusFlags.Disabled; });
+                hasMenu = true;
             }
 
-            if (evt.target is VFXView)
+            if (evt.target is VFXView )
             {
-                evt.menu.InsertAction(1, "Create Sticky Note", (e) => { AddStickyNote(mousePosition); },(e) => DropdownMenuAction.Status.Normal);
-
-                if( evt.triggerEvent is IMouseEvent)
+                evt.menu.InsertAction(1,"Create Sticky Note", (e) => { AddStickyNote(mousePosition); },
+                    (e) => { return DropdownMenu.MenuAction.StatusFlags.Normal; });
+                hasMenu = true;
+            }
+            if (targetSystem != null)
+            {
+                if (hasMenu)
                 {
-                    foreach( var system in m_Systems)
-                    {
-                        Rect bounds = system.worldBound;
-                        if (bounds.Contains((evt.triggerEvent as IMouseEvent).mousePosition))
-                        {
-                            evt.menu.InsertSeparator("", 2);
-                            evt.menu.InsertAction(3, string.IsNullOrEmpty(system.controller.title) ? "Name System" : "Rename System", a => system.OnRename(), e => DropdownMenuAction.Status.Normal);
-                            break;
-                        }
-                    }
+                    evt.menu.AppendSeparator();
                 }
+                evt.menu.InsertAction(2,string.IsNullOrEmpty(targetSystem.controller.title) ? "Name System" : "Rename System", a => targetSystem.OnRename(), e => DropdownMenu.MenuAction.StatusFlags.Normal);
             }
 
             if (evt.target is VFXContextUI)
             {
                 var context = evt.target as VFXContextUI;
-                evt.menu.InsertSeparator("", 2);
-                evt.menu.InsertAction(3, string.IsNullOrEmpty(context.controller.model.label) ? "Name Context" : "Rename Context", a => context.OnRename(), e => DropdownMenuAction.Status.Normal);
+                evt.menu.InsertAction(2,string.IsNullOrEmpty(context.controller.model.label) ? "Name Context" : "Rename Context", a => context.OnRename(), e => DropdownMenu.MenuAction.StatusFlags.Normal);
             }
         }
 

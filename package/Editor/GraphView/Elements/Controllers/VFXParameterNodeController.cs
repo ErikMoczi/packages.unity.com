@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
 
 using UnityEngine;
 using UnityEngine.Experimental.VFX;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 
 
 namespace UnityEditor.VFX.UI
@@ -198,7 +198,6 @@ namespace UnityEditor.VFX.UI
         }
 
         bool IPropertyRMProvider.expandable { get { return false; } }
-        bool IPropertyRMProvider.expandableIfShowsEverything { get { return false; } }
 
 
         public object value

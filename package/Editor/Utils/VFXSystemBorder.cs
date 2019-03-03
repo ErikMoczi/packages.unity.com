@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEditor.Experimental.GraphView;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleSheets;
+using UnityEditor.Experimental.UIElements.GraphView;
 using System;
 using System.Linq;
 
@@ -13,56 +14,8 @@ namespace UnityEditor.VFX.UI
     class VFXSystemBorderFactory : UxmlFactory<VFXSystemBorder>
     {}
 
-
-
-
     class VFXSystemBorder : GraphElement, IControlledElement<VFXSystemController>, IDisposable
     {
-        class Content : ImmediateModeElement
-        {
-            VFXSystemBorder m_Border;
-
-            public Content(VFXSystemBorder border)
-            {
-                m_Border = border;
-            }
-
-            protected override void ImmediateRepaint()
-            {
-                m_Border.RecreateResources();
-                VFXView view = GetFirstAncestorOfType<VFXView>();
-                if (view != null && m_Border.m_Mat != null)
-                {
-                    float radius = m_Border.resolvedStyle.borderTopLeftRadius;
-
-                    float realBorder = m_Border.resolvedStyle.borderLeftWidth * view.scale;
-
-                    Vector4 size = new Vector4(layout.width * .5f, layout.height * 0.5f, 0, 0);
-                    m_Border.m_Mat.SetVector("_Size", size);
-                    m_Border.m_Mat.SetFloat("_Border", realBorder < 1.75f ? 1.75f / view.scale : m_Border.resolvedStyle.borderLeftWidth);
-                    m_Border.m_Mat.SetFloat("_Radius", radius);
-
-                    float opacity = m_Border.resolvedStyle.opacity;
-
-
-                    Color start = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? m_Border.startColor.gamma : m_Border.startColor;
-                    start.a *= opacity;
-                    m_Border.m_Mat.SetColor("_ColorStart", start);
-                    Color end = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? m_Border.endColor.gamma : m_Border.endColor;
-                    end.a *= opacity;
-                    m_Border.m_Mat.SetColor("_ColorEnd", end);
-
-                    Color middle = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? m_Border.middleColor.gamma : m_Border.middleColor;
-                    middle.a *= opacity;
-                    m_Border.m_Mat.SetColor("_ColorMiddle", middle);
-
-                    m_Border.m_Mat.SetPass(0);
-
-                    Graphics.DrawMeshNow(s_Mesh, Matrix4x4.Translate(new Vector3(size.x, size.y, 0)));
-                }
-            }
-        }
-
         Material m_Mat;
 
         static Mesh s_Mesh;
@@ -72,12 +25,12 @@ namespace UnityEditor.VFX.UI
             RecreateResources();
 
             var tpl = Resources.Load<VisualTreeAsset>("uxml/VFXSystemBorder");
-            tpl.CloneTree(this);
+            tpl.CloneTree(this,new Dictionary<string, VisualElement>());
 
-            this.AddStyleSheetPath("VFXSystemBorder");
+            AddStyleSheetPath("VFXSystemBorder");
 
-            this.cacheAsBitmap = false;
-            this.style.overflow = Overflow.Visible;
+            this.clippingOptions = ClippingOptions.NoClipping;
+            //this.pickingMode = PickingMode.Ignore;
 
             m_Title = this.Query<Label>("title");
             m_TitleField = this.Query<TextField>("title-field");
@@ -85,20 +38,12 @@ namespace UnityEditor.VFX.UI
 
             m_Title.RegisterCallback<MouseDownEvent>(OnTitleMouseDown);
 
-            m_TitleField.Q("unity-text-input").RegisterCallback < FocusOutEvent >(OnTitleBlur);
+            m_TitleField.RegisterCallback<BlurEvent>(OnTitleBlur);
             m_TitleField.RegisterCallback<ChangeEvent<string>>(OnTitleChange);
             m_Title.RegisterCallback<GeometryChangedEvent>(OnTitleRelayout);
-
-            Content content = new Content(this);
-            content.style.position = UnityEngine.UIElements.Position.Absolute;
-            content.style.top = content.style.left = content.style.right = content.style.bottom = 0f;
-            content.pickingMode = PickingMode.Ignore;
-
-            pickingMode = PickingMode.Ignore;
-            Add(content);
-            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
             this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
         }
+
         public void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
         }
@@ -110,9 +55,7 @@ namespace UnityEditor.VFX.UI
             m_TitleField.visible = true;
             UpdateTitleFieldRect();
 
-            m_TitleField.Q(TextField.textInputUssName).visible = false;
-            m_TitleField.Q(TextField.textInputUssName).visible = true;
-            m_TitleField.Q(TextField.textInputUssName).Focus();
+            m_TitleField.Focus();
             m_TitleField.SelectAll();
         }
 
@@ -144,19 +87,18 @@ namespace UnityEditor.VFX.UI
             m_Title.parent.ChangeCoordinatesTo(m_TitleField.parent, rect);
 
 
-            m_TitleField.style.top = rect.yMin;
-            m_TitleField.style.left = rect.xMin;
-            m_TitleField.style.right = m_Title.resolvedStyle.marginRight + m_Title.resolvedStyle.borderRightWidth;
-            m_TitleField.style.height = rect.height - m_Title.resolvedStyle.marginTop - m_Title.resolvedStyle.marginBottom;
+            m_TitleField.style.positionTop = rect.yMin;
+            m_TitleField.style.positionLeft = rect.xMin;
+            m_TitleField.style.positionRight = m_Title.style.marginRight.value + m_Title.style.borderRightWidth.value;
+            m_TitleField.style.height = rect.height - m_Title.style.marginTop - m_Title.style.marginBottom;
         }
 
-        void OnTitleBlur(FocusOutEvent e)
+        void OnTitleBlur(BlurEvent e)
         {
             title = m_TitleField.value;
             m_TitleField.visible = false;
 
-            VFXView view = GetFirstAncestorOfType<VFXView>();
-
+            GetFirstAncestorOfType<VFXView>();
             controller.title = title;
         }
 
@@ -359,36 +301,36 @@ namespace UnityEditor.VFX.UI
             UnityObject.DestroyImmediate(m_Mat);
         }
 
-        Color m_StartColor;
+        StyleValue<Color> m_StartColor;
         public Color startColor
         {
             get
             {
-                return m_StartColor;
+                return m_StartColor.GetSpecifiedValueOrDefault(Color.black);
             }
             set
             {
                 m_StartColor = value;
             }
         }
-        Color m_EndColor;
+        StyleValue<Color> m_EndColor;
         public Color endColor
         {
             get
             {
-                return m_EndColor;
+                return m_EndColor.GetSpecifiedValueOrDefault(Color.black);
             }
             set
             {
                 m_EndColor = value;
             }
         }
-        Color m_MiddleColor;
+        StyleValue<Color> m_MiddleColor;
         public Color middleColor
         {
             get
             {
-                return m_MiddleColor;
+                return m_MiddleColor.GetSpecifiedValueOrDefault(Color.black);
             }
             set
             {
@@ -396,15 +338,49 @@ namespace UnityEditor.VFX.UI
             }
         }
 
-        static readonly CustomStyleProperty<Color> s_StartColorProperty = new CustomStyleProperty<Color>("--start-color");
-        static readonly CustomStyleProperty<Color> s_EndColorProperty = new CustomStyleProperty<Color>("--end-color");
-        static readonly CustomStyleProperty<Color> s_MiddleColorProperty = new CustomStyleProperty<Color>("--middle-color");
-        private void OnCustomStyleResolved(CustomStyleResolvedEvent e)
+        protected override void OnStyleResolved(ICustomStyle styles)
         {
-            var customStyle = e.customStyle;
-            customStyle.TryGetValue(s_StartColorProperty, out m_StartColor);
-            customStyle.TryGetValue(s_EndColorProperty, out m_EndColor);
-            customStyle.TryGetValue(s_MiddleColorProperty, out m_MiddleColor);
+            base.OnStyleResolved(styles);
+
+            styles.ApplyCustomProperty("start-color", ref m_StartColor);
+            styles.ApplyCustomProperty("end-color", ref m_EndColor);
+            styles.ApplyCustomProperty("middle-color", ref m_MiddleColor);
+        }
+
+        protected override void DoRepaint(IStylePainter sp)
+        {
+            RecreateResources();
+            VFXView view = GetFirstAncestorOfType<VFXView>();
+            if (view != null && m_Mat != null)
+            {
+                float radius = style.borderRadius;
+
+                float realBorder = style.borderLeftWidth.value * view.scale;
+
+                Vector4 size = new Vector4(layout.width * .5f, layout.height * 0.5f, 0, 0);
+                m_Mat.SetVector("_Size", size);
+                m_Mat.SetFloat("_Border", realBorder < 1.75f ?  1.75f / view.scale : style.borderLeftWidth.value);
+                m_Mat.SetFloat("_Radius", radius);
+
+
+                float opacity = style.opacity;
+
+
+                Color start = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? startColor.gamma : startColor;
+                start.a *= opacity;
+                m_Mat.SetColor("_ColorStart", start);
+                Color end = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? endColor.gamma : endColor;
+                end.a *= opacity;
+                m_Mat.SetColor("_ColorEnd", end);
+
+                Color middle = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? middleColor.gamma : middleColor;
+                middle.a *= opacity;
+                m_Mat.SetColor("_ColorMiddle", middle);
+
+                m_Mat.SetPass(0);
+
+                Graphics.DrawMeshNow(s_Mesh, Matrix4x4.Translate(new Vector3(size.x, size.y, 0)));
+            }
         }
 
         VFXSystemController m_Controller;

@@ -1,6 +1,7 @@
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
+using UnityEditor.Experimental.UIElements;
 
 
 namespace UnityEditor.VFX.UIElements
@@ -62,6 +63,11 @@ namespace UnityEditor.VFX.UIElements
                 m_Indeterminate = value;
                 ValueToGUI(true);
             }
+        }
+
+        void OnIgnoreEvent(EventBase e)
+        {
+            e.StopPropagation();
         }
 
         protected override void ValueToGUI(bool force)

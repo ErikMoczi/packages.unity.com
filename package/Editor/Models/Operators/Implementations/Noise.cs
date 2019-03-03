@@ -78,14 +78,14 @@ namespace UnityEditor.VFX.Operator
                 IEnumerable<VFXPropertyWithValue> properties = null;
 
                 if (dimensions == DimensionCount.One)
-                    properties = PropertiesFromType(nameof(InputProperties1D));
+                    properties = PropertiesFromType("InputProperties1D");
                 else if (dimensions == DimensionCount.Two)
-                    properties = PropertiesFromType(nameof(InputProperties2D));
+                    properties = PropertiesFromType("InputProperties2D");
                 else
-                    properties = PropertiesFromType(nameof(InputProperties3D));
+                    properties = PropertiesFromType("InputProperties3D");
 
-                properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesCommon)));
-                properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesRange)));
+                properties = properties.Concat(PropertiesFromType("InputPropertiesCommon"));
+                properties = properties.Concat(PropertiesFromType("InputPropertiesRange"));
 
                 return properties;
             }
@@ -95,13 +95,13 @@ namespace UnityEditor.VFX.Operator
         {
             get
             {
-                IEnumerable<VFXPropertyWithValue> properties = PropertiesFromType(nameof(OutputPropertiesCommon));
+                IEnumerable<VFXPropertyWithValue> properties = PropertiesFromType("OutputPropertiesCommon");
                 if (dimensions == DimensionCount.One)
-                    properties = properties.Concat(PropertiesFromType(nameof(OutputProperties1D)));
+                    properties = properties.Concat(PropertiesFromType("OutputProperties1D"));
                 else if (dimensions == DimensionCount.Two)
-                    properties = properties.Concat(PropertiesFromType(nameof(OutputProperties2D)));
+                    properties = properties.Concat(PropertiesFromType("OutputProperties2D"));
                 else
-                    properties = properties.Concat(PropertiesFromType(nameof(OutputProperties3D)));
+                    properties = properties.Concat(PropertiesFromType("OutputProperties3D"));
 
                 return properties;
             }

@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEditor.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements;
 using UnityEditor.VFX.UIElements;
 
 namespace UnityEditor.VFX.UI
@@ -39,8 +39,8 @@ namespace UnityEditor.VFX.UI
             if (!RangeShouldCreateSlider(range))
             {
                 result = CreateSimpleField(out m_TextField);
-                m_TextField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnKeyDown);
-                m_TextField.Q("unity-text-input").RegisterCallback<BlurEvent>(OnFocusLost);
+                m_TextField.RegisterCallback<KeyDownEvent>(OnKeyDown);
+                m_TextField.RegisterCallback<BlurEvent>(OnFocusLost);
             }
             else
             {

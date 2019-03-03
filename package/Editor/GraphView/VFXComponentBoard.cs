@@ -1,18 +1,17 @@
 using System;
-using UnityEditor.UIElements;
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 using UnityEngine.Experimental.VFX;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 using UnityEditor.VFX;
 using System.Collections.Generic;
 using UnityEditor;
 using System.Linq;
 using System.Text;
 using UnityEditor.SceneManagement;
+using UnityEngine.Experimental.UIElements.StyleEnums;
 using System.Globalization;
-
-using PositionType = UnityEngine.UIElements.Position;
 
 namespace UnityEditor.VFX.UI
 {
@@ -91,8 +90,8 @@ namespace UnityEditor.VFX.UI
             }
 
             Vector2 maxSizeInView = viewrect.max - rect.position - sizeMargin;
-            float newWidth = Mathf.Max(element.resolvedStyle.minWidth.value, Mathf.Min(rect.width, maxSizeInView.x));
-            float newHeight = Mathf.Max(element.resolvedStyle.minHeight.value, Mathf.Min(rect.height, maxSizeInView.y));
+            float newWidth = Mathf.Max(element.style.minWidth, Mathf.Min(rect.width, maxSizeInView.x));
+            float newHeight = Mathf.Max(element.style.minHeight, Mathf.Min(rect.height, maxSizeInView.y));
 
             if (Mathf.Abs(newWidth - rect.width) > 1)
             {
@@ -152,7 +151,7 @@ namespace UnityEditor.VFX.UI
             m_View = view;
             var tpl = Resources.Load<VisualTreeAsset>("uxml/VFXComponentBoard");
 
-            tpl.CloneTree(contentContainer);
+            tpl.CloneTree(contentContainer, new Dictionary<string, VisualElement>());
 
             contentContainer.AddStyleSheetPath("VFXComponentBoard");
 
@@ -182,7 +181,7 @@ namespace UnityEditor.VFX.UI
             m_PlayRateSlider = this.Query<Slider>("play-rate-slider");
             m_PlayRateSlider.lowValue = Mathf.Pow(VisualEffectControl.minSlider, 1 / VisualEffectControl.sliderPower);
             m_PlayRateSlider.highValue = Mathf.Pow(VisualEffectControl.maxSlider, 1 / VisualEffectControl.sliderPower);
-            m_PlayRateSlider.RegisterValueChangedCallback(evt => OnEffectSlider(evt.newValue));
+            m_PlayRateSlider.valueChanged += OnEffectSlider;
             m_PlayRateField = this.Query<IntegerField>("play-rate-field");
             m_PlayRateField.RegisterCallback<ChangeEvent<int>>(OnPlayRateField);
 
@@ -207,7 +206,7 @@ namespace UnityEditor.VFX.UI
 
             RegisterCallback<MouseDownEvent>(OnMouseClick, TrickleDown.TrickleDown);
 
-            style.position = PositionType.Absolute;
+            style.positionType = PositionType.Absolute;
 
             SetPosition(BoardPreferenceHelper.LoadPosition(BoardPreferenceHelper.Board.componentBoard, defaultRect));
         }
@@ -223,13 +222,13 @@ namespace UnityEditor.VFX.UI
 
         public override Rect GetPosition()
         {
-            return new Rect(resolvedStyle.left, resolvedStyle.top, resolvedStyle.width, resolvedStyle.height);
+            return new Rect(style.positionLeft, style.positionTop, style.width, style.height);
         }
 
         public override void SetPosition(Rect newPos)
         {
-            style.left = newPos.xMin;
-            style.top = newPos.yMin;
+            style.positionLeft = newPos.xMin;
+            style.positionTop = newPos.yMin;
             style.width = newPos.width;
             style.height = newPos.height;
         }
@@ -540,7 +539,7 @@ namespace UnityEditor.VFX.UI
                 {
                     var tpl = Resources.Load<VisualTreeAsset>("uxml/VFXComponentBoard-event");
 
-                    tpl.CloneTree(m_EventsContainer);
+                    tpl.CloneTree(m_EventsContainer, new Dictionary<string, VisualElement>());
 
                     VFXComponentBoardEventUI newUI = m_EventsContainer.Children().Last() as VFXComponentBoardEventUI;
                     if (newUI != null)

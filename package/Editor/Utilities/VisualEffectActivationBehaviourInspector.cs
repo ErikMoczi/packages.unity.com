@@ -1,4 +1,3 @@
-#if VFX_HAS_TIMELINE
 using System;
 using System.Linq;
 using UnityEngine;
@@ -198,4 +197,3 @@ namespace UnityEditor.VFX.Utils
         }
     }
 }
-#endif

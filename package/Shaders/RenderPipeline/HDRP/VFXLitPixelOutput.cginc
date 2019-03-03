@@ -37,9 +37,6 @@ float4 VFXGetPixelOutputForward(const VFX_VARYING_PS_INPUTS i, float3 normalWS, 
     #endif
     LightLoop(GetWorldSpaceNormalizeViewDir(posRWS), posInput, preLightData, bsdfData, builtinData, featureFlags, diffuseLighting, specularLighting);
 
-    diffuseLighting *= GetCurrentExposureMultiplier();
-    specularLighting *= GetCurrentExposureMultiplier();
-
     #ifdef _BLENDMODE_PRE_MULTIPLY
     diffuseLighting *= builtinData.opacity;
     specularLighting *= builtinData.opacity;

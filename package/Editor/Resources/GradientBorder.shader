@@ -14,7 +14,6 @@ Shader "Hidden/VFX/GradientBorder"
         Tags { "RenderType"="Transparent" "Queue"="Transparent"}
         LOD 100
         Cull Off
-        ZWrite Off
         ZTest Always
         Blend SrcAlpha OneMinusSrcAlpha
 

@@ -1,8 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
-using UnityEngine.UIElements;
+using UnityEditor.Experimental.UIElements.GraphView;
+using UnityEngine.Experimental.UIElements;
 
 namespace UnityEditor.VFX.UI
 {
@@ -10,7 +10,7 @@ namespace UnityEditor.VFX.UI
     {
         public VFXFlowEdge()
         {
-            this.AddStyleSheetPath("VFXFlowEdge");
+            AddStyleSheetPath("VFXFlowEdge");
 
             edgeControl.inputOrientation = Orientation.Vertical;
             edgeControl.outputOrientation = Orientation.Vertical;

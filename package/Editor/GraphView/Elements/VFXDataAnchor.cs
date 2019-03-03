@@ -1,12 +1,12 @@
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
+using UnityEngine.Experimental.UIElements.StyleSheets;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleEnums;
 using System.Collections.Generic;
 using Type = System.Type;
 using System.Linq;
 using UnityEngine.Profiling;
-
-using PositionType = UnityEngine.UIElements.Position;
 
 namespace UnityEditor.VFX.UI
 {
@@ -46,17 +46,17 @@ namespace UnityEditor.VFX.UI
         protected VFXDataAnchor(Orientation anchorOrientation, Direction anchorDirection, Type type, VFXNodeUI node) : base(anchorOrientation, anchorDirection, Capacity.Multi, type)
         {
             Profiler.BeginSample("VFXDataAnchor.VFXDataAnchor");
-            this.AddStyleSheetPath("VFXDataAnchor");
+            AddStyleSheetPath("VFXDataAnchor");
             AddToClassList("VFXDataAnchor");
-            this.AddStyleSheetPath("VFXTypeColor");
+            AddStyleSheetPath("VFXTypeColor");
 
             m_ConnectorHighlight = new VisualElement();
 
-            m_ConnectorHighlight.style.position = PositionType.Absolute;
-            m_ConnectorHighlight.style.top = 0f;
-            m_ConnectorHighlight.style.left = 0f;
-            m_ConnectorHighlight.style.bottom = 0f;
-            m_ConnectorHighlight.style.right = 0f;
+            m_ConnectorHighlight.style.positionType = PositionType.Absolute;
+            m_ConnectorHighlight.style.positionTop = 0;
+            m_ConnectorHighlight.style.positionLeft = 0;
+            m_ConnectorHighlight.style.positionBottom = 0;
+            m_ConnectorHighlight.style.positionRight = 0;
             m_ConnectorHighlight.pickingMode = PickingMode.Ignore;
 
             VisualElement connector = m_ConnectorBox as VisualElement;
@@ -77,10 +77,10 @@ namespace UnityEditor.VFX.UI
             var op = controller.sourceNode.model as VFXOperatorNumericCascadedUnified;
 
             if (op != null)
-                evt.menu.AppendAction("Remove Slot", OnRemove, e => op.operandCount > 2 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                evt.menu.AppendAction("Remove Slot", OnRemove, e => op.operandCount > 2 ? DropdownMenu.MenuAction.StatusFlags.Normal : DropdownMenu.MenuAction.StatusFlags.Disabled);
         }
 
-        void OnRemove(DropdownMenuAction e)
+        void OnRemove(DropdownMenu.MenuAction e)
         {
             var op = controller.sourceNode as VFXCascadedOperatorController;
 
@@ -125,6 +125,15 @@ namespace UnityEditor.VFX.UI
         public override bool collapsed
         {
             get { return !controller.expandedInHierachy; }
+        }
+
+        const string AnchorColorProperty = "anchor-color";
+        StyleValue<Color> m_AnchorColor;
+
+
+        protected override void OnStyleResolved(ICustomStyle styles)
+        {
+            base.OnStyleResolved(styles);
         }
 
         IEnumerable<VFXDataEdge> GetAllEdges()

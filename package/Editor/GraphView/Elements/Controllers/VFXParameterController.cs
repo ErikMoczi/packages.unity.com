@@ -3,24 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-using UnityEditor.Experimental.GraphView;
+using UnityEditor.Experimental.UIElements.GraphView;
 
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Experimental.VFX;
-using UnityEngine.UIElements;
+using UnityEngine.Experimental.UIElements;
 using System.Collections.ObjectModel;
 
 
 namespace UnityEditor.VFX.UI
 {
-    class VFXSubParameterController : Controller, IPropertyRMProvider
+    class VFXSubParameterController : IPropertyRMProvider
     {
-
-        public const int ExpandedChange = 1;
-        public override void ApplyChanges()
-        {
-        }
         VFXParameterController m_Parameter;
         //int m_Field;
         int[] m_FieldPath;
@@ -96,14 +91,17 @@ namespace UnityEditor.VFX.UI
 
         bool IPropertyRMProvider.expanded
         {
-            get { return expanded;}
+            get
+            {
+                return false;
+            }
         }
         bool IPropertyRMProvider.editable
         {
             get { return true; }
         }
 
-        bool IPropertyRMProvider.expandable { get { return children.Count() > 0; } }
+        bool IPropertyRMProvider.expandable { get { return false; } }
 
         public string name
         {
@@ -116,20 +114,14 @@ namespace UnityEditor.VFX.UI
 
         int IPropertyRMProvider.depth { get { return m_FieldPath.Length; } }
 
-
-        public bool expanded { get; private set; }
-        bool IPropertyRMProvider.expandableIfShowsEverything { get { return false; } }
-
         void IPropertyRMProvider.ExpandPath()
         {
-            expanded = true;
-            NotifyChange(ExpandedChange);
+            throw new NotImplementedException();
         }
 
         void IPropertyRMProvider.RetractPath()
         {
-            expanded = false;
-            NotifyChange(ExpandedChange);
+            throw new NotImplementedException();
         }
 
         public Type portType
@@ -200,7 +192,6 @@ namespace UnityEditor.VFX.UI
         {
             get { return m_Owner.expandable; }
         }
-        bool IPropertyRMProvider.expandableIfShowsEverything { get { return true; } }
         public object value
         {
             get { return m_Min ? m_Owner.minValue : m_Owner.maxValue; }
@@ -815,8 +806,6 @@ namespace UnityEditor.VFX.UI
         }
 
         public bool expandable { get { return false; } }
-
-        bool IPropertyRMProvider.expandableIfShowsEverything { get { return false; } }
 
         public override string name { get { return "Value"; } }
 

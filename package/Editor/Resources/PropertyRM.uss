@@ -45,7 +45,7 @@
     margin-left:4;
     margin-right:8;
 }
-.propertyrm .unity-button
+.propertyrm Button
 {
     margin-top:1;
     margin-bottom:1;
@@ -55,22 +55,11 @@
 
 .propertyrm #label
 {
-    color: rgb(153,153,153);
+    text-color: rgb(153,153,153);
     height:16;
     margin-left:0;
     padding-left:1;
-    margin-bottom:0;
-    padding-bottom:0;
-    -unity-text-align:middle-left;
 }
-
-.propertyrm > VFXLabeledField.fieldContainer,.propertyrm > VFXEnumField.fieldContainer
-{
-    padding-top:1;
-    padding-bottom:1;
-    height:18;
-}
-
 
 .propertyrm VFXMatrix4x4Field.fieldContainer
 {
@@ -91,9 +80,9 @@
     background-image:resource("vfx/spaceworld");
 }
 
-.propertyrm .unity-base-text-field *
+.propertyrm > FloatField
 {
-    -unity-text-align: middle-left;
+    margin-bottom:3;
 }
 
 .propertyrm .fieldContainer > *
@@ -102,14 +91,15 @@
 }
 .propertyrm .textfield::disabled
 {
-    color:#666;
+    text-color:#666;
 }
 
 .propertyrm .label
 {
-    color:#888;
+    text-color:#888;
     flex:0 0 auto;
-    -unity-text-align:middle-center;
+    padding-left:2;
+    text-alignment:middle-center;
     margin-left:0;
     padding-left:4;
     margin-right:2;
@@ -121,7 +111,7 @@
     padding-left:0;
 }
 
-.propertyrm .fieldContainer, .propertyrm .unity-float-field
+.propertyrm .fieldContainer, .propertyrm FloatField
 {
     -align-items: center;
     flex-direction:row;
@@ -134,7 +124,7 @@
     height:16;
 }
 
-BoolPropertyRM > .unity-toggle
+BoolPropertyRM > Toggle
 {
     padding-top:0;
     padding-bottom:0;
@@ -171,6 +161,10 @@ ColorPropertyRM .colorcontainer, Vector3PropertyRM .colorcontainer
     border-right-width:1;
     border-top-width:1;
     border-bottom-width:1;
+    border-top:1;
+    border-bottom:1;
+    border-left:1;
+    border-right:1;
     border-color:#000;
     margin-top:2;
     margin-bottom:2;
@@ -181,28 +175,18 @@ ColorPropertyRM > .maincontainer > .fieldContainer
     flex:0 0 auto;
 }
 
-ColorPropertyRM .unity-float-field
+ColorPropertyRM FloatField
 {
     flex:1 0 auto;
 }
 
-FloatPropertyRM .unity-float-field
-{
-    align-self:flex-end;
-    flex:1 0 auto;
-}
-
-IntPropertyRM .unity-integer-field
+FloatPropertyRM FloatField
 {
     align-self:flex-end;
-    margin-left:0;
-    margin-right:0;
-    margin-top:0;
-    margin-bottom:0;
     flex:1 0 auto;
 }
 
-UintPropertyRM .unity-long-field
+IntPropertyRM IntegerField
 {
     align-self:flex-end;
     margin-left:0;
@@ -212,7 +196,17 @@ UintPropertyRM .unity-long-field
     flex:1 0 auto;
 }
 
-CurvePropertyRM .unity-curve-field
+UintPropertyRM LongField
+{
+    align-self:flex-end;
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+    flex:1 0 auto;
+}
+
+CurvePropertyRM CurveField
 {
     flex:1 0 auto;
 }
@@ -223,7 +217,7 @@ CurvePropertyRM
     min-width:100;
 }
 
-StringPropertyRM VFXStringField .unity-text-field
+StringPropertyRM VFXStringField TextField
 {
     margin-left:0;
     margin-right:0;
@@ -240,16 +234,14 @@ Matrix4x4PropertyRM.propertyrm > .fieldContainer
 .propertyrm #indeterminate
 {
     flex:1 1 auto;
-    -unity-slice-left: 3;
-    -unity-slice-top: 3;
-    -unity-slice-right: 3;
-    -unity-slice-bottom: 3;
+    slice-left: 3;
+    slice-top: 3;
+    slice-right: 3;
+    slice-bottom: 3;
     margin-top:0;
     margin-bottom:0;
     margin-left:0;
     margin-right:0;
-    padding-left: 16;
-    -unity-text-align: middle-left;
 }
 
 .propertyrm .sliderField #indeterminate
