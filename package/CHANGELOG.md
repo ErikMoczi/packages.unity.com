@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.5-preview] - 2019-01-29
+
+### Changed
+- Fixed Syncvar variable update issue. Modify both the writing and reading syncvar data as per channel. (Fixed cases 1110031, 1111442 and 1117258)
+
 ## [0.2.4-preview] - 2019-01-11
 
 ### Changed

@@ -817,16 +817,11 @@ namespace UnityEngine.Networking
 
                     bool wroteData = false;
                     short oldPos;
-                    for (int i = 0; i < m_NetworkBehaviours.Length; i++)
+                    NetworkBehaviour[] behaviourOfSameChannel = GetBehavioursOfSameChannel(channelId, false);
+                    for (int i = 0; i < behaviourOfSameChannel.Length; i++)
                     {
                         oldPos = s_UpdateWriter.Position;
-                        NetworkBehaviour comp = m_NetworkBehaviours[i];
-                        if (comp.GetDirtyChannel() != channelId)
-                        {
-                            // component could write more than one dirty-bits, so call the serialize func
-                            comp.OnSerialize(s_UpdateWriter, false);
-                            continue;
-                        }
+                        NetworkBehaviour comp = behaviourOfSameChannel[i];
 
                         if (comp.OnSerialize(s_UpdateWriter, false))
                         {
@@ -856,21 +851,31 @@ namespace UnityEngine.Networking
             }
         }
 
-        internal void OnUpdateVars(NetworkReader reader, bool initialState, NetworkMessage netMsg)
+        private NetworkBehaviour[] GetBehavioursOfSameChannel(int channelId, bool initialState)
         {
+            List<NetworkBehaviour> channels = new List<NetworkBehaviour>();
             if (initialState && m_NetworkBehaviours == null)
             {
                 m_NetworkBehaviours = GetComponents<NetworkBehaviour>();
+                return m_NetworkBehaviours;
             }
-            for (int i = 0; i < m_NetworkBehaviours.Length; i++)
+            for (int itr = 0; itr < m_NetworkBehaviours.Length; itr++)
             {
-                NetworkBehaviour comp = m_NetworkBehaviours[i];
-
-                if (!netMsg.channelId.Equals(comp.GetNetworkChannel()))
+                NetworkBehaviour comp = m_NetworkBehaviours[itr];
+                if (comp.GetNetworkChannel() == channelId)
                 {
-                    // if the bahaviour network channel is not same as the netMsg channel
-                    continue;
+                    channels.Add(comp);
                 }
+            }
+            return channels.ToArray();
+        }
+
+        internal void OnUpdateVars(NetworkReader reader, bool initialState, NetworkMessage netMsg)
+        {
+            NetworkBehaviour[] behaviourOfSameChannel = GetBehavioursOfSameChannel(netMsg.channelId, initialState);
+            for (int i = 0; i < behaviourOfSameChannel.Length; i++)
+            {
+                NetworkBehaviour comp = behaviourOfSameChannel[i];
 
 #if UNITY_EDITOR
                 var oldReadPos = reader.Position;
