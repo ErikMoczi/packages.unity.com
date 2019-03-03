@@ -153,7 +153,7 @@ internal class VettingContext
 
 #if UNITY_2018_1_OR_NEWER
         // No need to compare against the previous version of the package if we're testing out the verified set.
-        if (context.ValidationType == ValidationType.VerifiedSet)
+        if (context.ValidationType != ValidationType.VerifiedSet)
         {
             var previousPackagePath = GetPreviousPackage(context.ProjectPackageInfo);
             if (!string.IsNullOrEmpty(previousPackagePath))

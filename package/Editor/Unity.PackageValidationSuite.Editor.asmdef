@@ -1,9 +1,23 @@
 {
     "name": "Unity.PackageValidationSuite.Editor",
-    "references": ["Unity.PackageManagerUI.Editor"],
+    "references": [
+        "GUID:15a615c733aa240909fe0b28b0d5143c"
+    ],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.package-manager-ui",
+            "expression": "1.9.8",
+            "define": "PACKMAN_UI_INSTALLED"
+        }
+    ]
 }
