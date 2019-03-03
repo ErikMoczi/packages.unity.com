@@ -1,1 +1,1 @@
-This package contains the necessary components required to use the OpenVR Virtual Reality SDK on Standalone. By using this package, you will be able to deploy and run your applications on SteamVR supported devices.
+This package contains the necessary components required to use the OpenVR SDK on desktop platforms. By using this package, you will be able to deploy and run your applications on SteamVR supported devices.
