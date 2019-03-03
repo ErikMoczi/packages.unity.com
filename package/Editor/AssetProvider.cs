@@ -102,10 +102,10 @@ namespace Unity.QuickSearch
                                                     .Take(1001)
                                                     .Select(path => _provider.CreateItem(path, Path.GetFileName(path))));
 
-                        if (context.searchQuery.Contains('*'))
+                        if (context.searchQuery.Contains('*') || items.Count == 0)
                         {
                             var safeFilter = string.Join("_", context.searchQuery.Split(k_InvalidSearchFileChars));
-                            items.AddRange(Directory.GetFiles(Application.dataPath + "/", safeFilter, SearchOption.AllDirectories)
+                            items.AddRange(Directory.GetFiles(Application.dataPath, safeFilter, SearchOption.AllDirectories)
                                 .Select(path => _provider.CreateItem(path.Replace(Application.dataPath, "Assets").Replace("\\", "/"), Path.GetFileName(path))));
                         }
                     },
@@ -170,7 +170,7 @@ namespace Unity.QuickSearch
                             {
                                 Selection.activeObject = asset;
                                 EditorWindow.FocusWindowIfItsOpen(Utils.GetProjectBrowserWindowType());
-                                EditorGUIUtility.PingObject(asset);
+                                EditorApplication.delayCall += () => EditorGUIUtility.PingObject(asset);
                             }
                             else
                             {

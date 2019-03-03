@@ -26,7 +26,7 @@ namespace Unity.QuickSearch
                     fetchItems = (context, items, provider) =>
                     {
                         items.AddRange(
-                            Resources.FindObjectsOfTypeAll(typeof(GameObject)).Cast<GameObject>()
+                            UnityEngine.Object.FindObjectsOfType(typeof(GameObject)).Cast<GameObject>()
                                 .Where(go => SearchProvider.MatchSearchGroups(context.searchQuery, go.name))
                                 .Select(go =>
                                      {

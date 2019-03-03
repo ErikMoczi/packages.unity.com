@@ -1,3 +1,7 @@
+## [0.9.7-preview.1] - 2019-02-20
+- Fixed cursor blinking
+- Improved fetched scene object results
+
 ## [0.9.6-preview.1] - 2019-02-20
 - Moved menu items under Help/
 - Added a warning when all filters are disabled.

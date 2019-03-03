@@ -782,10 +782,12 @@ namespace Unity.QuickSearch
                 }
 
                 EditorGUI.BeginChangeCheck();
-                GUI.SetNextControlName(k_QuickSearchBoxName);
 
-                using (new BlinkCursorScope(m_CursorBlinking, new Color(0, 0, 0, 0)))
+                using (new BlinkCursorScope(m_CursorBlinking, new Color(0, 0, 0, 0.01f)))
+                {
+                    GUI.SetNextControlName(k_QuickSearchBoxName);
                     context.searchBoxText = EditorGUILayout.TextField(context.searchBoxText, Styles.searchField, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                }
 
                 if (String.IsNullOrEmpty(context.searchBoxText))
                 {
