@@ -4,7 +4,7 @@ Search anything in Unity.
 
 ## Search Providers
 
-Using the shortcut ```Alt + ' ``` or the `Window -> Quick Search` menu will bring out the Quick Search Tool. This extensible tool allows you to search over multiple area of Unity.
+Using the shortcut ```Alt + ' ``` or the `Help -> Quick Search` menu will bring out the Quick Search Tool. This extensible tool allows you to search over multiple area of Unity.
 
 ![qs tour](Images/quicksearch_tool_tour.gif)
 
@@ -24,11 +24,15 @@ Asset provider supports advance type filtering (Similar to Project Hierarchy):
 
 ### Current Scene
 
-All GameObjects in the current scene are available for search. You can select them from the Quick Search Tool.
+All GameObjects in the current scene are available for search. Activating a scene item in the Quick Search tool will select the corresponding GameObject in the Scene.
+
+![scnee provider](Images/scene_provider_selection.png)
 
 ### Menu
 
 Each menu items in Unity is available for search. You can execute the menu item from the Quick Search Tool. This is especially useful to pop that elusive Test Runner or the Profiler!
+
+![asset filter](Images/menu_provider.png)
 
 ### Settings
 
@@ -38,26 +42,21 @@ Each Project Settings or Preferences pages is available for search. The Quick Se
 
 ### Search the Web
 
-We have created 3 `SearchProvider` to search various Unity website for search terms. Using these providers will open your default browser at a a specific Unity page and perform a search and display some results. You can search the following websites and it is very easy to add new web search providers:
+We have created 4 `SearchProvider`s to search various Unity websites. Using these providers will open your default browser at a a specific Unity page and perform a search and display some results. You can search the following websites and it is very easy to add new web search providers:
 
-- [answers.unity.com](answers.unity.com):
+- [answers.unity.com](answers.unity.com)
+- [The Official Unity Documentation](docs.unity3d.com/Manual)
+- [Scripting Reference](docs.unity3d.com/ScriptingReference)
+- [The Mighty Unity Asset Store](assetstore.unity.com)
 
-![answers](Images/answers_search.gif)
-
-- [The Official Unity Documentation](docs.unity3d.com/Manual):
-
-![manual](Images/manual_search.gif)
-
-- [The Mighty Unity Asset Store](assetstore.unity.com):
-
-![store](Images/store_search.gif)
+![store](Images/online_search.gif)
 
 ## Filters
 
 There are 2 levels of filtering available in the Quick Search Tool:
 
 ### Provider filters
-Those filters define which provider are available for a search. This can help reduce the amount of items return by a search query especialy if you know what you are looking for.
+Those filters define which providers are available for a search. This can help reduce the amount of items return by a search query especially if you know what type of item you are looking for.
 
 ![provider filter](Images/provider_filter.png)
 
@@ -78,6 +77,15 @@ From the Quick Search Box you can type a search `provider search filter token` t
 - Store: `us:`
 - Settings: `se:`
 
+Example of queries using text providers:
+
+- `p:Player` : Search assets containing "Player"
+- `h:Main Camera` : Search scene for GameObjects with "Main Camera" in their name
+- `me:Test Runner` : Search menus item for Test Runner
+- `se:VFX` : Search settings (project and preferences) for VFX
+
+![text_providers](Images/text_providers.gif)
+
 ### Provider specific filters
 Some provider (i.e the Asset provider) supports specific filters:
 
@@ -89,28 +97,15 @@ As usual you can pass the same search tokens used by the project browser to a se
 
 ## Last Search
 
-When opening the Quick Search Tool using ```Alt + ` ``` the state (and filters) of you previous search is preserved:
+When opening the Quick Search Tool using ```Alt + ` ``` the state (and filters) of your previous search is preserved:
 
 ![last search](Images/last_search.gif)
 
-## Recent Items
+## Drag and Drop
 
-If the search box is empty, we display the 10 last searched items:
+Asset items and Scene Items supports drag and drop from the QuickSearch window to anywhere that supports it (hierarchy view, game view, inspector, etc):
 
-![recent items](Images/recent_items.png)
-
-Note that those are affected by filters as well:
-
-![recent items](Images/recent_items_filter.gif)
-
-## Installation Setup
-
-You can download or clone this project anywhere and locate it using the package manager:
-
-![Open package manager](Images/open_package_manager.png)
-![Add package from disk](Images/add_package_from_disk.png)
-![Select package json file](Images/select_package_json.png)
-![Show loaded package info](Images/package_loaded.png)
+![dnd](Images/drag_and_drop.gif)
 
 # API
 

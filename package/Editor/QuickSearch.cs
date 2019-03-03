@@ -343,7 +343,7 @@ namespace Unity.QuickSearch
             public static readonly GUIStyle itemLabel = new GUIStyle(EditorStyles.label)
             {
                 name = "quick-search-item-label",
-
+                richText = true,
                 margin = new RectOffset(4, 4, 6, 2),
                 padding = paddingNone
             };
@@ -368,7 +368,7 @@ namespace Unity.QuickSearch
             public static readonly GUIStyle itemDescription = new GUIStyle(EditorStyles.label)
             {
                 name = "quick-search-item-description",
-
+                richText = true,
                 margin = new RectOffset(4, 4, 1, 4),
                 padding = paddingNone,
 
@@ -647,9 +647,12 @@ namespace Unity.QuickSearch
             }
             else if (Event.current.type == EventType.MouseDrag && m_PrepareDrag)
             {
-                var item = m_FilteredItems.ElementAt(m_SelectedIndex);
-                item.provider?.startDrag(item, context);
-                m_PrepareDrag = false;
+                if (m_FilteredItems != null && m_SelectedIndex >= 0)
+                {
+                    var item = m_FilteredItems.ElementAt(m_SelectedIndex);
+                    item.provider?.startDrag(item, context);
+                    m_PrepareDrag = false;
+                }
             }
         }
 

@@ -49,6 +49,8 @@ namespace Unity.QuickSearch
         public Texture2D thumbnail;
         // Backpointer to the provider.
         public SearchProvider provider;
+        // Search provider defined content
+        public object data;
     }
 
     public class SearchFilter
@@ -234,15 +236,16 @@ namespace Unity.QuickSearch
             priority = 100;
         }
 
-        public SearchItem CreateItem(string id, string label = null, string description = null, Texture2D thumbnail = null)
+        public SearchItem CreateItem(string id, string label = null, string description = null, Texture2D thumbnail = null, object data = null)
         {
-            return new SearchItem()
+            return new SearchItem
             {
                 id = id,
                 label = label ?? id,
                 description = description,
                 thumbnail = thumbnail,
-                provider = this
+                provider = this,
+                data = data
             };
         }
 
