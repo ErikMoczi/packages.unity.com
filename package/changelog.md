@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4-preview.47
+
+- Fix an issue during publish stage which was preventing to release the binaries.
+
 ## 0.2.4-preview.46
 
 - iOS player builds now use static linkage (to support TestFlight)  - Minimum supported Unity versions are 2018.3.6f1 or 2019.1.0b4
