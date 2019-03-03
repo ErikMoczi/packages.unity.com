@@ -34,7 +34,7 @@ namespace FrameworkTests
             string clrVersion = (PlayerSettings.scriptingRuntimeVersion == ScriptingRuntimeVersion.Latest) ? "4.0.30319.42000" : "2.0.50727.1433";
 
             var expectedXml =
-@"<?xml version=""1.0"" encoding=""utf-8""?>\n<test-run id=""2"" testcasecount=""10"" result=""Failed"" total=""10"" passed=""3"" failed=""2"" inconclusive=""4"" skipped=""1"" asserts=""5"" engine-version=""3.5.0.0"" clr-version=""" + clrVersion + @""" start-time=""2017-01-02 03:04:05Z"" end-time=""2017-01-02 03:05:06Z"" duration=""61"">\n  <test-result>\n    <InnerValueOfTestResult />\n  </test-result>\n</test-run>";
+                @"<?xml version=""1.0"" encoding=""utf-8""?>\n<test-run id=""2"" testcasecount=""10"" result=""Failed"" total=""10"" passed=""3"" failed=""2"" inconclusive=""4"" skipped=""1"" asserts=""5"" engine-version=""3.5.0.0"" clr-version=""" + clrVersion + @""" start-time=""2017-01-02 03:04:05Z"" end-time=""2017-01-02 03:05:06Z"" duration=""61"">\n  <test-result>\n    <InnerValueOfTestResult />\n  </test-result>\n</test-run>";
 
             var xmlSettings = new XmlWriterSettings()
             {
@@ -57,7 +57,7 @@ namespace FrameworkTests
                 {
                     actualXml = streamReader.ReadToEnd();
                 }
-                
+
                 Assert.AreEqual(expectedXml.Replace("\\n", Environment.NewLine), actualXml);
             }
         }
