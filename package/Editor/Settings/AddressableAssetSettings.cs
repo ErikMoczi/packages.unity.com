@@ -27,7 +27,7 @@ namespace UnityEditor.AddressableAssets.Settings
         static void RegisterWithAssetPostProcessor()
         {
             //if the Library folder has been deleted, this will be null and it will have to be set on the first access of the settings object
-            if(AddressableAssetSettingsDefaultObject.Settings != null)
+            if (AddressableAssetSettingsDefaultObject.Settings != null)
                 AddressablesAssetPostProcessor.OnPostProcess = AddressableAssetSettingsDefaultObject.Settings.OnPostprocessAllAssets;
         }
         /// <summary>
@@ -172,7 +172,7 @@ namespace UnityEditor.AddressableAssets.Settings
         /// Returns whether this settings object is persisted to an asset.
         /// </summary>
         public bool IsPersisted { get { return !m_IsTemporary; } }
-        
+
         [SerializeField]
         bool m_BuildRemoteCatalog = true;
 
@@ -184,7 +184,7 @@ namespace UnityEditor.AddressableAssets.Settings
             get { return m_BuildRemoteCatalog; }
             set { m_BuildRemoteCatalog = value; }
         }
-        
+
         [SerializeField]
         ProfileValueReference m_RemoteCatalogBuildPath;
         /// <summary>
@@ -249,13 +249,13 @@ namespace UnityEditor.AddressableAssets.Settings
                 return (m_CachedHash = HashingMethods.Calculate(stream).ToHash128());
             }
         }
-        
+
         internal void DataBuilderCompleted(IDataBuilder builder, IDataBuilderResult result)
         {
             if (OnDataBuilderComplete != null)
                 OnDataBuilderComplete(this, builder, result);
         }
-                
+
         /// <summary>
         /// Create an AssetReference object.  If the asset is not already addressable, it will be added.  
         /// </summary>
@@ -702,9 +702,9 @@ namespace UnityEditor.AddressableAssets.Settings
             }
             return false;
         }
-        
+
         void OnEnable()
-        {   
+        {
             profileSettings.OnAfterDeserialize(this);
             buildSettings.OnAfterDeserialize(this);
             Validate();
@@ -738,7 +738,7 @@ namespace UnityEditor.AddressableAssets.Settings
                 m_DataBuilders.Add(CreateScriptAsset<BuildScriptPackedPlayMode>());
                 m_DataBuilders.Add(CreateScriptAsset<BuildScriptPackedMode>());
             }
-            if(m_DataBuilders.Find(s=>s.GetType() == typeof(BuildScriptPackedPlayMode)) == null)
+            if (m_DataBuilders.Find(s => s.GetType() == typeof(BuildScriptPackedPlayMode)) == null)
                 m_DataBuilders.Add(CreateScriptAsset<BuildScriptPackedPlayMode>());
 
             if (ActivePlayerDataBuilder != null && !ActivePlayerDataBuilder.CanBuildData<AddressablesPlayerBuildResult>())
@@ -749,7 +749,7 @@ namespace UnityEditor.AddressableAssets.Settings
             profileSettings.Validate(this);
             buildSettings.Validate(this);
         }
-        
+
         T CreateScriptAsset<T>() where T : ScriptableObject
         {
             var script = CreateInstance<T>();
@@ -792,16 +792,8 @@ namespace UnityEditor.AddressableAssets.Settings
 
                 if (createDefaultGroups)
                 {
-                    var playerData = aa.CreateGroup(PlayerDataGroupName, false, false, false, null, typeof(PlayerDataGroupSchema));
-                    var resourceEntry = aa.CreateOrMoveEntry(AddressableAssetEntry.ResourcesName, playerData);
-                    resourceEntry.IsInResources = true;
-                    aa.CreateOrMoveEntry(AddressableAssetEntry.EditorSceneListName, playerData);
-
-                    var localGroup = aa.CreateGroup(DefaultLocalGroupName, true, false, false, null, typeof(ContentUpdateGroupSchema), typeof(BundledAssetGroupSchema));
-                    var schema = localGroup.GetSchema<BundledAssetGroupSchema>();
-                    schema.BuildPath.SetVariableByName(aa, kLocalBuildPath);
-                    schema.LoadPath.SetVariableByName(aa, kLocalLoadPath);
-                    schema.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackTogether;
+                    CreateBuiltInData(aa);
+                    CreateDefaultGroup(aa);
                 }
 
                 if (isPersisted)
@@ -809,6 +801,7 @@ namespace UnityEditor.AddressableAssets.Settings
             }
             return aa;
         }
+
 
         /// <summary>
         /// Adds a named set of schema types for use in the editor GUI.
@@ -883,46 +876,60 @@ namespace UnityEditor.AddressableAssets.Settings
         {
             get
             {
+                AddressableAssetGroup group = null;
                 if (string.IsNullOrEmpty(m_DefaultGroup))
+                    group = groups.Find(s => s.CanBeSetAsDefault());
+                else
                 {
-                    //set to the first non readonly group if possible
-                    foreach (var g in groups)
+                    group = groups.Find(s => s.Guid == m_DefaultGroup);
+                    if (group == null || !group.CanBeSetAsDefault())
                     {
-                        if (g != null && !g.ReadOnly)
-                        {
-                            m_DefaultGroup = g.Guid;
-                            break;
-                        }
-                    }
-                    if (string.IsNullOrEmpty(m_DefaultGroup))
-                    {
-                        Addressables.LogError("Attempting to access Default Addressables group but no valid group is available");
-                        return null;
+                        group = groups.Find(s => s.CanBeSetAsDefault());
+                        if (group != null)
+                            m_DefaultGroup = group.Guid;
                     }
                 }
-                var group = groups.Find(s => s.Guid == m_DefaultGroup);
-                if(group == null)
+
+                if (group == null)
                 {
-                    foreach(var g in groups)
-                    {
-                        if (!g.ReadOnly)
-                        {
-                            group = g;
-                            break;
-                        }
-                    }
-                    if(group == null)
-                    {
-                        Debug.LogWarning("Addressable assets must have at least one group that is not read-only to be default, creating new group");
-                        group = CreateGroup("New Group", true, false, true, null, typeof(BundledAssetGroupSchema));
-                    }
+                    Addressables.LogWarning("A valid default group could not be found.  One will be created.");
+                    group = CreateDefaultGroup(this);
                 }
+
                 return group;
             }
             set
             {
-                m_DefaultGroup = value.Guid;
+                if (value == null)
+                    Addressables.LogError("Unable to set null as the Default Group.  Default Groups must contain a BundledAssetGroupSchema and " +
+                                          "not be ReadOnly.");
+
+                else if (!value.CanBeSetAsDefault())
+                    Addressables.LogError("Unable to set " + value.Name + " as the Default Group.  Default Groups must contain a BundledAssetGroupSchema and " +
+                                          "not be ReadOnly.");
+                else
+                    m_DefaultGroup = value.Guid;
             }
+        }
+
+        private static AddressableAssetGroup CreateBuiltInData(AddressableAssetSettings aa)
+        {
+            var playerData = aa.CreateGroup(PlayerDataGroupName, false, false, false, null, typeof(PlayerDataGroupSchema));
+            var resourceEntry = aa.CreateOrMoveEntry(AddressableAssetEntry.ResourcesName, playerData);
+            resourceEntry.IsInResources = true;
+            aa.CreateOrMoveEntry(AddressableAssetEntry.EditorSceneListName, playerData);
+            return playerData;
+        }
+
+        private static AddressableAssetGroup CreateDefaultGroup(AddressableAssetSettings aa)
+        {
+            var localGroup = aa.CreateGroup(DefaultLocalGroupName, true, false, false, null, typeof(ContentUpdateGroupSchema), typeof(BundledAssetGroupSchema));
+            var schema = localGroup.GetSchema<BundledAssetGroupSchema>();
+            schema.BuildPath.SetVariableByName(aa, kLocalBuildPath);
+            schema.LoadPath.SetVariableByName(aa, kLocalLoadPath);
+            schema.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackTogether;
+            aa.m_DefaultGroup = localGroup.Guid;
+            return localGroup;
         }
 
         AddressableAssetEntry CreateEntry(string guid, string address, AddressableAssetGroup parent, bool readOnly, bool postEvent = true)
@@ -1062,15 +1069,15 @@ namespace UnityEditor.AddressableAssets.Settings
         {
             if (targetParent == null || entry == null)
                 return;
-            
+
             entry.ReadOnly = readOnly;
-            
+
             if (entry.parentGroup != null && entry.parentGroup != targetParent)
                 entry.parentGroup.RemoveAssetEntry(entry, postEvent);
-            
+
             targetParent.AddAssetEntry(entry, postEvent);
         }
-        
+
         /// <summary>
         /// Create a new entry, or if one exists in a different group, move it into the new group.
         /// </summary>
@@ -1100,7 +1107,7 @@ namespace UnityEditor.AddressableAssets.Settings
                 {
                     entry = CreateEntry(guid, guid, targetParent, true, postEvent);
                 }
-                
+
                 targetParent.AddAssetEntry(entry, postEvent);
             }
 
@@ -1150,15 +1157,12 @@ namespace UnityEditor.AddressableAssets.Settings
             var group = CreateInstance<AddressableAssetGroup>();
             group.Initialize(this, validName, GUID.Generate().ToString(), readOnly);
 
-            groups.Add(group);
             if (IsPersisted)
             {
                 if (!Directory.Exists(GroupFolder))
                     Directory.CreateDirectory(GroupFolder);
                 AssetDatabase.CreateAsset(group, GroupFolder + "/" + group.Name + ".asset");
             }
-            if (setAsDefaultGroup)
-                DefaultGroup = group;
             if (schemasToCopy != null)
             {
                 foreach (var s in schemasToCopy)
@@ -1167,6 +1171,10 @@ namespace UnityEditor.AddressableAssets.Settings
             foreach (var t in types)
                 group.AddSchema(t);
 
+            groups.Add(group);
+
+            if (setAsDefaultGroup)
+                DefaultGroup = group;
             SetDirty(ModificationEvent.GroupAdded, group, postEvent);
             return group;
         }
@@ -1175,7 +1183,7 @@ namespace UnityEditor.AddressableAssets.Settings
         {
             var cleanedName = potentialName.Replace('/', '-');
             cleanedName = cleanedName.Replace('\\', '-');
-            if(cleanedName != potentialName)
+            if (cleanedName != potentialName)
                 Addressables.Log("Group names cannot include '\\' or '/'.  Replacing with '-'. " + cleanedName);
             var validName = cleanedName;
             int index = 1;
@@ -1262,7 +1270,7 @@ namespace UnityEditor.AddressableAssets.Settings
                 if (typeof(AddressableAssetGroup).IsAssignableFrom(assetType))
                 {
                     AddressableAssetGroup group = aa.FindGroup(Path.GetFileNameWithoutExtension(str));
-                    if(group != null)
+                    if (group != null)
                         group.DedupeEnteries();
                 }
 
@@ -1290,7 +1298,7 @@ namespace UnityEditor.AddressableAssets.Settings
                 {
                     modified = true;
                 }
-                
+
             }
 
             foreach (string str in deletedAssets)
@@ -1400,12 +1408,14 @@ namespace UnityEditor.AddressableAssets.Settings
                     Debug.LogException(e);
                 }
             }
-            
+
             var buildContext = new AddressablesBuildDataBuilderContext(settings,
                 BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget),
                 EditorUserBuildSettings.activeBuildTarget, EditorUserBuildSettings.development,
                 ProjectConfigData.postProfilerEvents, settings.PlayerBuildVersion);
-            settings.ActivePlayerDataBuilder.BuildData<AddressablesPlayerBuildResult>(buildContext);
+            var result = settings.ActivePlayerDataBuilder.BuildData<AddressablesPlayerBuildResult>(buildContext);
+            if(BuildScript.buildCompleted != null)
+                BuildScript.buildCompleted(result);
             AssetDatabase.Refresh();
         }
 

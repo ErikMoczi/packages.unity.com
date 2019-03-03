@@ -280,7 +280,11 @@ namespace UnityEditor.AddressableAssets.Diagnostics.GUI
             m_Record = GUILayout.Toggle(m_Record, "Record", EditorStyles.toolbarButton, GUILayout.ExpandWidth(false));
 
             if (GUILayout.Button("Clear", EditorStyles.toolbarButton))
+            {
                 session.Clear();
+                if (m_GraphList != null)
+                    m_GraphList.Reload();
+            }
             if (GUILayout.Button("Load", EditorStyles.toolbarButton))
                 EditorUtility.DisplayDialog("Feature not implemented", "Saving and loading profile data is not yet supported", "Close");
             if (GUILayout.Button("Save", EditorStyles.toolbarButton))

@@ -496,5 +496,23 @@ namespace UnityEditor.AddressableAssets.Settings
 
             SetDirty(AddressableAssetSettings.ModificationEvent.EntryRemoved, removeEntries.ToArray(), postEvent);
         }
+
+        /// <summary>
+        /// Check to see if a group is the Default Group.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsDefaultGroup()
+        {
+            return Guid == m_Settings.DefaultGroup.Guid;
+        }
+
+        /// <summary>
+        /// Check if a group has the appropriate schemas and attributes that the Default Group requires.
+        /// </summary>
+        /// <returns></returns>
+        public bool CanBeSetAsDefault()
+        {
+            return !m_ReadOnly && HasSchema<BundledAssetGroupSchema>();
+        }
     }
 }

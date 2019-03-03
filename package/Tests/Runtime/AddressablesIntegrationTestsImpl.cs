@@ -334,12 +334,12 @@ namespace AddressableAssetsIntegrationTests
             foreach (var key in m_KeysList)
             {
                 loadCount++;
-                Addressables.PreloadDependencies<object>(key, c => Assert.IsNotNull(c.Result)).Completed += op =>
+                Addressables.DownloadDependencies(key).Completed += op =>
                 {
                     loaded++;
-                    Assert.IsNotNull(op.Result);
-                    foreach (var d in op.Result)
-                        Assert.IsNotNull(d);
+                    Assert.IsTrue(op.IsDone);
+                    Assert.IsTrue(op.IsValid);
+                    Assert.IsNull(op.OperationException);
                 };
             }
 
@@ -358,11 +358,11 @@ namespace AddressableAssetsIntegrationTests
             {
                 loadCount++;
                 List<object> keys = new List<object>(new[] { m_KeysList[Random.Range(0, m_KeysList.Count / 2)], m_KeysList[Random.Range(m_KeysList.Count / 2, m_KeysList.Count)] });
-                Addressables.PreloadDependencies<object>(keys, op => Assert.IsNotNull(op.Result), mode).Completed += op3 =>
+                Addressables.DownloadDependencies(keys, mode).Completed += op3 =>
                 {
-                    Assert.NotNull(op3.Result);
-                    foreach (var d in op3.Result)
-                        Assert.IsNotNull(d);
+                    Assert.IsTrue(op3.IsDone);
+                    Assert.IsTrue(op3.IsValid);
+                    Assert.IsNull(op3.OperationException);
                     loaded++;
                 };
             }

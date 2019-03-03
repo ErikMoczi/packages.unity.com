@@ -218,7 +218,7 @@ namespace UnityEngine.AddressableAssets
         /// <param name="msg">The msg to log</param>
         public static void LogException(IAsyncOperation op, Exception ex)
         {
-            Debug.LogErrorFormat("{0} encounterd in operation {1}.", ex.GetType().Name, op);
+            Debug.LogErrorFormat("{0} encountered in operation {1}.", ex.GetType().Name, op);
             Debug.LogException(ex);
         }
 
@@ -591,7 +591,7 @@ namespace UnityEngine.AddressableAssets
         /// </summary>
         /// <param name="keys">List of keys for the locations.</param>
         /// <param name="callback">Callback Action that is called per load operation.</param>
-        /// <param name="mode">Merge method of locations.</param>
+        /// <param name="mode">Method for merging the results of key matches.  See <see cref="MergeMode"/> for specifics</param>
         public static IAsyncOperation<IList<TObject>> LoadAssets<TObject>(IList<object> keys, Action<IAsyncOperation<TObject>> callback, MergeMode mode)
             where TObject : class
         {
@@ -663,14 +663,7 @@ namespace UnityEngine.AddressableAssets
             Addressables.ResourceManager.ReleaseResource(asset, info.Key);
         }
 
-        /// <summary>
-        /// Asynchronously loads only the dependencies for the specified list of <paramref name="keys"/>s.
-        /// </summary>
-        /// <returns>An async operation that will complete when all individual async load operations are complete.</returns>
-        /// <param name="keys">List of keys for which to load dependencies.</param>
-        /// <param name="callback">This callback will be invoked once for each object that is loaded.</param>
-        /// <param name="mode">Method for merging the results of key matches.  See <see cref="MergeMode"/> for specifics</param>
-        public static IAsyncOperation<IList<TObject>> PreloadDependencies<TObject>(IList<object> keys, Action<IAsyncOperation<TObject>> callback, MergeMode mode) where TObject : class
+        private static IAsyncOperation<IList<TObject>> PreloadDependencies<TObject>(IList<object> keys, Action<IAsyncOperation<TObject>> callback, MergeMode mode) where TObject : class
         {
             if (!InitializationOperation.IsDone)
                 return AsyncOperationCache.Instance.Acquire<ChainOperation<IList<TObject>, IResourceLocator>>().Start(null, keys, InitializationOperation, op => PreloadDependencies(keys, callback, mode)).Retain();
@@ -695,13 +688,7 @@ namespace UnityEngine.AddressableAssets
             return loadOp;
         }
 
-        /// <summary>
-        /// Asynchronously loads only the dependencies for the specified <paramref name="key"/>.
-        /// </summary>
-        /// <returns>An async operation that will complete when all individual async load operations are complete.</returns>
-        /// <param name="key">key for which to load dependencies.</param>
-        /// <param name="callback">This callback will be invoked once for each object that is loaded.</param>
-        public static IAsyncOperation<IList<TObject>> PreloadDependencies<TObject>(object key, Action<IAsyncOperation<TObject>> callback) where TObject : class
+        private static IAsyncOperation<IList<TObject>> PreloadDependencies<TObject>(object key, Action<IAsyncOperation<TObject>> callback) where TObject : class
         {
             if (!InitializationOperation.IsDone)
                 return AsyncOperationCache.Instance.Acquire<ChainOperation<IList<TObject>, IResourceLocator>>().Start(null, key, InitializationOperation, op => PreloadDependencies(key, callback)).Retain();
@@ -770,11 +757,21 @@ namespace UnityEngine.AddressableAssets
             return new CompletedOperation<long>().Start(locations, key, size);
         }
 
-
         /// <summary>
-        /// Downloads dependencies of assets marked with the specified label.  
+        /// Downloads dependencies of assets marked with the specified labels and addresses.  
         /// </summary>
-        /// <param name="key">The key of the asset to load dependencies for.</param>
+        /// <param name="keys">The keys of the assets to load dependencies for.</param>
+        /// <param name="mode">Method for merging the results of key matches.  See <see cref="MergeMode"/> for specifics</param>
+        /// <returns>The IAsyncOperation for the dependency load.</returns>
+        public static IAsyncOperation DownloadDependencies(IList<object> keys, MergeMode mode)
+        {
+            return PreloadDependencies<object>(keys, null, mode);
+        }
+        
+        /// <summary>
+        /// Downloads dependencies of assets marked with the specified label or address.  
+        /// </summary>
+        /// <param name="key">The key of the asset(s) to load dependencies for.</param>
         /// <returns>The IAsyncOperation for the dependency load.</returns>
         public static IAsyncOperation DownloadDependencies(object key)
         {
@@ -1087,7 +1084,7 @@ namespace UnityEngine.AddressableAssets
         private static string m_DontDestroyOnLoadSceneName = "DontDestroyOnLoad";
         static bool IsDontDestroyOnLoad(GameObject go)
         {
-            if (go.scene.name == m_DontDestroyOnLoadSceneName)
+            if (go != null && go.scene.name == m_DontDestroyOnLoadSceneName)
             {
                 Scene temp;
                 if (!s_InstanceToScene.TryGetValue(go, out temp))

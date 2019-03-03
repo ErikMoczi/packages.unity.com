@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.2-preview.1] - 2019-02-15
+## [1.0.2-preview.2] - 2019-02-15
  - *BREAKING CODE CHANGES* 
    - to ease code navigation, we have added several layers of namespace to the code.  
    - any hardcoded profile path to com.unity.addressables (specifically LocalLoadPath, RemoteLoadPath, etc) should use UnityEngine.AddressableAssets.Addressables.RuntimePath instead.  
@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
    - We have removed attribute AssetReferenceTypeRestriction as it is cleaner to enforce type via generics
    - Attribute AssetReferenceLabelRestriction is renamed to AssetReferenceUILabelRestriction and must be surrounded by #if UNITY_EDITOR in your game code, to enforce it's editor-only capability
    - Modifications to IResourceProvider API.
+   - Removed PreloadDependencies API.  Instead use DownloadDependencies
  - Content Update calculation has changed, this will invalide previously generated addressables_content_state.bin files.
    - Some types for content update were made private as a result of the above change.
  - Moved all of the Resource Manager package to be contained within Addressables (no longer a stand alone package).  No code change implications. 

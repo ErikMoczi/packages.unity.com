@@ -304,7 +304,7 @@ namespace UnityEditor.AddressableAssets.Build.DataBuilders
                     remoteBuildFolder == AddressableAssetProfileSettings.undefinedEntryValue ||
                     remoteLoadFolder == AddressableAssetProfileSettings.undefinedEntryValue)
                 {
-                    Addressables.LogError("Remote Build and/or Load paths are not set.  Cannot create remote catalog. '" + remoteBuildFolder + "', '" + remoteLoadFolder + "'");
+                    Addressables.LogError("Remote Build and/or Load paths are not set on the main AddressableAssetSettings asset, but 'Build Remote Catalog' is true.  Cannot create remote catalog.  In the inspector for any group, double click the 'Addressable Asset Settings' object to begin inspecting it. '" + remoteBuildFolder + "', '" + remoteLoadFolder + "'");
                 }
                 else
                 {

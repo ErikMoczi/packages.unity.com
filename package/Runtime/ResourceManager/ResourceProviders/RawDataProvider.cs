@@ -81,11 +81,13 @@ namespace UnityEngine.ResourceManagement.ResourceProviders
                     if (string.IsNullOrEmpty(webReq.error))
                         return m_ConvertFunc(webReq.downloadHandler.text);
                     
-                    OperationException = new Exception(string.Format("RawDataProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
+                    if (!m_IgnoreFailures)
+                        OperationException = new Exception(string.Format("RawDataProvider unable to load from url {0}, result='{1}'.", webReq.url, webReq.error));
                 }
                 else
                 {
-                    OperationException = new Exception("RawDataProvider unable to load from unknown url.");
+                    if (!m_IgnoreFailures)
+                        OperationException = new Exception("RawDataProvider unable to load from unknown url.");
                 }
                 return default(TObject);
 

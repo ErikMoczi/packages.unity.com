@@ -115,7 +115,7 @@ namespace UnityEngine.ResourceManagement.Util
         /// <summary>
         /// The object id.
         /// </summary>
-        public string Id { get { return m_Id; } }
+        public string Id { get { return m_Id; } internal set { m_Id = value; } }
 
         [FormerlySerializedAs("m_objectType")]
         [SerializeField]
@@ -131,7 +131,7 @@ namespace UnityEngine.ResourceManagement.Util
         /// <summary>
         /// String representation of the data that will be passed to the IInitializableObject.Initialize method of the created object.  This is usually a JSON string of the serialized data object.
         /// </summary>
-        public string Data { get { return m_Data; } }
+        public string Data { get { return m_Data; } internal set { m_Data = value; } }
 
         /// <inheritdoc/>
         public override string ToString()
