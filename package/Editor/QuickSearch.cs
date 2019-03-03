@@ -1,5 +1,5 @@
-//#define QUICKSEARCH_DEBUG
-//#define QUICKSEARCH_DEBUG_WINDOW
+// #define QUICKSEARCH_DEBUG
+// #define QUICKSEARCH_DEBUG_WINDOW
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -239,6 +239,7 @@ namespace Unity.QuickSearch
         private bool m_IsRepaintAfterTimeRequested = false;
         private double m_RequestRepaintAfterTime = 0;
         private double m_NextBlinkTime = 0;
+        private bool m_PrepareDrag;
 
         private const string k_QuickSearchBoxName = "QuickSearchBox";
 
@@ -630,6 +631,13 @@ namespace Unity.QuickSearch
                     Event.current.Use();
                 }
                 m_ClickTime = EditorApplication.timeSinceStartup;
+                m_PrepareDrag = true;
+            }
+            else if (Event.current.type == EventType.MouseDrag && m_PrepareDrag)
+            {
+                var item = m_FilteredItems.ElementAt(m_SelectedIndex);
+                item.provider?.startDrag(item, context);
+                m_PrepareDrag = false;
             }
         }
 

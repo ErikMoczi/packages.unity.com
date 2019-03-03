@@ -140,6 +140,17 @@ namespace Unity.QuickSearch
                         return item.thumbnail;
                     },
 
+                    startDrag = (item, context) =>
+                    {
+                        var obj = AssetDatabase.LoadAssetAtPath<Object>(item.id);
+                        if (obj != null)
+                        {
+                            DragAndDrop.PrepareStartDrag();
+                            DragAndDrop.objectReferences = new[] { obj };
+                            DragAndDrop.StartDrag("Drag asset");
+                        }
+                    },
+
                     subCategories = new List<NameId>()
                 };
 

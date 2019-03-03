@@ -1,3 +1,6 @@
+## [0.9.8-preview] - 2019-02-21
+- Added drag and drop support. You can drag an item from the quick search tool to a drop target.
+
 ## [0.9.7-preview.3] - 2019-02-20
 - Fixed cursor blinking
 - Improved fetched scene object results

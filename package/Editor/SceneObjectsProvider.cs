@@ -2,7 +2,6 @@ using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
@@ -41,7 +40,7 @@ namespace Unity.QuickSearch
                         if (item.thumbnail)
                             return item.thumbnail;
 
-                        GameObject obj = ObjectFromItem(item);
+                        var obj = ObjectFromItem(item);
                         if (obj != null)
                         {
                             item.thumbnail = PrefabUtility.GetIconForGameObject(obj);
@@ -51,6 +50,17 @@ namespace Unity.QuickSearch
                         }
 
                         return item.thumbnail;
+                    },
+
+                    startDrag = (item, context) =>
+                    {
+                        var obj = ObjectFromItem(item);
+                        if (obj != null)
+                        {
+                            DragAndDrop.PrepareStartDrag();
+                            DragAndDrop.objectReferences = new[] { obj };
+                            DragAndDrop.StartDrag("Drag scene object");
+                        }
                     },
 
                     isItemValid = item => ObjectFromItem(item) != null
