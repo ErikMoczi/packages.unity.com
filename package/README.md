@@ -1,4 +1,4 @@
-## The Master branch is currently targeting 19.1 ##
+## The Master branch is currently targeting 19.2 ##
 
 # About _High Definition Project Template_
 
