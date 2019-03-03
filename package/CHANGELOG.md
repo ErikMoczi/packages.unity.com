@@ -1,4 +1,4 @@
-## [0.9.7-preview.1] - 2019-02-20
+## [0.9.7-preview.3] - 2019-02-20
 - Fixed cursor blinking
 - Improved fetched scene object results
 
