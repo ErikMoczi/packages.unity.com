@@ -185,9 +185,9 @@ namespace UnityEditor
             EditorGUI.indentLevel += 1;
 
             int newRotation = EditorGUILayout.Popup(
-                    m_RotationAxisLabel,
-                    (int)m_SyncTransform.syncRotationAxis,
-                    axisOptions);
+                m_RotationAxisLabel,
+                (int)m_SyncTransform.syncRotationAxis,
+                axisOptions);
             if ((NetworkTransform.AxisSyncMode)newRotation != m_SyncTransform.syncRotationAxis)
             {
                 m_SyncTransform.syncRotationAxis = (NetworkTransform.AxisSyncMode)newRotation;

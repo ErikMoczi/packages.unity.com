@@ -251,9 +251,7 @@ namespace UnityEngine.Networking
         internal bool SendBytes(byte[] bytes, int bytesToSend)
         {
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.HLAPIMsg, "msg", 1);
+            Profiler.IncrementStatOutgoing(MsgType.HLAPIMsg);
 #endif
             if (bytesToSend >= UInt16.MaxValue)
             {
@@ -342,9 +340,7 @@ namespace UnityEngine.Networking
         ChannelPacket AllocPacket()
         {
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.SetStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.HLAPIPending, "msg", pendingPacketCount);
+            Profiler.SetStatOutgoing(MsgType.HLAPIPending, pendingPacketCount);
 #endif
             if (s_FreePackets.Count == 0)
             {
@@ -361,9 +357,7 @@ namespace UnityEngine.Networking
         static void FreePacket(ChannelPacket packet)
         {
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.SetStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.HLAPIPending, "msg", pendingPacketCount);
+            Profiler.SetStatOutgoing(MsgType.HLAPIPending, pendingPacketCount);
 #endif
             if (s_FreePackets.Count >= k_MaxFreePacketCount)
             {
@@ -376,9 +370,7 @@ namespace UnityEngine.Networking
         public bool SendInternalBuffer()
         {
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.LLAPIMsg, "msg", 1);
+            Profiler.IncrementStatOutgoing(MsgType.LLAPIMsg);
 #endif
             if (m_IsReliable && m_PendingPackets.Count > 0)
             {

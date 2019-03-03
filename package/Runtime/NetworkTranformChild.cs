@@ -403,9 +403,7 @@ namespace UnityEngine.Networking
             m_LocalTransformWriter.FinishMessage();
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.LocalChildTransform, "16:LocalChildTransform", 1);
+            Profiler.IncrementStatOutgoing(MsgType.LocalChildTransform, "16:LocalChildTransform");
 #endif
             ClientScene.readyConnection.SendWriter(m_LocalTransformWriter, GetNetworkChannel());
         }
@@ -416,9 +414,7 @@ namespace UnityEngine.Networking
             uint childIndex = netMsg.reader.ReadPackedUInt32();
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.LocalChildTransform, "16:LocalChildTransform", 1);
+            Profiler.IncrementStatIncoming(MsgType.LocalChildTransform, "16:LocalChildTransform");
 #endif
 
             GameObject foundObj = NetworkServer.FindLocalObject(netId);

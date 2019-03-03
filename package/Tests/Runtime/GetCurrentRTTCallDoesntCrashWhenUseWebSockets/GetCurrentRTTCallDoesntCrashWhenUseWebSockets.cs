@@ -7,6 +7,9 @@ using UnityEngine.Networking;
 public class GetCurrentRTTCallDoesntCrashWhenUseWebSockets
 {
     [UnityTest]
+    [UnityPlatform(RuntimePlatform.WindowsPlayer)]
+    [UnityPlatform(RuntimePlatform.LinuxPlayer)]
+    [UnityPlatform(RuntimePlatform.OSXPlayer)]
     public IEnumerator GetCurrentRTTCallDoesntCrashWhenUseWebSocketsTest()
     {
         NetworkClient.ShutdownAll();

@@ -508,9 +508,7 @@ namespace UnityEngine.Networking
             if (LogFilter.logDebug) { Debug.Log("Client spawn handler instantiating [netId:" + s_ObjectSpawnMessage.netId + " asset ID:" + s_ObjectSpawnMessage.assetId + " pos:" + s_ObjectSpawnMessage.position + "]"); }
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.ObjectSpawn, GetStringForAssetId(s_ObjectSpawnMessage.assetId), 1);
+            Profiler.IncrementStatIncoming(MsgType.ObjectSpawn, GetStringForAssetId(s_ObjectSpawnMessage.assetId));
 #endif
 
             NetworkIdentity localNetworkIdentity;
@@ -573,9 +571,7 @@ namespace UnityEngine.Networking
 
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.ObjectSpawnScene, "sceneId", 1);
+            Profiler.IncrementStatIncoming(MsgType.ObjectSpawnScene, "sceneId");
 #endif
 
             NetworkIdentity localNetworkIdentity;
@@ -629,9 +625,7 @@ namespace UnityEngine.Networking
             if (s_NetworkScene.GetNetworkIdentity(s_ObjectDestroyMessage.netId, out localObject))
             {
 #if UNITY_EDITOR
-                UnityEditor.NetworkDetailStats.IncrementStat(
-                    UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                    MsgType.ObjectDestroy, GetStringForAssetId(localObject.assetId), 1);
+                Profiler.IncrementStatIncoming(MsgType.ObjectDestroy, GetStringForAssetId(localObject.assetId));
 #endif
                 localObject.OnNetworkDestroy();
 
@@ -755,9 +749,7 @@ namespace UnityEngine.Networking
             }
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.SyncEvent, NetworkBehaviour.GetCmdHashHandlerName(cmdHash), 1);
+            Profiler.IncrementStatOutgoing(MsgType.SyncEvent, NetworkBehaviour.GetCmdHashHandlerName(cmdHash));
 #endif
         }
 
@@ -779,9 +771,7 @@ namespace UnityEngine.Networking
             }
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.SyncList, NetworkBehaviour.GetCmdHashHandlerName(cmdHash), 1);
+            Profiler.IncrementStatOutgoing(MsgType.SyncList, NetworkBehaviour.GetCmdHashHandlerName(cmdHash));
 #endif
         }
 

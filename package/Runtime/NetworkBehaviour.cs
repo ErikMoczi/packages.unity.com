@@ -71,9 +71,7 @@ namespace UnityEngine.Networking
             ClientScene.readyConnection.SendWriter(writer, channelId);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.Command, cmdName, 1);
+            Profiler.IncrementStatOutgoing(MsgType.Command, cmdName);
 #endif
         }
 
@@ -103,9 +101,7 @@ namespace UnityEngine.Networking
             NetworkServer.SendWriterToReady(gameObject, writer, channelId);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.Rpc, rpcName, 1);
+            Profiler.IncrementStatOutgoing(MsgType.Rpc, rpcName);
 #endif
         }
 
@@ -124,9 +120,7 @@ namespace UnityEngine.Networking
             conn.SendWriter(writer, channelId);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.Rpc, rpcName, 1);
+            Profiler.IncrementStatOutgoing(MsgType.Rpc, rpcName);
 #endif
         }
 
@@ -155,9 +149,7 @@ namespace UnityEngine.Networking
             NetworkServer.SendWriterToReady(gameObject, writer, channelId);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.SyncEvent, eventName, 1);
+            Profiler.IncrementStatOutgoing(MsgType.SyncEvent, eventName);
 #endif
         }
 

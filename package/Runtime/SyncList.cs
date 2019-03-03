@@ -321,9 +321,7 @@ namespace UnityEngine.Networking
             NetworkServer.SendWriterToReady(uv.gameObject, writer, m_Behaviour.GetNetworkChannel());
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.SyncList, op.ToString(), 1);
+            Profiler.IncrementStatOutgoing(MsgType.SyncList, op.ToString());
 #endif
 
             // ensure it is invoked on host

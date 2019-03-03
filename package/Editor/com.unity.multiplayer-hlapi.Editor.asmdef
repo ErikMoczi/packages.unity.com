@@ -1,7 +1,8 @@
 {
     "name": "com.unity.multiplayer-hlapi.Editor",
     "references": [
-      "com.unity.multiplayer-hlapi.Runtime"
+      "com.unity.multiplayer-hlapi.Runtime",
+      "com.unity.multiplayer-weaver.Editor"
     ],
     "includePlatforms": [
         "Editor"

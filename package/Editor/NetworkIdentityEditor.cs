@@ -101,8 +101,7 @@ namespace UnityEditor
                 }
             }
 
-            PrefabType prefabType = PrefabUtility.GetPrefabType(m_NetworkIdentity.gameObject);
-            if (prefabType == PrefabType.Prefab)
+            if (PrefabUtility.IsPartOfPrefabAsset(m_NetworkIdentity.gameObject))
                 return;
 
             if (m_NetworkIdentity.gameObject.activeSelf && m_NetworkIdentity.netId.IsEmpty() && NetworkServer.active)

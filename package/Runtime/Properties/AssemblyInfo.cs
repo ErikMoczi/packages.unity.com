@@ -11,12 +11,13 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Unity Technologies")]
 [assembly: AssemblyProduct("UnityEngine.Networking")]
-[assembly: AssemblyCopyright("Copyright © 2014")]
+[assembly: AssemblyCopyright("Copyright © 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: InternalsVisibleTo("UnityEditor.Networking")]
 [assembly: InternalsVisibleTo("com.unity.multiplayer-hlapi.Editor")]
 [assembly: InternalsVisibleTo("com.unity.multiplayer-hlapi.EditorTests")]
+[assembly: InternalsVisibleTo("com.unity.multiplayer-hlapi.Editor-testable")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from

@@ -296,7 +296,7 @@ namespace UnityEngine.Networking
                     (c >= '0' && c <= '9') ||
                     (c >= 'a' && c <= 'f') ||
                     (c >= 'A' && c <= 'F')
-                    )
+                )
                 {
                     continue;
                 }
@@ -481,11 +481,11 @@ namespace UnityEngine.Networking
 
                 if (LogFilter.logDebug) { Debug.Log("Connect Using Simulator " + (m_SimulatedLatency / 3) + "/" + m_SimulatedLatency); }
                 var simConfig = new ConnectionSimulatorConfig(
-                        simLatency,
-                        m_SimulatedLatency,
-                        simLatency,
-                        m_SimulatedLatency,
-                        m_PacketLoss);
+                    simLatency,
+                    m_SimulatedLatency,
+                    simLatency,
+                    m_SimulatedLatency,
+                    m_PacketLoss);
 
                 m_ClientConnectionId = NetworkTransport.ConnectWithSimulator(m_ClientId, m_ServerIp, m_ServerPort, 0, out error, simConfig);
             }
@@ -507,15 +507,15 @@ namespace UnityEngine.Networking
 
             byte error;
             m_ClientConnectionId = NetworkTransport.ConnectToNetworkPeer(
-                    m_ClientId,
-                    info.address,
-                    info.port,
-                    0,
-                    0,
-                    info.networkId,
-                    Utility.GetSourceID(),
-                    info.nodeId,
-                    out error);
+                m_ClientId,
+                info.address,
+                info.port,
+                0,
+                0,
+                info.networkId,
+                Utility.GetSourceID(),
+                info.nodeId,
+                out error);
 
             m_Connection = (NetworkConnection)Activator.CreateInstance(m_NetworkConnectionClass);
             m_Connection.SetHandlers(m_MessageHandlers);
@@ -551,9 +551,7 @@ namespace UnityEngine.Networking
                     return false;
                 }
 #if UNITY_EDITOR
-                UnityEditor.NetworkDetailStats.IncrementStat(
-                    UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                    MsgType.UserMessage, msgType.ToString() + ":" + msg.GetType().Name, 1);
+                Profiler.IncrementStatOutgoing(MsgType.UserMessage, msgType + ":" + msg.GetType().Name);
 #endif
                 return m_Connection.Send(msgType, msg);
             }
@@ -601,9 +599,7 @@ namespace UnityEngine.Networking
                     return false;
                 }
 #if UNITY_EDITOR
-                UnityEditor.NetworkDetailStats.IncrementStat(
-                    UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                    MsgType.UserMessage, msgType.ToString() + ":" + msg.GetType().Name, 1);
+                Profiler.IncrementStatOutgoing(MsgType.UserMessage, msgType + ":" + msg.GetType().Name);
 #endif
                 return m_Connection.SendUnreliable(msgType, msg);
             }
@@ -614,9 +610,7 @@ namespace UnityEngine.Networking
         public bool SendByChannel(short msgType, MessageBase msg, int channelId)
         {
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.UserMessage, msgType.ToString() + ":" + msg.GetType().Name, 1);
+            Profiler.IncrementStatOutgoing(MsgType.UserMessage, msgType + ":" + msg.GetType().Name);
 #endif
             if (m_Connection != null)
             {
@@ -737,9 +731,7 @@ namespace UnityEngine.Networking
                         }
 
 #if UNITY_EDITOR
-                        UnityEditor.NetworkDetailStats.IncrementStat(
-                        UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                        MsgType.LLAPIMsg, "msg", 1);
+                        Profiler.IncrementStatIncoming(MsgType.LLAPIMsg);
 #endif
 
                         m_MsgReader.SeekZero();
@@ -971,7 +963,7 @@ namespace UnityEngine.Networking
             s_IsActive = false;
             ClientScene.Shutdown();
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.ResetAll();
+            Profiler.ResetAll();
 #endif
         }
 

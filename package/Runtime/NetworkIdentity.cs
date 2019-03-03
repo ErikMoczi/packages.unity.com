@@ -48,12 +48,8 @@ namespace UnityEngine.Networking
         {
             get
             {
-                if (!m_IsServer)
-                {
-                    return false;
-                }
                 // if server has stopped, should not still return true here
-                return NetworkServer.active && m_IsServer;
+                return m_IsServer && NetworkServer.active;
             }
         }
 
@@ -235,17 +231,13 @@ namespace UnityEngine.Networking
 
         bool ThisIsAPrefab()
         {
-            PrefabType prefabType = PrefabUtility.GetPrefabType(gameObject);
-            if (prefabType == PrefabType.Prefab)
-                return true;
-            return false;
+            return PrefabUtility.IsPartOfPrefabAsset(gameObject);
         }
 
         bool ThisIsASceneObjectWithThatReferencesPrefabAsset(out GameObject prefab)
         {
             prefab = null;
-            PrefabType prefabType = PrefabUtility.GetPrefabType(gameObject);
-            if (prefabType == PrefabType.None)
+            if (!PrefabUtility.IsPartOfNonAssetPrefabInstance(gameObject))
                 return false;
             prefab = (GameObject)PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
             if (prefab == null)
@@ -528,9 +520,7 @@ namespace UnityEngine.Networking
             invokeFunction(invokeComponent, reader);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.SyncEvent, NetworkBehaviour.GetCmdHashEventName(cmdHash), 1);
+            Profiler.IncrementStatIncoming(MsgType.SyncEvent, NetworkBehaviour.GetCmdHashEventName(cmdHash));
 #endif
         }
 
@@ -571,9 +561,7 @@ namespace UnityEngine.Networking
             invokeFunction(invokeComponent, reader);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.SyncList, NetworkBehaviour.GetCmdHashListName(cmdHash), 1);
+            Profiler.IncrementStatIncoming(MsgType.SyncList, NetworkBehaviour.GetCmdHashListName(cmdHash));
 #endif
         }
 
@@ -614,9 +602,7 @@ namespace UnityEngine.Networking
             invokeFunction(invokeComponent, reader);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.Command, NetworkBehaviour.GetCmdHashCmdName(cmdHash), 1);
+            Profiler.IncrementStatIncoming(MsgType.Command, NetworkBehaviour.GetCmdHashCmdName(cmdHash));
 #endif
         }
 
@@ -657,9 +643,7 @@ namespace UnityEngine.Networking
             invokeFunction(invokeComponent, reader);
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.Rpc, NetworkBehaviour.GetCmdHashRpcName(cmdHash), 1);
+            Profiler.IncrementStatIncoming(MsgType.Rpc, NetworkBehaviour.GetCmdHashRpcName(cmdHash));
 #endif
         }
 
@@ -705,9 +689,7 @@ namespace UnityEngine.Networking
                             comp.ClearAllDirtyBits();
 
 #if UNITY_EDITOR
-                            UnityEditor.NetworkDetailStats.IncrementStat(
-                                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                                MsgType.UpdateVars, comp.GetType().Name, 1);
+                            Profiler.IncrementStatOutgoing(MsgType.UpdateVars, comp.GetType().Name);
 #endif
 
                             wroteData = true;
@@ -748,10 +730,7 @@ namespace UnityEngine.Networking
 #if UNITY_EDITOR
                 if (reader.Position - oldReadPos > 1)
                 {
-                    //MakeFloatGizmo("Received Vars " + comp.GetType().Name + " bytes:" + (reader.Position - oldReadPos), Color.white);
-                    UnityEditor.NetworkDetailStats.IncrementStat(
-                        UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                        MsgType.UpdateVars, comp.GetType().Name, 1);
+                    Profiler.IncrementStatIncoming(MsgType.UpdateVars, comp.GetType().Name);
                 }
 #endif
             }
@@ -1096,7 +1075,7 @@ namespace UnityEngine.Networking
             NetworkManager.UpdateScene();
 
 #if UNITY_EDITOR
-            NetworkDetailStats.NewProfilerTick(Time.time);
+            Profiler.NewProfilerTick();
 #endif
         }
     };

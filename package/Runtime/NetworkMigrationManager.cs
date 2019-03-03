@@ -711,9 +711,6 @@ namespace UnityEngine.Networking
             int yourConnectionId = -1;
             youAreNewHost = false;
 
-            if (m_Peers == null)
-                return false;
-
             for (int peerId = 0; peerId < m_Peers.Length; peerId++)
             {
                 var peer = m_Peers[peerId];

@@ -1812,6 +1812,8 @@ namespace Unity.UNetWeaver
                 Console.WriteLine("Pass: " + pass + " took " + watch.ElapsedMilliseconds + " milliseconds");
             }
 
+            string pdbToDelete = null;
+
             if (didWork)
             {
                 // build replacementMethods hash to speed up code site scan
@@ -1858,15 +1860,7 @@ namespace Unity.UNetWeaver
                 {
                     writeParams.SymbolWriterProvider = new MdbWriterProvider();
                     // old pdb file is out of date so delete it. symbols will be stored in mdb
-                    try
-                    {
-                        var pdb = Path.ChangeExtension(assName, ".pdb");
-                        File.Delete(pdb);
-                    }
-                    catch (IOException ioException)
-                    {
-                        Console.WriteLine("Exception while attempting to delete old pdb: " + ioException.Message);
-                    }
+                    pdbToDelete = Path.ChangeExtension(assName, ".pdb");
                 }
 
                 scriptDef.Write(dest, writeParams);
@@ -1874,6 +1868,11 @@ namespace Unity.UNetWeaver
 
             if (scriptDef.MainModule.SymbolReader != null)
                 scriptDef.MainModule.SymbolReader.Dispose();
+
+            if (pdbToDelete != null)
+            {
+                File.Delete(pdbToDelete);
+            }
 
             return true;
         }

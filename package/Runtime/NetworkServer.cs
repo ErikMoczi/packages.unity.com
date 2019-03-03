@@ -110,7 +110,7 @@ namespace UnityEngine.Networking
         public static void Reset()
         {
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.ResetAll();
+            Profiler.ResetAll();
 #endif
             NetworkTransport.Shutdown();
             NetworkTransport.Init();
@@ -721,9 +721,7 @@ namespace UnityEngine.Networking
         void OnData(NetworkConnection conn, int receivedSize, int channelId)
         {
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.LLAPIMsg, "msg", 1);
+            Profiler.IncrementStatIncoming(MsgType.LLAPIMsg);
 #endif
             conn.TransportReceive(m_SimpleServerSimple.messageBuffer, receivedSize, channelId);
         }
@@ -1350,9 +1348,7 @@ namespace UnityEngine.Networking
                 }
 
 #if UNITY_EDITOR
-                UnityEditor.NetworkDetailStats.IncrementStat(
-                    UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                    MsgType.ObjectSpawn, uv.assetId.ToString(), 1);
+                Profiler.IncrementStatOutgoing(MsgType.ObjectSpawn, uv.assetId.ToString());
 #endif
             }
             else
@@ -1380,9 +1376,7 @@ namespace UnityEngine.Networking
                 }
 
 #if UNITY_EDITOR
-                UnityEditor.NetworkDetailStats.IncrementStat(
-                    UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                    MsgType.ObjectSpawnScene, "sceneId", 1);
+                Profiler.IncrementStatOutgoing(MsgType.ObjectSpawnScene, "sceneId");
 #endif
             }
         }
@@ -1475,9 +1469,7 @@ namespace UnityEngine.Networking
             }
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.ObjectDestroy, uv.assetId.ToString(), 1);
+            Profiler.IncrementStatOutgoing(MsgType.ObjectDestroy, uv.assetId.ToString());
 #endif
 
             ObjectDestroyMessage msg = new ObjectDestroyMessage();

@@ -469,15 +469,11 @@ namespace UnityEngine.Networking
                     lastMessageTime = Time.time;
 
 #if UNITY_EDITOR
-                    UnityEditor.NetworkDetailStats.IncrementStat(
-                        UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                        MsgType.HLAPIMsg, "msg", 1);
+                    Profiler.IncrementStatIncoming(MsgType.HLAPIMsg);
 
                     if (msgType > MsgType.Highest)
                     {
-                        UnityEditor.NetworkDetailStats.IncrementStat(
-                            UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                            MsgType.UserMessage, msgType.ToString() + ":" + msgType.GetType().Name, 1);
+                        Profiler.IncrementStatIncoming(MsgType.UserMessage, msgType + ":" + msgType.GetType().Name);
                     }
 #endif
 

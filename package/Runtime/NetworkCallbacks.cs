@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class NetworkCallbacks : MonoBehaviour
+namespace UnityEngine.Networking
 {
-    void LateUpdate()
+    public class NetworkCallbacks : MonoBehaviour
     {
-        NetworkIdentity.UNetStaticUpdate();
+        void LateUpdate()
+        {
+            NetworkIdentity.UNetStaticUpdate();
+        }
     }
 }

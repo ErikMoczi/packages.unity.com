@@ -105,7 +105,7 @@ namespace UnityEngine.Networking
 
         public CharacterController  characterContoller { get { return m_CharacterController; } }
         public Rigidbody            rigidbody3D { get { return m_RigidBody3D; } }
-#if !PLATFORM_WINRT
+#if !PLATFORM_WINRT || ENABLE_DOTNET
         new
 #endif
         public Rigidbody2D          rigidbody2D { get { return m_RigidBody2D; } }
@@ -1025,9 +1025,9 @@ namespace UnityEngine.Networking
             if (interpolateRotation != 0)
             {
                 m_RigidBody3D.MoveRotation(Quaternion.Slerp(
-                        m_RigidBody3D.rotation,
-                        m_TargetSyncRotation3D,
-                        Time.fixedDeltaTime * interpolateRotation));
+                    m_RigidBody3D.rotation,
+                    m_TargetSyncRotation3D,
+                    Time.fixedDeltaTime * interpolateRotation));
 
                 //m_TargetSyncRotation3D *= Quaternion.Euler(m_TargetSyncAngularVelocity3D * Time.fixedDeltaTime);
 
@@ -1052,9 +1052,9 @@ namespace UnityEngine.Networking
             if (interpolateRotation != 0)
             {
                 transform.rotation = Quaternion.Slerp(
-                        transform.rotation,
-                        m_TargetSyncRotation3D,
-                        Time.fixedDeltaTime * interpolateRotation * 10);
+                    transform.rotation,
+                    m_TargetSyncRotation3D,
+                    Time.fixedDeltaTime * interpolateRotation * 10);
             }
             if (Time.time - m_LastClientSyncTime > GetNetworkSendInterval())
             {
@@ -1088,9 +1088,9 @@ namespace UnityEngine.Networking
                 }
 
                 Quaternion newRotation = Quaternion.Slerp(
-                        transform.rotation,
-                        Quaternion.Euler(0, 0, m_TargetSyncRotation2D),
-                        Time.fixedDeltaTime * interpolateRotation / GetNetworkSendInterval());
+                    transform.rotation,
+                    Quaternion.Euler(0, 0, m_TargetSyncRotation2D),
+                    Time.fixedDeltaTime * interpolateRotation / GetNetworkSendInterval());
 
                 m_RigidBody2D.MoveRotation(newRotation.eulerAngles.z);
 
@@ -1241,9 +1241,7 @@ namespace UnityEngine.Networking
             m_LocalTransformWriter.FinishMessage();
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Outgoing,
-                MsgType.LocalPlayerTransform, "6:LocalPlayerTransform", 1);
+            Profiler.IncrementStatOutgoing(MsgType.LocalPlayerTransform, "6:LocalPlayerTransform");
 #endif
             ClientScene.readyConnection.SendWriter(m_LocalTransformWriter, GetNetworkChannel());
         }
@@ -1253,9 +1251,7 @@ namespace UnityEngine.Networking
             NetworkInstanceId netId = netMsg.reader.ReadNetworkId();
 
 #if UNITY_EDITOR
-            UnityEditor.NetworkDetailStats.IncrementStat(
-                UnityEditor.NetworkDetailStats.NetworkDirection.Incoming,
-                MsgType.LocalPlayerTransform, "6:LocalPlayerTransform", 1);
+            Profiler.IncrementStatIncoming(MsgType.LocalPlayerTransform, "6:LocalPlayerTransform");
 #endif
 
             GameObject foundObj = NetworkServer.FindLocalObject(netId);
