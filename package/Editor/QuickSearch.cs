@@ -899,7 +899,7 @@ namespace Unity.QuickSearch
                 using (new BlinkCursorScope(m_CursorBlinking, new Color(0, 0, 0, 0.01f)))
                 {
                     var userSearchQuery = context.searchBoxText;
-                    if (!String.IsNullOrEmpty(m_CycledSearch) && Event.current.type == EventType.Repaint)
+                    if (!String.IsNullOrEmpty(m_CycledSearch) && (Event.current.type == EventType.Repaint || Event.current.type == EventType.Layout))
                     {
                         userSearchQuery = m_CycledSearch;
                         m_CycledSearch = null;

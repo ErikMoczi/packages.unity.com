@@ -1,3 +1,6 @@
+## [0.9.93-preview] - 2019-02-25
+- New icons
+
 ## [0.9.92-preview] - 2019-02-22
 - Add Page Up and Down support to scroll the item list faster.
 - Add AssetStoreProvider example
