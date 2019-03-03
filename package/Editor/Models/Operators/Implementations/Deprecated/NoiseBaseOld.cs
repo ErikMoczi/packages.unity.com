@@ -152,24 +152,24 @@ namespace UnityEditor.VFX.Operator
                 if (type == NoiseType.Curl)
                 {
                     if (curlDimensions == CurlDimensionCount.Two)
-                        properties = PropertiesFromType("InputProperties2D");
+                        properties = PropertiesFromType(nameof(InputProperties2D));
                     else
-                        properties = PropertiesFromType("InputProperties3D");
+                        properties = PropertiesFromType(nameof(InputProperties3D));
 
-                    properties = properties.Concat(PropertiesFromType("InputPropertiesCommon"));
+                    properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesCommon)));
 
                 }
                 else
                 {
                     if (dimensions == DimensionCount.One)
-                        properties = PropertiesFromType("InputProperties1D");
+                        properties = PropertiesFromType(nameof(InputProperties1D));
                     else if (dimensions == DimensionCount.Two)
-                        properties = PropertiesFromType("InputProperties2D");
+                        properties = PropertiesFromType(nameof(InputProperties2D));
                     else
-                        properties = PropertiesFromType("InputProperties3D");
+                        properties = PropertiesFromType(nameof(InputProperties3D));
 
-                    properties = properties.Concat(PropertiesFromType("InputPropertiesCommon"));
-                    properties = properties.Concat(PropertiesFromType("InputPropertiesRange"));
+                    properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesCommon)));
+                    properties = properties.Concat(PropertiesFromType(nameof(InputPropertiesRange)));
                 }
 
                 return properties;
@@ -183,18 +183,18 @@ namespace UnityEditor.VFX.Operator
                 if (type == NoiseType.Curl)
                 {
                     if (curlDimensions == CurlDimensionCount.Two)
-                        return PropertiesFromType("OutputPropertiesCurl2D");
+                        return PropertiesFromType(nameof(OutputPropertiesCurl2D));
                     else
-                        return PropertiesFromType("OutputPropertiesCurl3D");
+                        return PropertiesFromType(nameof(OutputPropertiesCurl3D));
                 }
 
-                IEnumerable<VFXPropertyWithValue> properties = PropertiesFromType("OutputPropertiesCommon");
+                IEnumerable<VFXPropertyWithValue> properties = PropertiesFromType(nameof(OutputPropertiesCommon));
                 if (dimensions == DimensionCount.One)
-                    properties = properties.Concat(PropertiesFromType("OutputProperties1D"));
+                    properties = properties.Concat(PropertiesFromType(nameof(OutputProperties1D)));
                 else if (dimensions == DimensionCount.Two)
-                    properties = properties.Concat(PropertiesFromType("OutputProperties2D"));
+                    properties = properties.Concat(PropertiesFromType(nameof(OutputProperties2D)));
                 else
-                    properties = properties.Concat(PropertiesFromType("OutputProperties3D"));
+                    properties = properties.Concat(PropertiesFromType(nameof(OutputProperties3D)));
 
                 return properties;
             }
