@@ -1,0 +1,18 @@
+﻿{
+   "name": "Unity.XR.Oculus.Editor",
+    "references": [
+        "Unity.XR.Oculus",
+    	"Unity.XR.Management",
+    	"Unity.XR.Management.Editor"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+    	"Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
