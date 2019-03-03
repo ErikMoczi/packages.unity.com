@@ -1,5 +1,8 @@
-## [0.9.8-preview] - 2019-02-21
+## [0.9.9-preview] - 2019-02-21
 - Added drag and drop support. You can drag an item from the quick search tool to a drop target.
+- Open the item contextual menu by pressing the keyboard right arrow of the selected item.
+- Fixed folder entry search results when only the folder filter is selected.
+- Fixed showing popup when alt-tabbing between windows.
 
 ## [0.9.7-preview.3] - 2019-02-20
 - Fixed cursor blinking

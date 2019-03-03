@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -61,8 +62,8 @@ namespace Unity.QuickSearch
             var containerWinType = AppDomain.CurrentDomain.GetAllDerivedTypes(typeof(ScriptableObject)).FirstOrDefault(t => t.Name == "ContainerWindow");
             if (containerWinType == null)
                 throw new MissingMemberException("Can't find internal type ContainerWindow. Maybe something has changed inside Unity");
-            var showModeField = containerWinType.GetField("m_ShowMode", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var positionProperty = containerWinType.GetProperty("position", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var showModeField = containerWinType.GetField("m_ShowMode", BindingFlags.NonPublic | BindingFlags.Instance);
+            var positionProperty = containerWinType.GetProperty("position", BindingFlags.Public | BindingFlags.Instance);
             if (showModeField == null || positionProperty == null)
                 throw new MissingFieldException("Can't find internal fields 'm_ShowMode' or 'position'. Maybe something has changed inside Unity");
             var windows = Resources.FindObjectsOfTypeAll(containerWinType);
@@ -78,17 +79,52 @@ namespace Unity.QuickSearch
             throw new NotSupportedException("Can't find internal main window. Maybe something has changed inside Unity");
         }
 
-        public static void CenterOnMainWin(this EditorWindow window)
+        internal static Rect GetCenteredWindowPosition(Rect parentWindowPosition, Vector2 size)
         {
-            var main = GetEditorMainWindowPos();
-            var pos = window.position;
-            pos.width = Mathf.Min(window.minSize.x, main.width * 0.90f);
-            pos.height = Mathf.Min(window.minSize.y, main.height * 0.90f);
-            var w = (main.width - pos.width) * 0.5f;
-            var h = (main.height - pos.height) * 0.5f;
-            pos.x = main.x + w;
-            pos.y = main.y + h;
-            window.position = pos;
+            var pos = new Rect
+            {
+                x = 0, y = 0,
+                width = Mathf.Min(size.x, parentWindowPosition.width * 0.90f), 
+                height = Mathf.Min(size.y, parentWindowPosition.height * 0.90f)
+            };
+            var w = (parentWindowPosition.width - pos.width) * 0.5f;
+            var h = (parentWindowPosition.height - pos.height) * 0.5f;
+            pos.x = parentWindowPosition.x + w;
+            pos.y = parentWindowPosition.y + h;
+            return pos;
+        }
+
+        internal static Rect GetMainWindowCenteredPosition(Vector2 size)
+        {
+            var mainWindowRect = GetEditorMainWindowPos();
+            return GetCenteredWindowPosition(mainWindowRect, size);
+        }
+
+        internal static void ShowDropDown(this EditorWindow window, Vector2 size)
+        {
+            window.maxSize = window.minSize = size;
+            window.position = GetMainWindowCenteredPosition(size);
+            window.ShowPopup();
+
+            Assembly assembly = typeof(EditorWindow).Assembly;
+
+            var editorWindowType = typeof(EditorWindow);
+            var hostViewType = assembly.GetType("UnityEditor.HostView");
+            var containerWindowType = assembly.GetType("UnityEditor.ContainerWindow");
+
+            var parentViewField = editorWindowType.GetField("m_Parent", BindingFlags.Instance | BindingFlags.NonPublic);
+            var parentViewValue = parentViewField.GetValue(window);
+
+            //m_Parent.AddToAuxWindowList();
+            hostViewType.InvokeMember("AddToAuxWindowList", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.InvokeMethod, null, parentViewValue, null);
+
+            // Dropdown windows should not be saved to layout
+            //m_Parent.window.m_DontSaveToLayout = true;
+            var containerWindowProperty = hostViewType.GetProperty("window", BindingFlags.Instance | BindingFlags.Public);
+            var parentContainerWindowValue = containerWindowProperty.GetValue(parentViewValue);
+            var dontSaveToLayoutField = containerWindowType.GetField("m_DontSaveToLayout", BindingFlags.Instance | BindingFlags.NonPublic);
+            dontSaveToLayoutField.SetValue(parentContainerWindowValue, true);
+            Debug.Assert((bool) dontSaveToLayoutField.GetValue(parentContainerWindowValue));
         }
     }
 

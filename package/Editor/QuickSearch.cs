@@ -452,7 +452,7 @@ namespace Unity.QuickSearch
                 padding = new RectOffset(0, 0, 0, 0),
                 normal = clear,
                 focused = clear, hover = clear, active = clear,
-                onNormal = clear, onHover = clear, onFocused = clear, onActive = clear,
+                onNormal = clear, onHover = clear, onFocused = clear, onActive = clear
             };
 
             public static readonly GUIStyle filterButton = new GUIStyle(EditorStyles.whiteLargeLabel)
@@ -494,6 +494,8 @@ namespace Unity.QuickSearch
         [UsedImplicitly]
         internal void OnDisable()
         {
+            s_FocusedWindow = null;
+
             if (m_SaveStateOnExit)
             {
                 SearchService.LastSearch = m_Context.searchBoxText;
@@ -570,6 +572,16 @@ namespace Unity.QuickSearch
                     if (m_SelectedIndex == -1)
                         m_SearchBoxFocus = true;
                     Event.current.Use();
+                }
+                else if (evt.keyCode == KeyCode.RightArrow)
+                {
+                    if (m_SelectedIndex != -1)
+                    {
+                        var item = m_FilteredItems.ElementAt(m_SelectedIndex);
+                        var menuPositionY = (m_SelectedIndex+1) * Styles.itemRowHeight - m_ScrollPosition.y + Styles.itemRowHeight/2.0f;
+                        ShowItemContextualMenu(item, context, new Rect(position.width - Styles.actionButtonSize, menuPositionY, 1, 1));
+                        Event.current.Use();
+                    }
                 }
                 else if (m_SelectedIndex >= 0 && (evt.keyCode == KeyCode.KeypadEnter || evt.keyCode == KeyCode.Space || evt.keyCode == KeyCode.Return))
                 {
@@ -862,17 +874,29 @@ namespace Unity.QuickSearch
 
                     if (GUILayout.Button(Icons.more, Styles.actionButton))
                     {
-                        var menu = new GenericMenu();
-                        foreach (var action in item.provider.actions)
-                        {
-                            menu.AddItem(new GUIContent(action.content.tooltip, action.content.image), false, () => ExecuteAction(action, item, context));
-                        }
-                        menu.ShowAsContext();
+                        ShowItemContextualMenu(item, context);
                         GUIUtility.ExitGUI();
                     }
                 }
             }
         }
+
+        private void ShowItemContextualMenu(SearchItem item, SearchContext context, Rect position = default(Rect))
+        {
+            var menu = new GenericMenu();
+            foreach (var action in item.provider.actions)
+                menu.AddItem(new GUIContent(action.content.tooltip, action.content.image), false, () => ExecuteAction(action, item, context));
+
+            if (position == default(Rect))
+                menu.ShowAsContext();
+            else
+                menu.DropDown(position);
+        }
+
+       /* internal void OnLostFocus()
+        {
+            Close();
+        }*/
 
         public static void ShowWindow(bool saveSearchStateOnExit = true)
         {
@@ -880,19 +904,16 @@ namespace Unity.QuickSearch
 
             #if QUICKSEARCH_DEBUG_WINDOW
             var qsWindow = GetWindow<QuickSearchTool>();
-			qsWindow.m_SaveStateOnExit = saveSearchStateOnExit;
+            qsWindow.m_SaveStateOnExit = saveSearchStateOnExit;
             qsWindow.CenterOnMainWin();
             qsWindow.Show(true);
             qsWindow.Focus();
             #else
             var qsWindow = CreateInstance<QuickSearchTool>();
-			qsWindow.m_SaveStateOnExit = saveSearchStateOnExit;
+            qsWindow.m_SaveStateOnExit = saveSearchStateOnExit;
             qsWindow.autoRepaintOnSceneChange = true;
-            qsWindow.maxSize = qsWindow.minSize = new Vector2(550, 400);
-            qsWindow.position = new Rect(0, 0, qsWindow.minSize.x, qsWindow.minSize.y);
-            qsWindow.CenterOnMainWin();
-            qsWindow.ShowAsDropDown(Rect.zero, qsWindow.minSize);
-            qsWindow.CenterOnMainWin();
+            qsWindow.ShowDropDown(new Vector2(550, 400));
+            //qsWindow.ShowDropDown(Rect.zero, qsWindow.minSize, new []{ Utils.PopupLocation.Above}, Utils.ShowMode.PopupMenu, true);
             #endif
         }
 
