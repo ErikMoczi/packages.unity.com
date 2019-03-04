@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.6] - 2019-3-4
+
+### Update changelog
+
+## [1.0.5] - 2019-3-4
+
+### Add conditional support for 2019.1
+
 ## [1.0.4] - 2019-2-18
 
 ### remove unnecessary meta files
