@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-#if UNITY_2019_1_OR_NEWER
 using UnityEngine.Rendering;
-#else
-using UnityEngine.Experimental.Rendering;
-#endif
 
 namespace Unity.Rendering
 {
@@ -49,7 +45,7 @@ namespace Unity.Rendering
             float distanceScale;
             if (isOrtho)
             {
-                distanceScale = 2.0F * orthoSize;
+                distanceScale = 2.0f * orthoSize / globalLodBias;
             }
             else
             {
@@ -161,9 +157,7 @@ namespace Unity.Rendering
         {
             if (lodParams.isOrtho)
             {
-                //return worldSpaceSize * lodParams.screenRelativeMetric;
-                //@TODO:
-                throw new System.NotImplementedException();
+                return lodParams.distanceScale * lodParams.distanceScale;
             }
             else
             {

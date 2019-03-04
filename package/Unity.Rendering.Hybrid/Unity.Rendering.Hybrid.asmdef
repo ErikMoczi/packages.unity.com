@@ -8,7 +8,9 @@
         "Unity.Collections",
         "Unity.Burst",
         "Unity.Jobs",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Unity.Mathematics.Extensions",
+        "Unity.Mathematics.Extensions.Hybrid"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],

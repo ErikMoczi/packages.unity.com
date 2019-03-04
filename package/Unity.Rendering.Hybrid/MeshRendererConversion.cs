@@ -1,11 +1,12 @@
 ﻿using Unity.Rendering;
 using Unity.Transforms;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Unity.Rendering
 {
-    [DisableAutoCreation]
+    
     class MeshRendererConversion : GameObjectConversionSystem
     {
         const bool AttachToPrimaryEntityForSingleMaterial = true;
@@ -22,7 +23,11 @@ namespace Unity.Rendering
                 dst.receiveShadows = meshRenderer.receiveShadows;
     
                 var materials = meshRenderer.sharedMaterials;
-    
+
+                //@TODO: Transform system should handle RenderMeshFlippedWindingTag automatically. This should not be the responsibility of the conversion system.
+                float4x4 localToWorld = meshRenderer.transform.localToWorldMatrix;
+                var flipWinding = math.determinant(localToWorld) < 0.0;
+
                 if (materials.Length == 1 && AttachToPrimaryEntityForSingleMaterial)
                 {
                     dst.material = materials[0];
@@ -30,6 +35,9 @@ namespace Unity.Rendering
                 
                     DstEntityManager.AddSharedComponentData(entity, dst);
                     DstEntityManager.AddComponentData(entity, new PerInstanceCullingTag());
+                    
+                    if (flipWinding)
+                        DstEntityManager.AddComponent(entity, ComponentType.ReadWrite<RenderMeshFlippedWindingTag>());
                 }
                 else
                 {
@@ -42,21 +50,18 @@ namespace Unity.Rendering
                     
                         DstEntityManager.AddSharedComponentData(meshEntity, dst);
                         DstEntityManager.AddComponentData(meshEntity, new PerInstanceCullingTag());
-                    
-                        //@TODO: Shouldn't be necessary to add Position Component, but looks like TransformSystem doesn't setup LocalToWorld otherwise...
-                        DstEntityManager.AddComponentData(meshEntity, new Position());
-                    
-                        // Parent it
-                        var attach = CreateAdditionalEntity(meshRenderer);
-                        DstEntityManager.AddComponentData(attach, new Attach {Parent = entity, Child = meshEntity});
+                                        
+                        DstEntityManager.AddComponentData(meshEntity, new LocalToWorld { Value = localToWorld });
+                        if (!DstEntityManager.HasComponent<Static>(meshEntity))
+                        {
+                            DstEntityManager.AddComponentData(meshEntity, new Parent { Value = entity });
+                            DstEntityManager.AddComponentData(meshEntity, new LocalToParent {Value = float4x4.identity});
+                        }
+                        
+                        if (flipWinding)
+                            DstEntityManager.AddComponent(meshEntity, ComponentType.ReadWrite<RenderMeshFlippedWindingTag>());
                     }
                 }
-    
-                
-                //@TODO: Transform system should handle RenderMeshFlippedWindingTag
-                // Flag this thing as positively or negatively scaled, so we can batch the renders correctly for the static case.
-                //if (math.determinant(localToWorld) < 0.0)
-                //    entityManager.AddComponent(meshEnt, ComponentType.Create<RenderMeshFlippedWindingTag>());
             });
         }
     }

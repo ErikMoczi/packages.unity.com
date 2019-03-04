@@ -7,13 +7,13 @@ namespace Unity.Rendering
     [Serializable]
     public struct FrozenRenderSceneTag : ISharedComponentData, IEquatable<FrozenRenderSceneTag>
     {
-        public int4             Location;
-        public int              SubsectionIndex;
+        public Hash128          SceneGUID;
+        public int              SectionIndex;
         public int              HasStreamedLOD;
 
         public bool Equals(FrozenRenderSceneTag other)
         {
-            return Location.Equals(other.Location) && SubsectionIndex == other.SubsectionIndex;
+            return SceneGUID == other.SceneGUID && SectionIndex == other.SectionIndex;
         }
     }
 

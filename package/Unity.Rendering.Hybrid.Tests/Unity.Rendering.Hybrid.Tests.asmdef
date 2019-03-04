@@ -2,7 +2,9 @@
     "name": "Unity.Rendering.Hybrid.Tests",
     "references": [
         "Unity.Rendering.Hybrid",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "Unity.Mathematics.Extensions",
+        "Unity.Mathematics.Extensions.Hybrid"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Unity.Rendering
 {
-    [DisableAutoCreation]
+    [UpdateAfter(typeof(LODGroupConversion))]
     class HLODGroupConversion : GameObjectConversionSystem
     {    
         protected override void OnUpdate()
@@ -20,7 +20,7 @@ namespace Unity.Rendering
                 if (!DstEntityManager.HasComponent<MeshLODGroupComponent>(hlodEntity))
                     return;
     
-                DstEntityManager.AddComponent(hlodEntity, ComponentType.Create<HLODComponent>());
+                DstEntityManager.AddComponent(hlodEntity, ComponentType.ReadWrite<HLODComponent>());
                             
                 var LODCount = lodGroup.lodCount;
                 if (LODCount != hlod.LODParentTransforms.Length)

@@ -161,7 +161,6 @@ namespace Unity.Rendering
     
         static void OnBeforeCull(Camera camera)
         {
-    #if UNITY_2019_1_OR_NEWER
             Profiler.BeginSample("HLOD");
             var lodParams = LODGroupExtensions.CalculateLODParams(camera);
     
@@ -198,9 +197,6 @@ namespace Unity.Rendering
             }
             m_DidSelectionChange = false;
             Profiler.EndSample();
-    #else
-            Debug.Log("HLOD requires Unity 2019.1");
-    #endif
         }
     }
 }

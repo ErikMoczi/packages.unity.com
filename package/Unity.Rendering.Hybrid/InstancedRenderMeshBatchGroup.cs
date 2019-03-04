@@ -1,4 +1,3 @@
-#if UNITY_2019_1_OR_NEWER
 using System;
 using Unity.Burst;
 using Unity.Collections;
@@ -120,7 +119,7 @@ namespace Unity.Rendering
 #if UNITY_EDITOR
         [NativeDisableUnsafePtrRestriction]
         public CullingStats* Stats;
-        
+
 #pragma warning disable 649
         [NativeSetThreadIndex]
         public int ThreadIndex;
@@ -135,6 +134,7 @@ namespace Unity.Rendering
 #endif
             var localIndex = internalBatchIndex.Value;
             var chunkInstanceCount = chunkData.ChunkInstanceCount;
+            var isOrtho = LODParams.isOrtho;
 
             ChunkInstanceLodEnabled chunkEntityLodEnabled = chunkData.InstanceLodEnableds;
 #if UNITY_EDITOR
@@ -188,7 +188,7 @@ namespace Unity.Rendering
                         var rootLodRequirement = rootLodRequirements[rootIndex];
                         var rootInstanceCount = rootLodRequirement.InstanceCount;
 
-                        var rootLodDistance = DistanceScale * math.length(LODParams.cameraPos - rootLodRequirement.LOD.WorldReferencePosition);
+                        var rootLodDistance = math.select(DistanceScale * math.length(LODParams.cameraPos - rootLodRequirement.LOD.WorldReferencePosition), DistanceScale, isOrtho);
 
                         float rootMinDist = math.select(rootLodRequirement.LOD.MinDist, 0.0f, forceLowLOD == 1);
                         float rootMaxDist = rootLodRequirement.LOD.MaxDist;
@@ -203,13 +203,13 @@ namespace Unity.Rendering
                             for (int i = 0; i < rootInstanceCount; i++)
                             {
                                 var instanceLodRequirement = instanceLodRequirements[chunkInstanceIndex + i];
-                                var instanceDistance = DistanceScale * math.length(LODParams.cameraPos - instanceLodRequirement.WorldReferencePosition);
+                                var instanceDistance = math.select(DistanceScale * math.length(LODParams.cameraPos - instanceLodRequirement.WorldReferencePosition), DistanceScale, isOrtho);
 
                                 var instanceLodIntersect = (instanceDistance < instanceLodRequirement.MaxDist) && (instanceDistance >= instanceLodRequirement.MinDist);
 
                                 graceDistance = math.min(math.abs(instanceDistance - instanceLodRequirement.MinDist), graceDistance);
                                 graceDistance = math.min(math.abs(instanceDistance - instanceLodRequirement.MaxDist), graceDistance);
-
+                                
                                 if (instanceLodIntersect)
                                 {
                                     var index = chunkInstanceIndex + i;
@@ -299,7 +299,7 @@ namespace Unity.Rendering
                 var chunkBounds = chunkData.ChunkBounds;
 
                 var perInstanceCull = 0 != (chunkData.Flags & BatchChunkData.kFlagInstanceCulling);
-                
+
                 var chunkIn = perInstanceCull ?
                     FrustumPlanes.Intersect2(Planes, chunkBounds.Value) :
                     FrustumPlanes.Intersect2NoPartial(Planes, chunkBounds.Value);
@@ -415,6 +415,8 @@ namespace Unity.Rendering
         // This is a hack to allocate local batch indices in response to external batches coming and going
         int m_LocalIdCapacity;
         NativeArray<int> m_LocalIdPool;
+
+        public int LastUpdatedOrderVersion = -1;
 
 #if UNITY_EDITOR
         float m_CamMoveDistance;
@@ -553,13 +555,17 @@ namespace Unity.Rendering
             }
 #endif
 
+            if (LastUpdatedOrderVersion != m_EntityManager.GetComponentOrderVersion<RenderMesh>())
+            {
+                // Debug.LogError("The chunk layout of RenderMesh components has changed between updating and culling. This is not allowed, rendering is disabled.");
+                return default(JobHandle);
+            }
+
             var batchCount = cullingContext.batchVisibility.Length;
             if (batchCount == 0)
                 return new JobHandle();;
 
             var lodParams = LODGroupExtensions.CalculateLODParams(cullingContext.lodParameters);
-            if (lodParams.isOrtho)
-                throw new System.NotImplementedException();
 
             Profiler.BeginSample("OnPerformCulling");
 
@@ -660,11 +666,7 @@ namespace Unity.Rendering
             }
 
             Profiler.BeginSample("AddBatch");
-            #if ENABLE_SCENE_CULLING_MASK
             int externalBatchIndex = m_BatchRendererGroup.AddBatch(mesh, subMeshIndex, material, 0, castShadows, receiveShadows, flippedWinding, bigBounds, batchInstanceCount, null, data.PickableObject, data.SceneCullingMask);
-            #else            
-            int externalBatchIndex = m_BatchRendererGroup.AddBatch(mesh, subMeshIndex, material, 0, castShadows, receiveShadows, flippedWinding, bigBounds, batchInstanceCount, null, null);
-            #endif
             var matrices = (float4x4*) m_BatchRendererGroup.GetBatchMatrices(externalBatchIndex).GetUnsafePtr();
             Profiler.EndSample();
 
@@ -708,6 +710,8 @@ namespace Unity.Rendering
                 var hasLodData = chunk.Has(rootLodRequirements) && chunk.Has(instanceLodRequirements);
                 var hasPerInstanceCulling = !hasLodData || chunk.Has(perInstanceCullingTag);
 
+                Assert.IsTrue(chunk.Count <= 128);
+
                 m_BatchToChunkMap.Add(localKey, new BatchChunkData
                 {
                     Chunk = chunk,
@@ -744,7 +748,7 @@ namespace Unity.Rendering
             }
 
             m_Tags[internalBatchIndex] = tag;
-            m_ForceLowLOD[internalBatchIndex] = (byte) ((tag.SubsectionIndex == 0 && tag.HasStreamedLOD != 0) ? 1 : 0); 
+            m_ForceLowLOD[internalBatchIndex] = (byte) ((tag.SectionIndex == 0 && tag.HasStreamedLOD != 0) ? 1 : 0);
 
             m_InternalBatchRange = math.max(m_InternalBatchRange, internalBatchIndex + 1);
             m_ExternalBatchCount = externalBatchIndex + 1;
@@ -828,12 +832,12 @@ namespace Unity.Rendering
 
         public void EndBatchGroup(FrozenRenderSceneTag tag, NativeArray<ArchetypeChunk> chunks, NativeArray<int> sortedChunkIndices)
         {
-            // Disable force low lod  based on loading a streaming zone 
-            if (tag.SubsectionIndex > 0 && tag.HasStreamedLOD != 0)
+            // Disable force low lod  based on loading a streaming zone
+            if (tag.SectionIndex > 0 && tag.HasStreamedLOD != 0)
             {
                 for (int i = 0; i < m_InternalBatchRange; i++)
                 {
-                    if (m_Tags[i].Location.Equals(tag.Location))
+                    if (m_Tags[i].SceneGUID.Equals(tag.SceneGUID))
                     {
                         m_ForceLowLOD[i] = 0;
                     }
@@ -843,12 +847,12 @@ namespace Unity.Rendering
 
         public void RemoveTag(FrozenRenderSceneTag tag)
         {
-            // Enable force low lod based on the high lod being streamed out 
-            if (tag.SubsectionIndex > 0 && tag.HasStreamedLOD != 0)
+            // Enable force low lod based on the high lod being streamed out
+            if (tag.SectionIndex > 0 && tag.HasStreamedLOD != 0)
             {
                 for (int i = 0; i < m_InternalBatchRange; i++)
                 {
-                    if (m_Tags[i].Location.Equals(tag.Location))
+                    if (m_Tags[i].SceneGUID.Equals(tag.SceneGUID))
                     {
                         m_ForceLowLOD[i] = 1;
                     }
@@ -919,4 +923,3 @@ namespace Unity.Rendering
 
     }
 }
-#endif

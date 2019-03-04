@@ -1,6 +1,4 @@
-﻿#if UNITY_2019_1_OR_NEWER
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -58,6 +56,7 @@ namespace Unity.Rendering
     [ExecuteAlways]
     //@TODO: Necessary due to empty component group. When Component group and archetype chunks are unified this should be removed
     [AlwaysUpdateSystem]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(LodRequirementsUpdateSystem))]
     public class RenderMeshSystemV2 : ComponentSystem
     {
@@ -77,31 +76,30 @@ namespace Unity.Rendering
         #else
         EditorRenderData m_DefaultEditorRenderData = new EditorRenderData { SceneCullingMask = ~0UL };
         #endif
-        
+
         protected override void OnCreateManager()
         {
             //@TODO: Support SetFilter with EntityArchetypeQuery syntax
-            /*
-            m_FrozenGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                Any = Array.Empty<ComponentType>(),
-                None = Array.Empty<ComponentType>(),
-                All = new ComponentType[]
-                    {typeof(ChunkWorldRenderBounds), typeof(WorldRenderBounds), typeof(LocalToWorld), typeof(RenderMesh), typeof(FrozenRenderSceneTag)}
-            });
-            */
-            m_FrozenGroup = GetComponentGroup(typeof(ChunkWorldRenderBounds), typeof(WorldRenderBounds), typeof(LocalToWorld), typeof(RenderMesh), typeof(FrozenRenderSceneTag));
-            
-            m_DynamicGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                Any = Array.Empty<ComponentType>(),
-                None = new ComponentType[] { typeof(FrozenRenderSceneTag) },
-                All = new ComponentType[]
-                    {typeof(WorldRenderBounds), typeof(LocalToWorld), typeof(RenderMesh)  }
-            });
+
+            m_FrozenGroup = GetComponentGroup(
+                ComponentType.ReadOnly<WorldRenderBounds>(),
+                ComponentType.ReadOnly<LocalToWorld>(),
+                ComponentType.ReadOnly<RenderMesh>(),
+                ComponentType.ReadOnly<FrozenRenderSceneTag>()
+            );
+            m_DynamicGroup = GetComponentGroup(
+                ComponentType.Exclude<FrozenRenderSceneTag>(),
+                ComponentType.ReadOnly<WorldRenderBounds>(),
+                ComponentType.ReadOnly<LocalToWorld>(),
+                ComponentType.ReadOnly<RenderMesh>()
+            );
 
             // This component group must include all types that are being used by the culling job
-            m_CullingJobDependencyGroup = GetComponentGroup(typeof(RootLodRequirement), typeof(LodRequirement), typeof(WorldRenderBounds));
+            m_CullingJobDependencyGroup = GetComponentGroup(
+                ComponentType.ReadOnly<RootLodRequirement>(),
+                ComponentType.ReadOnly<LodRequirement>(),
+                ComponentType.ReadOnly<WorldRenderBounds>()
+            );
 
             m_InstancedRenderMeshBatchGroup = new InstancedRenderMeshBatchGroup(EntityManager, this, m_CullingJobDependencyGroup);
             m_SubsceneTagVersion = new NativeHashMap<FrozenRenderSceneTag, int>(1000,Allocator.Persistent);
@@ -160,7 +158,7 @@ namespace Unity.Rendering
                         var editorRenderData = m_DefaultEditorRenderData;
                         if (editorRenderDataIndex != -1)
                             editorRenderData = EntityManager.GetSharedComponentData<EditorRenderData>(editorRenderDataIndex);
-                        
+
                         var remainingEntitySlots = 1023;
                         var flippedWinding = chunk.Has(meshInstanceFlippedTagType);
                         int instanceCount = chunk.Count;
@@ -188,7 +186,7 @@ namespace Unity.Rendering
                             if (editorRenderDataIndex != nextChunk.GetSharedComponentIndex(editorRenderDataType))
                                 break;
 #endif
-                            
+
                             remainingEntitySlots -= nextChunk.Count;
                             instanceCount += nextChunk.Count;
                             batchChunkCount++;
@@ -249,9 +247,7 @@ namespace Unity.Rendering
 
                 m_FrozenGroup.SetFilter(subsceneTag);
 
-                //@TODO - revert to CreateArchetypeChunkArray once it supports filtering
-                //var filteredChunks = m_FrozenGroup.CreateArchetypeChunkArray(Allocator.TempJob);
-                var filteredChunks = m_FrozenGroup.GetAllMatchingChunks(Allocator.TempJob);
+                var filteredChunks = m_FrozenGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
                 m_FrozenGroup.ResetFilter();
 
@@ -282,7 +278,7 @@ namespace Unity.Rendering
             chunks.Dispose();
         }
 
-        
+
         protected override void OnUpdate()
         {
             m_InstancedRenderMeshBatchGroup.CompleteJobs();
@@ -295,6 +291,8 @@ namespace Unity.Rendering
             Profiler.BeginSample("UpdateDynamicRenderBatches");
             UpdateDynamicRenderBatches();
             Profiler.EndSample();
+
+            m_InstancedRenderMeshBatchGroup.LastUpdatedOrderVersion = EntityManager.GetComponentOrderVersion<RenderMesh>();
         }
 
 #if UNITY_EDITOR
@@ -302,4 +300,3 @@ namespace Unity.Rendering
 #endif
     }
 }
-#endif

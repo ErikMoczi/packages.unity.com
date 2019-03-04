@@ -74,6 +74,8 @@ namespace Unity.Rendering
         }
     }
 
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.EntitySceneOptimizations)]
     [UpdateAfter(typeof(RenderBoundsUpdateSystem))]
     [ExecuteAlways]
     public class LodRequirementsUpdateSystem : JobComponentSystem
@@ -96,7 +98,7 @@ namespace Unity.Rendering
             [ReadOnly] public ArchetypeChunkComponentType<MeshLODComponent>     MeshLODComponent;
             [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld>         LocalToWorld;
             [ReadOnly] public ComponentDataFromEntity<LocalToWorld>             LocalToWorldLookup;
-            
+
             public ArchetypeChunkComponentType<LodRequirement>                  LodRequirement;
             public ArchetypeChunkComponentType<RootLodRequirement>              RootLodRequirement;
 
@@ -147,7 +149,10 @@ namespace Unity.Rendering
                     var lodGroup = MeshLODGroupComponent[lodGroupEntity];
                     var parentMask = lodGroup.ParentMask;
                     var parentGroupEntity = lodGroup.ParentGroup;
-                    var changedRoot = parentGroupEntity != lastLodRootGroupEntity || parentMask != lastLodRootMask || i == 0;
+                    
+                    //@TODO: Bring this optimization back
+                    //var changedRoot = parentGroupEntity != lastLodRootGroupEntity || parentMask != lastLodRootMask || i == 0;
+                    var changedRoot = true;
 
                     if (changedRoot)
                     {
@@ -199,19 +204,11 @@ namespace Unity.Rendering
             }
         }
 
-        public void AllowFrozenHack()
-        {
-            m_MissingLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<LodRequirement>());
-            m_MissingRootLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<RootLodRequirement>());
-            m_Group = GetComponentGroup(typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement));
-        }
-
-
         protected override void OnCreateManager()
         {
-            m_MissingLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<LodRequirement>(), ComponentType.Subtractive<Frozen>());
-            m_MissingRootLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Subtractive<RootLodRequirement>(), ComponentType.Subtractive<Frozen>());
-            m_Group = GetComponentGroup(typeof(LocalToWorld), typeof(LodRequirement), typeof(RootLodRequirement), ComponentType.Subtractive<Frozen>());
+            m_MissingLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Exclude<LodRequirement>(), ComponentType.Exclude<Frozen>());
+            m_MissingRootLodRequirement = GetComponentGroup(typeof(MeshLODComponent), ComponentType.Exclude<RootLodRequirement>(), ComponentType.Exclude<Frozen>());
+            m_Group = GetComponentGroup(ComponentType.ReadOnly<LocalToWorld>(), ComponentType.ReadOnly<MeshLODComponent>(), typeof(LodRequirement), typeof(RootLodRequirement), ComponentType.Exclude<Frozen>());
         }
 
         protected override JobHandle OnUpdate(JobHandle dependency)

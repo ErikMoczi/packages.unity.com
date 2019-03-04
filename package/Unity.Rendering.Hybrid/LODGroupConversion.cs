@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using Unity.Rendering;
 using UnityEngine;
 
-[DisableAutoCreation]
+[UpdateAfter(typeof(MeshRendererConversion))]
 class LODGroupConversion : GameObjectConversionSystem
 {    
     protected override void OnUpdate()

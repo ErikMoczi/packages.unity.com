@@ -8,34 +8,47 @@ using UnityEngine;
 
 namespace Unity.Rendering
 {
-    [UpdateAfter(typeof(EndFrameBarrier))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [ExecuteAlways]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.EntitySceneOptimizations)]
     public class CreateMissingRenderBoundsFromMeshRenderer : ComponentSystem
     {
         ComponentGroup m_MissingRenderBounds;
 
         protected override void OnCreateManager()
         {
-            m_MissingRenderBounds = GetComponentGroup(ComponentType.Subtractive<Frozen>(), ComponentType.Subtractive<RenderBounds>(), ComponentType.Create<RenderMesh>());
+            m_MissingRenderBounds = GetComponentGroup(
+                ComponentType.Exclude<Frozen>(), 
+                ComponentType.Exclude<RenderBounds>(), 
+                ComponentType.ReadWrite<RenderMesh>());
         }
 
         protected override void OnUpdate()
         {
-            var sharedComponents = m_MissingRenderBounds.GetSharedComponentDataArray<RenderMesh>();
-            var entities = m_MissingRenderBounds.GetEntityArray();
-            for (int i = 0; i != sharedComponents.Length; i++)
+            var chunks = m_MissingRenderBounds.CreateArchetypeChunkArray(Allocator.TempJob);
+            for (int i = 0; i < chunks.Length; ++i)
             {
-                var meshRenderer = sharedComponents[i];
-                if (meshRenderer.mesh != null)
-                    PostUpdateCommands.AddComponent(entities[i], new RenderBounds { Value = meshRenderer.mesh.bounds });
+                var chunk = chunks[i];
+                var sharedComponent = chunk.GetSharedComponentData(GetArchetypeChunkSharedComponentType<RenderMesh>(), EntityManager);
+                if (sharedComponent.mesh != null)
+                {
+                    var entities = chunk.GetNativeArray(GetArchetypeChunkEntityType());
+                    for (int j = 0; j < chunk.Count; ++j)
+                    {
+                        PostUpdateCommands.AddComponent(entities[j], new RenderBounds { Value = sharedComponent.mesh.bounds.ToAABB() });
+                    }
+                }
             }
+            chunks.Dispose();
         }
     }
 
     /// <summary>
     /// Updates WorldRenderBounds for anything that has LocalToWorld and RenderBounds (and ensures WorldRenderBounds exists)
     /// </summary>
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CreateMissingRenderBoundsFromMeshRenderer))]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.EntitySceneOptimizations)]
     [ExecuteAlways]
     public class RenderBoundsUpdateSystem : JobComponentSystem
     {
@@ -76,18 +89,27 @@ namespace Unity.Rendering
 
         public void AllowFrozenHack()
         {
-            m_MissingWorldRenderBounds = GetComponentGroup(typeof(RenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<WorldRenderBounds>());
+            m_MissingWorldRenderBounds = GetComponentGroup(typeof(RenderBounds), typeof(LocalToWorld), ComponentType.Exclude<WorldRenderBounds>());
 
             //@TODO: For controlling if system should update or not... Merge with m_Query once ComponentGroup is unified
-            m_WorldRenderBounds = GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld));
+            m_WorldRenderBounds = GetComponentGroup(
+                typeof(WorldRenderBounds), 
+                ComponentType.ReadOnly<LocalToWorld>());
         }
 
         protected override void OnCreateManager()
         {
-            m_MissingWorldRenderBounds = GetComponentGroup(typeof(RenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<WorldRenderBounds>(), ComponentType.Subtractive<Frozen>());
+            m_MissingWorldRenderBounds = GetComponentGroup(
+                typeof(RenderBounds), 
+                ComponentType.ReadOnly<LocalToWorld>(),
+                ComponentType.Exclude<WorldRenderBounds>(),
+                ComponentType.Exclude<Frozen>());
 
             //@TODO: For controlling if system should update or not... Merge with m_Query once ComponentGroup is unified
-            m_WorldRenderBounds = GetComponentGroup(typeof(WorldRenderBounds), typeof(LocalToWorld), ComponentType.Subtractive<Frozen>());
+            m_WorldRenderBounds = GetComponentGroup(
+                typeof(WorldRenderBounds), 
+                ComponentType.ReadOnly<LocalToWorld>(),
+                ComponentType.Exclude<Frozen>());
 
         }
 
