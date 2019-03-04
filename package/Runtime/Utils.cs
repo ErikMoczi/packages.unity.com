@@ -140,7 +140,7 @@ namespace Unity.PerformanceTesting.Runtime
 
             foreach (char c in invalid)
             {
-                path = path.Replace(c.ToString(), ""); 
+                path = path.Replace(c.ToString(), "");
             }
 
             return path;
