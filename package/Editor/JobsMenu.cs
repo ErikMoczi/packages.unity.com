@@ -20,7 +20,6 @@ class JobsMenu
         return true;
     }
 
-#if UNITY_2019_1_OR_NEWER
     const string kLeakOff = "Jobs/Leak Detection/Off";
     const string kLeakOn = "Jobs/Leak Detection/On";
     const string kLeakDetectionFull = "Jobs/Leak Detection/Full Stack Traces (Expensive)";
@@ -51,20 +50,4 @@ class JobsMenu
         Menu.SetChecked(kLeakDetectionFull, NativeLeakDetection.Mode == NativeLeakDetectionMode.EnabledWithStackTrace);
         return true;
     }
-    
-#else    
-    const string kLeakDetection = "Jobs/Leak Detection";
-    [MenuItem(kLeakDetection, false)]
-    static void SwitchLeaksOnOff()
-    {
-        NativeLeakDetection.Mode = NativeLeakDetection.Mode == NativeLeakDetectionMode.Disabled ? NativeLeakDetectionMode.Enabled : NativeLeakDetectionMode.Disabled;
-    }
-
-    [MenuItem(kLeakDetection, true)]
-    static bool SwitchLeaksOnOffValidate()
-    {
-        Menu.SetChecked(kLeakDetection, NativeLeakDetection.Mode != NativeLeakDetectionMode.Disabled);
-        return true;
-    }
-#endif
 }
