@@ -63,7 +63,7 @@ namespace UnityEngine.Entities.Tests
             EditorSceneManager.UnloadSceneAsync(scene);
         }
         
-        [Test]
+        [Test, Ignore("Disabled because when the package is published you get a ` Cancelling DisplayDialog: Opening scene in read-only package! It is not allowed to open a scene in a read-only package` error for this test")]
         public void ConversionIgnoresMissingMonoBehaviour()
         {
             TestTools.LogAssert.Expect(LogType.Warning, new Regex("missing"));

@@ -1,7 +1,7 @@
 {
     "name": "com.unity.entities", 
     "unity": "2019.1", 
-    "version": "0.0.12-preview.25", 
+    "version": "0.0.12-preview.26", 
     "dependencies": {
         "nuget.mono-cecil": "0.1.6-preview", 
         "com.unity.test-framework.performance": "0.1.50-preview", 
