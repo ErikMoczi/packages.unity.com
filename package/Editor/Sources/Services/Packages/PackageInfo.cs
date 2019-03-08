@@ -54,19 +54,29 @@ namespace UnityEditor.PackageManager.UI
                 return Description.Split(new[] {builtinPackageDocsUrlKey}, StringSplitOptions.None)[0];
         } }
 
+        private static Version ParseShortVersion(string shortVersionId)
+        {
+            try
+            {
+                var versionToken = shortVersionId.Split('@')[1];
+                return new Version(versionToken);
+            }
+            catch (Exception)
+            {
+                // Keep default version 0.0 on exception
+                return new Version();
+            }
+        }
+
         // Method content must be matched in package manager UI
         public static string GetPackageUrlRedirect(string packageName, string shortVersionId)
         {
-            var versionToken = shortVersionId.Split('@')[1];
-            Version version;
-            System.Version.TryParse(versionToken, out version);
-
             var redirectUrl = "";
             if (packageName == "com.unity.ads")
                 redirectUrl = "https://docs.unity3d.com/Manual/UnityAds.html";
             else if (packageName == "com.unity.analytics")
             {
-                if (version < new Version(3, 2))
+                if (ParseShortVersion(shortVersionId) < new Version(3, 2))
                     redirectUrl = "https://docs.unity3d.com/Manual/UnityAnalytics.html";
             }
             else if (packageName == "com.unity.purchasing")
@@ -77,7 +87,7 @@ namespace UnityEditor.PackageManager.UI
                 redirectUrl = "https://unity3d.com/cn/partners/xiaomi/guide";
             else if (packageName == "com.unity.shadergraph")
             {
-                if (version < new Version(4, 1))
+                if (ParseShortVersion(shortVersionId) < new Version(4, 1))
                     redirectUrl = "https://github.com/Unity-Technologies/ShaderGraph/wiki";
             }
 
