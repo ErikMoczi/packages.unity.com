@@ -6,7 +6,6 @@ using System.Xml;
 using UnityEditor.Android;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
-using UnityEditor.XR.ARExtensions;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -27,9 +26,6 @@ namespace UnityEditor.XR.ARCore
             EnsureMinSdkVersion();
             EnsureOnlyOpenGLES3IsUsed();
             EnsureGradleIsUsed();
-
-            if (LinkerUtility.AssemblyStrippingEnabled(report.summary.platformGroup))
-                LinkerUtility.EnsureLinkXmlExistsFor("ARCore");
         }
 
         void EnsureGradleIsUsed()
@@ -42,14 +38,14 @@ namespace UnityEditor.XR.ARCore
         {
             var arcoreSettings = ARCoreSettings.GetOrCreateSettings();
             int minSdkVersion;
-            if (arcoreSettings.ARCoreRequirement == ARCoreSettings.Requirement.Optional)
+            if (arcoreSettings.requirement == ARCoreSettings.Requirement.Optional)
                 minSdkVersion = 14;
             else
                 minSdkVersion = 24;
 
             if ((int)PlayerSettings.Android.minSdkVersion < minSdkVersion)
                 throw new BuildFailedException(string.Format("ARCore {0} apps require a minimum SDK version of {1}. Currently set to {2}",
-                    arcoreSettings.ARCoreRequirement, minSdkVersion, PlayerSettings.Android.minSdkVersion));
+                    arcoreSettings.requirement, minSdkVersion, PlayerSettings.Android.minSdkVersion));
         }
 
         void EnsureARCoreSupportedIsNotChecked()
@@ -208,11 +204,11 @@ namespace UnityEditor.XR.ARCore
             FindOrCreateTagWithAttributes(manifestDoc, applicationNode, "meta-data", "name", "unityplayer.SkipPermissionsDialog", "value", "true");
 
             var settings = ARCoreSettings.GetOrCreateSettings();
-            if (settings.ARCoreRequirement == ARCoreSettings.Requirement.Optional)
+            if (settings.requirement == ARCoreSettings.Requirement.Optional)
             {
                 FindOrCreateTagWithAttributes(manifestDoc, applicationNode, "meta-data", "name", k_AndroidNameValue, "value", "optional");
             }
-            else if (settings.ARCoreRequirement == ARCoreSettings.Requirement.Required)
+            else if (settings.requirement == ARCoreSettings.Requirement.Required)
             {
                 FindOrCreateTagWithAttributes(manifestDoc, manifestNode, "uses-feature", "name", k_AndroidHardwareCameraAr, "required", "true");
                 FindOrCreateTagWithAttributes(manifestDoc, applicationNode, "meta-data", "name", k_AndroidNameValue, "value", "required");

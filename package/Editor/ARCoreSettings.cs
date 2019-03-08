@@ -24,15 +24,15 @@ namespace UnityEditor.XR.ARCore
         }
 
         [SerializeField, Tooltip("Toggles whether ARCore is required for this app. Will make app only downloadable by devices with ARCore support if set to 'Required'.")]
-        Requirement m_ARCoreRequirement;
+        Requirement m_Requirement;
 
         /// <summary>
         /// Determines whether ARCore is required for this app: will make app only downloadable by devices with ARCore support if set to <see cref="Requirement.Required"/>.
         /// </summary>
-        public Requirement ARCoreRequirement
+        public Requirement requirement
         {
-            get { return m_ARCoreRequirement; }
-            set { m_ARCoreRequirement = value; }
+            get { return m_Requirement; }
+            set { m_Requirement = value; }
         }
 
         /// <summary>
@@ -73,6 +73,11 @@ namespace UnityEditor.XR.ARCore
             }
         }
 
+        internal static SerializedObject GetSerializedSettings()
+        {
+            return new SerializedObject(GetOrCreateSettings());
+        }
+
         internal static bool TrySelect()
         {
             var settings = currentSettings;
@@ -84,55 +89,5 @@ namespace UnityEditor.XR.ARCore
         }
 
         static readonly string k_ConfigObjectName = "com.unity.xr.arcore.PlayerSettings";
-    }
-
-    internal class SettingsSelectionWindow : EditorWindow
-    {
-        [MenuItem("Edit/Project Settings/ARCore")]
-        static void ShowSelectionWindow()
-        {
-            ARCoreSettings.TrySelect();
-            Rect rect = new Rect(500, 300, 400, 150);
-            var window = GetWindowWithRect<SettingsSelectionWindow>(rect);
-            window.titleContent = new GUIContent("ARCore");
-            window.Show();
-        }
-
-        void OnGUI()
-        {
-            GUILayout.Space(5);
-            GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
-            titleStyle.wordWrap = true;
-            EditorGUILayout.LabelField("Select an existing ARCoreSettings object or create a new one.", titleStyle);
-
-            EditorGUI.BeginChangeCheck();
-            ARCoreSettings.currentSettings =
-                EditorGUILayout.ObjectField("ARCoreSettings", ARCoreSettings.currentSettings, typeof(ARCoreSettings), false) as ARCoreSettings;
-            if (EditorGUI.EndChangeCheck())
-                ARCoreSettings.TrySelect();
-
-            GUILayout.Space(5);
-
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Create New"))
-                Create();
-
-            if (GUILayout.Button("Close"))
-                Close();
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        void Create()
-        {
-            var path = EditorUtility.SaveFilePanelInProject("Save ARCore Settings", "ARCoreSettings", "asset", "Please enter a filename to save the ARCore settings.");
-            if (string.IsNullOrEmpty(path))
-                return;
-
-            var settings = CreateInstance<ARCoreSettings>();
-            AssetDatabase.CreateAsset(settings, path);
-            ARCoreSettings.currentSettings = settings;
-        }
     }
 }

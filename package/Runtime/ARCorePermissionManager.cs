@@ -1,6 +1,4 @@
 using System;
-using UnityEngine;
-using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARCore
 {

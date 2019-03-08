@@ -13,12 +13,11 @@ typedef struct UnityXRNativeSession_1
     void* sessionPtr;
 } UnityXRNativeSession_1;
 
-// XRCameraExtensions.GetNativePtr
-typedef struct UnityXRNativeCamera_1
+typedef struct UnityXRNativeFrame_1
 {
     int version;
     void* framePtr;
-} UnityXRNativeCamera_1;
+} UnityXRNativeFrame_1;
 
 // XRPlaneExtensions.GetNativePtr
 typedef struct UnityXRNativePlane_1
@@ -34,12 +33,20 @@ typedef struct UnityXRNativeReferencePoint_1
     void* referencePointPtr;
 } UnityXRNativeReferencePoint_1;
 
+typedef struct UnityXRNativePointCloud_1
+{
+    int version;
+    void* pointCloud;
+} UnityXRNativePointCloud_1;
+
 static const int kUnityXRNativeSessionVersion = 1;
-static const int kUnityXRNativeCameraVersion = 1;
+static const int kUnityXRNativeFrameVersion = 1;
 static const int kUnityXRNativePlaneVersion = 1;
 static const int kUnityXRNativeReferencePointVersion = 1;
+static const int kUnityXRNativePointCloudVersion = 1;
 
 typedef UnityXRNativeSession_1 UnityXRNativeSession;
-typedef UnityXRNativeCamera_1 UnityXRNativeCamera;
+typedef UnityXRNativeFrame_1 UnityXRNativeFrame;
 typedef UnityXRNativePlane_1 UnityXRNativePlane;
 typedef UnityXRNativeReferencePoint_1 UnityXRNativeReferencePoint;
+typedef UnityXRNativePointCloud_1 UnityXRNativePointCloud;

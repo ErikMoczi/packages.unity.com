@@ -1,4 +1,4 @@
-using UnityEngine.XR.ARExtensions;
+using UnityEngine.XR.ARSubsystems;
 
 namespace UnityEngine.XR.ARCore
 {
@@ -9,7 +9,7 @@ namespace UnityEngine.XR.ARCore
             if (s_LastFrameUpdated == Time.frameCount)
                 return;
 
-            Api.ArPresto_update();
+            ArPrestoApi.ArPresto_update();
             s_LastFrameUpdated = Time.frameCount;
         }
 

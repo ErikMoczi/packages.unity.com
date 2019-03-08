@@ -1,13 +1,18 @@
 {
     "name": "Unity.XR.ARCore",
     "references": [
-        "Unity.XR.ARExtensions"
+        "Unity.XR.ARSubsystems"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Android",
         "Editor"
-   ],
+    ],
     "excludePlatforms": [],
-    "allowUnsafeCode": false
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }

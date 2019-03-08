@@ -1,8 +1,7 @@
 {
     "name": "Unity.XR.ARCore.Editor",
     "references": [
-    	"Unity.XR.ARCore",
-        "Unity.XR.ARExtensions.Editor"
+    	"Unity.XR.ARCore"
     ],
     "includePlatforms": [
         "Editor"

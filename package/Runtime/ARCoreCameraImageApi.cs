@@ -1,8 +1,9 @@
 using System;
-using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARCore
 {
+#if CAMERA_EXTENSIONS
+
     internal class ARCoreCameraImageApi : ICameraImageApi
     {
         public bool TryAcquireLatestImage(out int nativeHandle, out Vector2Int dimensions, out int planeCount, out double timestamp, out CameraImageFormat format)
@@ -62,4 +63,5 @@ namespace UnityEngine.XR.ARCore
             return Api.UnityARCore_cameraImage_tryGetPlane(nativeHandle, planeIndex, out rowStride, out pixelStride, out dataPtr, out dataLength);
         }
     }
+#endif    
 }

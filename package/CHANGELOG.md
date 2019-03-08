@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.0]
+### Changes
+- Verified against 2019.2.
+
 ## [1.0.0-preview.24] - 2018-12-13
 ### Improvements
 - Support x86, ARMv7, and ARM64 Android architetures (previously was limited to ARMv7).
