@@ -166,6 +166,7 @@ namespace UnityEngine.XR.ARKit
         {
             s_CurrentInstance = null;
             UnityARKit_FaceProvider_Shutdown();
+            m_Running = false;
         }
 
         /// <summary>
@@ -176,6 +177,7 @@ namespace UnityEngine.XR.ARKit
             UnityARKit_FaceProvider_SetFaceAnchorCallbacks(UnityARKit_face_anchor_added, UnityARKit_face_anchor_updated,
                 UnityARKit_face_anchor_removed, UnityARKit_face_session_begin_frame);
             UnityARKit_FaceProvider_Start();
+            m_Running = true;
         }
 
         /// <summary>
@@ -185,7 +187,15 @@ namespace UnityEngine.XR.ARKit
         {
             UnityARKit_FaceProvider_Stop();
             UnityARKit_FaceProvider_SetFaceAnchorCallbacks(null, null, null, null);
+            m_Running = false;
         }
+
+#if UNITY_2019_2_OR_NEWER
+        /// <summary>
+        /// Whether the subsystem is currently running.
+        /// </summary>
+        public override bool running { get { return m_Running; } }
+#endif
 
         /// <inheritdoc />
         /// <summary>
@@ -444,6 +454,9 @@ namespace UnityEngine.XR.ARKit
 
             return true;
         }
+
+    private bool m_Running;
+
     }
 }
 
