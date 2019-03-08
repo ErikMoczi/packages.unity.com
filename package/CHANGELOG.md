@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.7] - 2019-3-8
+
+#### Automation test deploy
+
 ## [1.0.6] - 2019-3-4
 
 ### Update changelog
