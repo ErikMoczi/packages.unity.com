@@ -1,6 +1,6 @@
 # Code Editor Package for Rider
 
-## [1.0.0] - 2019-01-01
+## [0.1.0-preview.7] - 2019-01-01
 
 ### This is the first release of *Unity Package rider_editor*.
 
