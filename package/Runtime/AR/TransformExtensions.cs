@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.XR.ARSubsystems;
+using UnityEngine.Experimental.XR;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -68,6 +68,42 @@ namespace UnityEngine.XR.ARFoundation
                 position = transform.InverseTransformPoint(pose.position),
                 rotation = Quaternion.Inverse(transform.rotation) * pose.rotation
             };
+        }
+
+        /// <summary>
+        /// Transforms a <c>List</c> of <c>XRRaycastHit</c>s.
+        /// </summary>
+        /// <param name="transform">The <c>Transform</c> component</param>
+        /// <param name="raycastHits">The <c>XRRaycastHit</c>s to transform. This is done in-place.</param>
+        public static void TransformXRRaycastHits(this Transform transform, List<XRRaycastHit> raycastHits)
+        {
+            if (raycastHits == null)
+                throw new ArgumentNullException("raycastHits");
+
+            for (int i = 0; i < raycastHits.Count; ++i)
+            {
+                var raycastHit = raycastHits[i];
+                raycastHit.Pose = transform.TransformPose(raycastHit.Pose);
+                raycastHits[i] = raycastHit;
+            }
+        }
+
+        /// <summary>
+        /// Inverse transforms a <c>List</c> of <c>XRRaycastHit</c>s.
+        /// </summary>
+        /// <param name="transform">The <c>Transform</c> component</param>
+        /// <param name="raycastHits">The <c>XRRaycastHit</c>s to inverse transform. This is done in-place.</param>
+        public static void InverseTransformXRRaycastHits(this Transform transform, List<XRRaycastHit> raycastHits)
+        {
+            if (raycastHits == null)
+                throw new ArgumentNullException("raycastHits");
+
+            for (int i = 0; i < raycastHits.Count; ++i)
+            {
+                var raycastHit = raycastHits[i];
+                raycastHit.Pose = transform.InverseTransformPose(raycastHit.Pose);
+                raycastHits[i] = raycastHit;
+            }
         }
 
         /// <summary>

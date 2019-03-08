@@ -1,6 +1,6 @@
 # About AR Foundation
 
-Use the AR Foundation package to add high-level functionality for working with augmented reality. Unity 2018.1 includes built-in multi-platform support for AR. These APIs are in the `UnityEngine.XR.ARSubsystems` namespace, and consist of a number of `Subsystem`s, e.g., `XRPlaneSubsystem`. Several XR Subsystems comprise the low-level API for interacting with AR. The **AR Foundation** package wraps this low-level API into a cohesive whole and enhances it with additional utilities, such as AR session lifecycle management and the creation of `GameObject`s to represent detected features in the environment.
+Use the AR Foundation package to add high-level functionality for working with augmented reality. Unity 2018.1 includes built-in multi-platform support for AR. These APIs are in the `UnityEngine.Experimental.XR` namespace, and consist of a number of `Subsystem`s, e.g., `XRPlaneSubsystem`. Several XR Subsystems comprise the low-level API for interacting with AR. The **AR Foundation** package wraps this low-level API into a cohesive whole and enhances it with additional utilities, such as AR session lifecycle management and the creation of `GameObject`s to represent detected features in the environment.
 
 AR Foundation is a set of `MonoBehaviour`s for dealing with devices that support following concepts:
 - Planar surface detection
@@ -45,7 +45,12 @@ An AR scene should include an `ARSession` component. The AR Session controls the
 
 An AR Session can be started, paused, resumed, and stopped entirely. Enabling or disabling the component will start/resume or pause the session, respectively. If a session is "paused", the system no longer tracks features in its environment, but if it is resumed at a later time, the system will attempt to recover and maintain previously detected features.
 
-If "Attempt Update" is checked, the device will try to install AR software if possible.
+A session has the following options, each of which may be changed at runtime:
+
+| Option | Meaning |
+|-|-|
+| Light Estimation | Whether to enable light estimation information. This can be used to correctly light virtual content in the scene. |
+| Try to Install Update If Needed | Will try to install AR software if possible. |
 
 **Note:** An AR session is a global construct. An `ARSession` component manages this global session, so multiple `ARSession` components will all try to manage the same global session.
 
@@ -90,17 +95,6 @@ Parented to the `ARSessionOrigin`'s' `GameObject` should be (at least) one camer
 ![alt text](images/tracked_pose_driver.png "TrackedPoseDriver")
 
 The `Camera` must be a child of the `ARSessionOrigin`.
-
-### ARCameraOptions
-
-The `XRCameraSubsystem` has a couple of options, which can be controlled via the `ARCameraOptions` component:
-
-![alt text](images/ar_camera_options.png "ARCameraOptions")
-
-| Option | Meaning |
-|-|-|
-| Focus Mode | May be "Auto" or "Fixed". "Auto" enables the hardware camera's automatic focus mode, while "fixed" disables it (the focus is "fixed" and does not change automatically). |
-| Light Estimation | Whether to enable light estimation information. This can be used to correctly light virtual content in the scene. |
 
 ### ARCameraBackground
 

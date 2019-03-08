@@ -1,17 +1,17 @@
 using System;
-using UnityEngine.XR.ARSubsystems;
+using UnityEngine.Experimental.XR;
 
 namespace UnityEngine.XR.ARFoundation
 {
     /// <summary>
     /// Represents the result of a raycast intersection with a trackable.
     /// </summary>
-    public struct ARRaycastHit : IEquatable<ARRaycastHit>, IComparable<ARRaycastHit>
+    public struct ARRaycastHit : IEquatable<ARRaycastHit>
     {
         /// <summary>
         /// Constructor invoked by the <see cref="ARSessionOrigin.Raycast"/> methods.
         /// </summary>
-        /// <param name="hit">Session-relative raycast hit data.</param>
+        /// <param name="hit">The raw data containing hit information.</param>
         /// <param name="distance">The distance, in Unity world space, of the hit.</param>
         /// <param name="transform">The <c>Transform</c> that transforms from session space to world space.</param>
         public ARRaycastHit(XRRaycastHit hit, float distance, Transform transform)
@@ -34,7 +34,7 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public TrackableType hitType
         {
-            get { return m_Hit.hitType; }
+            get { return m_Hit.HitType; }
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public TrackableId trackableId
         {
-            get { return m_Hit.trackableId; }
+            get { return m_Hit.TrackableId; }
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public Pose sessionRelativePose
         {
-            get { return m_Hit.pose; }
+            get { return m_Hit.Pose; }
         }
 
         /// <summary>
@@ -66,17 +66,14 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public float sessionRelativeDistance
         {
-            get { return m_Hit.distance; }
+            get { return m_Hit.Distance; }
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                var hash = m_Hit.GetHashCode();
-                hash = hash * 486187739 + distance.GetHashCode();
-                hash = hash * 486187739 + (m_Transform == null ? 0 : m_Transform.GetHashCode());
-                return hash;
+                return (m_Hit.GetHashCode() * 486187739 + distance.GetHashCode()) * 486187739 + (m_Transform == null ? 0 : m_Transform.GetHashCode());
             }
         }
 
@@ -104,11 +101,6 @@ namespace UnityEngine.XR.ARFoundation
         public static bool operator !=(ARRaycastHit lhs, ARRaycastHit rhs)
         {
             return !lhs.Equals(rhs);
-        }
-
-        public int CompareTo(ARRaycastHit other)
-        {
-            return m_Hit.distance.CompareTo(other.m_Hit.distance);
         }
 
         XRRaycastHit m_Hit;

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -13,37 +11,30 @@ namespace UnityEngine.XR.ARFoundation
         /// <summary>
         /// The <see cref="LightEstimationData" /> associated with this frame.
         /// </summary>
-        public LightEstimationData lightEstimation { get; set; }
+        public LightEstimationData lightEstimation { get; private set; }
 
         /// <summary>
-        /// The time, in nanoseconds, associated with this frame.
-        /// Use <c>timestampNs.HasValue</c> to determine if this data is available.
+        /// The time, in seconds, associated with this frame.
+        /// Use <c>time.HasValue</c> to determine if this data is available.
         /// </summary>
-        public long? timestampNs { get; set; }
+        public float? time { get; private set; }
 
-        // TODO
-        public Matrix4x4? projectionMatrix { get; set; }
-
-        // TODO
-        public Matrix4x4? displayMatrix { get; set; }
-
-        // TODO
-        public List<Texture2D> textures { get; set; }
-
-        // TODO
-        public List<int> propertyNameIds { get; set; }
+        /// <summary>
+        /// Constructs an <see cref="ARCameraFrameEventArgs" />.
+        /// </summary>
+        /// <param name="lightEstimation">The <see cref="LightEstimationData" /> for the frame.</param>
+        /// <param name="time">The time, in seconds, for the frame.</param>
+        public ARCameraFrameEventArgs(LightEstimationData lightEstimation, float? time)
+        {
+            this.lightEstimation = lightEstimation;
+            this.time = time;
+        }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                var hash = lightEstimation.GetHashCode();
-                hash = hash * 486187739 + timestampNs.GetHashCode();
-                hash = hash * 486187739 + projectionMatrix.GetHashCode();
-                hash = hash * 486187739 + displayMatrix.GetHashCode();
-                hash = hash * 486187739 + (textures == null ? 0 : textures.GetHashCode());
-                hash = hash * 486187739 + (propertyNameIds == null ? 0 : propertyNameIds.GetHashCode());
-                return hash;
+                return lightEstimation.GetHashCode() * 486187739 + time.GetHashCode();
             }
         }
 
@@ -57,26 +48,14 @@ namespace UnityEngine.XR.ARFoundation
 
         public override string ToString()
         {
-            var stringBuilder = new StringBuilder();
-            stringBuilder.Append("lightEstimation: " + lightEstimation.ToString());
-            stringBuilder.Append("\ntimestamp: "  + timestampNs);
-            if (timestampNs.HasValue)
-                stringBuilder.Append("ns");
-            stringBuilder.Append("\nprojectionMatrix: " + projectionMatrix);
-            stringBuilder.Append("\ndisplayMatrix: " + displayMatrix);
-            stringBuilder.Append("\ntexture count: " + (textures == null ? 0 : textures.Count));
-            stringBuilder.Append("\npropertyNameId count: " + (propertyNameIds == null ? 0 : propertyNameIds.Count));
-
-            return stringBuilder.ToString();
+            return string.Format("(Light Estimation: {0}, Time: {1})", lightEstimation.ToString(), time);
         }
 
         public bool Equals(ARCameraFrameEventArgs other)
         {
             return
                 (lightEstimation.Equals(other.lightEstimation)) &&
-                (projectionMatrix == other.projectionMatrix) &&
-                (displayMatrix == other.displayMatrix) &&
-                (timestampNs == other.timestampNs);
+                (time == other.time);
         }
 
         public static bool operator ==(ARCameraFrameEventArgs lhs, ARCameraFrameEventArgs rhs)

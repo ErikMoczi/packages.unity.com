@@ -47,9 +47,9 @@ namespace UnityEngine.XR.ARFoundation
         CameraClearFlags m_CameraClearFlags = CameraClearFlags.Skybox;
 
         /// <summary>
-        /// Invoked when one of the properties of this class changes.
+        /// Invoked when one of the properties of this class change.
         /// </summary>
-        public event Action backgroundRendererChanged;
+        public event Action backgroundRendererChanged = null;
 
         /// <summary>
         /// Get or set the <c>Material</c> used during background rendering.
