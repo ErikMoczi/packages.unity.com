@@ -12,18 +12,6 @@ namespace VisualStudioEditor
 {
     internal class VSInitializer
     {
-        internal class VisualStudioPath
-        {
-            public string Path { get; set; }
-            public string Edition { get; set; }
-            public VisualStudioPath(string path, string edition = "")
-            {
-                Path = path;
-                Edition = edition;
-            }
-    
-        }
-
         public void Initialize(string editorPath, Dictionary<VisualStudioVersion, string[]> installedVisualStudios)
         {
             switch (Application.platform) {

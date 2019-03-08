@@ -316,6 +316,11 @@ namespace VisualStudioEditor
 
         static bool IsInternalizedPackagePath(string file)
         {
+            if (string.IsNullOrWhiteSpace(file))
+            {
+                return false;
+            }
+
             var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(file);
             if (packageInfo == null) {
                 return false;
@@ -363,7 +368,6 @@ namespace VisualStudioEditor
                     continue;
                 }
                 method.Invoke(null, args);
-                
             }
         }
 
@@ -764,7 +768,7 @@ namespace VisualStudioEditor
             var projectDir = ProjectDirectory.Replace('/', '\\');
             file = file.Replace('/', '\\');
             var path = SkipPathPrefix(file, projectDir);
-            
+
             var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(path.Replace('\\', '/'));
             if (packageInfo != null) {
                 // We have to normalize the path, because the PackageManagerRemapper assumes

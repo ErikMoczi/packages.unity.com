@@ -2,15 +2,15 @@
   "name": "com.unity.ide.visualstudio",
   "displayName": "Visual Studio Editor",
   "description": "Code editor integration for supporting Visual Studio as code editor for unity. Adds support for generating csproj files for intellisense purposes, auto discovery of installations, etc.",
-  "version": "0.1.0-preview.9",
+  "version": "0.1.0-preview.10",
   "unity": "2019.2",
   "dependencies": {},
   "relatedPackages": {
-    "com.unity.ide.visualstudio.tests": "0.1.0-preview.9"
+    "com.unity.ide.visualstudio.tests": "0.1.0-preview.10"
   },
   "repository": {
     "type": "git",
     "url": "git@github.cds.internal.unity3d.com:unity/com.unity.ide.visualstudio.git",
-    "revision": "101c2bc9073fba2a35523a69f5c2ee4f0b7bf4f6"
+    "revision": "a1650575a8b7aed4704b84a75ac0e893aae25004"
   }
 }

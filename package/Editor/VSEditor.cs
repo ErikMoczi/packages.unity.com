@@ -26,18 +26,6 @@ namespace VisualStudioEditor
     [InitializeOnLoad]
     public class VSEditor : IExternalCodeEditor
     {
-        internal class VisualStudioPath
-        {
-            public string Path { get; set; }
-            public string Edition { get; set; }
-
-            public VisualStudioPath(string path, string edition = "")
-            {
-                Path = path;
-                Edition = edition;
-            }
-        }
-
         static readonly string k_ExpressNotSupportedMessage = L10n.Tr(
             "Unfortunately Visual Studio Express does not allow itself to be controlled by external applications. " +
             "You can still use it by manually opening the Visual Studio project file, but Unity cannot automatically open files for you when you doubleclick them. " +
@@ -403,7 +391,7 @@ namespace VisualStudioEditor
             {
                 UnityEngine.Debug.Log("Error: \n" + errorOutput);
             }
-            
+
             process.WaitForExit();
             return result;
         }
@@ -414,16 +402,9 @@ namespace VisualStudioEditor
             {
                 var baseFolder = GetBaseUnityDeveloperFolder();
                 var lowerPath = path.ToLowerInvariant();
-                var isUnitySourceCode = false;
-
-                if (lowerPath.Contains((baseFolder + "/Runtime").ToLowerInvariant()))
-                {
-                    isUnitySourceCode = true;
-                }
-                if (lowerPath.Contains((baseFolder + "/Editor").ToLowerInvariant()))
-                {
-                    isUnitySourceCode = true;
-                }
+                var isUnitySourceCode =
+                    lowerPath.Contains((baseFolder + "/Runtime").ToLowerInvariant())
+                    || lowerPath.Contains((baseFolder + "/Editor").ToLowerInvariant());
 
                 if (isUnitySourceCode)
                 {
@@ -438,7 +419,7 @@ namespace VisualStudioEditor
             return "";
         }
 
-        private string GetBaseUnityDeveloperFolder()
+        private static string GetBaseUnityDeveloperFolder()
         {
             return Directory.GetParent(EditorApplication.applicationPath).Parent.Parent.FullName;
         }
