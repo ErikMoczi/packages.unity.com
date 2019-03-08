@@ -82,12 +82,14 @@ namespace Unity.Rendering
             //@TODO: Support SetFilter with EntityArchetypeQuery syntax
 
             m_FrozenGroup = GetComponentGroup(
+                ComponentType.ChunkComponentReadOnly<ChunkWorldRenderBounds>(),
                 ComponentType.ReadOnly<WorldRenderBounds>(),
                 ComponentType.ReadOnly<LocalToWorld>(),
                 ComponentType.ReadOnly<RenderMesh>(),
                 ComponentType.ReadOnly<FrozenRenderSceneTag>()
             );
             m_DynamicGroup = GetComponentGroup(
+                ComponentType.ChunkComponentReadOnly<ChunkWorldRenderBounds>(),
                 ComponentType.Exclude<FrozenRenderSceneTag>(),
                 ComponentType.ReadOnly<WorldRenderBounds>(),
                 ComponentType.ReadOnly<LocalToWorld>(),
@@ -96,6 +98,7 @@ namespace Unity.Rendering
 
             // This component group must include all types that are being used by the culling job
             m_CullingJobDependencyGroup = GetComponentGroup(
+                ComponentType.ChunkComponentReadOnly<ChunkWorldRenderBounds>(),
                 ComponentType.ReadOnly<RootLodRequirement>(),
                 ComponentType.ReadOnly<LodRequirement>(),
                 ComponentType.ReadOnly<WorldRenderBounds>()

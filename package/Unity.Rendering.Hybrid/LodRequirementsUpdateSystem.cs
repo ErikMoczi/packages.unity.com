@@ -96,7 +96,6 @@ namespace Unity.Rendering
             [ReadOnly] public ComponentDataFromEntity<MeshLODGroupComponent>    MeshLODGroupComponent;
 
             [ReadOnly] public ArchetypeChunkComponentType<MeshLODComponent>     MeshLODComponent;
-            [ReadOnly] public ArchetypeChunkComponentType<LocalToWorld>         LocalToWorld;
             [ReadOnly] public ComponentDataFromEntity<LocalToWorld>             LocalToWorldLookup;
 
             public ArchetypeChunkComponentType<LodRequirement>                  LodRequirement;
@@ -111,7 +110,6 @@ namespace Unity.Rendering
                 var lodRequirement = chunk.GetNativeArray(LodRequirement);
                 var rootLodRequirement = chunk.GetNativeArray(RootLodRequirement);
                 var meshLods = chunk.GetNativeArray(MeshLODComponent);
-                var localToWorlds = chunk.GetNativeArray(LocalToWorld);
                 var instanceCount = chunk.Count;
 
 //                var requirementCount = 0;
@@ -122,7 +120,6 @@ namespace Unity.Rendering
                 for (int i = 0; i < instanceCount; i++)
                 {
                     var meshLod = meshLods[i];
-                    var localToWorld = localToWorlds[i];
                     var lodGroupEntity = meshLod.Group;
                     var lodMask = meshLod.LODMask;
                     var lodGroup = MeshLODGroupComponent[lodGroupEntity];
@@ -135,7 +132,9 @@ namespace Unity.Rendering
                         lastLodGroupMask = lodMask;
                     }
 */
-                    lodRequirement[i] = new LodRequirement(lodGroup, localToWorld, lodMask);
+
+                    // Cannot take LocalToWorld from the instances, because they might not all share the same pivot
+                    lodRequirement[i] = new LodRequirement(lodGroup, LocalToWorldLookup[lodGroupEntity], lodMask);
                 }
 
                 var rootLodIndex = -1;
@@ -221,7 +220,6 @@ namespace Unity.Rendering
                 Chunks = m_Group.CreateArchetypeChunkArray(Allocator.TempJob),
                 MeshLODGroupComponent = GetComponentDataFromEntity<MeshLODGroupComponent>(true),
                 MeshLODComponent = GetArchetypeChunkComponentType<MeshLODComponent>(true),
-                LocalToWorld = GetArchetypeChunkComponentType<LocalToWorld>(true),
                 LocalToWorldLookup = GetComponentDataFromEntity<LocalToWorld>(true),
                 LodRequirement = GetArchetypeChunkComponentType<LodRequirement>(),
                 RootLodRequirement = GetArchetypeChunkComponentType<RootLodRequirement>(),

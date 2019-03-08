@@ -12,7 +12,8 @@ namespace Unity.Rendering
             var group = GetComponentGroup(
                 new EntityArchetypeQuery
                 {
-                    All = new ComponentType[] { typeof(SceneSection), typeof(RenderMesh), typeof(LocalToWorld), typeof(Static) }
+                    All = new ComponentType[] { typeof(SceneSection), typeof(RenderMesh), typeof(LocalToWorld), typeof(Static) },
+                    None = new ComponentType[] { typeof(FrozenRenderSceneTag) }
                 });
 
             var sections = new List<SceneSection>();

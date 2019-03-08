@@ -687,24 +687,7 @@ namespace Unity.Rendering
             for (int i = 0; i < chunkCount; ++i)
             {
                 var chunk = chunks[sortedChunkIndices[startSortedIndex + i]];
-                var bounds = default(ChunkWorldRenderBounds);
-
-                if (chunk.Has(boundsType))
-                {
-                    var chunkBounds = chunk.GetNativeArray(boundsType);
-                    bounds = chunkBounds[0];
-                }
-                else
-                {
-                    bounds = new ChunkWorldRenderBounds
-                    {
-                        Value = new AABB
-                        {
-                            Center = new float3(0.0f, 0.0f, 0.0f),
-                            Extents = new float3(16738.0f, 16738.0f, 16738.0f)
-                        }
-                    };
-                }
+                var bounds = chunk.GetChunkComponentData(boundsType);
 
                 var localKey = new LocalGroupKey { Value = internalBatchIndex };
                 var hasLodData = chunk.Has(rootLodRequirements) && chunk.Has(instanceLodRequirements);

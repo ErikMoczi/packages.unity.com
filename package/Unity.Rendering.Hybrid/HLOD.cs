@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Profiling;
+using UnityEngine.Serialization;
 
 #pragma warning disable 414
 
@@ -15,6 +16,8 @@ namespace Unity.Rendering
     [RequireComponent(typeof(LODGroup))]
     public class HLOD : MonoBehaviour
     {
+        [Tooltip("Store lowest LOD in scene section 0, and the rest in section 1.")]
+        public bool autoLODSections = true;
         [SerializeField] Transform[] m_LODParentTransforms;
     
         [NonSerialized] int m_Index = -1;

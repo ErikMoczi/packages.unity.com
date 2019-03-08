@@ -1,18 +1,22 @@
-﻿using Unity.Rendering;
+﻿using System.Collections.Generic;
+using Unity.Rendering;
 using Unity.Transforms;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Unity.Rendering
 {
-    
     class MeshRendererConversion : GameObjectConversionSystem
     {
         const bool AttachToPrimaryEntityForSingleMaterial = true;
         
         protected override void OnUpdate()
         {
+            var sceneBounds = MinMaxAABB.Empty;
+
+            var materials = new List<Material>(10);
             ForEach((MeshRenderer meshRenderer, MeshFilter meshFilter) =>
             {
                 var entity = GetPrimaryEntity(meshRenderer);
@@ -21,14 +25,16 @@ namespace Unity.Rendering
                 dst.mesh = meshFilter.sharedMesh;
                 dst.castShadows = meshRenderer.shadowCastingMode;
                 dst.receiveShadows = meshRenderer.receiveShadows;
-    
-                var materials = meshRenderer.sharedMaterials;
 
+    
                 //@TODO: Transform system should handle RenderMeshFlippedWindingTag automatically. This should not be the responsibility of the conversion system.
                 float4x4 localToWorld = meshRenderer.transform.localToWorldMatrix;
                 var flipWinding = math.determinant(localToWorld) < 0.0;
 
-                if (materials.Length == 1 && AttachToPrimaryEntityForSingleMaterial)
+                meshRenderer.GetSharedMaterials(materials);
+                var materialCount = materials.Count; 
+
+                if (materialCount == 1 && AttachToPrimaryEntityForSingleMaterial)
                 {
                     dst.material = materials[0];
                     dst.subMesh = 0;
@@ -41,7 +47,7 @@ namespace Unity.Rendering
                 }
                 else
                 {
-                    for (int m = 0; m != materials.Length; m++)
+                    for (var m = 0; m != materialCount; m++)
                     {
                         var meshEntity = CreateAdditionalEntity(meshRenderer);
                     
@@ -49,8 +55,9 @@ namespace Unity.Rendering
                         dst.subMesh = m;
                     
                         DstEntityManager.AddSharedComponentData(meshEntity, dst);
+
                         DstEntityManager.AddComponentData(meshEntity, new PerInstanceCullingTag());
-                                        
+
                         DstEntityManager.AddComponentData(meshEntity, new LocalToWorld { Value = localToWorld });
                         if (!DstEntityManager.HasComponent<Static>(meshEntity))
                         {
@@ -62,8 +69,20 @@ namespace Unity.Rendering
                             DstEntityManager.AddComponent(meshEntity, ComponentType.ReadWrite<RenderMeshFlippedWindingTag>());
                     }
                 }
+                
+                sceneBounds.Encapsulate(meshRenderer.bounds.ToAABB());
             });
+
+            
+            using (var boundingVolume = DstEntityManager.CreateComponentGroup(typeof(SceneBoundingVolume)))
+            {
+                if (!boundingVolume.IsEmptyIgnoreFilter)
+                {
+                    var bounds = boundingVolume.GetSingleton<SceneBoundingVolume>();
+                    bounds.Value.Encapsulate(sceneBounds);
+                    boundingVolume.SetSingleton(bounds);
+                }
+            }
         }
     }
 }
-

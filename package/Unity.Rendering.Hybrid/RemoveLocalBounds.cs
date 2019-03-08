@@ -3,6 +3,7 @@ using Unity.Transforms;
 
 namespace Unity.Rendering
 {
+    /* Disabled for now. Makes chunk bounds go out of sync.
     [WorldSystemFilter(WorldSystemFilterFlags.EntitySceneOptimizations)]
     [UpdateAfter(typeof(RenderBoundsUpdateSystem))]
     class RemoveLocalBounds : ComponentSystem
@@ -18,4 +19,5 @@ namespace Unity.Rendering
             EntityManager.RemoveComponent(group, new ComponentTypes (typeof(RenderBounds)));
         }
     }
+    */
 }
