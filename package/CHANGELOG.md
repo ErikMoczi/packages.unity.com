@@ -4,24 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [5.7.0] - 2019-03-07
+## [6.5.0-preview] - 2019-03-07
 
-## [5.6.0] - 2019-02-21
+## [6.4.0-preview] - 2019-02-21
 
-## [5.5.0-preview] - 2019-02-18
+## [6.3.0-preview] - 2019-02-18
+
+## [6.2.0-preview] - 2019-02-15
+
 ### Changed
 - Code refactor: all macros with ARGS have been swapped with macros with PARAM. This is because the ARGS macros were incorrectly named.
 
-## [5.4.0-preview] - 2019-02-11
-### Added
+## [6.1.0-preview] - 2019-02-13
 
-### Fixed
-- Incorrect toggle rectangle in VisualEffect inspector
-- Shader compilation with SimpleLit and debug display
-
-## [5.3.1-preview] - 2019-01-28
-
-## [5.3.0-preview] - 2019-01-28
+## [6.0.0-preview] - 2019-02-23
 ### Added
 - Add spawnTime & spawnCount operator
 - Add seed slot to constant random mode of Attribute from curve and map
@@ -42,6 +38,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fix fog on decals
 - Saturate alpha component in outputs
 - Fixed scaleY in ConnectTarget
+- Incorrect toggle rectangle in VisualEffect inspector
+- Shader compilation with SimpleLit and debug display
 
 ## [5.2.0-preview] - 2018-11-27
 ### Added
