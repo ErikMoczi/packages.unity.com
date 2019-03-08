@@ -2,15 +2,15 @@
   "name": "com.unity.ide.vscode",
   "displayName": "Visual Studio Code Editor",
   "description": "Code editor integration for supporting Visual Studio Code as code editor for unity. Adds support for generating csproj files for intellisense purposes, auto discovery of installations, etc.",
-  "version": "0.1.0-preview.11",
+  "version": "1.0.0",
   "unity": "2019.2",
   "dependencies": {},
   "relatedPackages": {
-    "com.unity.ide.vscode.tests": "0.1.0-preview.11"
+    "com.unity.ide.vscode.tests": "1.0.0"
   },
   "repository": {
     "type": "git",
     "url": "git@github.cds.internal.unity3d.com:unity/com.unity.ide.vscode.git",
-    "revision": "62947b462ca2e44ed76b935c2d479d4b46c5566f"
+    "revision": "d51c39e4cbbb40441c28d8d6df2d1120f9b40e98"
   }
 }
