@@ -15,6 +15,9 @@ using UnityEditor;
 namespace UnityEngine.Experimental.XR.MagicLeap
 {
     [AddComponentMenu("AR/Magic Leap/ML Input")]
+#if UNITY_2018_3_OR_NEWER
+    [Lumin.RequiresPermission("ControllerPose")]
+#endif
     public sealed class MLInput : MonoBehaviour
     {
         void OnEnable()

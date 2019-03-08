@@ -13,6 +13,9 @@ using UnityEditor;
 namespace UnityEngine.XR.MagicLeap
 {
     [AddComponentMenu("AR/Magic Leap/ML Spatial Mapper")]
+#if UNITY_2018_3_OR_NEWER
+    [Lumin.RequiresPermission("WorldReconstruction")]
+#endif 
     public sealed class MLSpatialMapper : MonoBehaviour
     {
         /// <summary>
