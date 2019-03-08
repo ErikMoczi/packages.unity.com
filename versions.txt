@@ -62,3 +62,4 @@
 1.0.2-preview.2
 0.6.3-preview
 0.6.4-preview
+0.6.5-preview
