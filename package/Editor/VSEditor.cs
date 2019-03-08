@@ -304,7 +304,7 @@ namespace VisualStudioEditor
             }
             var filename = Path.GetFileName(lowerCasePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar)).Replace(" ", "");
 
-            if (filename == "visualstudio.app" || lowerCasePath.Contains("monodevelop") || lowerCasePath.Contains("xamarinstudio") || lowerCasePath.Contains("xamarin studio"))
+            if (filename == "visualstudio.app" || filename == "visualstudio(preview).app" || lowerCasePath.Contains("monodevelop") || lowerCasePath.Contains("xamarinstudio") || lowerCasePath.Contains("xamarin studio"))
             {
                 installation = new CodeEditor.Installation
                 {
