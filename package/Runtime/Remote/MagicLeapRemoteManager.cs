@@ -24,6 +24,8 @@ namespace UnityEditor.XR.MagicLeap.Remote
 
         private static Dictionary<string, string> s_PluginLookupCache = new Dictionary<string, string>();
 
+        private static bool s_MagicLeapRemoteInitialized = false;
+
         static class Native
         {
             [DllImport("UnityMagicLeap", EntryPoint="UnityMagicLeap_RemoteSetLoaderCallback")]
@@ -82,13 +84,16 @@ namespace UnityEditor.XR.MagicLeap.Remote
 #endif
         }
 
+        public static bool isInitialized
+        {
+            get { return s_MagicLeapRemoteInitialized; }
+        }
+
         static MagicLeapRemoteManager()
         {
             EditorApplication.playModeStateChanged -= PlaymodeStateChanged;
             EditorApplication.playModeStateChanged += PlaymodeStateChanged;
         }
-
-        public static event Action canInitializeSubsystems;
 
         static void PlaymodeStateChanged(PlayModeStateChange state)
         {
@@ -97,8 +102,7 @@ namespace UnityEditor.XR.MagicLeap.Remote
                 case PlayModeStateChange.EnteredPlayMode:
                 {
                     SetLoaderCallback();
-                    if (canInitializeSubsystems != null)
-                        canInitializeSubsystems();
+                    s_MagicLeapRemoteInitialized = true;
                     break;
                 }
                 case PlayModeStateChange.ExitingEditMode:
@@ -108,6 +112,7 @@ namespace UnityEditor.XR.MagicLeap.Remote
                 }
                 case PlayModeStateChange.ExitingPlayMode:
                 {
+                    s_MagicLeapRemoteInitialized = false;
                     Shutdown();
                     break;
                 }

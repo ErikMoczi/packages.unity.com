@@ -8,6 +8,7 @@ using UnityEngine.Experimental.XR;
 using UnityEngine.Lumin;
 
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.XR.MagicLeap.Remote;
 #endif
 
@@ -485,11 +486,20 @@ namespace UnityEngine.XR.MagicLeap
         void OnEnable()
         {
 #if UNITY_EDITOR && PLATFORM_LUMIN
-            MagicLeapRemoteManager.canInitializeSubsystems += Init;
+            StartCoroutine(WaitForMagicLeapRemote());
 #else
             Init();
 #endif // UNITY_EDITOR && PLATFORM_LUMIN
         }
+
+#if UNITY_EDITOR && PLATFORM_LUMIN
+        IEnumerator WaitForMagicLeapRemote()
+        {
+            while (!MagicLeapRemoteManager.isInitialized)
+                yield return null;
+            Init();
+        }
+#endif // UNITY_EDITOR && PLATFORM_LUMIN
 
         void OnDisable()
         {

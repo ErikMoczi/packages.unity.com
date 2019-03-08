@@ -2,9 +2,9 @@
 
 Use the *Magic Leap XR Plugin* package enables Magic Leap Spatial Mapping support via Unity's multi-platform XR API. This package implements the following XR Subsystems:
 
-* [Display](https://docs.unity3d.com/2018.3/Documentation/ScriptReference/Experimental.XR.XRDisplaySubsystem.html) (Not Yet Implemented)
-* [Input](https://docs.unity3d.com/2018.3/Documentation/ScriptReference/Experimental.XR.XRInputSubsystem.html) (Not Yet Implemented)
-* [Meshing](https://docs.unity3d.com/2018.3/Documentation/ScriptReference/Experimental.XR.XRMeshingSubsystem.html)
+* [Display](https://docs.unity3d.com/Documentation/ScriptReference/Experimental.XR.XRDisplaySubsystem.html) (Not Yet Implemented)
+* [Input](https://docs.unity3d.com/Documentation/ScriptReference/Experimental.XR.XRInputSubsystem.html) (Not Yet Implemented)
+* [Meshing](https://docs.unity3d.com/2019.1/Documentation/ScriptReference/Experimental.XR.XRMeshSubsystem.html)
 
 This version of *Magic Leap XR Plugin* supports the meshing functionality provided by the Magic Leap One:
 
@@ -70,7 +70,7 @@ If you wish to have the device start at a different location within the Unity sc
 
 This version of *Magic Leap XR Plugin* is compatible with the following versions of the Unity Editor:
 
-* 2018.3 Magic Leap Technical Preview 9 and later (recommended)
+* Unity 2019.1 Beta or later (recommended)
 
 ## Known limitations
 
@@ -88,3 +88,4 @@ This version of *Magic Leap XR Plugin* includes:
 |---|---|
 |June 1, 2018|Create initial documentation.|
 |August 17, 2018|Minor updates to docs to refer to 2018.3 version.|
+|March 5, 2019|Minor updates to docs to refer to 2019.1 version.|
