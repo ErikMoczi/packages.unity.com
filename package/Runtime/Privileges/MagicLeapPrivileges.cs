@@ -21,17 +21,17 @@ namespace UnityEngine.XR.MagicLeap
         static class Native
         {
 #if PLATFORM_LUMIN
-            const string Library = "UnityMagicLeap";
-            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "UnityMLPrivilegesStartup")]
+            const string Library = "ml_privileges";
+            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MLPrivilegesStartup")]
             public static extern ResultCode Startup();
 
-            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "UnityMLPrivilegesShutdown")]
+            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MLPrivilegesShutdown")]
             public static extern ResultCode Shutdown();
 
-            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "UnityMLPrivilegesCheckPrivilege")]
+            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MLPrivilegesCheckPrivilege")]
             public static extern ResultCode CheckPrivilege(uint privilegeId);
 
-            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "UnityMLPrivilegesRequestPrivilege")]
+            [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MLPrivilegesRequestPrivilege")]
             public static extern ResultCode RequestPrivilege(uint privilegeId);
 #else
             public static ResultCode Startup() { return ResultCode.Ok; }

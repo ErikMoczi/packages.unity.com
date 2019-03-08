@@ -8,7 +8,7 @@ using UnityEngine.Experimental.XR;
 using UnityEngine.Lumin;
 
 #if UNITY_EDITOR
-using UnityEditor;
+using UnityEditor.XR.MagicLeap.Remote;
 #endif
 
 namespace UnityEngine.XR.MagicLeap
@@ -230,7 +230,7 @@ namespace UnityEngine.XR.MagicLeap
                     m_BatchSize = value;
                     m_SettingsDirty = true;
                 }
-            }            
+            }
         }
 
         [SerializeField]
@@ -466,7 +466,7 @@ namespace UnityEngine.XR.MagicLeap
             m_MeshesBeingGenerated = new Dictionary<TrackableId, MeshInfo>();
         }
 
-        void OnEnable()
+        void Init()
         {
             CreateMeshSubsystemIfNeeded();
             if (s_MeshSubsystem == null)
@@ -480,6 +480,15 @@ namespace UnityEngine.XR.MagicLeap
             UpdateBatchSize();
             SetLod();
             s_MeshSubsystem.Start();
+        }
+
+        void OnEnable()
+        {
+#if UNITY_EDITOR && PLATFORM_LUMIN
+            MagicLeapRemoteManager.canInitializeSubsystems += Init;
+#else
+            Init();
+#endif // UNITY_EDITOR && PLATFORM_LUMIN
         }
 
         void OnDisable()

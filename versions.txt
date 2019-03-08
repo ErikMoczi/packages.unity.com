@@ -9,3 +9,4 @@
 2.0.0-preview.8
 2.0.0-preview.9
 2.0.0-preview.10
+2.0.0-preview.11

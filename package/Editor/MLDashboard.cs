@@ -116,7 +116,7 @@ namespace UnityEditor.XR.MagicLeap
             Process.Start(startInfo);
         }
 
-        [MenuItem("Magic Leap/Launch MLRemote")]
+        [MenuItem("Magic Leap/ML Remote/Launch MLRemote")]
         private static void LaunchRemote()
         {
             if (SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX)

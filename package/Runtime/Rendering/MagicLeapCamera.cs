@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.Collections;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.XR.MagicLeap.Remote;
 #endif
 using UnityEngine.Experimental;
 using UnityEngine.Experimental.XR;
@@ -37,7 +38,7 @@ namespace UnityEngine.XR.MagicLeap.Rendering
     [AddComponentMenu("AR/Magic Leap/Camera")]
     [RequireComponent(typeof(Camera))]
     [UsesLuminPlatformLevel(2)]
-    public partial class MagicLeapCamera : MonoBehaviour
+    public sealed class MagicLeapCamera : MonoBehaviour
     {
         static XRInputSubsystem s_InputSubsystem;
         static List<XRInputSubsystemDescriptor> s_Descriptors = new List<XRInputSubsystemDescriptor>();
@@ -46,14 +47,38 @@ namespace UnityEngine.XR.MagicLeap.Rendering
 #if ML_RENDERING_VALIDATION
         private Color m_PreviousClearColor;
 #endif
-        public Transform stereoConvergencePoint;
-
-        public FrameTimingHint frameTimingHint;
-        public StabilizationMode stabilizationMode;
-        public float stabilizationDistance;
-
         private List<Transform> _TransformList = new List<Transform>();
         private Unity.Jobs.JobHandle _Handle;
+
+        [SerializeField]
+        private Transform m_StereoConvergencePoint;
+        [SerializeField]
+        private FrameTimingHint m_FrameTimingHint;
+        [SerializeField]
+        private StabilizationMode m_StabilizationMode;
+        [SerializeField]
+        private float m_StabilizationDistance;
+
+        public Transform stereoConvergencePoint
+        {
+            get { return m_StereoConvergencePoint; }
+            set { m_StereoConvergencePoint = value; }
+        }
+        public FrameTimingHint frameTimingHint
+        {
+            get { return m_FrameTimingHint; }
+            set { m_FrameTimingHint = value; }
+        }
+        public StabilizationMode stabilizationMode
+        {
+            get { return m_StabilizationMode; }
+            set { m_StabilizationMode = value; }
+        }
+        public float stabilizationDistance
+        {
+            get { return m_StabilizationDistance; }
+            set { m_StabilizationDistance = value; }
+        }
 
 #if PLATFORM_LUMIN && !UNITY_EDITOR
         private static Lazy<bool> _enforceNearClip = new Lazy<bool>(() => RenderingSettings.GetSystemProperty("persist.ml.render.min_clip") == "true");
@@ -110,6 +135,15 @@ namespace UnityEngine.XR.MagicLeap.Rendering
         void OnEnable()
         {
             RenderingSettings.useLegacyFrameParameters = false;
+#if UNITY_EDITOR && PLATFORM_LUMIN
+            MagicLeapRemoteManager.canInitializeSubsystems += Init;
+#else
+            Init();
+#endif // UNITY_EDITOR && PLATFORM_LUMIN
+        }
+
+        void Init()
+        {
             CreateInputSubsystemIfNeeded();
             if (s_InputSubsystem == null)
             {
@@ -124,7 +158,7 @@ namespace UnityEngine.XR.MagicLeap.Rendering
         {
             m_Camera = GetComponent<Camera>();
             RenderingSettings.frameTimingHint = frameTimingHint;
-            RenderingSettings.singlePassEnabled = XRSettings.stereoRenderingMode != XRSettings.StereoRenderingMode.MultiPass;
+            RenderingSettings.singlePassEnabled = XRSettings.stereoRenderingMode == XRSettings.StereoRenderingMode.SinglePassInstanced;
         }
 
         void LateUpdate()
@@ -344,11 +378,11 @@ namespace UnityEngine.XR.MagicLeap.Rendering
 #if ML_RENDERING_VALIDATION
             previousClearColorProp = serializedObject.FindProperty("m_PreviousClearColor");
 #endif
-            stereoConvergencePointProp = serializedObject.FindProperty("stereoConvergencePoint");
+            stereoConvergencePointProp = serializedObject.FindProperty("m_StereoConvergencePoint");
 
-            frameTimingHintProp = serializedObject.FindProperty("frameTimingHint");
-            stabilizationModeProp = serializedObject.FindProperty("stabilizationMode");
-            stabilizationDistanceProp = serializedObject.FindProperty("stabilizationDistance");
+            frameTimingHintProp = serializedObject.FindProperty("m_FrameTimingHint");
+            stabilizationModeProp = serializedObject.FindProperty("m_StabilizationMode");
+            stabilizationDistanceProp = serializedObject.FindProperty("m_StabilizationDistance");
         }
 
         public override void OnInspectorGUI()
