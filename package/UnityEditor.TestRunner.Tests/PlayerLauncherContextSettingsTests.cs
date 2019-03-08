@@ -14,7 +14,9 @@ namespace FrameworkTests
         private EditorBuildSettingsScene m_SetupSceneValue2 = new EditorBuildSettingsScene("y", true);
 
         EditorBuildSettingsScene[] originalScenes;
+#pragma warning disable 618
         ResolutionDialogSetting originalDisplayResolutionDialog;
+#pragma warning restore 618
         bool originalRunInBackground;
         FullScreenMode originalFullScreenMode;
         string originalAotOptions;
@@ -27,7 +29,9 @@ namespace FrameworkTests
         public void Setup()
         {
             originalScenes = EditorBuildSettings.scenes;
+#pragma warning disable 618
             originalDisplayResolutionDialog = PlayerSettings.displayResolutionDialog;
+#pragma warning restore 618
             originalRunInBackground = PlayerSettings.runInBackground;
             originalFullScreenMode = PlayerSettings.fullScreenMode;
             originalAotOptions = PlayerSettings.aotOptions;
@@ -37,7 +41,9 @@ namespace FrameworkTests
             originalGiWorkflowMode = Lightmapping.giWorkflowMode;
 
             EditorBuildSettings.scenes = new[] { this.m_SetupSceneValue1, this.m_SetupSceneValue2 };
+#pragma warning disable 618
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.Enabled;
+#pragma warning restore 618
             PlayerSettings.runInBackground = true;
             PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
             PlayerSettings.aotOptions = "testAot";
@@ -51,7 +57,9 @@ namespace FrameworkTests
         public void TearDown()
         {
             EditorBuildSettings.scenes = originalScenes;
+#pragma warning disable 618
             PlayerSettings.displayResolutionDialog = originalDisplayResolutionDialog;
+#pragma warning restore 618
             PlayerSettings.runInBackground = originalRunInBackground;
             PlayerSettings.fullScreenMode = originalFullScreenMode;
             PlayerSettings.aotOptions = originalAotOptions;
@@ -93,7 +101,9 @@ namespace FrameworkTests
             Assert.AreEqual(2, EditorBuildSettings.scenes.Length, "Incorrect size of the editorBuildSettings.scenes");
             Assert.AreEqual(this.m_SetupSceneValue1.guid, EditorBuildSettings.scenes[0].guid, "Scene value not reset in dispose.");
             Assert.AreEqual(this.m_SetupSceneValue2.guid, EditorBuildSettings.scenes[1].guid, "Scene value not reset in dispose.");
+#pragma warning disable 618
             Assert.AreEqual(ResolutionDialogSetting.Enabled, PlayerSettings.displayResolutionDialog, k_AssertMsgPrefix + "displayResolutionDialog");
+#pragma warning restore 618
             Assert.AreEqual(true, PlayerSettings.runInBackground, k_AssertMsgPrefix + "runInBackground");
             Assert.AreEqual(FullScreenMode.FullScreenWindow, PlayerSettings.fullScreenMode, k_AssertMsgPrefix + "fullScreenMode");
             Assert.AreEqual("testAot", PlayerSettings.aotOptions, k_AssertMsgPrefix + "displayResolutionDialog");
