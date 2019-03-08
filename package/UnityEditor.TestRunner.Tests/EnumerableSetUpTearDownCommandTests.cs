@@ -161,7 +161,7 @@ namespace FrameworkTests
             {
                 if (s_Outputs == null)
                 {
-                    s_Outputs = new EditableList<string>();
+                    s_Outputs = new List<string>();
                 }
             }
 

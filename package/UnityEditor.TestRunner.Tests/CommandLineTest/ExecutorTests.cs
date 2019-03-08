@@ -31,7 +31,7 @@ public class ExecutorTests
         m_CmdExecutionSettings.TestResultsFile = "path";
         m_ApiSettingsBuilder = new ApiSettingsBuilder(m_ApiExecutionSettings, m_CmdExecutionSettings);
         m_errors = new List<string>();
-        m_Exceptions = new EditableList<Exception>();
+        m_Exceptions = new List<Exception>();
         m_ExitCall = null;
         m_ExecuterUnderTest = new Executer(m_ApiMock, m_ApiSettingsBuilder, (error, args) => m_errors.Add(string.Format(error, args)), (exception) => m_Exceptions.Add(exception), (exit) => m_ExitCall = exit, () => m_CompilationFailed);
     }
@@ -106,7 +106,7 @@ public class ExecutorTests
 
         m_ExecuterUnderTest.SetUpCallbacks(executionSettings);
 
-        Assert.AreEqual(4, m_ApiMock.registeredCallbacks.Count);
+        Assert.AreEqual(3, m_ApiMock.registeredCallbacks.Count);
         var xmlSavingCallback = m_ApiMock.registeredCallbacks.OfType<ResultsSavingCallbacks>().Single();
         Assert.AreEqual(expectedPath, xmlSavingCallback.m_ResultFilePath);
     }
