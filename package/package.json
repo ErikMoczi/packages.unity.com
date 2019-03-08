@@ -1,16 +1,15 @@
 {
 	"name": "com.unity.settings-manager",
-	"displayName":"Settings Manager",
-	"version": "0.1.0-preview.2",
+	"displayName": "Settings Manager",
+	"version": "0.1.0-preview.3",
 	"unity": "2018.1",
 	"description": "A framework for making any serializable field a setting, complete with a pre-built settings interface.",
-	"dependencies": {
-	},
+	"dependencies": {},
 	"samples": [
 		{
-			"displayName":"User Settings Example",
+			"displayName": "User Settings Example",
 			"description": "Example code showing use of the Settings Manager attributes.",
-            "path": "Samples~"
+			"path": "Samples~"
 		}
 	]
 }

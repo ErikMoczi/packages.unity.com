@@ -31,7 +31,7 @@ namespace UnityEditor.SettingsManagement.Examples
 		static MySetting<Vector2> s_Vector2Value = new MySetting<Vector2>("general.vector2Value", new Vector2(2f, 4f));
 
 		[UserSetting("General Settings", "Editor Flags")]
-		static MySetting<StaticEditorFlags> s_EditorFlags = new MySetting<StaticEditorFlags>("general.editorFlags", StaticEditorFlags.LightmapStatic);
+		static MySetting<StaticEditorFlags> s_EditorFlags = new MySetting<StaticEditorFlags>("general.editorFlags", StaticEditorFlags.BatchingStatic);
 #pragma warning restore 414
 
 		// [UserSetting] with no arguments simply registers the key with UserSettingsProvider so that it can be included
