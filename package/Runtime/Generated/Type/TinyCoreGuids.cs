@@ -72,6 +72,8 @@ namespace Unity.Tiny
             public const string Image2DAlphaMask = "4df7a6b68049e269b30ffe2a5a6aed74";
             public const string Image2DLoadFromFile = "28542cedaf766a0fefbfb558a6c3a717";
             public const string Image2DRenderToTexture = "b7ca7d4f902bd4ffad3750c88ad2b1a1";
+            public const string Image2DMemoryFormat = "750a8b97a27b5b2a47f482b0ec4a39e0";
+            public const string Image2DSaveStatus = "4f27c1d57bd001a6df211996e06defbb";
             public const string ImageStatus = "cb07231f1a16936525acbad6e53241f7";
             public const string Sprite2D = "bfaba92347219714d5784f79def27ae1";
             public const string Sprite2DBorder = "f0155b591121baf9dff767e8e86c086f";
@@ -90,9 +92,9 @@ namespace Unity.Tiny
             public const string AssetReferenceAudioClip = "5502517b113468fcb7ff6946633c3a25";
             public const string AssetReferenceSprite = "1e0590432ee8352acd7622770a2ca37d";
             public const string AssetReferenceSpriteAtlas = "4236cd8d8bb4346f3cfa21b247cda664";
+            public const string AssetReferenceTMP_FontAsset = "02dce641a01d7d6e266747d52d336bc5";
             public const string AssetReferenceTexture2D = "7f929fa05f11dd8dbfcce285d5094f37";
             public const string AssetReferenceTileBase = "0a4375899de1287484abc26b4202bd6d";
-            public const string AssetReferenceTMP_FontAsset = "02dce641a01d7d6e266747d52d336bc5";
             public const string CameraCullingMask = "7e2d7c3693d8764fe86725ff7c93f7a8";
             public const string EntityLayer = "09e72db86387b48e184be0f9d847d0e8";
         }

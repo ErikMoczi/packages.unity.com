@@ -1,0 +1,70 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "4f27c1d57bd001a6df211996e06defbb",
+    "Name": "Image2DSaveStatus",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "Visibility": 0,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "ab7f96764d0b7e956de9500984012941",
+        "Name": "Invalid",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "6c77474e7299c0cf94e8d8fcb11a1f01",
+        "Name": "Written",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "afff2076d8a90783914499749bc1310c",
+        "Name": "Writing",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "b40ddd52658713fca3fdfc6f2bdaecef",
+        "Name": "WriteErrorBadInput",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "861f1326dedd13105cafd5558e95b249",
+        "Name": "WriteErrorUnsuportedFormat",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "608cc0ecb6d01c93972dddb5aa568460",
+        "Name": "WriteError",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "4f27c1d57bd001a6df211996e06defbb", "Name": "Image2DSaveStatus" },
+        "Properties": {
+            "Invalid": 0,
+            "Written": 1,
+            "Writing": 2,
+            "WriteErrorBadInput": 3,
+            "WriteErrorUnsuportedFormat": 4,
+            "WriteError": 5
+        }
+    }
+}]

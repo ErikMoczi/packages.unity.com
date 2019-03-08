@@ -24,6 +24,11 @@ namespace Unity.Tiny.Bridge
         private static bool s_Dirty = false;
 
         /// <summary>
+        /// Indicates that Editor Application is currently Quitting.
+        /// </summary>
+        public static bool IsQuitting { get; private set; }
+        
+        /// <summary>
         /// Registers a global update method. These cannot be unregistered.
         /// </summary>
         /// <param name="action">The action to perform.</param>
@@ -64,6 +69,7 @@ namespace Unity.Tiny.Bridge
         private static void Init()
         {
             UnityEditor.EditorApplication.update += Update;
+            UnityEditor.EditorApplication.quitting += Quitting;
         }
 
         private static void Update()
@@ -71,6 +77,12 @@ namespace Unity.Tiny.Bridge
             ProcessUpdates(s_GlobalUpdates);
             ProcessUpdates(s_ContextualUpdates);
             s_Dirty = false;
+        }
+        
+        private static void Quitting()
+        {
+            IsQuitting = true;
+            UnityEditor.EditorApplication.quitting -= Quitting;
         }
 
         private static void CreateWrapper(List<ActionWrapper> list, Action action, int order)

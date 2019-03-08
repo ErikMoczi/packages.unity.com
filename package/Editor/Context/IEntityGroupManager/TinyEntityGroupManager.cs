@@ -41,7 +41,7 @@ namespace Unity.Tiny
         {
             get
             {
-                if (!m_Scene.isLoaded || !m_Scene.IsValid())
+                if ((!m_Scene.isLoaded || !m_Scene.IsValid()) && !Bridge.EditorApplication.IsQuitting)
                 {
                     m_Scene = TinyCache.GetOrGenerateScratchPad();
                 }

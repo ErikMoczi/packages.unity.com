@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.14.2] - 2019-03-05
+* Fixed the freezing of the editor when quitting Unity with a Tiny project opened
+* Must use Unity 2018.3.0f2 and above
+
 ## [0.14.1] - 2019-01-25
 * Fixed an issue with an internal class being referenced
 

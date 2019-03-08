@@ -1,0 +1,43 @@
+﻿[{
+    "$TypeId": 3,
+    "Id": "750a8b97a27b5b2a47f482b0ec4a39e0",
+    "Name": "Image2DMemoryFormat",
+    "ExportFlags": 1,
+    "Unlisted": false,
+    "Visibility": 0,
+    "TypeCode": "Enum",
+    "BaseType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+    "Fields": [{
+        "Id": "de0d08d6bc5ccba4179982b50306068f",
+        "Name": "RGBA8Premultiplied",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "a29cadbfc065f0179ddcaeb804c7a72a",
+        "Name": "RGBA8",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }, {
+        "Id": "54e975a5ff05f38fd5b5bac4ceffc520",
+        "Name": "A8",
+        "FieldType": { "Id": "9633c95a0a68473682f09ed6a01194b4", "Name": "Int32" },
+        "Array": false,
+        "Visibility": 0,
+        "EditorOnly": false,
+        "Versioned": true
+    }],
+    "DefaultValue": {
+        "Type": { "Id": "750a8b97a27b5b2a47f482b0ec4a39e0", "Name": "Image2DMemoryFormat" },
+        "Properties": {
+            "RGBA8Premultiplied": 0,
+            "RGBA8": 1,
+            "A8": 2
+        }
+    }
+}]

@@ -146,6 +146,11 @@ namespace Unity.Tiny
         /// Context for the build.
         /// </summary>
         internal TinyContext Context { get; set; }
+        
+        /// <summary>
+        ///  Editor Context for the build.
+        /// </summary>
+        internal EditorContextType EditorContext  { get; set; }
 
         /// <summary>
         /// Project to build, part of the given <see cref="Context"/>.
@@ -388,6 +393,7 @@ namespace Unity.Tiny
             return new TinyBuildOptions()
             {
                 Context = context,
+                EditorContext = EditorContextType.Project,
                 Project = project
             };
         }
@@ -398,11 +404,6 @@ namespace Unity.Tiny
         /// <returns>The build results.</returns>
         public static TinyBuildResult BuildAndLaunch()
         {
-            if (EditorApplication.isCompiling)
-            {
-                throw new Exception($"{TinyConstants.ApplicationName}: Exporting a project is not allowed while Unity is compiling.");
-            }
-
             using (var progress = new TinyEditorUtility.ProgressBarScope())
             {
                 var workspace = TinyEditorApplication.EditorContext.Workspace;
@@ -438,6 +439,7 @@ namespace Unity.Tiny
                 {
                     Context = context.Context,
                     Project = context.Project,
+                    EditorContext = TinyEditorApplication.ContextType,
                     Configuration = context.Workspace.BuildConfiguration,
                     Platform = context.Workspace.Platform,
                     AutoConnectProfiler = context.Workspace.AutoConnectProfiler
@@ -453,13 +455,24 @@ namespace Unity.Tiny
         /// <exception cref="ArgumentException">If the input <see cref="options"/> are invalid.</exception>
         public static TinyBuildResult Build(TinyBuildOptions options)
         {
-            if (options?.Project == null)
-            {
-                throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid build options provided", nameof(options));
-            }
-
             try
             {
+                if (options.EditorContext != EditorContextType.Project)
+                {
+                    EditorGUIUtilityBridge.DisplayDialog("Invalid Context", "Export only available in project context.", "Okay");
+                    throw new InvalidOperationException($"{TinyConstants.ApplicationName}: Export only available in project context.");
+                }
+                
+                if (EditorApplication.isCompiling)
+                {
+                    throw new InvalidOperationException($"{TinyConstants.ApplicationName}: Exporting a project is not allowed while Unity is compiling.");
+                }
+
+                if (options == null || !ValidateProject(options.Project))
+                {
+                    throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid build options provided", nameof(options));
+                }
+
                 // Platform builder
                 ITinyBuilder builder = null;
                 switch (options.Platform)
@@ -528,12 +541,29 @@ namespace Unity.Tiny
             catch (Exception ex)
             {
                 TinyEditorAnalytics.SendException("BuildPipeline.Build", ex);
+                EditorApplication.isPlaying = false;
                 throw;
             }
             finally
             {
                 TinyEditorUtility.RepaintAllWindows();
             }
+        }
+
+        private static bool ValidateProject(TinyProject project)
+        {
+            if (project == null)
+            {
+                return false;
+            }
+
+            var configuration = project.Configuration.Dereference(project.Registry);
+            if (configuration == null)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private static TinyBuildResult RunBuildSteps(TinyEditorUtility.ProgressBarScope progress, TinyBuildContext context)
