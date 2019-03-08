@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Unity.CodeEditor;
+using UnityEngine;
 
 namespace VisualStudioEditor
 {
@@ -38,8 +39,7 @@ namespace VisualStudioEditor
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error detecting Visual Studio installations: {0}{1}{2}", ex.Message, Environment.NewLine, ex.StackTrace);
-                //InstalledVisualStudios = new Dictionary<VisualStudioVersion, VisualStudioPath[]>();
+                Debug.Log($"Error detecting Visual Studio installations: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
                 return new CodeEditor.Installation[0];
             }
         }

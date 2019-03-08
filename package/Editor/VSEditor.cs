@@ -11,7 +11,7 @@ using Unity.CodeEditor;
 
 namespace VisualStudioEditor
 {
-    internal enum VisualStudioVersion
+    public enum VisualStudioVersion
     {
         Invalid = 0,
         VisualStudio2008 = 9,
@@ -67,7 +67,7 @@ namespace VisualStudioEditor
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error detecting Visual Studio installations: {0}{1}{2}", ex.Message, Environment.NewLine, ex.StackTrace);
+                UnityEngine.Debug.Log($@"Error detecting Visual Studio installations: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
                 InstalledVisualStudios = new Dictionary<VisualStudioVersion, string[]>();
             }
             var editor = new VSEditor(new Discovery(), new ProjectGeneration());
@@ -176,7 +176,7 @@ namespace VisualStudioEditor
 
         public CodeEditor.Installation[] Installations => m_Discoverability.PathCallback();
 
-        static void ParseRawDevEnvPaths(string[] rawDevEnvPaths, Dictionary<VisualStudioVersion, string[]> versions)
+        public static void ParseRawDevEnvPaths(string[] rawDevEnvPaths, Dictionary<VisualStudioVersion, string[]> versions)
         {
             if (rawDevEnvPaths == null)
             {
@@ -186,8 +186,15 @@ namespace VisualStudioEditor
             var v2017 = rawDevEnvPaths.Where(path => path.Contains("2017")).ToArray();
             var v2019 = rawDevEnvPaths.Where(path => path.Contains("2019")).ToArray();
 
-            versions[VisualStudioVersion.VisualStudio2017] = v2017;
-            versions[VisualStudioVersion.VisualStudio2019] = v2019;
+            if (v2017.Length > 0)
+            {
+                versions[VisualStudioVersion.VisualStudio2017] = v2017;
+            }
+
+            if (v2019.Length > 0)
+            {
+                versions[VisualStudioVersion.VisualStudio2019] = v2019;
+            }
         }
 
         /// <summary>

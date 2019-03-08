@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace VisualStudioEditor
 {
@@ -26,29 +27,31 @@ namespace VisualStudioEditor
 
         static void InitializeVSForMac(string externalEditor)
         {
-            Version vsfmVersion;
-            if (!IsVSForMac(externalEditor, out vsfmVersion))
+            if (!IsVSForMac(externalEditor, out var vsfmVersion))
                 return;
-
-            //s_ShouldUnityVSBeActive = true;
 
             var bridgeFile = GetVSForMacBridgeAssembly(externalEditor, vsfmVersion);
             if (string.IsNullOrEmpty(bridgeFile) || !File.Exists(bridgeFile))
             {
-                Console.WriteLine("Unable to find Tools for Unity bridge dll for Visual Studio for Mac " + externalEditor);
+                Debug.Log("Unable to find Tools for Unity bridge dll for Visual Studio for Mac " + externalEditor);
                 return;
             }
 
-            //s_UnityVSBridgeToLoad = bridgeFile;
             AppDomain.CurrentDomain.Load(AssemblyName.GetAssemblyName(bridgeFile));
-            //InternalEditorUtility.RegisterPrecompiledAssembly(Path.GetFileNameWithoutExtension(bridgeFile), bridgeFile);
+        }
+
+        static bool IsVisualStudioForMac(string path)
+        {
+            var lowerCasePath = path.ToLower();
+            var filename = Path.GetFileName(lowerCasePath).Replace(" ", "");
+            return filename.StartsWith("visualstudio") && !filename.Contains("code") && filename.EndsWith(".app");
         }
 
         static bool IsVSForMac(string externalEditor, out Version vsfmVersion)
         {
             vsfmVersion = null;
 
-            if (!externalEditor.ToLower().EndsWith("visual studio.app"))
+            if (!IsVisualStudioForMac(externalEditor))
                 return false;
 
             // We need to extract the version used by VS for Mac
@@ -59,7 +62,8 @@ namespace VisualStudioEditor
             }
             catch (Exception e)
             {
-                Console.WriteLine("Failed to read Visual Studio for Mac information: {0}", e);
+                Debug.Log("Failed to read Visual Studio for Mac information");
+                Debug.LogException(e);
                 return false;
             }
         }
@@ -100,12 +104,12 @@ namespace VisualStudioEditor
             var bridgeFile = GetVstuBridgeAssembly(vsVersion);
             if (bridgeFile == null)
             {
-                Console.WriteLine("Unable to find bridge dll in registry for Microsoft Visual Studio Tools for Unity for " + externalEditor);
+                Debug.Log("Unable to find bridge dll in registry for Microsoft Visual Studio Tools for Unity for " + externalEditor);
                 return;
             }
             if (!File.Exists(bridgeFile))
             {
-                Console.WriteLine("Unable to find bridge dll on disk for Microsoft Visual Studio Tools for Unity for " + bridgeFile);
+                Debug.Log("Unable to find bridge dll on disk for Microsoft Visual Studio Tools for Unity for " + bridgeFile);
                 return;
             }
 
