@@ -10,7 +10,7 @@ public class FloatEqualityComparerTest
         new object[] {10e-8f, 0f, new FloatEqualityComparer(10e-6f)},
         new object[] {1.0f, 1.0f, new FloatEqualityComparer(10e-6f)},
         new object[] {0f, 0f, new FloatEqualityComparer(10e-6f)},
-        new object[] {-0.00009f, 0.00009f, new FloatEqualityComparer(10e-6f)},
+        new object[] {-0.00009f, 0.00009f, new FloatEqualityComparer(0.0002f)},
         new object[] {float.PositiveInfinity, float.PositiveInfinity, new FloatEqualityComparer(10e-6f)},
         new object[] {float.NegativeInfinity, float.NegativeInfinity, new FloatEqualityComparer(10e-6f)}
     };
