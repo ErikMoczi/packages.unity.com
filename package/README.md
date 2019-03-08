@@ -10,7 +10,7 @@ The purpose of this package is to provide Google VR SDK Support. This package pr
     README
     Licenses
     CHANGELOG
-    Documentation
+    Documentation~
     Plugins/Android
     package.json
 ```
