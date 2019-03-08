@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.IO;
-using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace UnityEditor.XR.ARKit
@@ -27,27 +24,15 @@ namespace UnityEditor.XR.ARKit
         }
 
         [SerializeField, Tooltip("Toggles whether ARKit is required for this app. Will make app only downloadable by devices with ARKit support if set to 'Required'.")]
-        Requirement m_ARKitRequirement;
+        Requirement m_Requirement;
 
         /// <summary>
         /// Determines whether ARKit is required for this app: will make app only downloadable by devices with ARKit support if set to <see cref="Requirement.Required"/>.
         /// </summary>
-        public Requirement ARKitRequirement
+        public Requirement requirement
         {
-            get { return m_ARKitRequirement; }
-            set { m_ARKitRequirement = value; }
-        }
-
-        [SerializeField, Tooltip("Toggles whether ARKit FaceTracking is enabled for this app. Will make app use TrueDepth camera APIs when enabled (which requires privacy policy during submission).")]
-        bool m_ARKitFaceTrackingEnabled;
-
-        /// <summary>
-        /// Determines whether ARKit FaceTracking is enabled for this app. Will make app use TrueDepth camera APIs when enabled (which requires privacy policy during submission)./>.
-        /// </summary>
-        public bool ARKitFaceTrackingEnabled
-        {
-            get { return m_ARKitFaceTrackingEnabled; }
-            set { m_ARKitFaceTrackingEnabled = value; }
+            get { return m_Requirement; }
+            set { m_Requirement = value; }
         }
 
         /// <summary>
@@ -101,56 +86,11 @@ namespace UnityEditor.XR.ARKit
             return true;
         }
 
+        internal static SerializedObject GetSerializedSettings()
+        {
+            return new SerializedObject(GetOrCreateSettings());
+        }
+
         static readonly string k_ConfigObjectName = "com.unity.xr.arkit.PlayerSettings";
-    }
-
-    internal class SettingsSelectionWindow : EditorWindow
-    {
-        [MenuItem("Edit/Project Settings/ARKit XR Plugin")]
-        static void ShowSelectionWindow()
-        {
-            ARKitSettings.TrySelect();
-            Rect rect = new Rect(500, 300, 400, 150);
-            var window = GetWindowWithRect<SettingsSelectionWindow>(rect);
-            window.titleContent = new GUIContent("ARKit XR Plugin");
-            window.Show();
-        }
-
-        void OnGUI()
-        {
-            GUILayout.Space(5);
-            GUIStyle titleStyle = new GUIStyle(GUI.skin.label);
-            titleStyle.wordWrap = true;
-            EditorGUILayout.LabelField("Select an existing ARKitSettings object or create a new one.", titleStyle);
-
-            EditorGUI.BeginChangeCheck();
-            ARKitSettings.currentSettings =
-                EditorGUILayout.ObjectField("ARKitSettings", ARKitSettings.currentSettings, typeof(ARKitSettings), false) as ARKitSettings;
-            if (EditorGUI.EndChangeCheck())
-                ARKitSettings.TrySelect();
-
-            GUILayout.Space(5);
-
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Create New"))
-                Create();
-
-            if (GUILayout.Button("Close"))
-                Close();
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        void Create()
-        {
-            var path = EditorUtility.SaveFilePanelInProject("Save ARKit XR Plugin Settings", "ARKitSettings", "asset", "Please enter a filename to save the ARKit XR Plugin settings.");
-            if (string.IsNullOrEmpty(path))
-                return;
-
-            var settings = CreateInstance<ARKitSettings>();
-            AssetDatabase.CreateAsset(settings, path);
-            ARKitSettings.currentSettings = settings;
-        }
     }
 }

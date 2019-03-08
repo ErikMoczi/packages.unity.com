@@ -5,3 +5,5 @@ Provides native Apple ARKit integration for use with Unity's multi-platform XR A
 -Depth Data
 -Reference Points
 -Hit Testing
+-Face Tracking
+-Environment Probes

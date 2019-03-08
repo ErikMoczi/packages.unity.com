@@ -1,8 +1,8 @@
 using System;
-using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARKit
 {
+#if CAMERA_EXTENSIONS
     internal class ARKitCameraConfigApi : ICameraConfigApi
     {
         public int GetConfigurationCount()
@@ -37,4 +37,5 @@ namespace UnityEngine.XR.ARKit
             }
         }
     }
+#endif
 }

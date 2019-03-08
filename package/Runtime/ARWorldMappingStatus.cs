@@ -1,4 +1,4 @@
-namespace UnityEngine.XR.ARExtensions
+namespace UnityEngine.XR.ARKit
 {
     /// <summary>
     /// Used to determine the suitability of the current session for

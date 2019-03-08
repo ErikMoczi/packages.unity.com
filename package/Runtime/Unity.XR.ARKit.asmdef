@@ -1,7 +1,18 @@
 {
     "name": "Unity.XR.ARKit",
-    "references": ["Unity.XR.ARExtensions"],
-    "includePlatforms": ["iOS", "Editor"],
+    "references": [
+        "Unity.XR.ARSubsystems"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor",
+        "iOS"
+    ],
     "excludePlatforms": [],
-    "allowUnsafeCode": true
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }

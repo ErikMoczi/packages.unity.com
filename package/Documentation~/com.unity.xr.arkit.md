@@ -10,6 +10,7 @@ Use the *ARKit XR Plugin* package enable ARKit support via Unity's multi-platfor
 * [ReferencePoints](https://docs.unity3d.com/2018.1/Documentation/ScriptReference/Experimental.XR.XRReferencePointSubsystem.html)
 * [Session](https://docs.unity3d.com/2018.1/Documentation/ScriptReference/Experimental.XR.XRSessionSubsystem.html)
 * [Face Tracking](https://docs.unity3d.com/Packages/com.unity.xr.facesubsystem@1.0/manual/index.html)
+* [Environment Probes](https://docs.unity3d.com/Packages/com.unity.xr.environmentprobesubsystem@1.0/manual/index.html)
 
 This version of *ARKit XR Plugin* supports the following features:
 
@@ -23,10 +24,11 @@ This version of *ARKit XR Plugin* supports the following features:
 * Hit Testing
 * Session Management
 * Face Tracking
+* Environment Probes
 
 # Installing ARKit XR Plugin
 
-To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html). 
+To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).
 
 In addition, you will likely want to also install the *ARFoundation* package which makes use of *ARKit XR Plugin* package and provides many useful scripts and prefabs.
 
@@ -51,10 +53,10 @@ For Face Tracking, you should check the box named ARKit Face Tracking Enabled:
 
 ![alt text](images/arkitsettings_inspector.png "ARKitSettings Inspector Face Tracking")
 
-### ARKit Required 
+### ARKit Required
 ARKit may be either "required" or "optional". If ARKit is set to optional, the app may be installed on a device that does not support ARKit. This is useful if you want to provide an experience which uses AR where available, and presents a different experience where AR is not available. By default, ARKit is required.
 
-![alt text](images/arkitsettings_inspector2.png "ARKitSettings Inspector ARKit Required") 
+![alt text](images/arkitsettings_inspector2.png "ARKitSettings Inspector ARKit Required")
 
 
 # Technical details
@@ -62,7 +64,7 @@ ARKit may be either "required" or "optional". If ARKit is set to optional, the a
 
 This version of *ARKit XR Plugin* is compatible with the following versions of the Unity Editor:
 
-* 2018.1 and later (recommended)
+* 2018.3 and later (recommended)
 
 ## Known limitations
 
@@ -78,13 +80,14 @@ This version of *ARKit XR Plugin* is compatible with the following versions of t
 This version of *ARKit XR Plugin* includes:
 
 * A static library which provides implementation of the XR Subsystems listed above
-* An Objective-C source file 
+* An Objective-C source file
 * A shader used for rendering the camera image
-* A plugin metadata file 
+* A plugin metadata file
 
 ## Document revision history
 |Date|Reason|
 |---|---|
+|December 18, 2018|Add environment probe support. Updated the requirements to be Unity 2018.3.|
 |November 14, 2018|Add Face Tracking support.|
 |October 9, 2018|Remove lack of ARWorldMap support as a known limitation; it is now supported.|
 |April 19, 2018|Documentation update. Added support for vertical planes and boundary points for all planes.|

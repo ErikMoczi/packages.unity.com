@@ -29,3 +29,12 @@ The purpose of this package is to provide ARKit XR Support.
       ├── UnitySubsystemsManifest.json
       └── Unity.XR.ARKit.asmdef
 ```
+
+## Building
+
+1. Initialize submodules:
+    1. `git submodule init`
+    1. `git submodule update`
+1. Build
+    1. Run `build.sh` from `Source~/` OR
+    1. Open the Xcode project at `Source~/UnityARKit.xcodeproj` and build `UnityARKit` and `UnityARKitFaceTracking`.
