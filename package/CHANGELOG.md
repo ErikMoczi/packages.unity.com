@@ -4,7 +4,8 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.3.2-preview] - 2019-02-28
+## [1.3.3-preview] - 2019-02-28
+- Minimum Unity version is now 2018.3 to address a build-time bug with progressive lightmapper.
 - Added missing version into CacheEntry calculation
 - Fixed build error causing AssetBundle.LoadAssetWithSubAssets to return partial results
 - Updated function implementations to be virtual for overriding
