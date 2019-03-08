@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.6.3-preview] - 2019-02-28
+## [0.6.4-preview] - 2019-03-05
  - *BREAKING CODE CHANGES* 
    - to ease code navigation, we have added several layers of namespace to the code.  
    - All Instantiate API calls (Adddressables and AssetReference) have been changed to only work with GameObjects.
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
    - Previous model built one catalog per group, wherever that group built it's data.
    - New model builds one catalog locally, and optionally one "remote".  Remote location is set on the top level AddressableAssetSettings object.
    - Loading will now always check if remote has changes (if remote exists), and use local otherwise (or cached version of remote).
- - LoadScene API now takes LoadSceneParameters in 2018.2+
+ - LoadScene API now takes the LoadSceneParameters that were added to the engine in 2018.2
  - Exposed AddressablesBuildDataBuilderContext.BuildScriptContextConstants for use in build scripts.
  - Refactored AddressablesBuildDataBuilderContext.GetValue to take default parameter.
  - Fixed Scene asset path to be consistent between different play modes in the catalog data.
