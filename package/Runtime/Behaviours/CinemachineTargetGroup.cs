@@ -7,7 +7,7 @@ namespace Cinemachine
     /// <summary>Defines a group of target objects, each with a radius and a weight.
     /// The weight is used when calculating the average position of the target group.
     /// Higher-weighted members of the group will count more.
-    /// The bounding box is calculated by taking the member positions, weight, 
+    /// The bounding box is calculated by taking the member positions, weight,
     /// and radii into account.
     /// </summary>
     [DocumentationSorting(DocumentationSortingAttribute.Level.UserRef)]
@@ -24,7 +24,7 @@ namespace Cinemachine
         [DocumentationSorting(DocumentationSortingAttribute.Level.UserRef)]
         [Serializable] public struct Target
         {
-            /// <summary>The target objects.  This object's position and orientation will contribute to the 
+            /// <summary>The target objects.  This object's position and orientation will contribute to the
             /// group's average position and orientation, in accordance with its weight</summary>
             [Tooltip("The target objects.  This object's position and orientation will contribute to the group's average position and orientation, in accordance with its weight")]
             public Transform target;
@@ -101,9 +101,9 @@ namespace Cinemachine
         }
 
         /// <summary>Return true if there are no members with weight > 0</summary>
-        public bool IsEmpty 
+        public bool IsEmpty
         {
-            get 
+            get
             {
                 for (int i = 0; i < m_Targets.Length; ++i)
                     if (m_Targets[i].target != null && m_Targets[i].weight > UnityVectorExtensions.Epsilon)
@@ -141,7 +141,7 @@ namespace Cinemachine
                 if (index > 0)
                     Array.Copy(oldTargets, m_Targets, index);
                 if (index < m_Targets.Length - 1)
-                    Array.Copy(oldTargets, index + 1, m_Targets, index, m_Targets.Length - index - 1);
+                    Array.Copy(oldTargets, index + 1, m_Targets, index, oldTargets.Length - index - 1);
             }
         }
 
@@ -167,7 +167,7 @@ namespace Cinemachine
         {
             if (index < 0 || index >= m_Targets.Length)
                 return Sphere;
-            return WeightedMemberBounds(m_Targets[index], mAveragePos, mAverageWeight);
+            return WeightedMemberBounds(m_Targets[index], mAveragePos, mMaxWeight);
         }
 
         /// <summary>The axis-aligned bounding box of the group, in a specific reference frame</summary>
@@ -186,7 +186,7 @@ namespace Cinemachine
             return b;
         }
 
-        private static BoundingSphere WeightedMemberBounds(Target t, Vector3 avgPos, float avgWeight)
+        private static BoundingSphere WeightedMemberBounds(Target t, Vector3 avgPos, float maxWeight)
         {
             float w = 0;
             Vector3 pos = avgPos;
@@ -194,15 +194,15 @@ namespace Cinemachine
             {
                 pos = t.target.position;
                 w = Mathf.Max(0, t.weight);
-                if (avgWeight > UnityVectorExtensions.Epsilon && w < avgWeight)
-                    w /= avgWeight;
+                if (maxWeight > UnityVectorExtensions.Epsilon && w < maxWeight)
+                    w /= maxWeight;
                 else
                     w = 1;
             }
             return new BoundingSphere(Vector3.Lerp(avgPos, pos, w), t.radius * w);
         }
-        
-        private float mAverageWeight;
+
+        private float mMaxWeight;
         private Vector3 mAveragePos;
 
         void DoUpdate()
@@ -210,8 +210,8 @@ namespace Cinemachine
             if (IsEmpty)
                 return;
 
-            mAveragePos = CalculateAveragePosition(out mAverageWeight);
-            BoundingBox = CalculateBoundingBox(mAveragePos, mAverageWeight);
+            mAveragePos = CalculateAveragePosition(out mMaxWeight);
+            BoundingBox = CalculateBoundingBox(mAveragePos, mMaxWeight);
 
             switch (m_PositionMode)
             {
@@ -233,30 +233,24 @@ namespace Cinemachine
             }
         }
 
-        Vector3 CalculateAveragePosition(out float averageWeight)
+        Vector3 CalculateAveragePosition(out float maxWeight)
         {
             Vector3 pos = Vector3.zero;
             float weight = 0;
-            int numTargets = 0;
+            maxWeight = 0;
             for (int i = 0; i < m_Targets.Length; ++i)
             {
-                if (m_Targets[i].target != null && m_Targets[i].weight > UnityVectorExtensions.Epsilon)
+                if (m_Targets[i].target != null)
                 {
-                    ++numTargets;
                     weight += m_Targets[i].weight;
                     pos += m_Targets[i].target.position * m_Targets[i].weight;
+                    maxWeight = Mathf.Max(maxWeight, m_Targets[i].weight);
                 }
             }
             if (weight > UnityVectorExtensions.Epsilon)
-            {
                 pos /= weight;
-                averageWeight = weight / numTargets;
-            }
             else
-            {
-                averageWeight = 0;
                 pos = transform.position;
-            }
             return pos;
         }
 
@@ -276,16 +270,16 @@ namespace Cinemachine
             return r.Normalized();
         }
 
-        Bounds CalculateBoundingBox(Vector3 avgPos, float averageWeight)
+        Bounds CalculateBoundingBox(Vector3 avgPos, float maxWeight)
         {
             Bounds b = new Bounds(avgPos, Vector3.zero);
-            if (averageWeight > UnityVectorExtensions.Epsilon)
+            if (maxWeight > UnityVectorExtensions.Epsilon)
             {
                 for (int i = 0; i < m_Targets.Length; ++i)
                 {
                     if (m_Targets[i].target != null)
                     {
-                        BoundingSphere s = WeightedMemberBounds(m_Targets[i], mAveragePos, mAverageWeight);
+                        BoundingSphere s = WeightedMemberBounds(m_Targets[i], mAveragePos, maxWeight);
                         b.Encapsulate(new Bounds(s.position, s.radius * 2 * Vector3.one));
                     }
                 }
@@ -324,7 +318,7 @@ namespace Cinemachine
         /// Get the local-space angular bounds of the group, from a spoecific point of view.
         /// Also returns the z depth range of the members.
         /// </summary>
-        /// <param name="observer">Point of view from which to calculate, and in whose 
+        /// <param name="observer">Point of view from which to calculate, and in whose
         /// space the return values are</param>
         /// <param name="minAngles">The lower bound of the screen angles of the members (degrees)</param>
         /// <param name="maxAngles">The upper bound of the screen angles of the members (degrees)</param>

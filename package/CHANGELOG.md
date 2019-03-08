@@ -4,9 +4,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.3.4-preview.1] - 2019-01-08
-- FreeLook: inherit position bugfix
+## [2.3.4-preview.2] - 2019-01-00
+- Added support for PostProcessing V3 - now called CinemachineVolumeSttings
 - Orthographic cameras allow a Near Clip of 0
+- Timeline won't auto-create CM brains when something dragged onto it
+- Bugfix: FreeLook inherit position
+- Bugfix: collider was pushing camera too far if there were multiple overlapping obstacles
+- Bugfix: use IsAssignableFrom instead of IsSubclass in several places
+- Bugfix: when interrupting a blend in progress, Cut was not respected
+- Bugfix: collider minimum occlusion time and smoothing time interaction
+- Bugfix: TargetGroup.RemoveMember error (fogbugz 1119028)
+- Bugfix: TargetGroup member lerping jerk when member weight near 0
 
 ## [2.3.3] - 2019-01-08
 ### Temporary patch to get around a Unity bug in conditional dependencies
