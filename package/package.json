@@ -1,11 +1,14 @@
 {
-  "name": "com.unity.jobs",
-  "version": "0.0.7-preview.7",
-  "unity": "2019.1",
-  "description": "Additional C# jobs types. IJobParallelForBatch and IJobParallelForFilter",
-  "keywords": [
-    "ads",
-    "unity"
-  ],
-  "category": "AssetStore/Unity"
+    "category": "AssetStore/Unity", 
+    "name": "com.unity.jobs", 
+    "unity": "2019.1", 
+    "version": "0.0.7-preview.8", 
+    "dependencies": {
+        "com.unity.collections": "0.0.9-preview.14"
+    }, 
+    "keywords": [
+        "ads", 
+        "unity"
+    ], 
+    "description": "Additional C# jobs types. IJobParallelForBatch and IJobParallelForFilter"
 }
