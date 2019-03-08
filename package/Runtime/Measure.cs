@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using Unity.PerformanceTesting.Runtime;
 using Unity.PerformanceTesting.Measurements;
