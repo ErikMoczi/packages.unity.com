@@ -40,22 +40,22 @@ namespace UnityEditor.XR.MagicLeap
 
     public class ImportFailureException : Exception
     {
-        const string kHelpMessage = @"Cannot import {0} as it appears to already have been previously imported. Please delete the existing file, restart Unity, and try importing again";
+        const string kHelpMessage = @"Cannot import {0} as it appears to already have been previously imported. Please delete the existing {1}, restart Unity, and try importing again";
+
         public string HelpMessage
         {
             get
             {
-                return string.Format(kHelpMessage, Path);
+                return string.Format(kHelpMessage, Path, System.IO.Path.GetDirectoryName(Path));
             }
         }
 
         public string Path { get; }
 
-        public ImportFailureException(string path) : base(string.Format("Cannot Import {0}", path))
+        public ImportFailureException(string path) : base(string.Format(kHelpMessage, path, System.IO.Path.GetDirectoryName(path)))
         {
             Path = path;
         }
-
     }
 
 #if UNITY_EDITOR_OSX
@@ -367,10 +367,10 @@ ZI_SHIM_PATH_linux64=$(MLREMOTE_BASE)/lib/linux64;$(STUB_PATH)
                     var dep_path = Path.GetFullPath(item);
                     if (!File.Exists(dep_path))
                     {
-                        UnityDebug.LogFormat("missing dep: {0} for {1}", dep_path, dm.file);
+                        //UnityDebug.LogFormat("missing dep: {0} for {1}", dep_path, dm.file);
                         Directory.CreateDirectory(Path.GetDirectoryName(dep_path));
                         var src = Path.Combine(macOSDependencyPath, Path.GetFileName(item));
-                        UnityDebug.LogFormat("searching for {0}: {1}", Path.GetFileName(item), src);
+                        //UnityDebug.LogFormat("searching for {0}: {1}", Path.GetFileName(item), src);
                         if (File.Exists(src))
                             File.Copy(src, dep_path);
                     }

@@ -5,13 +5,16 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
+#if PLATFORM_LUMIN
 using UnityEditor.Lumin;
+#endif // PLATFORM_LUMIN
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Rendering;
 
 namespace UnityEditor.XR.MagicLeap
 {
+#if PLATFORM_LUMIN
     public class MLDashboard : EditorWindow
     {
         private IMGUIContainer _remoteChecksUi;
@@ -193,6 +196,7 @@ namespace UnityEditor.XR.MagicLeap
             }
         }
     }
+#endif // PLATFORM_LUMIN
 
     internal static class MagicLeapPackageLocator
     {

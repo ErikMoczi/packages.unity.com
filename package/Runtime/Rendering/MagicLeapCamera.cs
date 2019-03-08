@@ -40,9 +40,6 @@ namespace UnityEngine.XR.MagicLeap.Rendering
     [UsesLuminPlatformLevel(2)]
     public sealed class MagicLeapCamera : MonoBehaviour
     {
-        static XRInputSubsystem s_InputSubsystem;
-        static List<XRInputSubsystemDescriptor> s_Descriptors = new List<XRInputSubsystemDescriptor>();
-
         private Camera m_Camera;
 #if ML_RENDERING_VALIDATION
         private Color m_PreviousClearColor;
@@ -116,42 +113,14 @@ namespace UnityEngine.XR.MagicLeap.Rendering
             stabilizationDistance = (GetComponent<Camera>() != null) ? GetComponent<Camera>().farClipPlane : 1000.0f;
         }
 
-        void OnDestroy()
-        {
-            if (s_InputSubsystem != null)
-            {
-                s_InputSubsystem.Destroy();
-                s_InputSubsystem = null;
-            }
-        }
-
         void OnDisable()
         {
             RenderingSettings.useLegacyFrameParameters = true;
-            if (s_InputSubsystem != null)
-                s_InputSubsystem.Stop();
         }
 
         void OnEnable()
         {
             RenderingSettings.useLegacyFrameParameters = false;
-#if UNITY_EDITOR && PLATFORM_LUMIN
-            MagicLeapRemoteManager.canInitializeSubsystems += Init;
-#else
-            Init();
-#endif // UNITY_EDITOR && PLATFORM_LUMIN
-        }
-
-        void Init()
-        {
-            CreateInputSubsystemIfNeeded();
-            if (s_InputSubsystem == null)
-            {
-                enabled = false;
-                return;
-            }
-
-            s_InputSubsystem.Start();
         }
 
         void Start()
@@ -199,28 +168,6 @@ namespace UnityEngine.XR.MagicLeap.Rendering
                     distances.Value.Dispose();
                     distances = null;
                     break;
-            }
-        }
-
-        static void CreateInputSubsystemIfNeeded()
-        {
-            if (s_InputSubsystem != null)
-                return;
-
-            s_Descriptors.Clear();
-            SubsystemManager.GetSubsystemDescriptors<XRInputSubsystemDescriptor>(s_Descriptors);
-
-            if (s_Descriptors.Count > 0)
-            {
-                var descriptorToUse = s_Descriptors[0];
-                if (s_Descriptors.Count > 1)
-                {
-                    Type typeOfD = typeof(XRInputSubsystemDescriptor);
-                    Debug.LogWarningFormat("Found {0} {1}s. Using \"{2}\"",
-                        s_Descriptors.Count, typeOfD.Name, descriptorToUse.id);
-                }
-
-                s_InputSubsystem = descriptorToUse.Create();
             }
         }
 

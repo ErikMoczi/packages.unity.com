@@ -1,0 +1,19 @@
+{
+    "name": "Unity.XR.MagicLeap.Tests.Editor",
+    "references": [
+        "UnityEditor.XR.MagicLeap",
+        "UnityEngine.XR.MagicLeap"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

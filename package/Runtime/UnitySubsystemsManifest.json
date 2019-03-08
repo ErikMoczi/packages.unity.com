@@ -2,11 +2,6 @@
     "name": "UnityMagicLeap",
     "version": "1.0.0",
     "libraryName": "UnityMagicLeap",
-    "inputs": [
-        {
-            "disablesLegacyInput": false,
-            "id": "MagicLeap-Input"
-        }],
     "meshings": [
         {
             "id": "MagicLeap-Mesh"
