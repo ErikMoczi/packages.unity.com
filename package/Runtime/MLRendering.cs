@@ -5,12 +5,13 @@ using System.Runtime.InteropServices;
 #if PLATFORM_LUMIN
 using System.Text;
 #endif
-#if !NETFX_CORE && !NET_4_6 && !NET_STANDARD_2_0
-using UnityEngine.XR.MagicLeap.Compatibility;
-#endif
 
 using UnityEngine;
 using UnityEngine.XR;
+
+#if !NETFX_CORE || !NET_4_6 || !NET_STANDARD_2_0
+using UnityEngine.XR.MagicLeap.Compatibility;
+#endif
 
 namespace UnityEngine.XR.MagicLeap
 {

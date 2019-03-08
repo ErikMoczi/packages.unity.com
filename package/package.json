@@ -1,7 +1,7 @@
 {
   "name": "com.unity.xr.magicleap",
   "displayName": "Magic Leap",
-  "version": "0.0.1-test.0",
+  "version": "2.0.0-preview.0",
   "unity": "2018.3",
   "description": "Provides rendering and spatial mapping support for Magic Leap.",
   "keywords": [
@@ -13,10 +13,6 @@
     "xreditorsubsystem"
   ],
   "dependencies": {},
-  "relatedPackages": {
-    "com.unity.xr.magicleap.tests": "0.0.1-test.0"
-  },
-  "repository": {
-    "revision": "af19489e2b984b37aa9898a2e2fc083800c7f9f4"
-  }
+  "repository": {},
+  "gitHead": "8ea776bc66b039a831c0fbcf1f9daf3f36262ec9"
 }

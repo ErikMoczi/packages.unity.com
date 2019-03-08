@@ -1,0 +1,10 @@
+{
+    "name": "Unity.XR.MagicLeap.Editor",
+    "references": [
+        "Unity.XR.MagicLeap"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

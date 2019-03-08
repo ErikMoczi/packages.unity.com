@@ -201,37 +201,6 @@ namespace UnityEngine.XR.MagicLeap
         }
 
         [SerializeField]
-        float m_PollingRate = Defaults.pollingRate;
-
-        /// <summary>
-        /// How often to check for updates, in seconds. More frequent updates will increase CPU usage.
-        /// </summary>
-        public float pollingRate
-        {
-            get { return m_PollingRate; }
-            set { m_PollingRate = value; }
-        }
-
-        [SerializeField]
-        int m_BatchSize = Defaults.batchSize;
-
-        /// <summary>
-        /// How many meshes to update per batch. Larger values are more efficient, but have higher latency.
-        /// </summary>
-        public int batchSize
-        {
-            get { return m_BatchSize; }
-            set
-            {
-                if (m_BatchSize != value)
-                {
-                    m_BatchSize = value;
-                    m_SettingsDirty = true;
-                }
-            }            
-        }
-
-        [SerializeField]
         bool m_RequestVertexConfidence = Defaults.requestVertexConfidence;
 
         /// <summary>
@@ -423,7 +392,7 @@ namespace UnityEngine.XR.MagicLeap
             {
                 flags = flags,
                 fillHoleLength = fillHoleLength,
-                disconnectedComponentArea = disconnectedComponentArea,
+                disconnectedComponentArea = disconnectedComponentArea
             };
 
             return settings;
@@ -475,7 +444,6 @@ namespace UnityEngine.XR.MagicLeap
 
             UpdateSettings();
             UpdateBounds();
-            UpdateBatchSize();
             SetLod();
             s_MeshSubsystem.Start();
         }
@@ -514,7 +482,6 @@ namespace UnityEngine.XR.MagicLeap
 
         void UpdateSettings()
         {
-            UpdateBatchSize();
             var settings = GetMeshingSettings();
             Api.UnityMagicLeap_MeshingUpdateSettings(settings);
             m_SettingsDirty = false;
@@ -527,11 +494,6 @@ namespace UnityEngine.XR.MagicLeap
         {
             Api.UnityMagicLeap_MeshingSetBounds(transform.localPosition, transform.localRotation, boundsExtents);
             transform.hasChanged = false;
-        }
-
-        void UpdateBatchSize()
-        {
-            Api.UnityMagicLeap_MeshingSetBatchSize(batchSize);
         }
 
         void Reset()
@@ -563,10 +525,7 @@ namespace UnityEngine.XR.MagicLeap
             if (transform.hasChanged)
                 UpdateBounds();
 
-            float timeSinceLastUpdate = (float) (DateTime.Now - m_TimeLastUpdated).TotalSeconds;
-            bool allowUpdate = (timeSinceLastUpdate > m_PollingRate);
-
-            if (allowUpdate && s_MeshSubsystem.TryGetMeshInfos(s_MeshInfos))
+            if (s_MeshSubsystem.TryGetMeshInfos(s_MeshInfos))
             {
                 foreach (var meshInfo in s_MeshInfos)
                 {
@@ -598,7 +557,6 @@ namespace UnityEngine.XR.MagicLeap
                     }
                 }
 
-                m_TimeLastUpdated = DateTime.Now;
             }
 
             if (meshPrefab != null)
@@ -766,16 +724,12 @@ namespace UnityEngine.XR.MagicLeap
             public static bool planarize = false;
             public static float disconnectedComponentArea = .25f;
             public static uint meshQueueSize = 4;
-            public static float pollingRate = 0.25f;
-            public static int batchSize = 16;
             public static bool requestVertexConfidence = false;
             public static bool removeMeshSkirt = false;
             public static LevelOfDetail levelOfDetail = LevelOfDetail.Maximum;
         }
 
         bool m_SettingsDirty;
-
-        DateTime m_TimeLastUpdated = DateTime.MinValue;
 
         Dictionary<TrackableId, MeshInfo> m_MeshesNeedingGeneration;
 
@@ -812,7 +766,6 @@ namespace UnityEngine.XR.MagicLeap
             public MLMeshingFlags flags;
             public float fillHoleLength;
             public float disconnectedComponentArea;
-            public int batchSize;
         }
 
 #if UNITY_EDITOR || PLATFORM_LUMIN
@@ -824,9 +777,6 @@ namespace UnityEngine.XR.MagicLeap
 
         [DllImport("UnityMagicLeap")]
         public static extern void UnityMagicLeap_MeshingSetBounds(Vector3 center, Quaternion rotation, Vector3 extents);
-
-        [DllImport("UnityMagicLeap")]
-        public static extern void UnityMagicLeap_MeshingSetBatchSize(int batchSize);
 
         [DllImport("UnityMagicLeap")]
         public static extern IntPtr UnityMagicLeap_MeshingAcquireConfidence(TrackableId meshId, out int count);
@@ -842,8 +792,6 @@ namespace UnityEngine.XR.MagicLeap
         public static void UnityMagicLeap_MeshingSetLod(MLSpatialMapper.LevelOfDetail lod) { }
 
         public static void UnityMagicLeap_MeshingSetBounds(Vector3 center, Quaternion rotation, Vector3 extents) { }
-
-        public static void UnityMagicLeap_MeshingSetBatchSize(int batchSize) {}
 
         public static IntPtr UnityMagicLeap_MeshingAcquireConfidence(TrackableId meshId, out int count) { count = 0; return IntPtr.Zero; }
 
