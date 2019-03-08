@@ -106,7 +106,7 @@ public class ExecutorTests
 
         m_ExecuterUnderTest.SetUpCallbacks(executionSettings);
 
-        Assert.AreEqual(3, m_ApiMock.registeredCallbacks.Count);
+        Assert.AreEqual(4, m_ApiMock.registeredCallbacks.Count);
         var xmlSavingCallback = m_ApiMock.registeredCallbacks.OfType<ResultsSavingCallbacks>().Single();
         Assert.AreEqual(expectedPath, xmlSavingCallback.m_ResultFilePath);
     }
