@@ -1,9 +1,11 @@
 {
-    "name": "Unity.Settings.Example",
+    "name": "Unity.Settings.Tests",
     "references": [
         "Unity.Settings.Editor"
     ],
-    "optionalUnityReferences": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
     "includePlatforms": [
         "Editor"
     ],
@@ -11,6 +13,7 @@
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
-    "defineConstraints": []
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }
