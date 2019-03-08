@@ -13,6 +13,7 @@ namespace Unity.InteractiveTutorials
             GUIContent,
             NamedControl,
             Property,
+            GUIStyleName,
         }
 
         public Mode selectorMode { get { return m_SelectorMode; } set { m_SelectorMode = value; } }
@@ -34,5 +35,9 @@ namespace Unity.InteractiveTutorials
         public Type targetType { get { return m_TargetType.type; } set { m_TargetType.type = value; } }
         [SerializeField, SerializedTypeFilter(typeof(UnityObject))]
         private SerializedType m_TargetType = new SerializedType(null);
+
+        public string guiStyleName { get { return m_GUIStyleName; } set { m_GUIStyleName = value; } }
+        [SerializeField]
+        private string m_GUIStyleName;
     }
 }

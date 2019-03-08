@@ -45,15 +45,17 @@ public class ReadmeEditor : Editor {
 	[MenuItem("Help/Template Walkthroughs")]
 	static Readme SelectReadme() 
 	{
-		var ids = AssetDatabase.FindAssets("t:Readme");
-		if (ids.Length == 1)
-		{
-			var readmeObject = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(ids[0]));
-			
-			Selection.objects = new UnityEngine.Object[]{readmeObject};
-			
-			return (Readme)readmeObject;
-		}
+        var ids = AssetDatabase.FindAssets("t:Readme");
+        if (ids.Length == 1)
+        {
+            var readmeObject = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(ids[0]));
+
+            Selection.objects = new UnityEngine.Object[]{readmeObject};
+
+            InspectorWindowProxy.ForceShowInspector();
+
+            return (Readme)readmeObject;
+        }
 
 		return null;
 	}

@@ -62,7 +62,7 @@ namespace Unity.InteractiveTutorials
         {
             var hostView = m_GUIView as HostView;
 
-            if (hostView != null)
+            if (hostView != null && hostView.window != null)
             {
                 return hostView.window.showMode == ShowMode.MainWindow;
             }

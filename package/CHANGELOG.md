@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.15] - 2019-03-04
+### Added
+ - Adding the ability to unmask elements based on the name of the GUIStyle used to draw them.
+ - Warning message when the user is about to exit the tutorial.
+
+### Changed
+ - When clicking on "Help/Template Walkthroughs" if the inspector window is not visible, the Inspector window will be shown
+
 ## [0.1.14] - 2019-02-12
 ### Fixed
  - If the user opens an Undocked window, that is not part of the tutorial, the window tabs are unmasked, so they can close or move the window.

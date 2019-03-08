@@ -13,5 +13,10 @@ namespace Unity.InteractiveTutorials
                     editor.isInspectorDirty = true;
             }
         }
+
+        public static void ForceShowInspector()
+        {
+            EditorWindow.GetWindow<InspectorWindow>().Show();
+        }
     }
 }

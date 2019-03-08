@@ -11,6 +11,7 @@ namespace Unity.InteractiveTutorials
         private const string k_ControlNamePath = "m_ControlName";
         private const string k_PropertyPathPath = "m_PropertyPath";
         private const string k_TargetTypePath = "m_TargetType";
+        private const string k_GUIStyleNamePath = "m_GUIStyleName";
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -23,6 +24,9 @@ namespace Unity.InteractiveTutorials
                     break;
                 case GUIControlSelector.Mode.NamedControl:
                     height += EditorGUIUtility.standardVerticalSpacing + EditorGUI.GetPropertyHeight(property.FindPropertyRelative(k_ControlNamePath), true);
+                    break;
+                case GUIControlSelector.Mode.GUIStyleName:
+                    height += EditorGUIUtility.standardVerticalSpacing + EditorGUI.GetPropertyHeight(property.FindPropertyRelative(k_GUIStyleNamePath), true);
                     break;
                 case GUIControlSelector.Mode.Property:
                     height +=
@@ -60,6 +64,9 @@ namespace Unity.InteractiveTutorials
                     position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
 
                     selectorData = property.FindPropertyRelative(k_PropertyPathPath);
+                    break;
+                case GUIControlSelector.Mode.GUIStyleName:
+                    selectorData = property.FindPropertyRelative(k_GUIStyleNamePath);
                     break;
             }
             if (selectorData != null)

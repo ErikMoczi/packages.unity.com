@@ -64,6 +64,7 @@ namespace Unity.InteractiveTutorials
 
         public GUIContent usedGUIContent { get { return m_IMGUIDrawInstruction.usedGUIContent; } }
         public Rect rect { get { return m_IMGUIDrawInstruction.rect; } }
+        public string usedGUIStyleName { get { return m_IMGUIDrawInstruction.usedGUIStyle.name; } }
     }
 
     public class IMGUINamedControlInstructionProxy

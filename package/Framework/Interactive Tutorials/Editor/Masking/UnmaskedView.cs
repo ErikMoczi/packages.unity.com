@@ -180,6 +180,16 @@ namespace Unity.InteractiveTutorials
                                 }
                             }
                             break;
+                        case GUIControlSelector.Mode.GUIStyleName:
+                            foreach (var instruction in drawInstructions)
+                            {
+                                if (instruction.usedGUIStyleName == controlSelector.guiStyleName)
+                                {
+                                    regionFound = true;
+                                    regionRect = instruction.rect;
+                                }
+                            }
+                            break;
                         case GUIControlSelector.Mode.NamedControl:
                             foreach (var instruction in namedControlInstructions)
                             {

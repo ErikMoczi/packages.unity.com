@@ -28,7 +28,6 @@ namespace Unity.InteractiveTutorials
         }
 
         private List<TutorialParagraphView> m_Paragraphs = new List<TutorialParagraphView>();
-        [SerializeField]
         private int[] m_Indexes;
         [SerializeField]
         private List<TutorialParagraphView> m_AllParagraphs = new List<TutorialParagraphView>();
@@ -57,6 +56,11 @@ namespace Unity.InteractiveTutorials
         private static readonly GUIContent s_RestartPromptText = new GUIContent("Returning to the first step will restart the tutorial and you will lose all of your progress. Do you wish to restart?");
         private static readonly GUIContent s_RestartPromptYes = new GUIContent("Yes");
         private static readonly GUIContent s_RestartPromptNo = new GUIContent("No");
+
+        private static readonly GUIContent s_ExitPromptTitle = new GUIContent("Exit Tutorial?");
+        private static readonly GUIContent s_ExitPromptText = new GUIContent("You are about to exit the tutorial and lose all of your progress. Do you wish to exit?");
+        private static readonly GUIContent s_ExitPromptYes = new GUIContent("Yes");
+        private static readonly GUIContent s_ExitPromptNo = new GUIContent("No");
 
         internal Tutorial currentTutorial { get { return m_CurrentTutorial; } }
         private Tutorial m_CurrentTutorial;
@@ -230,7 +234,13 @@ namespace Unity.InteractiveTutorials
                     return;
 
                 case Tutorial.ExitBehavior.CloseWindow:
-                    Close();
+                    if (completed)
+                        Close();
+                    else if (EditorUtility.DisplayDialog(s_ExitPromptTitle.text, s_ExitPromptText.text, s_ExitPromptYes.text, s_ExitPromptNo.text))
+                    {
+                        Close();
+                    }
+
                     break;
 
                 default:
@@ -259,16 +269,12 @@ namespace Unity.InteractiveTutorials
         internal void CreateTutorialViews()
         {
             m_AllParagraphs.Clear();
-            var ite = 0;
-            m_Indexes = new int[m_CurrentTutorial.pageCount];
             foreach (var page in m_CurrentTutorial.pages)
             {
                 if (page == null)
                     continue;
 
                 var instructionIndex = 0;
-                m_Indexes[ite] = m_AllParagraphs.Count;
-                ite++;
                 foreach (var paragraph in page.paragraphs)
                 {
                     if (paragraph.type == ParagraphType.Instruction)
@@ -280,6 +286,20 @@ namespace Unity.InteractiveTutorials
 
         private List<TutorialParagraphView> GetCurrentParagraph()
         {
+            if (m_Indexes == null || m_Indexes.Length != m_CurrentTutorial.pageCount)
+            {
+                // Update page to paragraph index
+                m_Indexes = new int[m_CurrentTutorial.pageCount];
+                var pageIndex = 0;
+                var paragraphIndex = 0;
+                foreach (var page in m_CurrentTutorial.pages)
+                {
+                    m_Indexes[pageIndex++] = paragraphIndex;
+                    if (page != null)
+                        paragraphIndex += page.paragraphs.Count();
+                }
+            }
+
             List<TutorialParagraphView> tmp = new List<TutorialParagraphView>();
             if (m_Indexes.Length > 0)
             {
