@@ -109,6 +109,7 @@ namespace UnityEngine.ResourceManagement.Util
     [Serializable]
     public struct ObjectInitializationData
     {
+#pragma warning disable CS0649
         [FormerlySerializedAs("m_id")]
         [SerializeField]
         string m_Id;
@@ -132,6 +133,7 @@ namespace UnityEngine.ResourceManagement.Util
         /// String representation of the data that will be passed to the IInitializableObject.Initialize method of the created object.  This is usually a JSON string of the serialized data object.
         /// </summary>
         public string Data { get { return m_Data; } internal set { m_Data = value; } }
+#pragma warning restore CS0649 
 
         /// <inheritdoc/>
         public override string ToString()

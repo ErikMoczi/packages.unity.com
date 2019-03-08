@@ -54,8 +54,15 @@ namespace UnityEditor.AddressableAssets.GUI
             if(m_AssetRefObject != null)
             {
                 if (m_AssetRefObject.editorAsset == target)
+                {
+                    //In the event we are setting the reference to null (intentional if we want to set the reference to "None (Addressable Asset)")
+                    //we need to clear the reference cleanly to make sure we're not holding onto an old guid of a potentially deleted/missing file.
+                    if (target == null)
+                        m_AssetRefObject.SetEditorAsset(null);
+
                     return true;
-                
+                }
+
                 Undo.RecordObject(property.serializedObject.targetObject, "Assign Asset Reference");
                 success = m_AssetRefObject.SetEditorAsset(target);
                 if (success)
@@ -113,8 +120,8 @@ namespace UnityEditor.AddressableAssets.GUI
             EditorGUI.BeginProperty(position, label, property);
 
             GatherFilters(property);
-            var guidProp = property.FindPropertyRelative("m_AssetGUID");
-            string guid = guidProp.stringValue;
+            var refKey = m_AssetRefObject.RuntimeKey;
+            string guid = refKey.isValid ? refKey.ToString() : "";
             var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
 
             var checkToForceAddressable = string.Empty;
@@ -577,7 +584,7 @@ namespace UnityEditor.AddressableAssets.GUI
 
             int arrayIndex = splitCounts[depth];
 
-            var newField = targetObject.GetType().GetField(currName);
+            var newField = targetObject.GetType().GetField(currName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var newObj = newField.GetValue(targetObject);
             if (depth == splitName.Count - 1)
             {
