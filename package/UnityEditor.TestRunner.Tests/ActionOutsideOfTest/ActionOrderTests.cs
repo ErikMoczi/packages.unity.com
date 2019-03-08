@@ -48,32 +48,32 @@ namespace ActionOutsideOfTest
     public abstract class ActionOrderTestBase : ActionOrderBaseForInheritanceTest, IPrebuildSetup
     {
         [OneTimeSetUp]
-        public new void OneTimeSetUp()
+        public void OneTimeSetUp()
         {
             Log("OneTimeSetUp");
         }
 
         [SetUp]
-        public new void SetUp()
+        public void SetUp()
         {
             Log("SetUp");
         }
 
         [UnitySetUp]
-        public new IEnumerator UnitySetUp()
+        public IEnumerator UnitySetUp()
         {
             Log("UnitySetup");
             yield return null;
         }
 
         [TearDown]
-        public new void TearDown()
+        public void TearDown()
         {
             Log("TearDown");
         }
 
         [UnityTearDown]
-        public new IEnumerator UnityTearDown()
+        public IEnumerator UnityTearDown()
         {
             Log("UnityTearDown");
             yield return null;
