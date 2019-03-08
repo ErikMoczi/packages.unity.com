@@ -17,7 +17,7 @@ namespace UnityEditor.VFX
             {
                 if (m_PackagePath == null)
                 {
-                    foreach (var pkg in UnityEditor.PackageManager.PackageInfo.GetAll())
+                    foreach (var pkg in UnityEditor.PackageManager.Packages.GetAll())
                     {
                         if (pkg.name == "com.unity.visualeffectgraph")
                         {

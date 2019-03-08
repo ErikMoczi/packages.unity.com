@@ -11,10 +11,11 @@
     "name": "com.unity.visualeffectgraph", 
     "repoPackagePath": "com.unity.visualeffectgraph", 
     "repository": {
-        "revision": "bf01c0b76dd7ae0e827585901116145bc3fa89fd", 
+        "revision": "1045f10e0eeb705fdb78206c2d6c274489e56e90", 
         "type": "git", 
         "url": "ssh://git@github.com/Unity-Technologies/ScriptableRenderLoop.git"
     }, 
-    "unity": "2019.2", 
-    "version": "6.4.0-preview"
+    "unity": "2019.1", 
+    "unityRelease": "0b4", 
+    "version": "5.7.0-preview"
 }
