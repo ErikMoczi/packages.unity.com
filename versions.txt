@@ -80,3 +80,4 @@
 4.0.4-preview.3
 4.0.4-preview.4
 4.0.4-preview.5
+4.0.4-preview.6
