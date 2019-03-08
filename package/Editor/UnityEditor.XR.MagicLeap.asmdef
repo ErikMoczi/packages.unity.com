@@ -1,0 +1,16 @@
+{
+    "name": "UnityEditor.XR.MagicLeap",
+    "references": [
+        "UnityEngine.XR.MagicLeap"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
