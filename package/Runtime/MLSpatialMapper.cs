@@ -743,11 +743,6 @@ namespace UnityEngine.XR.MagicLeap
 
             if (s_Descriptors.Count > 0)
             {
-#if UNITY_EDITOR
-                string libraryPath = EditorUserBuildSettings.GetPlatformSettings("Lumin", "SDKPath");
-                Api.UnityMagicLeap_SetLibraryPath(libraryPath);
-#endif
-
                 var descriptorToUse = s_Descriptors[0];
                 if (s_Descriptors.Count > 1)
                 {
@@ -836,9 +831,6 @@ namespace UnityEngine.XR.MagicLeap
 
         [DllImport("UnityMagicLeap")]
         public static extern void UnityMagicLeap_MeshingReleaseConfidence(TrackableId meshId);
-
-        [DllImport("UnityMagicLeap", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.StdCall)]
-        public static extern void UnityMagicLeap_SetLibraryPath(string path);
 #else
         public static void UnityMagicLeap_MeshingUpdateSettings(MLMeshingSettings newSettings) { }
 
@@ -851,8 +843,6 @@ namespace UnityEngine.XR.MagicLeap
         public static IntPtr UnityMagicLeap_MeshingAcquireConfidence(TrackableId meshId, out int count) { count = 0; return IntPtr.Zero; }
 
         public static void UnityMagicLeap_MeshingReleaseConfidence(TrackableId meshId) { }
-
-        public static void UnityMagicLeap_SetLibraryPath(string path) { }
 #endif
     }
 }

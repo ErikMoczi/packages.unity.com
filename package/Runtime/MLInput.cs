@@ -57,11 +57,6 @@ namespace UnityEngine.Experimental.XR.MagicLeap
 
             if (s_Descriptors.Count > 0)
             {
-#if UNITY_EDITOR
-                string libraryPath = EditorUserBuildSettings.GetPlatformSettings("Lumin", "SDKPath");
-                Api.UnityMagicLeap_SetLibraryPath(libraryPath);
-#endif
-
                 var descriptorToUse = s_Descriptors[0];
                 if (s_Descriptors.Count > 1)
                 {

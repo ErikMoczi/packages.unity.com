@@ -33,7 +33,7 @@ namespace UnityEngine.XR.MagicLeap.Rendering
 
     [RequireComponent(typeof(Camera))]
 #if UNITY_2018_3_OR_NEWER
-    [Lumin.RequiresPlatform(2)]
+    [Lumin.RequiresPlatform(3)]
 #endif
     public partial class MagicLeapCamera : MonoBehaviour
     {
@@ -84,6 +84,16 @@ namespace UnityEngine.XR.MagicLeap.Rendering
             frameTimingHint = FrameTimingHint.Max_60Hz;
             stabilizationMode = StabilizationMode.FarClip;
             stabilizationDistance = (GetComponent<Camera>() != null) ? GetComponent<Camera>().farClipPlane : 1000.0f;
+        }
+
+        void OnDisable()
+        {
+            RenderingSettings.useLegacyFrameParameters = true;
+        }
+
+        void OnEnable()
+        {
+            RenderingSettings.useLegacyFrameParameters = false;
         }
 
         void Start()
@@ -219,7 +229,10 @@ namespace UnityEngine.XR.MagicLeap.Rendering
 #endif
         private float GetCameraScale()
         {
-            var scale = transform.lossyScale;
+            var scale = Vector3.one;
+            var parent = transform.parent;
+            if (parent)
+                scale = parent.lossyScale;
 #if ML_RENDERING_VALIDATION
             if (!(Mathf.Approximately(scale.x, scale.y) && Mathf.Approximately(scale.x, scale.z)))
             {
@@ -236,7 +249,7 @@ namespace UnityEngine.XR.MagicLeap.Rendering
             return m_Camera.farClipPlane / scale;
         }
 
-        private float GetNearClippingPlane(float scale  )
+        private float GetNearClippingPlane(float scale)
         {
             return m_Camera.nearClipPlane / scale;
         }

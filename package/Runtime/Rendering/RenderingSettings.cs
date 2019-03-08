@@ -49,6 +49,11 @@ namespace UnityEngine.XR.MagicLeap.Rendering
             get { return UnityMagicLeap_RenderingGetParameter("StabilizationDistance", 100.0f); }
             internal set { UnityMagicLeap_RenderingSetParameter("StabilizationDistance", value); }
         }
+        internal static bool useLegacyFrameParameters
+        {
+            get { return UnityMagicLeap_RenderingGetParameter("UseLegacyFrameParameters", 0.0f) != 0.0f; }
+            set { UnityMagicLeap_RenderingSetParameter("UseLegacyFrameParameters", value ? 1.0f : 0.0f); }
+        }
 #if PLATFORM_LUMIN
         [DllImport("UnityMagicLeap")]
         internal static extern FrameTimingHint UnityMagicLeap_RenderingGetFrameTimingHint();
