@@ -4,24 +4,18 @@ namespace UnityEngine.TestTools.Utils
 {
     public static class Utils
     {
-        private const float k_FEpsilon = 0.0001f;
-
-        public static bool AreFloatsEqual(float expected, float actual, float allowedRelativeError)
+        public static bool AreFloatsEqual(float expected, float actual, float epsilon)
         {
-            if (IsFloatCloseToZero(actual) && IsFloatCloseToZero(expected)
-                || (expected == Mathf.Infinity && actual == Mathf.Infinity)
-                || (expected == Mathf.NegativeInfinity && actual == Mathf.NegativeInfinity)
-                || (Math.Abs(actual - expected) < k_FEpsilon))
-            {
-                return true;
-            }
+            // special case for infinity
+            if (expected == Mathf.Infinity || actual == Mathf.Infinity || expected == Mathf.NegativeInfinity || actual == Mathf.NegativeInfinity)
+                return expected == actual;
 
-            return Math.Abs((actual - expected) / expected) <= allowedRelativeError;
-        }
-
-        private static bool IsFloatCloseToZero(float a)
-        {
-            return Math.Abs(a) < k_FEpsilon;
+            // we cover both relative and absolute tolerance with this check
+            // which is better than just relative in case of small (in abs value) args
+            // please note that "usually" approximation is used [i.e. abs(x)+abs(y)+1]
+            // but we speak about test code so we dont care that much about performance
+            // but we do care about checks being more precise
+            return Math.Abs(actual - expected) <= epsilon * Mathf.Max(Mathf.Max(Mathf.Abs(actual), Mathf.Abs(expected)), 1.0f);
         }
 
         public static bool AreFloatsEqualAbsoluteError(float expected, float actual, float allowedAbsoluteError)

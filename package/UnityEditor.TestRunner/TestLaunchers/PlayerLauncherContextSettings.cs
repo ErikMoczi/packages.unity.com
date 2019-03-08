@@ -9,7 +9,9 @@ namespace UnityEditor.TestTools.TestRunner
         private ITestRunSettings m_OverloadSettings;
 
         private EditorBuildSettingsScene[] m_EditorBuildSettings;
+#pragma warning disable 618
         private ResolutionDialogSetting m_DisplayResolutionDialog;
+#pragma warning restore 618
         private bool m_RunInBackground;
         private FullScreenMode m_FullScreenMode;
         private bool m_ResizableWindow;
@@ -52,8 +54,10 @@ namespace UnityEditor.TestTools.TestRunner
 
             m_EditorBuildSettings = EditorBuildSettings.scenes;
 
+#pragma warning disable 618
             m_DisplayResolutionDialog = PlayerSettings.displayResolutionDialog;
             PlayerSettings.displayResolutionDialog = ResolutionDialogSetting.Disabled;
+#pragma warning restore 618
 
             m_RunInBackground = PlayerSettings.runInBackground;
             PlayerSettings.runInBackground = true;
@@ -86,7 +90,9 @@ namespace UnityEditor.TestTools.TestRunner
 
             PlayerSettings.fullScreenMode = m_FullScreenMode;
             PlayerSettings.runInBackground = m_RunInBackground;
+#pragma warning disable 618
             PlayerSettings.displayResolutionDialog = m_DisplayResolutionDialog;
+#pragma warning restore 618
             PlayerSettings.resizableWindow = m_ResizableWindow;
             PlayerSettings.SplashScreen.show = m_ShowUnitySplashScreen;
             PlayerSettings.productName = m_OldproductName;

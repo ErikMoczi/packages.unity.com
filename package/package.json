@@ -1,7 +1,7 @@
 {
   "name": "com.unity.test-framework",
   "displayName":  "Test Framework",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "unity": "2019.2",
   "description": "Test framework for running Edit mode and Play mode test in Unity.",
   "keywords": [ "Test", "TestFramework" ],
@@ -9,12 +9,12 @@
   "repository": {
     "type": "git",
     "url": "git@gitlab.cds.internal.unity3d.com/upm-packages/core/com.unity.test-framework.git",
-    "revision": "dfc86411f74af602772303b7b2c9dbdd23ba1388"
+    "revision": "f25690c7870ee4bad9079c731902d5d65ca7dfc5"
   }, 
   "dependencies": {
     "com.unity.ext.nunit": "1.0.0"
   },
   "relatedPackages": {
-    "com.unity.test-framework.tests": "1.0.2"
+    "com.unity.test-framework.tests": "1.0.3"
   }
 }
