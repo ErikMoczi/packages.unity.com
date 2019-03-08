@@ -7,6 +7,7 @@ using Unity.Collections;
 using UnityEditor;
 #endif
 using UnityEngine.Jobs;
+using UnityEngine.Lumin;
 #if !NETFX_CORE && !NET_4_6 && !NET_STANDARD_2_0
 using UnityEngine.XR.MagicLeap.Compatibility;
 #endif
@@ -31,10 +32,9 @@ namespace UnityEngine.XR.MagicLeap.Rendering
         Custom
     }
 
+    [AddComponentMenu("AR/Magic Leap/Camera")]
     [RequireComponent(typeof(Camera))]
-#if UNITY_2018_3_OR_NEWER
-    [Lumin.RequiresPlatform(3)]
-#endif
+    [UsesLuminPlatformLevel(2)]
     public partial class MagicLeapCamera : MonoBehaviour
     {
         private Camera m_Camera;

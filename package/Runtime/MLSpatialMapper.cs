@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental;
 using UnityEngine.Experimental.XR;
+using UnityEngine.Lumin;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -13,9 +14,7 @@ using UnityEditor;
 namespace UnityEngine.XR.MagicLeap
 {
     [AddComponentMenu("AR/Magic Leap/ML Spatial Mapper")]
-#if UNITY_2018_3_OR_NEWER
-    [Lumin.RequiresPermission("WorldReconstruction")]
-#endif 
+    [UsesLuminPrivilege("WorldReconstruction")]
     public sealed class MLSpatialMapper : MonoBehaviour
     {
         /// <summary>

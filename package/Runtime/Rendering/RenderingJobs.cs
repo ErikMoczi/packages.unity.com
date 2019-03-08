@@ -1,7 +1,7 @@
 ﻿using Unity.Collections;
 using UnityEngine.Jobs;
 
-namespace UnityEngine.XR.MagicLeap
+namespace UnityEngine.XR.MagicLeap.Rendering
 {
     internal static class RenderingJobs
     {

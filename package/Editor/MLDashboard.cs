@@ -90,7 +90,7 @@ namespace UnityEditor.XR.MagicLeap
             }
         }
 
-        [MenuItem("Window/XR/MagicLeap Dashboard", false, 1)]
+        //[MenuItem("Window/XR/MagicLeap Dashboard", false, 1)]
         private static void Display()
         {
             // Get existing open window or if none, make a new one:
@@ -116,7 +116,7 @@ namespace UnityEditor.XR.MagicLeap
             Process.Start(startInfo);
         }
 
-        [MenuItem("Magic Leap/Lauch MLRemote")]
+        [MenuItem("Magic Leap/Launch MLRemote")]
         private static void LaunchRemote()
         {
             if (SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX)
