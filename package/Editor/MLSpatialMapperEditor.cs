@@ -14,6 +14,8 @@ namespace UnityEditor.XR.MagicLeap
         SerializedProperty m_MeshType;
         SerializedProperty m_FillHoleLength;
         SerializedProperty m_MeshQueueSize;
+        SerializedProperty m_PollingRate;
+        SerializedProperty m_BatchSize;
         SerializedProperty m_Planarize;
         SerializedProperty m_DisconnectedComponentArea;
         SerializedProperty m_RequestVertexConfidence;
@@ -50,6 +52,14 @@ namespace UnityEditor.XR.MagicLeap
             public static readonly GUIContent MeshQueueSize = new GUIContent(
                 "Mesh Queue Size",
                 "Controls the number of meshes to queue for generation at once. Larger numbers will lead to higher CPU usage.");
+
+            public static readonly GUIContent PollingRate = new GUIContent(
+                "Update Polling Rate",
+                "How often to check for updates, in seconds. More frequent updates will increase CPU usage.");
+
+            public static readonly GUIContent BatchSize = new GUIContent(
+                "Batch Size",
+                "Maximum number of meshes to update per batch. Larger values are more efficient, but have higher latency.");
 
             public static readonly GUIContent Planarize = new GUIContent(
                 "Planarize",
@@ -93,6 +103,8 @@ namespace UnityEditor.XR.MagicLeap
             m_MeshType = this.serializedObject.FindProperty("m_MeshType");
             m_FillHoleLength = this.serializedObject.FindProperty("m_FillHoleLength");
             m_MeshQueueSize = this.serializedObject.FindProperty("m_MeshQueueSize");
+            m_PollingRate = this.serializedObject.FindProperty("m_PollingRate");
+            m_BatchSize = this.serializedObject.FindProperty("m_BatchSize");
             m_Planarize = this.serializedObject.FindProperty("m_Planarize");
             m_DisconnectedComponentArea = this.serializedObject.FindProperty("m_DisconnectedComponentArea");
             m_RequestVertexConfidence = this.serializedObject.FindProperty("m_RequestVertexConfidence");
@@ -114,6 +126,8 @@ namespace UnityEditor.XR.MagicLeap
             {
                 EditorGUILayout.PropertyField(m_LevelOfDetail, Tooltips.LevelOfDetail);
                 EditorGUILayout.PropertyField(m_MeshQueueSize, Tooltips.MeshQueueSize);
+                EditorGUILayout.PropertyField(m_PollingRate, Tooltips.PollingRate);
+                EditorGUILayout.PropertyField(m_BatchSize, Tooltips.BatchSize);
                 EditorGUILayout.PropertyField(m_FillHoleLength, Tooltips.FillHoleLength);
                 m_FillHoleLength.floatValue = Mathf.Max(0f, m_FillHoleLength.floatValue);
                 EditorGUILayout.PropertyField(m_Planarize, Tooltips.Planarize);

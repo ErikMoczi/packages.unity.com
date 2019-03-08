@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.UIElements;
 using UnityEditor.Lumin;
@@ -11,10 +14,10 @@ namespace UnityEditor.XR.MagicLeap
 {
     public class MLRemoteWindow : EditorWindow
     {
-        private static MLRemoteWindow _instance = null;
-
         private IMGUIContainer _remoteChecksUi;
         private VisualElement _mainVisualContainer;
+
+        private string[] _availablePackages = new string[] {};
 
         private void OnDisable()
         {
@@ -30,6 +33,8 @@ namespace UnityEditor.XR.MagicLeap
             _mainVisualContainer.Add(_remoteChecksUi);
             var root = this.GetRootVisualContainer();
             root.Add(_mainVisualContainer);
+
+            _availablePackages = MagicLeapPackageLocator.GetUnityPackages().ToArray();
         }
 
         private void OnRemoteChecksUI()
@@ -67,6 +72,22 @@ namespace UnityEditor.XR.MagicLeap
                     }
                 }
             }
+
+            using (new GUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Import MagicLeap unitypackage"))
+                {
+                    var rect = GUILayoutUtility.GetLastRect();
+                    var versions = new GenericMenu();
+                    foreach (var pkg in _availablePackages)
+                    {
+                        versions.AddItem(new GUIContent(pkg), false, InstallPackage, pkg);
+                    }
+                    // show options as a drop down.
+                    versions.DropDown(rect);
+                }
+
+            }
         }
 
         [MenuItem("Window/XR/MagicLeap Remote", false, 1)]
@@ -74,6 +95,13 @@ namespace UnityEditor.XR.MagicLeap
         {
             // Get existing open window or if none, make a new one:
             EditorWindow.GetWindow<MLRemoteWindow>(false, "ML Remote").Show();
+        }
+
+        private void InstallPackage(object p)
+        {
+            var path = p as string;
+            UnityEngine.Debug.LogFormat("Importing: {0}", path);
+            AssetDatabase.ImportPackage(path, true);
         }
 
         private static void LaunchProcess(string filename, string args = "")
@@ -120,7 +148,7 @@ namespace UnityEditor.XR.MagicLeap
 
         private static bool HasVirtualDevice
         {
-            get { return SDK.Find(true).HasMLRemote; }
+            get { var sdk = SDK.Find(false);  return (sdk != null) ? sdk.HasMLRemote : false; }
         }
 
         private static void Restart(params string[] args)
@@ -146,5 +174,27 @@ namespace UnityEditor.XR.MagicLeap
                 return activeProcesses.Length > 0;
             }
         }
+    }
+
+    internal static class MagicLeapPackageLocator
+    {
+        public static IEnumerable<string> GetUnityPackages()
+        {
+            var tools = Path.Combine(MagicLeapRoot, "tools");
+            return new DirectoryInfo(tools).GetFiles("*.unitypackage", SearchOption.AllDirectories).Select(fi => fi.FullName);
+        }
+
+        private static string HomeFolder
+        {
+            get
+            {
+                var home = Environment.GetEnvironmentVariable("USERPROFILE");
+                return (string.IsNullOrEmpty(home))
+                    ? Environment.GetEnvironmentVariable("HOME")
+                    : home;
+            }
+        }
+
+        public static string MagicLeapRoot { get { return Path.Combine(HomeFolder, "MagicLeap"); } }
     }
 }

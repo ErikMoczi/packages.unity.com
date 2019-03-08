@@ -9,10 +9,6 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.XR;
 
-#if !NETFX_CORE || !NET_4_6 || !NET_STANDARD_2_0
-using UnityEngine.XR.MagicLeap.Compatibility;
-#endif
-
 namespace UnityEngine.XR.MagicLeap
 {
     public enum FrameTimingHint : int
