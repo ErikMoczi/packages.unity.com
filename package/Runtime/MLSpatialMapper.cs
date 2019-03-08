@@ -818,7 +818,6 @@ namespace UnityEngine.XR.MagicLeap
             public MLMeshingFlags flags;
             public float fillHoleLength;
             public float disconnectedComponentArea;
-            public int batchSize;
         }
 
 #if UNITY_EDITOR || PLATFORM_LUMIN
