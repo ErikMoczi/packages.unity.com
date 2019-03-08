@@ -6,6 +6,8 @@ namespace UnityEngine.XR.ARFoundation
     /// Manages the lifetime of the <c>XRInputSubsystem</c>. Add one of these to any <c>GameObject</c> in your scene
     /// if you want device pose information to be available. Read the input by using the <c>TrackedPoseDriver</c>
     /// </summary>
+    [DefaultExecutionOrder(ARUpdateOrder.k_InputManager)]
+    [DisallowMultipleComponent]
     public sealed class ARInputManager : MonoBehaviour
     {
         /// <summary>

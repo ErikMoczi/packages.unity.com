@@ -5,16 +5,23 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace UnityEngine.XR.ARFoundation
 {
+    /// <summary>
+    /// Manages the lifetime of the <c>XRCameraSubsystem</c>. Add one of these to a <c>Camera</c> in your scene
+    /// if you want camera texture and light estimation information to be available.
+    /// </summary>
+    [DefaultExecutionOrder(ARUpdateOrder.k_CameraManager)]
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(Camera))]
     public sealed class ARCameraManager : MonoBehaviour
     {
         [SerializeField]
         [Tooltip("The focus mode to request on the (physical) AR camera.")]
-        XRCameraFocusMode m_FocusMode = XRCameraFocusMode.Auto;
+        CameraFocusMode m_FocusMode = CameraFocusMode.Auto;
 
         /// <summary>
-        /// Get or set the <c>XRCameraFocusMode</c> to use on the camera
+        /// Get or set the <c>CameraFocusMode</c> to use on the camera
         /// </summary>
-        public XRCameraFocusMode focusMode
+        public CameraFocusMode focusMode
         {
             get { return m_FocusMode; }
             set
@@ -27,12 +34,12 @@ namespace UnityEngine.XR.ARFoundation
 
         [SerializeField]
         [Tooltip("When enabled, requests that light estimation information be made available.")]
-        XRLightEstimationMode m_LightEstimationMode = XRLightEstimationMode.Disabled;
+        LightEstimationMode m_LightEstimationMode = LightEstimationMode.Disabled;
 
         /// <summary>
         /// Get or set whether light estimation information be made available (if possible).
         /// </summary>
-        public XRLightEstimationMode lightEstimationMode
+        public LightEstimationMode lightEstimationMode
         {
             get { return m_LightEstimationMode; }
             set
@@ -43,7 +50,10 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        // TODO
+        /// <summary>
+        /// Determines whether camera permission has been granted.
+        /// </summary>
+        /// <value><c>true</c> if permission has been granted; otherwise, <c>false</c>.</value>
         public bool permissionGranted
         {
             get
@@ -55,10 +65,14 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        // TODO
+        /// <summary>
+        /// An event which fires each time a new camera frame is received.
+        /// </summary>
         public event Action<ARCameraFrameEventArgs> frameReceived;
 
-        // TODO
+        /// <summary>
+        /// Gets the name of the shader used in background rendering.
+        /// </summary>
         public string shaderName
         {
             get
@@ -67,6 +81,25 @@ namespace UnityEngine.XR.ARFoundation
                     return subsystem.shaderName;
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Tries the get camera intrinsics. Camera intrinsics refers to properties
+        /// of a physical camera which may be useful when performing additional
+        /// computer vision processing on the camera image.
+        /// </summary>
+        /// <returns><c>true</c>, if <paramref name="cameraIntrinsics"/> was populated,
+        /// <c>false</c> otherwise.</returns>
+        /// <param name="cameraIntrinsics">The camera intrinsics to populate.</param>
+        public bool TryGetIntrinsics(out XRCameraIntrinsics cameraIntrinsics)
+        {
+            if (subsystem == null)
+            {
+                cameraIntrinsics = default(XRCameraIntrinsics);
+                return false;
+            }
+
+            return subsystem.TryGetIntrinsics(out cameraIntrinsics);
         }
 
         /// <summary>
@@ -126,7 +159,7 @@ namespace UnityEngine.XR.ARFoundation
                 // Update the existing textures that are in common between the two arrays.
                 for (int i = 0; i < numUpdated; ++i)
                 {
-                    m_TextureInfos[i].SetDescriptor(textureDescriptors[i]);
+                    m_TextureInfos[i] = TextureInfo.GetUpdatedTextureInfo(m_TextureInfos[i], textureDescriptors[i]);
                 }
 
                 // If there are fewer textures in the current frame than we had previously, destroy any remaining unneeded
@@ -172,7 +205,7 @@ namespace UnityEngine.XR.ARFoundation
 
         void InvokeFrameReceivedEvent(XRCameraFrame frame)
         {
-            var lightEstimation = new LightEstimationData();
+            var lightEstimation = new ARLightEstimationData();
 
             if (frame.hasAverageBrightness)
                 lightEstimation.averageBrightness = frame.averageBrightness;
@@ -293,35 +326,38 @@ namespace UnityEngine.XR.ARFoundation
             /// <summary>
             /// Sets the current descriptor, and creates/updates the associated texture as appropriate.
             /// </summary>
+            /// <param name="textureInfo">The texture info to update.</param>
             /// <param name="descriptor">The texture descriptor wrapping a native texture object.</param>
-            public void SetDescriptor(XRTextureDescriptor descriptor)
+            public static TextureInfo GetUpdatedTextureInfo(TextureInfo textureInfo, XRTextureDescriptor descriptor)
             {
                 // If the current and given descriptors are equal, exit early from this method.
-                if (m_Descriptor.Equals(descriptor))
+                if (textureInfo.m_Descriptor.Equals(descriptor))
                 {
-                    return;
+                    return textureInfo;
                 }
 
                 // If there is a texture already and if the descriptors have identical texture metadata, we only need
                 // to update the existing texture with the given native texture object.
-                if ((m_Texture != null) && m_Descriptor.hasIdenticalTextureMetadata(descriptor))
+                if ((textureInfo.m_Texture != null) && textureInfo.m_Descriptor.hasIdenticalTextureMetadata(descriptor))
                 {
                     // Update the current descriptor with the given descriptor.
-                    m_Descriptor = descriptor;
+                    textureInfo.m_Descriptor = descriptor;
 
                     // Update the current texture with the native texture object.
-                    m_Texture.UpdateExternalTexture(m_Descriptor.nativeTexture);
+                    textureInfo.m_Texture.UpdateExternalTexture(textureInfo.m_Descriptor.nativeTexture);
                 }
                 // Else, we need to create a new texture object.
                 else
                 {
                     // Update the current descriptor with the given descriptor.
-                    m_Descriptor = descriptor;
+                    textureInfo.m_Descriptor = descriptor;
 
                     // Replace the current texture with a newly created texture, and update the material.
-                    DestroyTexture();
-                    m_Texture = CreateTexture(m_Descriptor);
+                    textureInfo.DestroyTexture();
+                    textureInfo.m_Texture = CreateTexture(textureInfo.m_Descriptor);
                 }
+
+                return textureInfo;
             }
 
             /// <summary>

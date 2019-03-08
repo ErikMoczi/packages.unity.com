@@ -17,7 +17,7 @@ namespace UnityEngine.XR.ARFoundation
         /// The material associated with <see cref="ARFoundationBackgroundRenderer"/> should be rendered as the background.
         /// </summary>
         MaterialAsBackground
-    };
+    }
 
     /// <summary>
     /// Uses command buffers to blit an image to a camera's background.
@@ -40,16 +40,10 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         protected Texture m_BackgroundTexture;
 
-        ARRenderMode m_RenderMode = ARRenderMode.StandardBackground;
-
-        CommandBuffer m_CommandBuffer;
-
-        CameraClearFlags m_CameraClearFlags = CameraClearFlags.Skybox;
-
         /// <summary>
-        /// Invoked when one of the properties of this class change.
+        /// Invoked when one of the properties of this class changes.
         /// </summary>
-        public event Action backgroundRendererChanged = null;
+        public event Action<ARFoundationBackgroundRendererChangedEventArgs> backgroundRendererChanged;
 
         /// <summary>
         /// Get or set the <c>Material</c> used during background rendering.
@@ -69,7 +63,7 @@ namespace UnityEngine.XR.ARFoundation
                 m_BackgroundMaterial = value;
 
                 if (backgroundRendererChanged != null)
-                    backgroundRendererChanged();
+                    backgroundRendererChanged(new ARFoundationBackgroundRendererChangedEventArgs());
 
                 ReapplyCommandBuffersIfNeeded();
             }
@@ -94,7 +88,7 @@ namespace UnityEngine.XR.ARFoundation
                 m_BackgroundTexture = value;
 
                 if (backgroundRendererChanged != null)
-                    backgroundRendererChanged();
+                    backgroundRendererChanged(new ARFoundationBackgroundRendererChangedEventArgs());
 
                 ReapplyCommandBuffersIfNeeded();
             }
@@ -119,7 +113,7 @@ namespace UnityEngine.XR.ARFoundation
                 m_Camera = value;
 
                 if (backgroundRendererChanged != null)
-                    backgroundRendererChanged();
+                    backgroundRendererChanged(new ARFoundationBackgroundRendererChangedEventArgs());
 
                 ReapplyCommandBuffersIfNeeded();
             }
@@ -154,7 +148,7 @@ namespace UnityEngine.XR.ARFoundation
                 }
 
                 if (backgroundRendererChanged != null)
-                    backgroundRendererChanged();
+                    backgroundRendererChanged(new ARFoundationBackgroundRendererChangedEventArgs());
             }
         }
 
@@ -243,5 +237,11 @@ namespace UnityEngine.XR.ARFoundation
 
             return true;
         }
+
+        ARRenderMode m_RenderMode = ARRenderMode.StandardBackground;
+
+        CommandBuffer m_CommandBuffer;
+
+        CameraClearFlags m_CameraClearFlags = CameraClearFlags.Skybox;
     }
 }

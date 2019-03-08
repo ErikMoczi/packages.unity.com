@@ -18,17 +18,6 @@ namespace UnityEngine.XR.ARFoundation
         bool m_DestroyOnRemoval = true;
 
         /// <summary>
-        /// Invoked when the trackable is updated.
-        /// </summary>
-        public event Action updated;
-
-        /// <summary>
-        /// Invoked when the trackable is removed. If <see cref="destroyOnRemoval"/> is true, the
-        /// trackable will be removed immediately after this event is invoked.
-        /// </summary>
-        public event Action removed;
-
-        /// <summary>
         /// If true, this component's <c>GameObject</c> will be removed immediately when the XR device reports this trackable is no longer tracked.
         /// </summary>
         /// <remarks>
@@ -77,18 +66,6 @@ namespace UnityEngine.XR.ARFoundation
             this.sessionRelativeData = sessionRelativeData;
             transform.localPosition = sessionRelativeData.pose.position;
             transform.localRotation = sessionRelativeData.pose.rotation;
-        }
-
-        internal void InvokeUpdatedEvent()
-        {
-            if (updated != null)
-                updated();
-        }
-
-        internal void InvokeRemovedEvent()
-        {
-            if (removed != null)
-                removed();
         }
     }
 }

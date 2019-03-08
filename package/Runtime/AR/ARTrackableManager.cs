@@ -110,16 +110,6 @@ namespace UnityEngine.XR.ARFoundation
             {
                 // User events
                 OnTrackablesChanged(s_Added, s_Updated, s_Removed);
-
-                // TODO: Discuss the need for this
-                foreach (var added in s_Added)
-                    added.InvokeUpdatedEvent();
-
-                foreach (var updated in s_Updated)
-                    updated.InvokeUpdatedEvent();
-
-                foreach (var removed in s_Removed)
-                    removed.InvokeRemovedEvent();
             }
             finally
             {
@@ -177,7 +167,6 @@ namespace UnityEngine.XR.ARFoundation
         {
             var trackable = CreateOrUpdateTrackable(sessionRelativeData);
             m_PendingAdds.Add(trackable.trackableId, trackable);
-            trackable.InvokeUpdatedEvent();
             return trackable;
         }
 
@@ -222,15 +211,7 @@ namespace UnityEngine.XR.ARFoundation
             {
                 m_PendingAdds.Remove(trackableId);
                 m_Trackables.Remove(trackableId);
-                try
-                {
-                    // Guard against exceptions in user callbacks
-                    trackable.InvokeRemovedEvent();
-                }
-                finally
-                {
-                    DestroyTrackable(trackable);
-                }
+                DestroyTrackable(trackable);
                 return true;
             }
 

@@ -1,14 +1,11 @@
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.XR.ARFoundation;
 using UnityEngine.SpatialTracking;
+using UnityEngine.XR.ARFoundation;
 
 namespace UnityEditor.XR.ARFoundation
 {
     internal static class SceneUtils
     {
-        static readonly string k_DebugFaceMaterial = "Packages/com.unity.xr.arfoundation/Materials/DebugFace.mat";
-
         static readonly string k_DebugPlaneMaterial = "Packages/com.unity.xr.arfoundation/Materials/DebugPlane.mat";
 
         static readonly string k_ParticleMaterial = "Default-Particle.mat";
@@ -24,7 +21,10 @@ namespace UnityEditor.XR.ARFoundation
         {
             var originGo = ObjectFactory.CreateGameObject("AR Session Origin", typeof(ARSessionOrigin));
             var cameraGo = ObjectFactory.CreateGameObject("AR Camera",
-                typeof(Camera), typeof(TrackedPoseDriver), typeof(ARCameraBackground));
+                typeof(Camera),
+                typeof(TrackedPoseDriver),
+                typeof(ARCameraManager),
+                typeof(ARCameraBackground));
 
             Undo.SetTransformParent(cameraGo.transform, originGo.transform, "Parent camera to session origin");
 
@@ -39,12 +39,13 @@ namespace UnityEditor.XR.ARFoundation
 
             var tpd = cameraGo.GetComponent<TrackedPoseDriver>();
             tpd.SetPoseSource(TrackedPoseDriver.DeviceType.GenericXRDevice, TrackedPoseDriver.TrackedPose.ColorCamera);
+            tpd.updateType = TrackedPoseDriver.UpdateType.Update;
         }
 
         [MenuItem("GameObject/XR/AR Session", false, 10)]
         static void CreateARSession()
         {
-            ObjectFactory.CreateGameObject("AR Session", typeof(ARSession));
+            ObjectFactory.CreateGameObject("AR Session", typeof(ARSession), typeof(ARInputManager));
         }
 
         [MenuItem("GameObject/XR/AR Default Point Cloud", false, 10)]
@@ -80,19 +81,6 @@ namespace UnityEditor.XR.ARFoundation
                 typeof(MeshRenderer), typeof(LineRenderer));
             SetupMeshRenderer(go.GetComponent<MeshRenderer>(), k_DebugPlaneMaterial);
             SetupLineRenderer(go.GetComponent<LineRenderer>());
-        }
-
-        [MenuItem("GameObject/XR/AR Default Face", false, 10)]
-        static void CreateARFaceVisualizer()
-        {
-            var go = ObjectFactory.CreateGameObject("AR Default Face",
-                typeof(ARFaceMeshVisualizer), typeof(MeshCollider), typeof(MeshFilter),
-                typeof(MeshRenderer));
-            var meshRenderer = go.GetComponent<MeshRenderer>();
-            SetupMeshRenderer(meshRenderer, k_DebugFaceMaterial);
-            //self shadowing doesn't look good on the default face
-            meshRenderer.receiveShadows = false;
-            meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
         }
 
         static void SetupLineRenderer(LineRenderer lineRenderer)

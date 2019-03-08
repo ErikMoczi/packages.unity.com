@@ -4,9 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.1.0-preview.2] - 2019-03-06
+## [1.1.0-preview.1] - 2019-??-??
 ### Fixes
 - Add dependency on Legacy Input Helpers, which were moved from Unity to a package in 2019.1.
+
+## [1.0.0-preview.23] - 2019-??-??
+### New
+- Add a generic base class for future tracking subsystems.
 
 ## [1.0.0-preview.22] - 2018-12-13
 
