@@ -559,22 +559,12 @@ namespace VisualStudioEditor
             IEnumerable<ResponseFileData> responseFilesData
         )
         {
-            string targetFrameworkVersion;
-            string targetLanguageVersion;
             var toolsVersion = "4.0";
             var productVersion = "10.0.20506";
             const string baseDirectory = ".";
 
-            if (island.compilerOptions.ApiCompatibilityLevel == ApiCompatibilityLevel.NET_4_6)
-            {
-                targetFrameworkVersion = "v4.7.1";
-                targetLanguageVersion = "latest";
-            }
-            else
-            {
-                targetFrameworkVersion = "v3.5";
-                targetLanguageVersion = "4";
-            }
+            var targetFrameworkVersion = "v4.7.1";
+            var targetLanguageVersion = "latest";
 
             var arguments = new object[]
             {
