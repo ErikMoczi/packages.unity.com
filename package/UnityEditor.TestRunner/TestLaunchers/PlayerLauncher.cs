@@ -44,6 +44,9 @@ namespace UnityEditor.TestTools.TestRunner
             editorConnectionTestCollector.hideFlags = HideFlags.HideAndDontSave;
             editorConnectionTestCollector.Init(m_TargetPlatform);
 
+            var remotePlayerLogController = RemotePlayerLogController.instance;
+            remotePlayerLogController.hideFlags = HideFlags.HideAndDontSave;
+
             using (var settings = new PlayerLauncherContextSettings(m_OverloadTestRunSettings))
             {
                 var sceneName = CreateSceneName();

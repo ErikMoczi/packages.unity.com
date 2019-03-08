@@ -53,8 +53,9 @@ namespace UnityEditor.TestRunner.TestLaunchers
         private void RunFinished(MessageEventArgs messageEventArgs)
         {
             m_RemoteTestResultReciever.RunFinished(messageEventArgs);
-            CallbacksDelegator.instance.RunFinishedRemotely(messageEventArgs.data);
             m_PlatformSpecificSetup.CleanUp();
+
+            CallbacksDelegator.instance.RunFinishedRemotely(messageEventArgs.data);
         }
 
         private void TestStarted(MessageEventArgs messageEventArgs)

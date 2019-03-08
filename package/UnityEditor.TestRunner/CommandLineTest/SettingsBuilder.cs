@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEditor.TestRunner.CommandLineParser;
 using UnityEditor.TestTools.TestRunner.Api;
 
@@ -73,9 +74,11 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             );
             optionSet.Parse(commandLineArgs);
 
+            var projectPath = Path.GetDirectoryName(resultFilePath);
             return new ExecutionSettings()
             {
                 TestResultsFile = resultFilePath,
+                ProjectPath = projectPath
             };
         }
 

@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.TestRunner.TestLaunchers;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -65,6 +66,7 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
         private void TimeoutReached()
         {
+            RemotePlayerLogController.instance.StopLogWriters();
             m_LogErrorFormat("Test execution timed out.", new object[0]);
             m_ExitApplication((int)Executer.ReturnCodes.RunError);
         }

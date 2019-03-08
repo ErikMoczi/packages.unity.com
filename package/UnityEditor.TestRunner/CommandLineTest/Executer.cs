@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using UnityEditor.TestRunner.TestLaunchers;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -30,6 +31,8 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             try
             {
                 executionSettings = m_SettingsBuilder.BuildApiExecutionSettings(commandLineArgs);
+                if (executionSettings.targetPlatform.HasValue)
+                    RemotePlayerLogController.instance.SetBuildTarget(executionSettings.targetPlatform.Value);
             }
             catch (SetupException exception)
             {
@@ -64,11 +67,15 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
         internal void SetUpCallbacks(ExecutionSettings executionSettings)
         {
+            RemotePlayerLogController.instance.SetProjectPath(executionSettings.ProjectPath);
+
             var resultSavingCallback = ScriptableObject.CreateInstance<ResultsSavingCallbacks>();
             resultSavingCallback.m_ResultFilePath = executionSettings.TestResultsFile;
 
+            var logSavingCallback = ScriptableObject.CreateInstance<LogSavingCallbacks>();
 
             m_TestRunnerApi.RegisterCallbacks(resultSavingCallback);
+            m_TestRunnerApi.RegisterCallbacks(logSavingCallback);
             m_TestRunnerApi.RegisterCallbacks(ScriptableObject.CreateInstance<ExitCallbacks>(), -10);
             var timeoutCallbacks = ScriptableObject.CreateInstance<TimeoutCallbacks>();
             timeoutCallbacks.Init((action, time) => new DelayedCallback(action, time), m_LogErrorFormat, m_ExitEditorApplication);
