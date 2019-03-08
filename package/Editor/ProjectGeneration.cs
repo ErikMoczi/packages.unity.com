@@ -326,6 +326,11 @@ namespace RiderEditor
 
         static bool IsInternalizedPackagePath(string file)
         {
+            if (string.IsNullOrWhiteSpace(file))
+            {
+                return false;
+            }
+
             var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(file);
             if (packageInfo == null) {
                 return false;
@@ -373,7 +378,6 @@ namespace RiderEditor
                     continue;
                 }
                 method.Invoke(null, args);
-                
             }
         }
 
