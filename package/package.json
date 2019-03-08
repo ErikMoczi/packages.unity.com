@@ -1,0 +1,9 @@
+{
+	"name": "com.unity.settings-manager",
+	"displayName":"Settings Manager",
+	"version": "0.1.0-preview.0",
+	"unity": "2018.1",
+	"description": "A framework for making any serializable field a setting, complete with a pre-built settings interface.",
+	"dependencies": {
+	}
+}
