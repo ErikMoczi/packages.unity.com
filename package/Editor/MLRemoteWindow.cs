@@ -148,7 +148,18 @@ namespace UnityEditor.XR.MagicLeap
 
         private static bool HasVirtualDevice
         {
-            get { var sdk = SDK.Find(false);  return (sdk != null) ? sdk.HasMLRemote : false; }
+            get
+            {
+                try
+                {
+                    var sdk = SDK.Find(false);
+                    return (sdk != null) ? sdk.HasMLRemote : false;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
         }
 
         private static void Restart(params string[] args)

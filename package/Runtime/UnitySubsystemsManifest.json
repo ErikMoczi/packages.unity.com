@@ -5,5 +5,9 @@
     "meshings": [
         {
             "id": "MagicLeap-Mesh"
+        }],
+    "inputs": [
+        {
+            "id": "MagicLeap-Input"
         }]
 }
