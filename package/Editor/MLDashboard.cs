@@ -4,10 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 using UnityEditor.Lumin;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using UnityEngine.Rendering;
 
 namespace UnityEditor.XR.MagicLeap
@@ -31,7 +31,7 @@ namespace UnityEditor.XR.MagicLeap
                 name = "MainVisualContainer"
             };
             _mainVisualContainer.Add(_remoteChecksUi);
-            var root = this.GetRootVisualContainer();
+            var root = this.rootVisualElement;
             root.Add(_mainVisualContainer);
 
             _availablePackages = MagicLeapPackageLocator.GetUnityPackages().ToArray();
