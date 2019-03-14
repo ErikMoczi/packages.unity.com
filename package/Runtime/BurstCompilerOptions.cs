@@ -1,3 +1,5 @@
+// As BurstCompiler.Compile is not supported on Tiny/ZeroPlayer, we can ifdef the entire file
+#if !UNITY_ZEROPLAYER && !UNITY_CSHARP_TINY
 using System;
 using System.ComponentModel;
 using System.Reflection;
@@ -430,3 +432,4 @@ namespace Unity.Burst
         All = IL | ILPre | Backend | IR | IROptimized | Asm | Function | Analysis | IRPassAnalysis
     }
 }
+#endif

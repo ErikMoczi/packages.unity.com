@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.0-preview.3] - 2019-03-14
+
+- Fix compilation issue with uTiny builds
+
 ## [1.0.0-preview.2] - 2019-03-13
 
 - Fix no-alias warning spamming when building a standalone player
