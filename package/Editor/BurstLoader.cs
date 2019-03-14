@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Unity.Burst.LowLevel;
 using UnityEditor;
 
@@ -29,7 +30,15 @@ namespace Unity.Burst.Editor
             {
                 RuntimePath = Path.GetFullPath("Packages/com.unity.burst/.Runtime");
             }
-            BurstCompilerService.Initialize(RuntimePath, BurstReflection.ExtractBurstCompilerOptions);
+
+            BurstEditorOptions.EnsureSynchronized();
+
+            BurstCompilerService.Initialize(RuntimePath, TryGetOptionsFromMember);
+        }
+
+        private static bool TryGetOptionsFromMember(MemberInfo member, out string flagsOut)
+        {
+            return BurstCompilerOptions.Global.TryGetOptions(member, out flagsOut);
         }
     }
 }

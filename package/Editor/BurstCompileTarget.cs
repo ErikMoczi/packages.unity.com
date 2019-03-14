@@ -8,9 +8,11 @@ namespace Unity.Burst.Editor
     {
         public BurstCompileTarget(MethodInfo method, Type jobType, bool isStaticMethod)
         {
-            Method = method;
-            JobType = jobType;
-            SupportsBurst = BurstReflection.ExtractBurstCompilerOptions(JobType, out DefaultOptions);
+            Method = method ?? throw new ArgumentNullException(nameof(method));
+            JobType = jobType ?? throw new ArgumentNullException(nameof(jobType));
+            // This is important to clone the options as we don't want to modify the global instance
+            Options = BurstCompilerOptions.Global.Clone();
+            // The BurstCompilerAttribute can be either on the type or on the method
             IsStaticMethod = isStaticMethod;
         }
 
@@ -32,12 +34,12 @@ namespace Unity.Burst.Editor
         /// <summary>
         /// The default compiler options
         /// </summary>
-        public readonly string DefaultOptions;
+        public readonly BurstCompilerOptions Options;
 
         /// <summary>
         /// Set to true if burst compilation is possible.
         /// </summary>
-        public readonly bool SupportsBurst;
+        public bool IsSupported => Options.IsSupported(JobType) || (IsStaticMethod && Options.IsSupported(Method));
 
         /// <summary>
         /// Generated disassembly, or null if disassembly failed

@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace Burst.Compiler.IL.Tests
 {
-    public class Expressions
+    public partial class Expressions
     {
         [TestCompiler((uint)(1 << 20))]
         [TestCompiler((uint)(1 << 15))]
@@ -226,6 +226,7 @@ namespace Burst.Compiler.IL.Tests
             return value;
         }
 
+        [Ignore("Incorrect results in mono")]
         [TestCompiler(0.0f)]
         [TestCompiler(1.0f)]
         [TestCompiler(0.5f)]
@@ -812,12 +813,6 @@ namespace Burst.Compiler.IL.Tests
         public static int test_expr_sizeof_int()
         {
             return sizeof(int);
-        }
-
-        [TestCompiler]
-        public static int test_expr_sizeof_int_ptr()
-        {
-            return Unsafe.SizeOf<IntPtr>();
         }
 
         [TestCompiler(-1)]

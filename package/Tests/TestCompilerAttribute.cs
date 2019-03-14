@@ -87,11 +87,12 @@ namespace Burst.Compiler.IL.Tests
                 return compiledFunction;
             }
 
+#if UNITY_BURST_FEATURE_FUNCPTR
             protected override IFunctionPointer CompileFunctionPointer(MethodInfo methodInfo, Type functionType)
             {
                 throw new NotImplementedException();
             }
-
+#endif
             protected override void Setup()
             {
             }

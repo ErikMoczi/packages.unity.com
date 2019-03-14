@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0-preview.2] - 2019-03-13
+
+- Fix no-alias warning spamming when building a standalone player
+- Improve the layout of the options/buttons for the inspector so that they at least attempt to layout better when the width is too small for all the buttons
+- Fix formatting of error messages so the Unity Console can correctly parse the location as a clickable item (Note however it does not appear to allow double clicking on absolute paths)
+- Change burst menu to Jobs/Burst. Improve order of menu items
+- Fix for AOTSettings bug related to StandaloneWindows vs StandaloneWindows64
+
 ## [1.0.0-preview.1] - 2019-03-11
 
 - Fix regression when resolving the type of generic used in a field

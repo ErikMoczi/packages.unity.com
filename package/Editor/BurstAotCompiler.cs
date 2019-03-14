@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Burst.Compiler.IL;
 using Unity.Burst.LowLevel;
 using UnityEditor;
 using UnityEditor.Build;
@@ -152,7 +151,7 @@ extern ""C""
             for (var i = 0; i < methodsToCompile.Count; i++)
             {
                 var burstCompileTarget = methodsToCompile[i];
-                if (!burstCompileTarget.SupportsBurst)
+                if (!burstCompileTarget.IsSupported)
                 {
                     continue;
                 }

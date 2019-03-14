@@ -6,7 +6,7 @@ namespace Burst.Compiler.IL.Tests
     /// <summary>
     /// Test with enums.
     /// </summary>
-    public class TestEnums
+    public partial class TestEnums
     {
         [System.Flags]
         public enum MyEnum
@@ -57,12 +57,6 @@ namespace Burst.Compiler.IL.Tests
         public static int test_enum_sizeof_small_enum()
         {
             return sizeof(SmallEnum);
-        }
-
-        [TestCompiler]
-        public static int test_enum_sizeof_small_enum_in_struct()
-        {
-            return Unsafe.SizeOf<MySmallEnumStruct>();
         }
 
         [TestCompiler(SmallEnum.Three)]

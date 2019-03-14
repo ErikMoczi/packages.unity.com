@@ -1,6 +1,10 @@
 using System;
 
+#if BURST_INTERNAL
+namespace Burst.Compiler.IL
+#else
 namespace Unity.Burst
+#endif
 {
     /// <summary>
     /// Provides helper intrinsics that can be used at runtime.

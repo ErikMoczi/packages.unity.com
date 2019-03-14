@@ -8,7 +8,7 @@ namespace Burst.Compiler.IL.Tests
     [TestFixture]
     public partial class Vectors
     {
-        public class LoadStore
+        public partial class LoadStore
         {
             [TestCompiler(DataRange.Standard)]
             public static float TestReturnFloat4(ref float4 result)
@@ -94,16 +94,6 @@ namespace Burst.Compiler.IL.Tests
                 var local = vect;
                 local.z += 5;
                 result = local;
-            }
-
-            [TestCompiler(DataRange.Standard)]
-            public static unsafe float FieldLoadIndirectUnsafeFloat4(ref float4 a)
-            {
-                fixed (void* pa = &a)
-                {
-                    var value = Unsafe.Read<float4>(pa);
-                    return ConvertToFloat(value);
-                }
             }
         }
     }

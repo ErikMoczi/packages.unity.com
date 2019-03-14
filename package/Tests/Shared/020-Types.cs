@@ -12,7 +12,7 @@ namespace Burst.Compiler.IL.Tests
     /// <summary>
     /// Tests types
     /// </summary>
-    public class Types
+    public partial class Types
     {
         [TestCompiler]
         public static int Bool()
@@ -110,26 +110,6 @@ namespace Burst.Compiler.IL.Tests
         }
 
         [TestCompiler]
-        public static int SizeOfBoolStruct()
-        {
-            // Check the size of a struct with only booleans
-            return Unsafe.SizeOf<BoolStruct>();
-        }
-
-        [TestCompiler]
-        public static int SizeOfBoolFixedStruct()
-        {
-            // Check the size of a struct with only booleans
-            return Unsafe.SizeOf<BoolFixedStruct>();
-        }
-
-        [TestCompiler]
-        public static int SizeOfInterleavedBoolStruct()
-        {
-            return Unsafe.SizeOf<InterleavedBoolStruct>();
-        }
-
-        [TestCompiler]
         public static long StructAccess()
         {
             var s = new InterleavedBoolStruct();
@@ -167,18 +147,6 @@ namespace Burst.Compiler.IL.Tests
             }
         }
 #endif
-
-        [TestCompiler()]
-        public static int SizeOfStructSize()
-        {
-            return Unsafe.SizeOf<StructWithSize>();
-        }
-
-        [TestCompiler()]
-        public static int SizeOfEmptyStruct()
-        {
-            return Unsafe.SizeOf<EmptyStruct>();
-        }
 
         [TestCompiler(ExpectCompilerException = true)]
         public static int TestUsingReferenceType()

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using Burst.Compiler.IL;
 using Unity.Burst.LowLevel;
 using UnityEditor;
 using UnityEditor.Compilation;
@@ -11,8 +10,6 @@ using UnityEngine;
 
 namespace Unity.Burst.Editor
 {
-    using static BurstCompilerOptions;
-
     internal enum DisassemblyKind
     {
         Asm = 0,
@@ -37,11 +34,11 @@ namespace Unity.Burst.Editor
 
         private static readonly string[] DisasmOptions =
         {
-            "\n" + GetOption(OptionDump, NativeDumpFlags.Asm),
-            "\n" + GetOption(OptionDump, NativeDumpFlags.IL),
-            "\n" + GetOption(OptionDump, NativeDumpFlags.IR),
-            "\n" + GetOption(OptionDump, NativeDumpFlags.IROptimized),
-            "\n" + GetOption(OptionDump, NativeDumpFlags.IRPassAnalysis)
+            "\n" + BurstCompilerOptions.GetOption(BurstCompilerOptions.OptionDump, NativeDumpFlags.Asm),
+            "\n" + BurstCompilerOptions.GetOption(BurstCompilerOptions.OptionDump, NativeDumpFlags.IL),
+            "\n" + BurstCompilerOptions.GetOption(BurstCompilerOptions.OptionDump, NativeDumpFlags.IR),
+            "\n" + BurstCompilerOptions.GetOption(BurstCompilerOptions.OptionDump, NativeDumpFlags.IROptimized),
+            "\n" + BurstCompilerOptions.GetOption(BurstCompilerOptions.OptionDump, NativeDumpFlags.IRPassAnalysis)
         };
 
         private static readonly string[] CodeGenOptions =
@@ -86,6 +83,8 @@ namespace Unity.Burst.Editor
         private SearchField _searchField;
 
         [SerializeField] private string _selectedItem;
+
+        [NonSerialized]
         private List<BurstCompileTarget> _targets;
 
         [NonSerialized]
@@ -118,11 +117,83 @@ namespace Unity.Burst.Editor
             CleanupFont();
         }
 
+        private void FlowToNewLine(ref float remainingWidth, float resetWidth, GUIStyle style, GUIContent content)
+        {
+            float spaceRemainingBeforeNewLine = EditorStyles.toggle.CalcSize(new GUIContent("WWWW")).x;
+
+            remainingWidth -= style.CalcSize(content).x;
+            if (remainingWidth <= spaceRemainingBeforeNewLine)
+            {
+                remainingWidth = resetWidth;
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+            }
+        }
+
+        private void RenderButtonBars(float width, BurstCompileTarget target, out bool doRefresh, out bool doCopy, out int fontIndex)
+        {
+            float remainingWidth = width;
+
+            var contentDisasm = new GUIContent("Enhanced Disassembly");
+            var contentSafety = new GUIContent("Safety Checks");
+            var contentOptimizations = new GUIContent("Optimizations");
+            var contentFastMath = new GUIContent("Fast Math");
+            var contentCodeGenOptions = new GUIContent("Auto");
+            var contentLabelFontSize = new GUIContent("Font Size");
+            var contentFontSize = new GUIContent("99");
+            var contentRefresh = new GUIContent("Refresh Disassembly");
+            var contentCopyToClip = new GUIContent("Copy to Clipboard");
+
+            GUILayout.BeginHorizontal();
+
+            _enhancedDisassembly = GUILayout.Toggle(_enhancedDisassembly, contentDisasm, EditorStyles.toggle);
+            FlowToNewLine(ref remainingWidth,width, EditorStyles.toggle, contentDisasm);
+            _safetyChecks = GUILayout.Toggle(_safetyChecks, contentSafety, EditorStyles.toggle);
+            FlowToNewLine(ref remainingWidth,width, EditorStyles.toggle, contentSafety);
+            _optimizations = GUILayout.Toggle(_optimizations, contentOptimizations, EditorStyles.toggle);
+            FlowToNewLine(ref remainingWidth,width, EditorStyles.toggle, contentOptimizations);
+            _fastMath = GUILayout.Toggle(_fastMath, contentFastMath, EditorStyles.toggle);
+            FlowToNewLine(ref remainingWidth,width, EditorStyles.toggle, contentFastMath);
+
+            EditorGUI.BeginDisabledGroup(!target.IsSupported);
+            _codeGenOptions = EditorGUILayout.Popup(_codeGenOptions, CodeGenOptions, EditorStyles.popup);
+            FlowToNewLine(ref remainingWidth, width, EditorStyles.popup, contentCodeGenOptions);
+
+            GUILayout.Label("Font Size", EditorStyles.label);
+            fontIndex = EditorGUILayout.Popup(_fontSizeIndex, _fontSizesText, EditorStyles.popup);
+            FlowToNewLine(ref remainingWidth, width, EditorStyles.label,contentLabelFontSize);
+            FlowToNewLine(ref remainingWidth, width, EditorStyles.popup,contentFontSize);
+
+            doRefresh = GUILayout.Button(contentRefresh, EditorStyles.miniButton);
+            FlowToNewLine(ref remainingWidth, width, EditorStyles.miniButton,contentRefresh);
+
+            doCopy = GUILayout.Button(contentCopyToClip, EditorStyles.miniButton);
+            FlowToNewLine(ref remainingWidth, width, EditorStyles.miniButton,contentCopyToClip);
+            EditorGUI.EndDisabledGroup();
+
+            GUILayout.EndHorizontal();
+
+            _disasmKind = (DisassemblyKind) GUILayout.Toolbar((int) _disasmKind, DisassemblyKindNames, GUILayout.Width(width));
+
+        }
+
         public void OnGUI()
         {
+            // Make sure that editor options are synchronized
+            BurstEditorOptions.EnsureSynchronized();
+
             if (_targets == null)
             {
                 _targets = BurstReflection.FindExecuteMethods(AssembliesType.Editor);
+                foreach (var target in _targets)
+                {
+                    // Enable burst compilation by default (override globals for the inspector)
+                    // This is not working as expected. This changes indirectly the global options while it shouldn't
+                    // Unable to explain how it can happen
+                    // so for now, if global enable burst compilation is disabled, then inspector is too
+                    //target.Options.EnableBurstCompilation = true;
+                }
+
                 _treeView.Targets = _targets;
                 _treeView.Reload();
 
@@ -155,6 +226,7 @@ namespace Unity.Burst.Editor
 
                 _font = Font.CreateDynamicFontFromOSFont(fontName, FontSize);
                 _fixedFontStyle.font = _font;
+                _fixedFontStyle.fontSize = FontSize;
             }
 
             if (_searchField == null) _searchField = new SearchField();
@@ -190,60 +262,51 @@ namespace Unity.Burst.Editor
                 // Stash selected item name to handle domain reloads more gracefully
                 _selectedItem = target.GetDisplayName();
 
-                GUILayout.BeginHorizontal();
+                bool doRefresh = false;
+                bool doCopy = false;
+                int fsi = _fontSizeIndex;
 
-                _enhancedDisassembly = GUILayout.Toggle(_enhancedDisassembly, "Enhanced Disassembly");
-                _safetyChecks = GUILayout.Toggle(_safetyChecks, "Safety Checks");
-                _optimizations = GUILayout.Toggle(_optimizations, "Optimizations");
-                _fastMath = GUILayout.Toggle(_fastMath, "Fast Math");
-                EditorGUI.BeginDisabledGroup(!target.SupportsBurst);
-                _codeGenOptions = EditorGUILayout.Popup(_codeGenOptions, CodeGenOptions);
-
-                GUILayout.Label("Font Size");
-                var fsi = EditorGUILayout.Popup(_fontSizeIndex, _fontSizesText);
-
-                var doRefresh = GUILayout.Button("Refresh Disassembly");
-                var doCopy = GUILayout.Button("Copy to Clipboard");
-                EditorGUI.EndDisabledGroup();
-
-                GUILayout.EndHorizontal();
-
-                _disasmKind = (DisassemblyKind) GUILayout.Toolbar((int) _disasmKind, DisassemblyKindNames);
+                RenderButtonBars((position.width*2)/3, target, out doRefresh, out doCopy, out fsi);
 
                 var disasm = target.Disassembly != null ? target.Disassembly[(int) _disasmKind] : null;
+
+
+                var methodOptions = target.Options.Clone();
 
                 if (doRefresh)
                 {
                     // TODO: refactor this code with a proper AppendOption to avoid these "\n"
                     var options = new StringBuilder();
-                    BurstReflection.ExtractBurstCompilerOptionsBasic(target.JobType, options);
 
-                    if (!_safetyChecks)
-                        options.Append("\n" + GetOption(OptionDisableSafetyChecks) + "\n" + GetOption(OptionNoAlias));
+                    methodOptions.EnableBurstSafetyChecks = _safetyChecks;
+                    methodOptions.EnableEnhancedAssembly = _enhancedDisassembly;
+                    methodOptions.DisableOptimizations = !_optimizations;
+                    methodOptions.EnableFastMath = _fastMath;
+                    // force synchronouze compilation for the inspector
+                    methodOptions.EnableBurstCompileSynchronously = true;
 
-                    if (_enhancedDisassembly)
-                        options.Append("\n" + GetOption(OptionDebug));
-
-                    if (!_optimizations) options.Append("\n" + GetOption(OptionDisableOpt));
-
-                    if (_fastMath) options.Append("\n" + GetOption(OptionFastMath));
-
-                    options.AppendFormat("\n" + GetOption(OptionTarget, CodeGenOptions[_codeGenOptions]));
-
-                    var baseOptions = options.ToString().Trim('\n', ' ');
-
-                    target.Disassembly = new string[DisasmOptions.Length];
-
-                    for (var i = 0; i < DisasmOptions.Length; ++i)
-                        target.Disassembly[i] = GetDisassembly(target.Method, baseOptions + DisasmOptions[i]);
-
-                    if (_enhancedDisassembly && (int)DisassemblyKind.Asm < target.Disassembly.Length)
+                    string defaultOptions;
+                    if (methodOptions.TryGetOptions(target.JobType, out defaultOptions))
                     {
-                        var processor = new BurstDisassembler();
-                        target.Disassembly[(int)DisassemblyKind.Asm] = processor.Process(target.Disassembly[(int)DisassemblyKind.Asm]);
-                    }
+                        options.Append(defaultOptions);
 
-                    disasm = target.Disassembly[(int) _disasmKind];
+                        options.AppendFormat("\n" + BurstCompilerOptions.GetOption(BurstCompilerOptions.OptionTarget, CodeGenOptions[_codeGenOptions]));
+
+                        var baseOptions = options.ToString().Trim('\n', ' ');
+
+                        target.Disassembly = new string[DisasmOptions.Length];
+
+                        for (var i = 0; i < DisasmOptions.Length; ++i)
+                            target.Disassembly[i] = GetDisassembly(target.Method, baseOptions + DisasmOptions[i]);
+
+                        if (_enhancedDisassembly && (int)DisassemblyKind.Asm < target.Disassembly.Length)
+                        {
+                            var processor = new BurstDisassembler();
+                            target.Disassembly[(int)DisassemblyKind.Asm] = processor.Process(target.Disassembly[(int)DisassemblyKind.Asm]);
+                        }
+
+                        disasm = target.Disassembly[(int)_disasmKind];
+                    }
                 }
 
                 if (disasm != null)
@@ -371,7 +434,7 @@ namespace Unity.Burst.Editor
         {
             var target = Targets[args.item.id - 1];
             var wasEnabled = GUI.enabled;
-            GUI.enabled = target.SupportsBurst;
+            GUI.enabled = target.IsSupported;
             base.RowGUI(args);
             GUI.enabled = wasEnabled;
         }

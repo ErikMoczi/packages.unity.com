@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Burst.Compiler.IL;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEditor.Compilation;
 using Debug = UnityEngine.Debug;
@@ -208,93 +207,6 @@ namespace Unity.Burst.Editor
             return result;
         }
 
-        public static bool ExtractBurstCompilerOptionsBasic(MemberInfo member, StringBuilder flagsOut)
-        {
-            if (!BurstEditorOptions.EnableBurstCompilation)
-            {
-                return false;
-            }
-
-            var attr = member.GetCustomAttribute<BurstCompileAttribute>();
-            if (attr == null)
-                return false;
-
-            if (attr.CompileSynchronously || BurstGlobalCompilerOptions.ForceSynchronousCompilation || BurstEditorOptions.EnableBurstCompileSynchronously)
-            {
-                AddOption(flagsOut, GetOption(OptionJitEnableSynchronousCompilation));
-            }
-
-            if (attr.FloatMode != FloatMode.Default)
-                AddOption(flagsOut, GetOption(OptionFloatMode, attr.FloatMode));
-
-            if (attr.FloatPrecision != FloatPrecision.Standard)
-                AddOption(flagsOut, GetOption(OptionFloatPrecision, attr.FloatPrecision));
-
-            // Add custom options
-            if (attr.Options != null)
-            {
-                foreach (var option in attr.Options)
-                {
-                    if (!string.IsNullOrEmpty(option))
-                    {
-                        AddOption(flagsOut, option);
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        public static bool GetBurstGeneralOptions(StringBuilder flagsOut)
-        {
-            if (!BurstEditorOptions.EnableBurstCompilation)
-            {
-                return false;
-            }
-
-            if (BurstEditorOptions.EnableBurstSafetyChecks)
-            {
-                AddOption(flagsOut, GetOption(OptionSafetyChecks));
-            }
-            else
-            {
-                AddOption(flagsOut, GetOption(OptionDisableSafetyChecks));
-                // Enable NoAlias ahen safety checks are disable
-                AddOption(flagsOut, GetOption(OptionNoAlias));
-            }
-
-            if (BurstEditorOptions.EnableShowBurstTimings)
-            {
-                AddOption(flagsOut, GetOption(OptionJitLogTimings));
-            }
-            return true;
-        }
-
-        public static bool ExtractBurstCompilerOptions(MemberInfo member, out string flagsOut)
-        {
-            flagsOut = null;
-            // We don't fail if member == null as this method is being called by native code and doesn't expect to crash
-            if (!BurstEditorOptions.EnableBurstCompilation || member == null || BurstGlobalCompilerOptions.DisableCompilation)
-            {
-                return false;
-            }
-
-            var flagsBuilderOut = new StringBuilder();
-            if (!ExtractBurstCompilerOptionsBasic(member, flagsBuilderOut))
-                return false;
-
-            GetBurstGeneralOptions(flagsBuilderOut);
-            flagsOut = flagsBuilderOut.ToString();
-            return true;
-        }
-
-        private static void AddOption(StringBuilder builder, string option)
-        {
-            if (builder.Length != 0)
-                builder.Append('\n'); // Use \n to separate options
-
-            builder.Append(option);
-        }
 
         /// <summary>
         /// Collects all assemblies - transitively that are valid for the specified type `Player` or `Editor`

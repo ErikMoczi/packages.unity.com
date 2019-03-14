@@ -2,8 +2,6 @@
     "name": "Unity.Burst.Tests.EditMode",
     "references": [
         "Unity.Burst",
-        "Unity.Collections",
-        "Unity.Jobs",
         "Unity.Mathematics"
     ],
     "optionalUnityReferences": [
@@ -17,5 +15,6 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": []
+    "defineConstraints": [],
+    "versionDefines": []
 }

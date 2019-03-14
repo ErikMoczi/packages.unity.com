@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace Burst.Compiler.IL.Tests
 {
-    public class TestStructs
+    public partial class TestStructs
     {
         [TestCompiler]
         public static float test_struct_func_call_by_value()
@@ -133,12 +133,6 @@ namespace Burst.Compiler.IL.Tests
         //}
 
         [TestCompiler]
-        public static int test_struct_with_intptr_sizeof()
-        {
-            return Unsafe.SizeOf<StructForSizeOf>();
-        }
-
-        [TestCompiler]
         public static float test_struct_with_static_fields()
         {
             StructWithStaticVariables myStruct = new StructWithStaticVariables();
@@ -244,13 +238,6 @@ namespace Burst.Compiler.IL.Tests
             {
                 Value = 13.37f
             }.AsUint;
-        }
-
-        [TestCompiler]
-        public static int TestExplicitStructPadding()
-        {
-            var paddedStruct = new PaddedStruct() {Value = 3};
-            return paddedStruct.Value + Unsafe.SizeOf<PaddedStruct>();
         }
         
         [TestCompiler]

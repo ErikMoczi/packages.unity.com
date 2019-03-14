@@ -51,8 +51,20 @@ namespace Unity.Burst.Editor
             return "ProjectSettings/BurstAotSettings_"+target.ToString()+".json";
         }
 
+        internal static BuildTarget ResolveTarget(BuildTarget target)
+        {
+            // Treat the 32/64 platforms the same from the point of view of burst settings
+            // since there is no real distinguishment from the platforms selector
+            if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
+                return BuildTarget.StandaloneWindows;
+            if (target == BuildTarget.StandaloneLinux64 || target == BuildTarget.StandaloneLinux)
+                return BuildTarget.StandaloneLinux;
+            return target;
+        }
+
         internal static BurstPlatformAotSettings GetOrCreateSettings(BuildTarget target)
         {
+            target = ResolveTarget(target);
             BurstPlatformAotSettings settings = ScriptableObject.CreateInstance<BurstPlatformAotSettings>();
             settings.InitialiseDefaults(target);
             string path = GetPath(target);
@@ -72,6 +84,7 @@ namespace Unity.Burst.Editor
 
         internal void Save(BuildTarget target)
         {
+            target = ResolveTarget(target);
             File.WriteAllText(GetPath(target), EditorJsonUtility.ToJson(this, true));
         }
 
