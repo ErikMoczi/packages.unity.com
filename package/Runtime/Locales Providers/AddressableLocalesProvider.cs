@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UnityEngine.ResourceManagement;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace UnityEngine.Localization
 {

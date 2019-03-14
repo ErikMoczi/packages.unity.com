@@ -4,3 +4,4 @@
 0.2.1-preview
 0.2.2-preview
 0.2.3-preview
+0.2.4-preview

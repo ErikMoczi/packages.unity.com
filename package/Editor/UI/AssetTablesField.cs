@@ -1,11 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.AddressableAssets;
-using UnityEditor.Experimental.UIElements;
-using UnityEditor.VersionControl;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Localization;
+using UnityEditor.AddressableAssets.Settings;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements;
+#endif
 
 namespace UnityEditor.Localization.UI
 {

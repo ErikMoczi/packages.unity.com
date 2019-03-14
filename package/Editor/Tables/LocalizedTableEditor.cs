@@ -1,14 +1,24 @@
 ﻿using System.Collections.Generic;
-using UnityEditor.Experimental;
 using UnityEngine;
 using UnityEngine.Localization;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental;
+#endif
 
 namespace UnityEditor.Localization
 {
     [CanEditMultipleObjects()]
     [CustomEditor(typeof(LocalizedTable), true)]
-    public class LocalizedTableEditor : UIElementsEditor
+    public class LocalizedTableEditor :
+        #if UNITY_2019_1_OR_NEWER
+        Editor
+        #else
+        UIElementsEditor
+        #endif
     {
         GUIContent m_TableEditorButton;
         GUIContent m_Label;
@@ -77,24 +87,5 @@ namespace UnityEditor.Localization
                 UpdateAddressable();
             }
         }
-
-        //public void DrawTableEditorGUI(Rect rect)
-        //{
-        //    serializedObject.Update();
-        //    OnTableEditorGUI(rect);
-        //    if (serializedObject.ApplyModifiedProperties())
-        //        UpdateAddressable();
-        //}
-
-        //public virtual Rect OnTableEditorGUI(Rect rect)
-        //{
-        //    //EditorGUI.BeginChangeCheck();
-        //    var propRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
-        //    EditorGUI.PropertyField(propRect, m_TableName);
-        //    //if (EditorGUI.EndChangeCheck())
-        //    //    SetLabelText(m_TableName.stringValue);
-
-        //    return new Rect(rect.x, propRect.yMax + EditorGUIUtility.standardVerticalSpacing, rect.width, rect.height - propRect.height - EditorGUIUtility.standardVerticalSpacing);
-        //}
     }
 }

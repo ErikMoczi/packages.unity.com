@@ -1,5 +1,11 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
+#endif
 
 namespace UnityEditor.Localization.UI
 {
@@ -26,7 +32,7 @@ namespace UnityEditor.Localization.UI
             if (asset == null)
                 throw new FileNotFoundException("Failed to load UI Template at path " + path);
 
-            return asset.CloneTree(null);
+            return asset.CloneTree((Dictionary<string, VisualElement>)null);
         }
     }
 }

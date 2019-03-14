@@ -1,6 +1,10 @@
-﻿using UnityEngine;
+﻿#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Experimental.UIElements;
+#endif
 
 namespace UnityEditor.Localization.UI
 {
@@ -33,11 +37,11 @@ namespace UnityEditor.Localization.UI
             NewButton = root.Q<ToolbarToggle>("toolbarButtonNew");
             EditButton = root.Q<ToolbarToggle>("toolbarButtonEdit");
 
-            NewButton.OnValueChanged(evt =>
+            NewButton.RegisterCallback<ChangeEvent<bool>>(evt =>
             {
                 if (evt.newValue) ShowNewCallback();
             });
-            EditButton.OnValueChanged(evt =>
+            EditButton.RegisterCallback<ChangeEvent<bool>>(evt =>
             {
                 if (evt.newValue) ShowEditCallback();
             });

@@ -1,8 +1,11 @@
-#if UNITY_2018_3_OR_NEWER
-
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
 using UnityEngine.Localization;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
+using UnityEngine.Experimental.UIElements;
+#endif
 
 namespace UnityEditor.Localization
 {
@@ -72,4 +75,3 @@ namespace UnityEditor.Localization
         }
     }
 }
-#endif

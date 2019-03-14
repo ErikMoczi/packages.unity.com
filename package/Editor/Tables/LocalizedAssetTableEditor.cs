@@ -1,10 +1,16 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
 using UnityEngine.Localization;
-using UnityEditor.Experimental.UIElements;
 using UnityEditor.Localization.UI;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
+#else
+using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements;
+#endif
 
 namespace UnityEditor.Localization
 {
@@ -31,7 +37,7 @@ namespace UnityEditor.Localization
             m_Root = UI.Resources.GetTemplate("LocalizedAssetTableEditor");
             m_Root.Bind(serializedObject);
 
-            m_Root.Q<PropertyField>("m_TableName").Q<TextField>().OnValueChanged(TableNameChanged);
+            m_Root.Q<PropertyField>("m_TableName").Q<TextField>().RegisterCallback<ChangeEvent<string>>(TableNameChanged);
             m_Root.Q<PropertyField>("m_TableName").Q<TextField>().isDelayed = true; // Prevent an undo per char change.
             var tableContainer = m_Root.Q("tableContainer");
             m_IMGUIContainer = new IMGUIContainer(OnIMGUI);

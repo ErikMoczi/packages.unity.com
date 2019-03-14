@@ -1,9 +1,14 @@
 ﻿using UnityEngine;
-using UnityEngine.Experimental.UIElements;
 using UnityEngine.Localization;
-using UnityEditor.Experimental.UIElements;
 using UnityEditor.Localization.UI;
 using Resources = UnityEditor.Localization.UI.Resources;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+#else
+using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements;
+#endif
 
 // TODO: Detect if a table is part of addressables. 
 // TODO: Detect changes to assets/imports etc.
@@ -43,17 +48,25 @@ namespace UnityEditor.Localization
             toolbar.EditButton.value = true;
             m_AssetTablesField.SetValueFromTable(selectedTable);
 
+            #if !UNITY_2019_1_OR_NEWER
             // If EditTable is called during OnEnable then the change event will not be sent.
             if (m_AssetTablesField.panel == null)
             {
                 ShowTableEditor(m_AssetTablesField.value);
             }
+            #endif
         }
 
         void OnEnable()
         {
+            #if UNITY_2019_1_OR_NEWER
+            m_Root = rootVisualElement;
+            m_Root.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(Resources.GetStyleSheetPath("AssetTablesWindow")));
+            #else
             m_Root = this.GetRootVisualContainer();
             m_Root.AddStyleSheetPath(Resources.GetStyleSheetPath("AssetTablesWindow"));
+            #endif
+
             var template = Resources.GetTemplate("AssetTablesWindow");
             m_Root.Add(template);
             template.StretchToParentSize();
@@ -70,7 +83,7 @@ namespace UnityEditor.Localization
             toolbar.selectionChanged += panel => UpdatePanels();
 
             m_AssetTablesField = m_Root.Q<AssetTablesField>();
-            m_AssetTablesField.OnValueChanged(TableSelected);
+            m_AssetTablesField.RegisterCallback<ChangeEvent<AssetTableCollection>>(TableSelected);
             if (m_AssetTablesField.value != null && !(m_AssetTablesField.value is AssetTablesField.NoTables))
             {
                 m_ActiveTableEditor = m_AssetTablesField.value.TableEditor.CreateInspectorGUI();

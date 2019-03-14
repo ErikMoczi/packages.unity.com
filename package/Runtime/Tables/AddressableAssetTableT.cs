@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 // TODO: Unload function for restoring/unloading all assets.
 namespace UnityEngine.Localization

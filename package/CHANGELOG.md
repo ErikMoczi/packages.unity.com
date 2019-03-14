@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
+## [0.2.4] - 2019-03-13
+-Fixed UIElements compilation issues in 2019.1+
+-Updated to Addressables version '0.6.7-preview'.
+
 ## [0.2.3] - 2019-02-20
 -Fixed adding Locales and Tables to Addressables not working when the Addressables settings asset did not exist(LOC-24).
 -Fixed exception when changing a table name in the Table Editor window.

@@ -19,7 +19,7 @@ namespace UnityEditor.Localization.UI.Tests
         public void DoesNotThrowException_WhenNoTablesExistInProject()
         {
             LocalizationPlayerSettings.Instance = new EmptyProjectPlayerSettings();
-            var assetTablesField = new AssetTablesField();
+            Assert.DoesNotThrow(() => new AssetTablesField());
             LocalizationPlayerSettings.Instance = null;
         }
     }

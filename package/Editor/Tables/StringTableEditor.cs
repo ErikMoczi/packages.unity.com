@@ -1,10 +1,16 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.Localization;
+using UnityEditor.Localization.UI;
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
+#else
 using UnityEngine.Experimental.UIElements;
 using UnityEditor.Experimental.UIElements;
-using UnityEditor.Localization.UI;
 using UnityEngine.Experimental.UIElements.StyleEnums;
+#endif
 
 namespace UnityEditor.Localization
 {
@@ -81,7 +87,8 @@ namespace UnityEditor.Localization
             {
                 m_Root = Resources.GetTemplate("StringTableEditor");
                 m_Root.Bind(serializedObject);
-                m_Root.Q<PropertyField>("m_TableName").Q<TextField>().OnValueChanged(TableNameChanged);
+
+                m_Root.Q<PropertyField>("m_TableName").Q<TextField>().RegisterCallback<ChangeEvent<string>>(TableNameChanged);
                 m_Root.Q<PropertyField>("m_TableName").Q<TextField>().isDelayed = true; // Prevent an undo for every char changed.
                 var tableContainer = m_Root.Q("tableContainer");
                 m_ImguiContainer = new IMGUIContainer(OnIMGUI);
@@ -95,7 +102,7 @@ namespace UnityEditor.Localization
                 m_DetailedPanelContainer = m_Root.Q("detailedPanelContainer");
 
                 m_PluralModeToggle = m_DetailedPanelContainer.Q<Toggle>("pluralModeToggle");
-                m_PluralModeToggle.OnValueChanged(evt => RefreshEditPanel());
+                m_PluralModeToggle.RegisterCallback<ChangeEvent<bool>>(evt => RefreshEditPanel());
             }
             return m_Root;
         }
@@ -113,14 +120,14 @@ namespace UnityEditor.Localization
             {
                 contents.Add(new Label("Source Text"));
                 var sourceText = new TextField { isDelayed = true, value = entry.Id };
-                sourceText.OnValueChanged(SourceTextChanged);
+                sourceText.RegisterCallback<ChangeEvent<string>>(SourceTextChanged);
                 contents.Add(sourceText);
 
                 if (!m_PluralModeToggle.value)
                 {
                     contents.Add(new Label("Translated Text(" + m_SelectedTable.LocaleIdentifier.Code + ")"));
                     var translated = new TextField { isDelayed = true, value = entry.Translated };
-                    translated.OnValueChanged(evt =>
+                    translated.RegisterCallback<ChangeEvent<string>>(evt =>
                     {
                         Undo.RecordObject(m_SelectedTable, "Change translated text");
                         entry.Translated = evt.newValue;
@@ -138,7 +145,7 @@ namespace UnityEditor.Localization
                             contents.Add(new Label("Plural " + i));
                             var plural = new TextField() { isDelayed = true, value = entry.GetPlural(i), multiline = true };
                             var pluralIndex = i;
-                            plural.OnValueChanged(evt =>
+                            plural.RegisterCallback<ChangeEvent<string>>(evt =>
                             {
                                 Undo.RecordObject(m_SelectedTable, "Change translated text");
                                 entry.SetPlural(pluralIndex, evt.newValue);
