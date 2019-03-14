@@ -89,7 +89,8 @@ namespace UnityEngine.SpatialTracking
     /// The PoseDataSource class acts as a container for the GetDatafromSource method call that should be used by PoseProviders wanting to query data for a particular pose.
     /// </summary>
     static public class PoseDataSource
-    {        
+    {
+#if ENABLE_VR
         static internal List<XR.XRNodeState> nodeStates = new List<XR.XRNodeState>();        
         static internal PoseDataFlags GetNodePoseData(XR.XRNode node, out Pose resultPose)
         {
@@ -113,6 +114,7 @@ namespace UnityEngine.SpatialTracking
             resultPose = Pose.identity;
             return retData;
         }
+#endif
 
         /// <summary>
         /// <signature><![CDATA[GetDataFromSource(TrackedPose,Pose)]]></signature>
@@ -122,6 +124,7 @@ namespace UnityEngine.SpatialTracking
         /// <returns>Retuns a bitflag which represents which data has been retrieved from the provided pose source</returns>                            
         static public PoseDataFlags GetDataFromSource(TrackedPoseDriver.TrackedPose poseSource, out Pose resultPose)
         {
+#if ENABLE_VR
             switch (poseSource)
             {
                 case TrackedPoseDriver.TrackedPose.RemotePose:
@@ -171,12 +174,14 @@ namespace UnityEngine.SpatialTracking
                     break;
                 }              
             }
+#endif
             resultPose = Pose.identity;
             return PoseDataFlags.NoData;
         }
        
         static PoseDataFlags TryGetTangoPose(out Pose pose)
         {
+#if ENABLE_VR
             PoseData poseOut;
             if (TangoInputTracking.TryGetPoseAtTime(out poseOut) && poseOut.statusCode == PoseStatus.Valid)
             {
@@ -184,6 +189,7 @@ namespace UnityEngine.SpatialTracking
                 pose.rotation = poseOut.rotation;
                 return PoseDataFlags.Position | PoseDataFlags.Rotation; ;
             }
+#endif
             pose = Pose.identity;
 
             return PoseDataFlags.NoData;
@@ -453,7 +459,9 @@ namespace UnityEngine.SpatialTracking
 
             if (HasStereoCamera())
             {
+#if ENABLE_VR
                 XRDevice.DisableAutoXRCameraTracking(GetComponent<Camera>(), true);
+#endif
             }
         }
 

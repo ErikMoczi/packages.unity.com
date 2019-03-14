@@ -48,7 +48,7 @@ namespace UnityEngine.XR.LegacyInputHelpers
             set { m_FinalPose = value; }
         }
 
-
+#if ENABLE_VR
         [SerializeField]
         XRNode m_PoseSource = XRNode.LeftHand;
         /// <summary>
@@ -70,6 +70,7 @@ namespace UnityEngine.XR.LegacyInputHelpers
             get { return m_HeadPoseSource; }
             set { m_HeadPoseSource = value; }
         }
+#endif
 
         /// Standard implementation for a mathematical model to make the virtual controller approximate the
         /// physical location of the Daydream controller.
@@ -317,6 +318,7 @@ namespace UnityEngine.XR.LegacyInputHelpers
         {
             // Determine handedness multiplier.
             m_HandedMultiplier.Set(0, 1, 1);
+#if ENABLE_VR
             if (m_PoseSource == XRNode.RightHand || m_PoseSource == XRNode.TrackingReference)
             {
                 m_HandedMultiplier.x = 1.0f;
@@ -325,12 +327,13 @@ namespace UnityEngine.XR.LegacyInputHelpers
             {
                 m_HandedMultiplier.x = -1.0f;
             }
+#endif
         }
 
         protected virtual bool UpdateTorsoDirection(bool forceImmediate)
         {
             // Determine the gaze direction horizontally.
-
+#if ENABLE_VR
             Vector3 gazeDirection = new Vector3();
             if (TryGetForwardVector(m_HeadPoseSource, out gazeDirection))
             {
@@ -357,11 +360,13 @@ namespace UnityEngine.XR.LegacyInputHelpers
                 m_TorsoRotation = Quaternion.FromToRotation(Vector3.forward, m_TorsoDirection);
                 return true;
             }
+#endif
             return false;
         }
 
         protected virtual bool UpdateNeckPosition()
         {
+#if ENABLE_VR
             if (m_IsLockedToNeck && TryGetPosition(m_HeadPoseSource, out m_NeckPosition))
             {
                 // Find the approximate neck position by Applying an inverse neck model.
@@ -369,11 +374,10 @@ namespace UnityEngine.XR.LegacyInputHelpers
                 // for the head's rotation so that the motion feels more natural.
                 return ApplyInverseNeckModel(m_NeckPosition, out m_NeckPosition);
             }
-            else
-            {
-                m_NeckPosition = Vector3.zero;
-                return true;
-            }
+#endif
+
+            m_NeckPosition = Vector3.zero;
+            return true;
         }
 
         protected virtual bool ApplyArmModel()
@@ -460,6 +464,7 @@ namespace UnityEngine.XR.LegacyInputHelpers
         protected virtual bool ApplyInverseNeckModel(Vector3 headPosition, out Vector3 calculatedPosition)
         {
             // Determine the gaze direction horizontally.
+#if ENABLE_VR
             Quaternion headRotation = new Quaternion();
             if (TryGetRotation(m_HeadPoseSource, out headRotation))
             {
@@ -469,12 +474,14 @@ namespace UnityEngine.XR.LegacyInputHelpers
 
                 calculatedPosition = headPosition;
                 return true;
-            }      
-            
+            }
+#endif
+
             calculatedPosition = Vector3.zero;
             return false;
         }
 
+#if ENABLE_VR
         protected bool TryGetForwardVector(XRNode node, out Vector3 forward)
         {
             Pose tmpPose = new Pose();
@@ -572,10 +579,12 @@ namespace UnityEngine.XR.LegacyInputHelpers
             angVel = Vector3.zero;
             return false;
         }
+#endif
 
         /// Get the controller's orientation.
         protected bool GetControllerRotation(out Quaternion rotation, out Quaternion xyRotation, out float xAngle)
         {
+#if ENABLE_VR
             // Find the controller's orientation relative to the player.
             if (TryGetRotation(poseSource, out rotation))
             {
@@ -589,13 +598,12 @@ namespace UnityEngine.XR.LegacyInputHelpers
                 xyRotation = Quaternion.FromToRotation(Vector3.forward, controllerForward);
                 return true;
             }
-            else
-            {
-                rotation = Quaternion.identity;
-                xyRotation = Quaternion.identity;
-                xAngle = 0.0f;
-                return false;
-            }
+#endif
+
+            rotation = Quaternion.identity;
+            xyRotation = Quaternion.identity;
+            xAngle = 0.0f;
+            return false;
         }
 
 #if UNITY_EDITOR
