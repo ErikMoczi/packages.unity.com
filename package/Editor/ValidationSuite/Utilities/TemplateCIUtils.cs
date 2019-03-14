@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace UnityEditor.PackageManager.ValidationSuite
 {
@@ -45,7 +46,7 @@ namespace UnityEditor.PackageManager.ValidationSuite
             return false;
         }
 
-        public static string Pack(string path, string destinationPath)
+        public static List<string> Pack(string path, string destinationPath)
         {
             return _Pack("template", path, destinationPath);
         }

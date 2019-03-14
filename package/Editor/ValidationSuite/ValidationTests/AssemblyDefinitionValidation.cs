@@ -35,7 +35,6 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
         void CheckAssemblyDefinitionContent(string assemblyDefinitionPath)
         {
             var simplifiedPath = assemblyDefinitionPath.Replace(Context.PublishPackageInfo.path, "{Package-Root}");
-            TestOutput.Add("Checking: " + simplifiedPath);
 
             var isRuntime = simplifiedPath.IndexOf("Runtime") >= 0;
             var isEditor = simplifiedPath.IndexOf("Editor") >= 0;
@@ -46,28 +45,25 @@ namespace UnityEditor.PackageManager.ValidationSuite.ValidationTests
                 var assemblyDefinitionData = Utilities.GetDataFromJson<AssemblyDefinition>(assemblyDefinitionPath);
                 var editorInIncludePlatforms = FindValueInArray(assemblyDefinitionData.includePlatforms, "Editor");
 
-                if (isEditor && assemblyDefinitionData.includePlatforms.Length > 1)
+                var isTestAssembly = FindValueInArray(assemblyDefinitionData.optionalUnityReferences, "TestAssemblies");
+                if (!isTestAssembly && isEditor && assemblyDefinitionData.includePlatforms.Length > 1)
                 {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("For editor assemblies, only 'Editor' should be present in 'includePlatform' in: [{0}]", simplifiedPath));
+                    Error(string.Format("For editor assemblies, only 'Editor' should be present in 'includePlatform' in: [{0}]", simplifiedPath));
                 }
 
-                if (isEditor && !editorInIncludePlatforms)
+                if (!isTestAssembly && isEditor && !editorInIncludePlatforms)
                 {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("For editor assemblies, 'Editor' should be present in the includePlatform section in: [{0}]", simplifiedPath));
+                    Error(string.Format("For editor assemblies, 'Editor' should be present in the includePlatform section in: [{0}]", simplifiedPath));
                 }
 
-                if (FindValueInArray(assemblyDefinitionData.optionalUnityReferences, "TestAssemblies") != isTest)
+                if (isTestAssembly != isTest)
                 {
-                    TestState = TestState.Failed;
-                    TestOutput.Add(string.Format("'TestAssemblies'{0} should be present in 'optionalUnityReferences' in: [{1}]", isTest ? "" : " not", simplifiedPath));
+                    Error(string.Format("'TestAssemblies'{0} should be present in 'optionalUnityReferences' in: [{1}]", isTest ? "" : " not", simplifiedPath));
                 }
             }
             catch (Exception e)
             {
-                TestState = TestState.Failed;
-                TestOutput.Add("Can't read assembly definition: " + e.Message);
+                Error("Can't read assembly definition: " + e.Message);
             }
         }
 

@@ -1,0 +1,11 @@
+{
+    "name": "Unity.PackageValidationSuite.EditorTests.WithGoodRenameConfigInDll",
+    "references": [],
+	"includePlatforms": [
+		"Editor"
+	],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "allowUnsafeCode": false
+}

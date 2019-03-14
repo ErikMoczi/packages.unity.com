@@ -1,0 +1,11 @@
+{
+    "name": "With Spaces",
+    "references": [],
+	"includePlatforms": [
+		"Editor"
+	],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "allowUnsafeCode": false
+}

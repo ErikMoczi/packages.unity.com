@@ -1,0 +1,11 @@
+{
+    "name": "WithInvalidRenameConfigInDll",
+    "references": [],
+	"includePlatforms": [
+		"Editor"
+	],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "allowUnsafeCode": false
+}

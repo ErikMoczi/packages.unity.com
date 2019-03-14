@@ -30,3 +30,4 @@
 0.4.0-preview.15
 0.4.0-preview.16
 0.4.0-preview.17
+0.4.0-preview.18

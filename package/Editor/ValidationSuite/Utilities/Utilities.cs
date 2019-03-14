@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Semver;
-using UnityEditor.Sprites;
 using UnityEngine;
 
 #if UNITY_2018_1_OR_NEWER

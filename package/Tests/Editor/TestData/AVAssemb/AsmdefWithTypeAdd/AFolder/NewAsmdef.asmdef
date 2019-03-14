@@ -1,0 +1,15 @@
+{
+    "name": "Unity.PackageValidationSuite.EditorTests.AsmdefWithTypeAdd.NewAsmdef",
+    "references": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
