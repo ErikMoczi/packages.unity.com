@@ -4,16 +4,31 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.2.0] - 2019-02-21
-- Fixing an error in the readme.asset .
-- Updating the LW version for bugfixes.
+## [2.8.0] - 2019-03-08
+- Updating LWRP package version
 
-## [3.1.0] - 2019-02-19
--Adding information about package manager to the readme.
+## [2.7.1] - 2019-03-05
+- PlayerSettings.displayResolutionDialog property now defaults to false.
 
-## [3.0.0] - 2019-02-12
+## [2.7.0] - 2019-02-25
+- fixing version mismatch
+
+## [2.6.0] - 2019-02-25
+- Updating LW package version for bug fixes 
+- Removing deprecated package from manifest
+
+## [2.5.0] - 2019-02-22
+- Upgrading materials for LW
+- Adding packman information to readme
+
+## [2.4.0] - 2019-02-21
 - Updating LW package version
-- Removing deprecated packages from manifest
+
+## [2.3.0] - 2019-02-20
+- Updating LW package version
+
+## [2.2.0] - 2019-02-13
+- Updating LW package version
 
 ## [2.1.0] - 2019-02-04
 - Corrected some default values in project settings.
