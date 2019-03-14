@@ -16,15 +16,15 @@ MonoBehaviour:
     type: 2}
   m_RenderingPathDefaultCameraFrameSettings:
     bitDatas:
-      data1: 69275665760029
+      data1: 69284255694621
       data2: 4539628424389459968
   m_RenderingPathDefaultBakedOrCustomReflectionFrameSettings:
     bitDatas:
-      data1: 69271353851677
+      data1: 69279943786269
       data2: 4539628424389459968
   m_RenderingPathDefaultRealtimeReflectionFrameSettings:
     bitDatas:
-      data1: 69275508285213
+      data1: 69284098219805
       data2: 4539628424389459968
   m_RenderPipelineSettings:
     supportShadowMask: 1
@@ -92,9 +92,25 @@ MonoBehaviour:
   allowShaderVariantStripping: 1
   enableSRPBatcher: 0
   shaderVariantLogLevel: 0
-  diffusionProfileSettings: {fileID: 0}
-  diffusionProfileSettingsList: []
-  m_Version: 3
+  diffusionProfileSettings: {fileID: 11400000, guid: 26bdddf49760c61438938733f07fa2a2,
+    type: 2}
+  diffusionProfileSettingsList:
+  - {fileID: 11400000, guid: 26bdddf49760c61438938733f07fa2a2, type: 2}
+  - {fileID: 11400000, guid: de655f8837487724796eb6738948bae1, type: 2}
+  - {fileID: 11400000, guid: bb16a29466bc44946bdf2261f62aa544, type: 2}
+  - {fileID: 11400000, guid: c2110e59c65abd74ca69eb363ea8387a, type: 2}
+  - {fileID: 11400000, guid: 89d78ea5c9eeebc46bd712a39d58cff6, type: 2}
+  - {fileID: 11400000, guid: 887afa8bb180b2a4fa5909bc4af35c2f, type: 2}
+  - {fileID: 11400000, guid: 4482fa54d08d1db48b1f7e745f02a28f, type: 2}
+  - {fileID: 11400000, guid: cff140318f7dfda478c589677964e201, type: 2}
+  - {fileID: 11400000, guid: e9b83fac95dff7a4e92b66da2f226111, type: 2}
+  - {fileID: 11400000, guid: 9b87d5fe798fea743bee5b2a5c688441, type: 2}
+  - {fileID: 11400000, guid: 7fc176dd332daee4691bd1a3c9aa6e4d, type: 2}
+  - {fileID: 11400000, guid: 2ee04a06278feff46a7e31fcf4b31aaf, type: 2}
+  - {fileID: 11400000, guid: ddd8f45e8de0b634cbc3d9757744d650, type: 2}
+  - {fileID: 11400000, guid: e81ba3f7dc86b2b4586f3ea1bb72ff5d, type: 2}
+  - {fileID: 11400000, guid: 14046b74d62124842a52be14997f5923, type: 2}
+  m_Version: 5
   m_ObsoleteFrameSettings:
     overrides: 0
     enableShadow: 0

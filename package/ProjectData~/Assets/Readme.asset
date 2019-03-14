@@ -38,6 +38,14 @@ MonoBehaviour:
     linkText: Volumes in HDRP
     url: https://github.com/Unity-Technologies/ScriptableRenderPipeline/wiki/Volumes
   - heading: 
+    text: This project uses the new Package Manager to bring you the latest features
+      Unity has to offer. Open the Package Manager from Windows > Package Manager
+      and make sure you're using the most recent version of the High Definition Render
+      Pipeline. To update packages, select your desired package from the list on the
+      left, and click the Update to button in the bottom right corner.
+    linkText: 
+    url: 
+  - heading: 
     text: 'To read more about the HD Render Pipeline please refer to the Scriptable
       Render Pipeline wiki: '
     linkText: Scriptable Render Pipeline
@@ -47,12 +55,4 @@ MonoBehaviour:
       Pipeline and can be downloaded here:'
     linkText: HDRI Package
     url: https://assetstore.unity.com/packages/essentials/beta-projects/unity-hdri-pack-72511
-  - heading: 
-    text: This project uses the new Package Manager to bring you the latest features
-      Unity has to offer. Open the Package Manager from Windows > Package Manager
-      and make sure you're using the most recent version of the High Definition Render
-      Pipeline. To update packages, select your desired package from the list on the
-      left, and click the Update to button in the bottom right corner.
-    linkText: 
-    url: 
   loadedLayout: 1
