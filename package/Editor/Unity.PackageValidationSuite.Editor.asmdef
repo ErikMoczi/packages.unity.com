@@ -1,8 +1,6 @@
 {
     "name": "Unity.PackageValidationSuite.Editor",
-    "references": [
-        "GUID:15a615c733aa240909fe0b28b0d5143c"
-    ],
+    "references": ["Unity.PackageManagerUI.Editor"],
     "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"

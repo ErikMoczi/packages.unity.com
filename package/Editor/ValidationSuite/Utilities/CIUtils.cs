@@ -76,6 +76,13 @@ namespace UnityEditor.PackageManager.ValidationSuite
                     packagePaths.Add(packagePath);
                 }
             }
+            
+            // TODO: Remove this part when we switch to Packman API pack function
+            var packagesJsonPath = Path.Combine(path, "packages.json");
+            if (File.Exists(packagesJsonPath))
+            {
+                File.Delete(packagesJsonPath);
+            }
 
             //See if upm-ci~ exists and remove
             if (Directory.Exists(Path.Combine(path, "upm-ci~")))
