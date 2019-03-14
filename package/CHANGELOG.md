@@ -4,16 +4,35 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [3.2.0] - 2019-02-21
-- Fixing a bug in the Readme.asset .
-- Updating HD version for bug fixes.
+## [2.11.0] - 2019-03-08
+- Updating HD package version
 
-## [3.1.0] - 2019-02-19
-- Updating readme with information for package manager. 
+## [2.10.2] - 2019-03-05
+- PlayerSettings.displayResolutionDialog property now defaults to false.
 
-## [3.0.0] - 2019-02-12
-- Updating HD version 6.0.0-preview
-- Removing deprecating packages from manifest
+## [2.10.1] - 2019-02-26
+- Adding back the preview tag
+
+## [2.10.0] - 2019-02-25
+- fixing version mismatch
+
+## [2.9.0] - 2019-02-25
+- Updating HD package version
+- Updating grpahics API settings for Linux
+- Removing deprecated package from manifest
+
+## [2.8.0] - 2019-02-22
+- Adding packman information to the readme
+- Updating default settings files
+
+## [2.7.0] - 2019-02-21
+- Updating HD package version
+
+## [2.6.0] - 2019-02-20
+- Updating HD package version
+
+## [2.5.0] - 2019-02-13
+- Updating HD package version
 
 ## [2.4.0] - 2019-02-11
 - Graphics API for LInux is now manually set to Vulkan.
