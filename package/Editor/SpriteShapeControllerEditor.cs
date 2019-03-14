@@ -160,23 +160,19 @@ namespace UnityEditor.U2D
             EditorGUILayout.PropertyField(m_IsOpenEndedProp, Contents.openEndedLabel);
             EditorGUILayout.PropertyField(m_AdaptiveUVProp, Contents.adaptiveUVLabel);
 
+            EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);
             EditorGUILayout.PropertyField(m_StretchUVProp, Contents.stretchUVLabel);
 
-            m_ShowStretchOption.target = ShouldShowStretchOption();
-            if (EditorGUILayout.BeginFadeGroup(m_ShowStretchOption.faded))
+            if (ShouldShowStretchOption())
             {
                 EditorGUILayout.PropertyField(m_StretchTilingProp, Contents.stretchTilingLabel);
             }
-            EditorGUILayout.EndFadeGroup();
-
-            m_ShowNonStretchOption.target = !ShouldShowStretchOption();
-            if (EditorGUILayout.BeginFadeGroup(m_ShowNonStretchOption.faded))
+            else
             {
                 EditorGUILayout.PropertyField(m_FillPixelPerUnitProp, Contents.fillPixelPerUnitLabel);
                 EditorGUILayout.PropertyField(m_WorldSpaceUVProp, Contents.worldUVLabel);
             }
-            EditorGUILayout.EndFadeGroup();
 
             if (m_SpriteShapeController.gameObject.GetComponent<PolygonCollider2D>() != null || m_SpriteShapeController.gameObject.GetComponent<EdgeCollider2D>() != null)
             {

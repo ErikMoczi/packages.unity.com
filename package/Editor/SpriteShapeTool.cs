@@ -64,15 +64,17 @@ namespace UnityEditor.U2D
     {
         private static SpriteShapeTool m_SpriteShapeTool = new SpriteShapeTool();
         private static InternalEditorBridge.ShortcutContext m_ShortcutContext;
+        private static int s_Initialized = 0;
 
         static SpriteShapeToolInitializer()
         {
-            RegisterShortcuts();
+
             SceneView.duringSceneGui += DuringSceneGui;
         }
 
         private static void DuringSceneGui(SceneView sceneView)
         {
+            RegisterShortcuts();
             HandleActivation();
 
             if (m_SpriteShapeTool.isActive)
@@ -94,6 +96,8 @@ namespace UnityEditor.U2D
 
         private static void RegisterShortcuts()
         {
+            if (s_Initialized == 1)
+                return;
             m_ShortcutContext = new InternalEditorBridge.ShortcutContext()
             {
                 isActive = () => m_SpriteShapeTool.isActive,
@@ -101,8 +105,9 @@ namespace UnityEditor.U2D
             };
 
             InternalEditorBridge.RegisterShortcutContext(m_ShortcutContext);
+            s_Initialized = 1;
         }
-        
+
         [Shortcut("SpriteShape Editing/Cycle Tangent Mode", typeof(InternalEditorBridge.ShortcutContext), KeyCode.M)]
         private static void ShortcutCycleTangentMode(ShortcutArguments args)
         {
@@ -344,6 +349,7 @@ namespace UnityEditor.U2D
             m_SplineEditor = new SplineEditor() 
             {
                 //Data
+                GetLocalPosition = i => spline.GetPosition(i),
                 GetPosition = i => LocalToWorld(spline.GetPosition(i)),
                 SetPosition = (i, p) => spline.SetPosition(i, WorldToLocal(p)),
                 GetLeftTangent = i => LocalToWorld(spline.GetLeftTangent(i) + spline.GetPosition(i)) - LocalToWorld(spline.GetPosition(i)),

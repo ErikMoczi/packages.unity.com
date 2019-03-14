@@ -188,6 +188,11 @@ namespace UnityEditor.U2D
             }
         }
 
+        private bool OnCanAddCallback(ReorderableList list)
+        {
+            return (list.count < 64);
+        }
+
         private void OnRemoveSprite(ReorderableList list)
         {
             var count = list.count;
@@ -444,7 +449,7 @@ namespace UnityEditor.U2D
                                 if (spr.texture != null)
                                 {
                                     DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                                    if (currentEvent.type == EventType.DragPerform)
+                                    if (currentEvent.type == EventType.DragPerform && sprites.arraySize < 64)
                                     {
                                         sprites.InsertArrayElementAtIndex(sprites.arraySize);
                                         var spriteProp = sprites.GetArrayElementAtIndex(sprites.arraySize - 1);
@@ -550,6 +555,7 @@ namespace UnityEditor.U2D
                     drawHeaderCallback = DrawSpriteListHeader,
                     onSelectCallback = OnSelelectSpriteCallback,
                     onRemoveCallback = OnRemoveSprite,
+                    onCanAddCallback = OnCanAddCallback,
                     elementHeight = EditorGUIUtility.singleLineHeight + 6f
                 };
             }

@@ -80,6 +80,7 @@ namespace UnityEditor.U2D
             }
         }
 
+        public Func<int, Vector3> GetLocalPosition = i => Vector3.zero;
         public Func<int, Vector3> GetPosition = i => Vector3.zero;
         public Action<int, Vector3> SetPosition = (i, p) => { };
         public Func<int, Vector3> GetLeftTangent = i => Vector3.zero;
@@ -1038,6 +1039,25 @@ namespace UnityEditor.U2D
             return (TangentMode)((((int)current) + 1) % Enum.GetValues(typeof(TangentMode)).Length);
         }
 
+        static float SlopeAngle(Vector2 start, Vector2 end)
+        {
+            Vector2 dir = start - end;
+            dir.Normalize();
+            Vector2 dvup = new Vector2(0, 1f);
+            Vector2 dvrt = new Vector2(1f, 0);
+
+            float dr = Vector2.Dot(dir, dvrt);
+            float du = Vector2.Dot(dir, dvup);
+            float cu = Mathf.Acos(du);
+            float sn = dr >= 0 ? 1.0f : -1.0f;
+            float an = cu * Mathf.Rad2Deg * sn;
+
+            // Adjust angles when direction is parallel to Up Axis.
+            an = (du != 1f) ? an : 0;
+            an = (du != -1f) ? an : -180f;
+            return an;
+        }
+
         public void CycleSpriteIndex()
         {
             var selection = SplineEditorCache.GetSelection();
@@ -1048,14 +1068,17 @@ namespace UnityEditor.U2D
             Debug.Assert(SplineEditorCache.GetTarget() != null);
 
             var nextIndex = SplineUtility.NextIndex(selection.single, GetPointCount());
-            var angle = SpriteShapeHandleUtility.PosToAngle(GetPosition(selection.single), GetPosition(nextIndex), 0f);
+            var pos1 = GetLocalPosition(selection.single);
+            var pos2 = GetLocalPosition(nextIndex);
+            var angle = SlopeAngle(pos1, pos2) + 90;
             var angleRangeIndex = SpriteShapeEditorUtility.GetRangeIndexFromAngle(spriteShape, angle);
-            
             if (angleRangeIndex == -1)
                 return;
 
             var angleRange = spriteShape.angleRanges[angleRangeIndex];
-            var spriteIndex = (GetSpriteIndex(selection.single) + 1) % angleRange.sprites.Count;
+            var spriteIndex = 0;
+            if (angleRange.sprites.Count > 0)
+                spriteIndex = (GetSpriteIndex(selection.single) + 1) % angleRange.sprites.Count;
 
             RegisterUndo();
 

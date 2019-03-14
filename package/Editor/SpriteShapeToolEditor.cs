@@ -97,11 +97,9 @@ namespace UnityEditor.U2D
             {
                 EditorGUILayout.LabelField(Contents.pointLabel, EditorStyles.boldLabel);
 
-                EditorGUI.indentLevel += 1;
                 DoTangentGUI();
                 DoPointInspector();
                 SnappingUtility.enabled = EditorGUILayout.Toggle(Contents.enableSnapLabel, SnappingUtility.enabled);
-                EditorGUI.indentLevel -= 1;
             }                
 
             if (EditorGUI.EndChangeCheck())

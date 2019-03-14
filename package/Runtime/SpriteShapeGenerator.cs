@@ -55,7 +55,7 @@ namespace UnityEngine.U2D
         struct JobContourPoint
         {
             public float2 position;             // Position.
-            public float4 ptData;               // x : height.
+            public float2 ptData;               // x : height.
         }
 
         // Tessellation Structures.
@@ -493,12 +493,15 @@ namespace UnityEngine.U2D
             float kHighestQualityTolerance = 16.0f;
 
             kColliderQuality = math.clamp(colliderDetail, kLowestQualityTolerance, kHighestQualityTolerance);
-            kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.01f;
             kColliderCleanup = optimizeCollider ? 1 : 0;
+            if (optimizeCollider)
+                kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.01f;
+            else
+                kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.0002f;
             colliderPivot = (colliderPivot == 0) ? 0.001f : colliderPivot;
 
             kRenderQuality = math.clamp(shapeParams.splineDetail, kLowestQualityTolerance, kHighestQualityTolerance);
-            kRenderQuality = (kHighestQualityTolerance - kRenderQuality + 2.0f) * 0.01f;
+            kRenderQuality = (kHighestQualityTolerance - kRenderQuality + 2.0f) * 0.0002f;
 
             m_ShapeParams.shapeData = new int4(shapeParams.carpet ? 1 : 0, shapeParams.adaptiveUV ? 1 : 0, shapeParams.spriteBorders ? 1 : 0, shapeParams.fillTexture != null ? 1 : 0);
             m_ShapeParams.splineData = new int4(shapeParams.stretchUV ? 1 : 0, (shapeParams.splineDetail > 4) ? (int)shapeParams.splineDetail : 4, (int)shapeParams.angleThreshold, updateCollider ? 1 : 0);
@@ -1128,6 +1131,9 @@ namespace UnityEngine.U2D
 
             int localVertex = 0;
             float pivot = 0.5f - ispr.metaInfo.y;
+            int finalCount = indexCount + inCount;
+            if (finalCount >= indexData.Length)
+                throw new InvalidOperationException("Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
 
             for (int i = 0; i < inCount; i = i + 4, outCount = outCount + 4, localVertex = localVertex + 4)
             {
@@ -1189,7 +1195,11 @@ namespace UnityEngine.U2D
                 {
                     if (!lc)
                     {
-                        sa = GenerateColumnsBi(cs.pos, ns.pos, whsize, false, ref lt, ref lb, cs.meta.x * 0.5f);
+                        JobControlPoint icp = GetControlPoint(segment.spInfo.x);
+                        var nsPos = ns.pos;
+                        if (math.any(icp.tangentRt))
+                            nsPos = icp.tangentRt + cs.pos;
+                        sa = GenerateColumnsBi(cs.pos, nsPos, whsize, false, ref lt, ref lb, cs.meta.x * 0.5f);
                     }
                     if (lc && useClosure)
                     {
@@ -1198,7 +1208,14 @@ namespace UnityEngine.U2D
                     }
                     else
                     {
-                        sb = GenerateColumnsBi(ns.pos, es, whsize, lc, ref rt, ref rb, ns.meta.x * 0.5f);
+                        var esPos = es;
+                        if (i == lcm)
+                        { 
+                            JobControlPoint jcp = GetControlPoint(segment.spInfo.y);
+                            if (math.any(jcp.tangentLt))
+                                esPos = jcp.tangentLt + ns.pos;
+                        }
+                        sb = GenerateColumnsBi(ns.pos, esPos, whsize, lc, ref rt, ref rb, ns.meta.x * 0.5f);
                     }
                 }
 
@@ -1385,11 +1402,18 @@ namespace UnityEngine.U2D
                         float sh = icp.ptData.x, eh = ncp.ptData.x, hl = 0;
                         sl = sl + al;
 
+                        var addtail = true;
                         float2 step = math.normalize(df);
                         isv.pos = icp.position;
                         isv.meta.x = icp.ptData.x;
                         isv.sprite.x = sprIx;
-                        m_VertexData[vertexCount++] = isv;
+                        if (vertexCount > 0)
+                        { 
+                            var dt = math.length(m_VertexData[vertexCount-1].pos - isv.pos);
+                            addtail = dt > kEpsilonRelaxed;
+                        }
+                        if (addtail)
+                            m_VertexData[vertexCount++] = isv;
 
                         while (sl > pxlWidth)
                         {
@@ -1401,7 +1425,8 @@ namespace UnityEngine.U2D
                             isv.pos = ip;
                             isv.meta.x = math.lerp(sh, eh, hl / al);
                             isv.sprite.x = sprIx;
-                            m_VertexData[vertexCount++] = isv;
+                            if (math.any(m_VertexData[vertexCount-1].pos - isv.pos))
+                                m_VertexData[vertexCount++] = isv;
 
                             sl = sl - pxlWidth;
                             sp = ip;
@@ -1445,6 +1470,8 @@ namespace UnityEngine.U2D
                 if (hasCollider)
                 {
                     JobSpriteInfo isprc = GetSpriteInfo(isi.spInfo.w);
+                    if (isprc.metaInfo.x == 0)
+                        isprc = ispr;
                     outputCount = 0;
                     rpunits = 1.0f / isprc.metaInfo.x;
                     whsize = new float2(isprc.metaInfo.z, isprc.metaInfo.w) * rpunits;
