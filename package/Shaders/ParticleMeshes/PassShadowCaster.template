@@ -32,10 +32,7 @@ Pass
 #define VFX_VARYING_FRAMEBLEND builtInInterpolants.y
 #define VFX_VARYING_UV uv
 		
-${VFXBegin:VFXVertexAdditionalProcess}
-float3 posWS = TransformPositionVFXToWorld(vPos);
-VFXApplyShadowBias(o.VFX_VARYING_POSCS, posWS, normalWS);
-${VFXEnd}
+${VFXBegin:VFXVertexAdditionalProcess}${VFXEnd}
 
 // Needed for HDRP
 #define SHADERPASS SHADERPASS_SHADOWS

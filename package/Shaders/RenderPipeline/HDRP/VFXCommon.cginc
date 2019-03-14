@@ -65,12 +65,9 @@ float VFXLinearEyeDepth(float depth)
     return LinearEyeDepth(depth,_ZBufferParams);
 }
 
-void VFXApplyShadowBias(inout float4 posCS, inout float3 posWS, float3 normalWS)
+float4 VFXApplyShadowBias(float4 posCS)
 {
-}
-
-void VFXApplyShadowBias(inout float4 posCS, inout float3 posWS)
-{
+    return posCS;
 }
 
 float4 VFXApplyFog(float4 color,float4 posCS,float3 posWS)

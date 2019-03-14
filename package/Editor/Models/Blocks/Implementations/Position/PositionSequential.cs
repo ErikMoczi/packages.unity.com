@@ -20,7 +20,7 @@ namespace UnityEditor.VFX.Block
         }
     }
 
-    [VFXInfo(category = "Position", variantProvider = typeof(PositionSequentialVariantProvider), experimental = true)]
+    [VFXInfo(category = "Position", variantProvider = typeof(PositionSequentialVariantProvider))]
     class PositionSequential : VFXBlock
     {
         public enum SequentialShape
@@ -54,9 +54,6 @@ namespace UnityEditor.VFX.Block
         [SerializeField, VFXSetting]
         [Tooltip("Write target position")]
         private bool writeTargetPosition = false;
-
-        [SerializeField, VFXSetting]
-        private VFXOperatorUtility.SequentialAddressingMode mode = VFXOperatorUtility.SequentialAddressingMode.Wrap;
 
         public override string name { get { return string.Format("Position : Sequential ({0})", shape); } }
         public override VFXContextType compatibleContexts { get { return VFXContextType.kInitAndUpdateAndOutput; } }
@@ -172,7 +169,7 @@ namespace UnityEditor.VFX.Block
                 var start = expressions.First(o => o.name == "Start").exp;
                 var end = expressions.First(o => o.name == "End").exp;
                 var count = expressions.First(o => o.name == "Count").exp;
-                return VFXOperatorUtility.SequentialLine(start, end, indexExpr, count, mode);
+                return VFXOperatorUtility.SequentialLine(start, end, indexExpr, count);
             }
             else if (shape == SequentialShape.Circle)
             {
@@ -181,7 +178,7 @@ namespace UnityEditor.VFX.Block
                 var up = expressions.First(o => o.name == "Up").exp;
                 var radius = expressions.First(o => o.name == "Radius").exp;
                 var count = expressions.First(o => o.name == "Count").exp;
-                return VFXOperatorUtility.SequentialCircle(center, radius, normal, up, indexExpr, count, mode);
+                return VFXOperatorUtility.SequentialCircle(center, radius, normal, up, indexExpr, count);
             }
             else if (shape == SequentialShape.ThreeDimensional)
             {
@@ -192,7 +189,7 @@ namespace UnityEditor.VFX.Block
                 var countX = expressions.First(o => o.name == "CountX").exp;
                 var countY = expressions.First(o => o.name == "CountY").exp;
                 var countZ = expressions.First(o => o.name == "CountZ").exp;
-                return VFXOperatorUtility.Sequential3D(origin, axisX, axisY, axisZ, indexExpr, countX, countY, countZ, mode);
+                return VFXOperatorUtility.Sequential3D(origin, axisX, axisY, axisZ, indexExpr, countX, countY, countZ);
             }
             throw new NotImplementedException();
         }
