@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-preview.1] - 2019-03-11
+
+- Fix regression when resolving the type of generic used in a field
+- Fix linker for XboxOne, UWP
+- Fix performance codegen when using large structs
+- Fix codegen when a recursive function is involved with platform dependent ABI transformations
+
 ## [0.2.4-preview.50] - 2019-02-27
 
 - Fix meta file conflict

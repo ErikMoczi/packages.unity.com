@@ -55,7 +55,6 @@ namespace Burst.Compiler.IL
         public const string OptionAotType = "type=";
         public const string OptionAotAssembly = "assembly=";
         public const string OptionAotOutputPath = "output=";
-        public const string OptionAotIL2CPPPluginFolder = "il2cpp-plugin-folder=";
         public const string OptionAotKeepIntermediateFiles = "keep-intermediate-files";
         public const string OptionAotNoLink = "nolink";
 
@@ -153,6 +152,11 @@ namespace Burst.Compiler.IL
         /// </summary>
         IRPassAnalysis = 1 << 7,
 
-        All = IL | Backend | IR | IROptimized | Asm | Function | Analysis | IRPassAnalysis
+        /// <summary>
+        /// Dumps the IL before all transformation of the method being compiled
+        /// </summary>
+        ILPre = 1 << 8,
+
+        All = IL | ILPre | Backend | IR | IROptimized | Asm | Function | Analysis | IRPassAnalysis
     }
 }

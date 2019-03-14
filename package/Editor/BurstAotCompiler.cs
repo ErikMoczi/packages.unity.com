@@ -218,19 +218,6 @@ extern ""C""
 
             commonOptions.AddRange(assemblyFolders.Select(folder => GetOption(OptionAotAssemblyFolder, folder)));
 
-            // Gets platform specific IL2CPP plugin folder
-            // Only the following platforms are providing a dedicated Tools directory
-            switch (report.summary.platform)
-            {
-                case BuildTarget.XboxOne:
-                case BuildTarget.PS4:
-                case BuildTarget.Android:
-                case BuildTarget.iOS:
-                    var pluginFolder = BuildPipeline.GetBuildToolsDirectory(report.summary.platform);
-                    commonOptions.Add(GetOption(OptionAotIL2CPPPluginFolder, pluginFolder));
-                    break;
-            }
-
             var combinations = new List<BurstOutputCombination>();
 
             if (targetPlatform == TargetPlatform.macOS)
@@ -256,7 +243,7 @@ extern ""C""
             }
             else if (targetPlatform == TargetPlatform.Android)
             {
-                // Set the ANDROID_NDK_ROOT so IL2CPP knows where to find the Android toolchain
+                // Set the ANDROID_NDK_ROOT so BCL knows where to find the Android toolchain
                 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ANDROID_NDK_ROOT")))
                 {
                     var ndkRoot = EditorPrefs.GetString("AndroidNdkRoot");
