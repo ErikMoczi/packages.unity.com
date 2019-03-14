@@ -17,6 +17,7 @@ namespace Unity.Rendering
         }
     }
 
+    [UnityEngine.AddComponentMenu("Hidden/DontUse")]
     public class FrozenRenderSceneTagProxy : SharedComponentDataProxy<FrozenRenderSceneTag>
     {
     }

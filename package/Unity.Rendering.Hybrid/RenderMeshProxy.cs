@@ -27,6 +27,7 @@ namespace Unity.Rendering
         public bool                 receiveShadows;
     }
 
+    [AddComponentMenu("DOTS/Deprecated/RenderMeshProxy-Deprecated")]
     public class RenderMeshProxy : SharedComponentDataProxy<RenderMesh>
     {
         internal override void UpdateComponentData(EntityManager manager, Entity entity)

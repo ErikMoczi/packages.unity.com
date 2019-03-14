@@ -11,7 +11,7 @@ namespace Unity.Rendering
     {    
         protected override void OnUpdate()
         {
-            ForEach((HLOD hlod) =>
+            Entities.ForEach((HLOD hlod) =>
             {
                 var lodGroup = hlod.GetComponent<LODGroup>();
                 var hlodEntity = GetPrimaryEntity(hlod);

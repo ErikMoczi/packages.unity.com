@@ -8,7 +8,7 @@ class LODGroupConversion : GameObjectConversionSystem
 {    
     protected override void OnUpdate()
     {
-        ForEach((LODGroup lodGroup) =>
+        Entities.ForEach((LODGroup lodGroup) =>
         {
             if (lodGroup.lodCount > 8)
             {

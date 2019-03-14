@@ -2,9 +2,9 @@
     "displayName": "Hybrid Renderer", 
     "name": "com.unity.rendering.hybrid", 
     "unity": "2019.1", 
-    "version": "0.0.1-preview.7", 
+    "version": "0.0.1-preview.8", 
     "dependencies": {
-        "com.unity.entities": "0.0.12-preview.27"
+        "com.unity.entities": "0.0.12-preview.28"
     }, 
     "keywords": [
         "entities", 

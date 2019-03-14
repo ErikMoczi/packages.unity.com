@@ -17,7 +17,7 @@ namespace Unity.Rendering
             var sceneBounds = MinMaxAABB.Empty;
 
             var materials = new List<Material>(10);
-            ForEach((MeshRenderer meshRenderer, MeshFilter meshFilter) =>
+            Entities.ForEach((MeshRenderer meshRenderer, MeshFilter meshFilter) =>
             {
                 var entity = GetPrimaryEntity(meshRenderer);
     

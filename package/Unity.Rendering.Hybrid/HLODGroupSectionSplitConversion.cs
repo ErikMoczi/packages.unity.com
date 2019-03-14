@@ -16,7 +16,7 @@ class HLODGroupSectionSplitConversion : GameObjectConversionSystem
 
     protected override void OnUpdate()
     {
-        ForEach((HLOD hlod) =>
+        Entities.ForEach((HLOD hlod) =>
         {
             if (!hlod.autoLODSections)
                 return;
