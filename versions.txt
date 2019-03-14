@@ -28,3 +28,4 @@
 5.7.0-preview
 6.5.0-preview
 5.7.1-preview
+5.7.2-preview
