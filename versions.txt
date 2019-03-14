@@ -30,3 +30,4 @@
 5.7.1-preview
 5.7.2-preview
 5.8.0-preview
+5.8.1-preview
