@@ -4,6 +4,13 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2019-03-05
+- PlayerSettings.displayResolutionDialog property now defaults to false.
+
+## [3.1.0] - 2019-02-28
+- Add com.unity.2d.sprite to package manifest
+- Add com.unity.2d.tilemap to package manifest
+
 ## [3.0.0] - 2019-02-12
 - Removing deprecated package versions from manifest
 

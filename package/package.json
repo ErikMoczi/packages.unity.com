@@ -1,7 +1,7 @@
 {
   "name": "com.unity.template.2d",
   "displayName": "2D",
-  "version": "3.0.0",
+  "version": "3.1.1",
   "type": "template",
   "unity": "2019.2",
   "description": "This is an empty project configured for 2D apps. It uses Unity's built-in renderer.",
@@ -38,11 +38,13 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
+    "com.unity.modules.xr": "1.0.0",
+    "com.unity.2d.sprite": "1.0.0",
+    "com.unity.2d.tilemap": "1.0.0"
   },
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/project-templates/upm-package-template-2D.git",
-    "revision": "03c10fbd92aaa44fe8473f61d27950258b988045"
+    "revision": "544961f11174d58ecaabdd743c574ba2ca576c60"
   }
 }
