@@ -1,7 +1,7 @@
 {
   "name": "com.unity.localization",
   "displayName": "Localization",
-  "version": "0.2.4-preview",
+  "version": "0.2.5-preview",
   "unity": "2018.3",
   "description": "Preview of player localization system. Provides tools for localizing your built application.",
   "keywords": [
@@ -16,7 +16,7 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.cds.internal.unity3d.com/upm-packages/Localization/upm-package-localization.git",
-    "revision": "24864ec5a6f1b4a114c4e80833936560d59d54b8"
+    "revision": "09d8ae20b53b8d0bad53d67196d8d402e640d7e6"
   },
   "samples": [
     {
