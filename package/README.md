@@ -1,4 +1,4 @@
-## The Master branch is currently targeting 19.2 ##
+## The Master branch is currently targeting 19.1 ##
 
 # About _3D With Extras Project Template_
 
