@@ -4,6 +4,12 @@ All notable changes to this project template will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2019-03-05
+- Updating LWRP version to 6.5.0.
+
+## [3.2.1] - 2019-03-05
+- PlayerSettings.displayResolutionDialog property now defaults to false.
+
 ## [3.2.0] - 2019-02-21
 - Fixing an error in the readme.
 - Updating LW version for bug fixes.
