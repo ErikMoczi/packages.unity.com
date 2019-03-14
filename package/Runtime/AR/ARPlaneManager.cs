@@ -1,24 +1,23 @@
 using System;
 using System.Collections.Generic;
-using Unity.Collections;
-using UnityEngine.Serialization;
-using UnityEngine.XR.ARSubsystems;
+using UnityEngine.Experimental.XR;
+using UnityEngine.XR.ARExtensions;
 
 namespace UnityEngine.XR.ARFoundation
 {
     /// <summary>
-    /// A manager for <see cref="ARPlane"/>s. Creates, updates, and removes
-    /// <c>GameObject</c>s in response to detected surfaces in the physical
-    /// environment.
+    /// Creates, updates, and removes <c>GameObject</c>s with <see cref="ARPlane"/> components under the <see cref="ARSessionOrigin"/>'s <see cref="ARSessionOrigin.trackablesParent"/>.
     /// </summary>
-    [DefaultExecutionOrder(ARUpdateOrder.k_PlaneManager)]
-    [DisallowMultipleComponent]
+    /// <remarks>
+    /// When enabled, this component subscribes to <see cref="ARSubsystemManager.planeAdded"/>,
+    /// <see cref="ARSubsystemManager.planeUpdated"/>, and <see cref="ARSubsystemManager.planeRemoved"/>.
+    /// If this component is disabled, and there are no other subscribers to those events,
+    /// plane detection will be disabled on the device.
+    /// </remarks>
     [RequireComponent(typeof(ARSessionOrigin))]
-    public sealed class ARPlaneManager : ARTrackableManager<
-        XRPlaneSubsystem,
-        XRPlaneSubsystemDescriptor,
-        BoundedPlane,
-        ARPlane>, IRaycaster
+    [DisallowMultipleComponent]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPlaneManager.html")]
+    public sealed class ARPlaneManager : MonoBehaviour
     {
         [SerializeField]
         [Tooltip("If not null, instantiates this prefab for each created plane.")]
@@ -33,276 +32,248 @@ namespace UnityEngine.XR.ARFoundation
             set { m_PlanePrefab = value; }
         }
 
-        [SerializeField, PlaneDetectionModeMask]
-        [Tooltip("The types of planes to detect.")]
-        [FormerlySerializedAs("PlaneDetectionFlags")]
-        PlaneDetectionMode m_DetectionMode = k_PlaneDetectionModeEverything;
+        [SerializeField, PlaneDetectionFlagsMask]
+        [Tooltip("Specifies the types of planes to detect.")]
+        PlaneDetectionFlags m_DetectionFlags = k_PlaneDetectionFlagEverything;
 
         /// <summary>
-        /// Get or set the <c>PlaneDetectionMode</c> to use for plane detection.
+        /// Get or set the <c>PlaneDetectionFlags</c> to use for plane detection.
         /// </summary>
-        public PlaneDetectionMode detectionMode
+        public PlaneDetectionFlags detectionFlags
         {
             get
             {
-                if (m_DetectionMode == k_PlaneDetectionModeEverything)
-                    return PlaneDetectionMode.Horizontal | PlaneDetectionMode.Vertical;
+                if (m_DetectionFlags == k_PlaneDetectionFlagEverything)
+                    return PlaneDetectionFlags.Horizontal | PlaneDetectionFlags.Vertical;
 
-                return m_DetectionMode;
+                return m_DetectionFlags;
             }
             set
             {
-                m_DetectionMode = value;
+                m_DetectionFlags = value;
 
-                if (subsystem != null)
-                    subsystem.planeDetectionMode = detectionMode;
+                if (enabled)
+                    ARSubsystemManager.planeDetectionFlags = detectionFlags;
             }
         }
 
         /// <summary>
-        /// Invoked when planes have changed (been added, updated, or removed).
+        /// Raised for each new <see cref="ARPlane"/> detected in the environment.
         /// </summary>
-        public event Action<ARPlanesChangedEventArgs> planesChanged;
+        public event Action<ARPlaneAddedEventArgs> planeAdded;
 
         /// <summary>
-        /// Attempt to retrieve an existing <see cref="ARPlane"/> by <paramref name="trackableId"/>.
+        /// Raised for each <see cref="ARPlane"/> every time it updates.
         /// </summary>
-        /// <param name="trackableId">The <see cref="TrackableId"/> of the plane to retrieve.</param>
-        /// <returns>The <see cref="ARPlane"/> with <paramref name="trackableId"/>, or <c>null</c> if it does not exist.</returns>
-        public ARPlane GetPlane(TrackableId trackableId)
+        public event Action<ARPlaneUpdatedEventArgs> planeUpdated;
+
+        /// <summary>
+        /// Raised whenever an <see cref="ARPlane"/> is removed.
+        /// </summary>
+        public event Action<ARPlaneRemovedEventArgs> planeRemoved;
+
+        /// <summary>
+        /// Get the number of planes managed by this manager.
+        /// </summary>
+        public int planeCount
+        {
+            get { return m_Planes.Count; }
+        }
+
+        /// <summary>
+        /// Get all currently tracked <see cref="ARPlane"/>s.
+        /// </summary>
+        /// <param name="planes">Replaces the contents with the current list of planes.</param>
+        public void GetAllPlanes(List<ARPlane> planes)
+        {
+            if (planes == null)
+                throw new ArgumentNullException("planes");
+
+            planes.Clear();
+            foreach (var kvp in m_Planes)
+            {
+                planes.Add(kvp.Value);
+            }
+        }
+
+        /// <summary>
+        /// Attempts to retrieve an <see cref="ARPlane"/>.
+        /// </summary>
+        /// <param name="planeId">The <c>TrackableId</c> associated with the <see cref="ARPlane"/>.</param>
+        /// <returns>The <see cref="ARPlane"/>if found. <c>null</c> otherwise.</returns>
+        public ARPlane TryGetPlane(TrackableId planeId)
         {
             ARPlane plane;
-            if (m_Trackables.TryGetValue(trackableId, out plane))
-                return plane;
+            m_Planes.TryGetValue(planeId, out plane);
 
-            return null;
+            return plane;
         }
 
-        /// <summary>
-        /// Performs a raycast against all currently tracked planes.
-        /// </summary>
-        /// <param name="ray">The ray, in Unity world space, to cast.</param>
-        /// <param name="trackableTypeMask">A mask of raycast types to perform.</param>
-        /// <param name="allocator">The <c>Allocator</c> to use when creating the returned <c>NativeArray</c>.</param>
-        /// <returns>
-        /// A new <c>NativeArray</c> of raycast results allocated with <paramref name="allocator"/>.
-        /// The caller owns the memory and is responsible for calling <c>Dispose</c> on the <c>NativeArray</c>.
-        /// </returns>
-        /// <seealso cref="ARRaycastManager.Raycast(Ray, List{ARRaycastHit}, TrackableType)"/>
-        /// <seealso cref="ARRaycastManager.Raycast(Vector2, List{ARRaycastHit}, TrackableType)"/>
-        public NativeArray<XRRaycastHit> Raycast(
-            Ray ray,
-            TrackableType trackableTypeMask,
-            Allocator allocator)
+        void Awake()
         {
-            // No plane types requested; early out.
-            if ((trackableTypeMask & TrackableType.Planes) == TrackableType.None)
-                return new NativeArray<XRRaycastHit>(0, allocator);
+            m_SessionOrigin = GetComponent<ARSessionOrigin>();
+        }
 
-            var trackableCollection = trackables;
+        void OnEnable()
+        {
+            SyncPlanes();
+            ARSubsystemManager.planeDetectionFlags = detectionFlags;
+            ARSubsystemManager.planeAdded += OnPlaneAdded;
+            ARSubsystemManager.planeUpdated += OnPlaneUpdated;
+            ARSubsystemManager.planeRemoved += OnPlaneRemoved;
+            ARSubsystemManager.sessionDestroyed += OnSessionDestroyed;
+        }
 
-            // Allocate a buffer that is at least large enough to contain a hit against every plane
-            var hitBuffer = new NativeArray<XRRaycastHit>(trackableCollection.count, Allocator.Temp);
-            try
+        void OnDisable()
+        {
+            ARSubsystemManager.planeAdded -= OnPlaneAdded;
+            ARSubsystemManager.planeUpdated -= OnPlaneUpdated;
+            ARSubsystemManager.planeRemoved -= OnPlaneRemoved;
+            ARSubsystemManager.sessionDestroyed -= OnSessionDestroyed;
+        }
+
+        void OnSessionDestroyed()
+        {
+            if (planeRemoved != null)
             {
-                int count = 0;
-                foreach (var plane in trackableCollection)
+                foreach (var kvp in m_Planes)
                 {
-                    TrackableType trackableTypes = TrackableType.None;
-
-                    var normal = plane.transform.localRotation * Vector3.up;
-                    var infinitePlane = new Plane(normal, plane.transform.localPosition);
-                    float distance;
-                    if (!infinitePlane.Raycast(ray, out distance))
-                        continue;
-
-                    // Pose in session space
-                    var pose = new Pose(
-                        ray.origin + ray.direction * distance,
-                        plane.transform.localRotation);
-
-                    if ((trackableTypeMask & TrackableType.PlaneWithinInfinity) != TrackableType.None)
-                        trackableTypes |= TrackableType.PlaneWithinInfinity;
-
-                    // To test the rest, we need the intersection point in plane space
-                    var hitPositionPlaneSpace3d = Quaternion.Inverse(plane.transform.localRotation) * (pose.position - plane.transform.localPosition);
-                    var hitPositionPlaneSpace = new Vector2(hitPositionPlaneSpace3d.x, hitPositionPlaneSpace3d.z);
-
-                    var estimatedOrWithinBounds = TrackableType.PlaneWithinBounds | TrackableType.PlaneEstimated;
-                    if ((trackableTypeMask & estimatedOrWithinBounds) != TrackableType.None)
-                    {
-                        var differenceFromCenter = hitPositionPlaneSpace - plane.centerInPlaneSpace;
-                        if ((Mathf.Abs(differenceFromCenter.x) <= plane.extents.x) &&
-                            (Mathf.Abs(differenceFromCenter.y) <= plane.extents.y))
-                        {
-                            trackableTypes |= (estimatedOrWithinBounds & trackableTypeMask);
-                        }
-                    }
-
-                    if ((trackableTypeMask & TrackableType.PlaneWithinPolygon) != TrackableType.None)
-                    {
-                        plane.GetPlaneSpaceBoundary(s_PlaneSpaceBoundary);
-                        if (WindingNumber(hitPositionPlaneSpace, s_PlaneSpaceBoundary) != 0)
-                            trackableTypes |= TrackableType.PlaneWithinPolygon;
-                    }
-
-                    if (trackableTypes != TrackableType.None)
-                    {
-                        hitBuffer[count++] = new XRRaycastHit(
-                            plane.trackableId,
-                            pose,
-                            distance,
-                            trackableTypes);
-                    }
+                    var plane = kvp.Value;
+                    planeRemoved(new ARPlaneRemovedEventArgs(plane));
+                    plane.OnRemove();
                 }
-
-                // Finally, copy to return value
-                var hitResults = new NativeArray<XRRaycastHit>(count, allocator);
-                NativeArray<XRRaycastHit>.Copy(hitBuffer, hitResults, count);
-                return hitResults;
             }
-            finally
+            else
             {
-                hitBuffer.Dispose();
+                foreach (var kvp in m_Planes)
+                    kvp.Value.OnRemove();
             }
+
+            m_Planes.Clear();
         }
 
-        static float GetCrossDirection(Vector2 a, Vector2 b)
+        void SyncPlanes()
         {
-            return a.x * b.y - a.y * b.x;
-        }
+            var planeSubsystem = ARSubsystemManager.planeSubsystem;
+            if (planeSubsystem == null)
+                return;
 
-        // See http://geomalgorithms.com/a03-_inclusion.html
-        static int WindingNumber(
-            Vector2 positionInPlaneSpace,
-            List<Vector2> boundaryInPlaneSpace)
-        {
-            int windingNumber = 0;
-            Vector2 point = positionInPlaneSpace;
-            for (int i = 0; i < boundaryInPlaneSpace.Count; ++i)
+            s_BoundedPlanes.Clear();
+            planeSubsystem.GetAllPlanes(s_BoundedPlanes);
+
+            // Check for added/updated planes
+            s_TrackableIds.Clear();
+            foreach (var boundedPlane in s_BoundedPlanes)
             {
-                int j = (i + 1) % boundaryInPlaneSpace.Count;
-                Vector2 vi = boundaryInPlaneSpace[i];
-                Vector2 vj = boundaryInPlaneSpace[j];
+                var planeId = boundedPlane.Id;
 
-                if (vi.y <= point.y)
+                ARPlane plane;
+                if (m_Planes.TryGetValue(planeId, out plane))
                 {
-                    if (vj.y > point.y)                                     // an upward crossing
-                    {
-                        if (GetCrossDirection(vj - vi, point - vi) < 0f)    // P left of edge
-                            ++windingNumber;
-                    }
-                    // have  a valid up intersect
+                    plane.boundedPlane = boundedPlane;
+                    if (planeUpdated != null)
+                        planeUpdated(new ARPlaneUpdatedEventArgs(plane));
                 }
                 else
-                {                                                           // y > P.y (no test needed)
-                    if (vj.y <= point.y)                                    // a downward crossing
-                    {
-                        if (GetCrossDirection(vj - vi, point - vi) > 0f)    // P right of edge
-                            --windingNumber;
-                    }
-                    // have  a valid down intersect
-                }
-            }
-
-            return windingNumber;
-        }
-
-        protected override GameObject GetPrefab()
-        {
-            return m_PlanePrefab;
-        }
-
-        protected override void OnBeforeStart()
-        {
-            subsystem.planeDetectionMode = detectionMode;
-        }
-
-        protected override void OnAfterSetSessionRelativeData(
-            ARPlane plane,
-            BoundedPlane sessionRelativeData)
-        {
-            ARPlane subsumedByPlane;
-            if (m_Trackables.TryGetValue(sessionRelativeData.subsumedById, out subsumedByPlane))
-            {
-                plane.subsumedBy = subsumedByPlane;
-            }
-            else
-            {
-                plane.subsumedBy = null;
-            }
-
-            // subsystem cannot be null here
-            NativeArray<Vector2> boundary;
-            if (subsystem.SubsystemDescriptor.supportsBoundaryVertices)
-            {
-                boundary = subsystem.GetBoundary(plane.trackableId, Allocator.Temp);
-            }
-            else
-            {
-                var extents = sessionRelativeData.extents;
-                boundary = new NativeArray<Vector2>(4, Allocator.Temp);
-                boundary[0] = new Vector2(-extents.x, -extents.y);
-                boundary[1] = new Vector2(-extents.x,  extents.y);
-                boundary[2] = new Vector2( extents.x,  extents.y);
-                boundary[3] = new Vector2( extents.x, -extents.y);
-            }
-
-            if (boundary.IsCreated)
-            {
-                using (boundary)
                 {
-                    plane.SetPlaneSpaceBoundaryPoints(boundary);
+                    plane = AddPlane(boundedPlane);
+                    plane.boundedPlane = boundedPlane;
+                    if (planeAdded != null)
+                        planeAdded(new ARPlaneAddedEventArgs(plane));
                 }
-            }
-        }
 
-        protected override void OnTrackablesChanged(
-            List<ARPlane> added,
-            List<ARPlane> updated,
-            List<ARPlane> removed)
-        {
-            if (planesChanged != null)
+                s_TrackableIds.Add(planeId);
+            }
+
+            // Check for removed planes
+            s_PlanesToRemove.Clear();
+            foreach (var kvp in m_Planes)
             {
-                planesChanged(
-                    new ARPlanesChangedEventArgs(
-                        added,
-                        updated,
-                        removed));
+                var planeId = kvp.Key;
+                if (!s_TrackableIds.Contains(planeId))
+                    s_PlanesToRemove.Add(planeId);
             }
+
+            foreach (var id in s_PlanesToRemove)
+                RemovePlane(m_Planes[id]);
         }
 
-        /// <summary>
-        /// The name to be used for the <c>GameObject</c> whenever a new plane is detected.
-        /// </summary>
-        protected override string gameObjectName
+        GameObject CreateGameObject()
         {
-            get { return "ARPlane"; }
+            if (planePrefab != null)
+                return Instantiate(planePrefab, m_SessionOrigin.trackablesParent);
+
+            var go = new GameObject();
+            go.transform.SetParent(m_SessionOrigin.trackablesParent, false);
+            go.layer = gameObject.layer;
+            return go;
         }
 
-        protected override void OnEnable()
+        ARPlane AddPlane(BoundedPlane boundedPlane)
         {
-            base.OnEnable();
+            var go = CreateGameObject();
+            var plane = go.GetComponent<ARPlane>();
+            if (plane == null)
+                plane = go.AddComponent<ARPlane>();
 
-            if (subsystem != null)
-            {
-                var raycastManager = GetComponent<ARRaycastManager>();
-                if (raycastManager != null)
-                    raycastManager.RegisterRaycaster(this);
-            }
+            m_Planes.Add(boundedPlane.Id, plane);
+
+            return plane;
         }
 
-        protected override void OnDisable()
+        void OnPlaneAdded(PlaneAddedEventArgs eventArgs)
         {
-            base.OnDisable();
+            var boundedPlane = eventArgs.Plane;
+            var plane = AddPlane(boundedPlane);
+            plane.boundedPlane = boundedPlane;
 
-            var raycastManager = GetComponent<ARRaycastManager>();
-            if (raycastManager != null)
-                raycastManager.UnregisterRaycaster(this);
+            if (planeAdded != null)
+                planeAdded(new ARPlaneAddedEventArgs(plane));
         }
 
-        static List<Vector2> s_PlaneSpaceBoundary = new List<Vector2>();
+        void OnPlaneUpdated(PlaneUpdatedEventArgs eventArgs)
+        {
+            var boundedPlane = eventArgs.Plane;
+            var plane = TryGetPlane(boundedPlane.Id);
+            if (plane == null)
+                plane = AddPlane(boundedPlane);
 
-        const PlaneDetectionMode k_PlaneDetectionModeEverything = (PlaneDetectionMode)(-1);
+            plane.boundedPlane = boundedPlane;
+
+            if (planeUpdated != null)
+                planeUpdated(new ARPlaneUpdatedEventArgs(plane));
+        }
+
+        void OnPlaneRemoved(PlaneRemovedEventArgs eventArgs)
+        {
+            var boundedPlane = eventArgs.Plane;
+            var plane = TryGetPlane(boundedPlane.Id);
+
+            if (plane == null)
+                return;
+
+            RemovePlane(plane);
+        }
+
+        void RemovePlane(ARPlane plane)
+        {
+            if (planeRemoved != null)
+                planeRemoved(new ARPlaneRemovedEventArgs(plane));
+
+            plane.OnRemove();
+            m_Planes.Remove(plane.boundedPlane.Id);
+        }
+
+        Dictionary<TrackableId, ARPlane> m_Planes = new Dictionary<TrackableId, ARPlane>();
+
+        ARSessionOrigin m_SessionOrigin;
+
+        static List<BoundedPlane> s_BoundedPlanes = new List<BoundedPlane>();
+
+        static HashSet<TrackableId> s_TrackableIds = new HashSet<TrackableId>();
+
+        static List<TrackableId> s_PlanesToRemove = new List<TrackableId>();
+
+        const PlaneDetectionFlags k_PlaneDetectionFlagEverything = (PlaneDetectionFlags)(-1);
     }
 }

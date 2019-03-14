@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.XR.ARSubsystems;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -12,10 +11,10 @@ namespace UnityEngine.XR.ARFoundation
     [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPointCloudParticleVisualizer.html")]
     public sealed class ARPointCloudParticleVisualizer : MonoBehaviour
     {
-        void OnPointCloudChanged(ARPointCloudUpdatedEventArgs eventArgs)
+        void OnPointCloudChanged(ARPointCloud pointCloud)
         {
             var points = s_Vertices;
-            m_PointCloud.GetPoints(points, Space.Self);
+            pointCloud.GetPoints(points, Space.Self);
 
             int numParticles = points.Count;
             if (m_Particles == null || m_Particles.Length < numParticles)
@@ -52,25 +51,26 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             m_PointCloud.updated += OnPointCloudChanged;
+            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
             UpdateVisibility();
         }
 
         void OnDisable()
         {
             m_PointCloud.updated -= OnPointCloudChanged;
+            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
             UpdateVisibility();
         }
 
-        void Update()
+        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
         {
             UpdateVisibility();
         }
 
         void UpdateVisibility()
         {
-            var visible =
-                enabled &&
-                (m_PointCloud.trackingState != TrackingState.None);
+            var visible = enabled &&
+                (ARSubsystemManager.systemState == ARSystemState.SessionTracking);
 
             SetVisible(visible);
         }

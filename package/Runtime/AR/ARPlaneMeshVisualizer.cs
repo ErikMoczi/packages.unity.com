@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine.XR.ARSubsystems;
+using UnityEngine.Experimental.XR;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -22,12 +22,30 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public Mesh mesh { get; private set; }
 
+        /// <summary>
+        /// Invoked after <seealso cref="mesh"/> has been regenerated, but before
+        /// any components have been updated to use the new <c>Mesh</c>.
+        /// </summary>
+        public event Action<ARPlaneMeshVisualizer> meshUpdated;
+
         void OnBoundaryChanged(ARPlaneBoundaryChangedEventArgs eventArgs)
         {
-            var polygon = s_PlaneSpaceBoundary;
-            m_Plane.GetPlaneSpaceBoundary(polygon);
-            if (!ARPlaneMeshGenerators.GenerateMesh(mesh, new Pose(transform.localPosition, transform.localRotation), polygon))
+            // Ignore subsumed planes
+            if (m_Plane.boundedPlane.SubsumedById != TrackableId.InvalidId)
+            {
+                DisableComponents();
                 return;
+            }
+
+            var center = eventArgs.center;
+            var normal = eventArgs.normal;
+            var polygon = eventArgs.convexBoundary;
+
+            if (!ARPlaneMeshGenerators.GenerateMesh(mesh, m_Plane.boundedPlane.Pose, center, normal, polygon))
+                return;
+
+            if (meshUpdated != null)
+                meshUpdated(this);
 
             var lineRenderer = GetComponent<LineRenderer>();
             if (lineRenderer != null)
@@ -35,8 +53,7 @@ namespace UnityEngine.XR.ARFoundation
                 lineRenderer.positionCount = polygon.Count;
                 for (int i = 0; i < polygon.Count; ++i)
                 {
-                    var point2 = polygon[i];
-                    lineRenderer.SetPosition(i, new Vector3(point2.x, 0, point2.y));
+                    lineRenderer.SetPosition(i, polygon[i]);
                 }
             }
 
@@ -74,11 +91,20 @@ namespace UnityEngine.XR.ARFoundation
         void UpdateVisibility()
         {
             var visible = enabled &&
-                (m_Plane.trackingState != TrackingState.None) &&
-                (ARSession.state > ARSessionState.Ready) &&
-                (m_Plane.subsumedBy == null);
+                (m_Plane.trackingState != TrackingState.Unavailable) &&
+                (ARSubsystemManager.systemState > ARSystemState.Ready);
 
             SetVisible(visible);
+        }
+
+        void OnUpdated(ARPlane plane)
+        {
+            UpdateVisibility();
+        }
+
+        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
+        {
+            UpdateVisibility();
         }
 
         void Awake()
@@ -90,13 +116,16 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             m_Plane.boundaryChanged += OnBoundaryChanged;
+            m_Plane.updated += OnUpdated;
+            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
             UpdateVisibility();
-            OnBoundaryChanged(default(ARPlaneBoundaryChangedEventArgs));
         }
 
         void OnDisable()
         {
             m_Plane.boundaryChanged -= OnBoundaryChanged;
+            m_Plane.updated -= OnUpdated;
+            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
             UpdateVisibility();
         }
 
@@ -119,21 +148,10 @@ namespace UnityEngine.XR.ARFoundation
 
                 transform.hasChanged = false;
             }
-
-            if (m_Plane.subsumedBy != null)
-            {
-                DisableComponents();
-            }
-            else
-            {
-                UpdateVisibility();
-            }
         }
 
         float? m_InitialLineWidthMultiplier;
 
         ARPlane m_Plane;
-
-        static List<Vector2> s_PlaneSpaceBoundary = new List<Vector2>();
     }
 }

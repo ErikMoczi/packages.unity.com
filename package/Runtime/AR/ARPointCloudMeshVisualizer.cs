@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine.XR.ARSubsystems;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -14,10 +13,10 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public Mesh mesh { get; private set; }
 
-        void OnPointCloudChanged(ARPointCloudUpdatedEventArgs eventArgs)
+        void OnPointCloudChanged(ARPointCloud pointCloud)
         {
             var points = s_Vertices;
-            m_PointCloud.GetPoints(points, Space.Self);
+            pointCloud.GetPoints(points, Space.Self);
 
             mesh.Clear();
             mesh.SetVertices(points);
@@ -44,25 +43,26 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             m_PointCloud.updated += OnPointCloudChanged;
+            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
             UpdateVisibility();
         }
 
         void OnDisable()
         {
             m_PointCloud.updated -= OnPointCloudChanged;
+            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
             UpdateVisibility();
         }
 
-        void Update()
+        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
         {
             UpdateVisibility();
         }
 
         void UpdateVisibility()
         {
-            var visible = 
-                enabled &&
-                (m_PointCloud.trackingState != TrackingState.None);
+            var visible = enabled &&
+                (ARSubsystemManager.systemState == ARSystemState.SessionTracking);
 
             SetVisible(visible);
         }
