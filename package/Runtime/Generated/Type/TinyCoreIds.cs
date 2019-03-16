@@ -72,8 +72,6 @@ namespace Unity.Tiny
             public static readonly TinyId Image2DAlphaMask = new TinyId(CoreGuids.Core2D.Image2DAlphaMask);
             public static readonly TinyId Image2DLoadFromFile = new TinyId(CoreGuids.Core2D.Image2DLoadFromFile);
             public static readonly TinyId Image2DRenderToTexture = new TinyId(CoreGuids.Core2D.Image2DRenderToTexture);
-            public static readonly TinyId Image2DMemoryFormat = new TinyId(CoreGuids.Core2D.Image2DMemoryFormat);
-            public static readonly TinyId Image2DSaveStatus = new TinyId(CoreGuids.Core2D.Image2DSaveStatus);
             public static readonly TinyId ImageStatus = new TinyId(CoreGuids.Core2D.ImageStatus);
             public static readonly TinyId Sprite2D = new TinyId(CoreGuids.Core2D.Sprite2D);
             public static readonly TinyId Sprite2DBorder = new TinyId(CoreGuids.Core2D.Sprite2DBorder);
@@ -92,9 +90,9 @@ namespace Unity.Tiny
             public static readonly TinyId AssetReferenceAudioClip = new TinyId(CoreGuids.EditorExtensions.AssetReferenceAudioClip);
             public static readonly TinyId AssetReferenceSprite = new TinyId(CoreGuids.EditorExtensions.AssetReferenceSprite);
             public static readonly TinyId AssetReferenceSpriteAtlas = new TinyId(CoreGuids.EditorExtensions.AssetReferenceSpriteAtlas);
-            public static readonly TinyId AssetReferenceTMP_FontAsset = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTMP_FontAsset);
             public static readonly TinyId AssetReferenceTexture2D = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTexture2D);
             public static readonly TinyId AssetReferenceTileBase = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTileBase);
+            public static readonly TinyId AssetReferenceTMP_FontAsset = new TinyId(CoreGuids.EditorExtensions.AssetReferenceTMP_FontAsset);
             public static readonly TinyId CameraCullingMask = new TinyId(CoreGuids.EditorExtensions.CameraCullingMask);
             public static readonly TinyId EntityLayer = new TinyId(CoreGuids.EditorExtensions.EntityLayer);
         }

@@ -17,6 +17,8 @@ namespace Unity.Tiny.Test
         private TinyProject _project;
         private TinyModule _module;
 
+        private const string k_OldId = "this is a globally unique ID made with love";
+        
         [SetUp]
         public void SetUp()
         {
@@ -262,20 +264,6 @@ export class SimpleBehaviour extends ut.ComponentBehaviour {
 		    Assert.NotNull(optField);
 		    Assert.AreEqual("game.OtherUserComponent", optField.QualifiedName);
 		    Assert.IsTrue(optField.IsOptional);
-	    }
-
-	    [Test]
-	    public void BuildAndRunModule()
-	    {
-		    using (new FlowTestHelper.ModuleContext())
-		    {
-			    var ex = Assert.Throws<InvalidOperationException>(() =>
-			    {
-				    TinyBuildPipeline.BuildAndLaunch();
-			    });
-		    
-			    Assert.That(ex.Message, Is.EqualTo("Tiny: Export only available in project context."));
-		    }
 	    }
     }
 }

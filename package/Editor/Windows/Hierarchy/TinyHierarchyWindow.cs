@@ -355,11 +355,6 @@ namespace Unity.Tiny
 
         private static void HandleSceneGraphChange(ChangeSource source, object originator)
         {
-            if (Context == null)
-            {
-                return;
-            }
-            
             foreach (var entityGroup in LoadedEntityGroups)
             {
                 var graph = EntityGroupManager.GetSceneGraph(entityGroup);

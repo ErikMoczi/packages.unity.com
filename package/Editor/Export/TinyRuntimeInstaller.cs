@@ -5,23 +5,16 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Unity.Tiny
 {
     internal static class TinyRuntimeInstaller
     {
-        private const string RuntimeVariantFull = "RuntimeFull";
-        private const string RuntimeVariantStripped = "RuntimeStripped";
-        private const string PublicDistFolder = "Tiny/Dist/artifacts/Stevedore/tiny-dist";
-        private const string PublicSamplesPackage = "Tiny/Dist/artifacts/Stevedore/tiny-samples/tiny-samples.unitypackage";
+        internal const string RuntimeVariantFull = "RuntimeFull";
+        internal const string RuntimeVariantStripped = "RuntimeStripped";
 
-        static TinyRuntimeInstaller()
-        {
-            LazyInstall();
-        }
-
-        private static void LazyInstall()
+        [InitializeOnLoadMethod]
+        internal static void InstallOnLoad()
         {
             if (!EditorApplication.isPlayingOrWillChangePlaymode)
             {
@@ -40,15 +33,6 @@ namespace Unity.Tiny
                 Install(force: false, silent: true);
 #endif
             }
-        }
-
-        private static string PrependMono(string program)
-        {
-#if UNITY_EDITOR_WIN
-            return program.Replace('/', '\\');
-#else
-            return "mono " + program;
-#endif
         }
 
         /// <summary>
@@ -232,7 +216,12 @@ namespace Unity.Tiny
             };
             using (var progress = new TinyEditorUtility.ProgressBarScope("Building Runtime...", "..."))
             {
-                var beeProgram = PrependMono("bee.exe");
+#if UNITY_EDITOR_WIN
+                var beeProgram = "bee.exe";
+#else
+                var beeProgram = "mono bee.exe";
+#endif
+
                 for (var i = 0; i < beeTargets.Count; ++i)
                 {
                     var target = beeTargets[i];
@@ -253,7 +242,7 @@ namespace Unity.Tiny
                 }
 
                 var buildFolder = runtimeFolder + "build/";
-                var distFolder = GetRuntimeDistDirectory() + "/";
+                var distFolder = "./Tiny/Dist/";
 
                 if (isClean)
                 {
@@ -312,11 +301,8 @@ namespace Unity.Tiny
 
                 var runtimeRev = distFolder + "runtime-rev.txt";
                 var projectRoot = new DirectoryInfo(".");
-#if UNITY_EDITOR_WIN
+
                 TinyShell.RunInShell($"git show --format=\"%%H\" --no-patch > {runtimeRev}", new ShellProcessArgs()
-#else
-                TinyShell.RunInShell($"git show --format=\"%H\" --no-patch > {runtimeRev}", new ShellProcessArgs()
-#endif
                 {
                     WorkingDirectory = projectRoot,
                     ThrowOnError = true
@@ -363,10 +349,14 @@ namespace Unity.Tiny
                 {
                     TinyPreferences.MonoDirectory
                 };
-                using (new TinyEditorUtility.ProgressBarScope("Building Tools...", "Packaging node tools into native executables, please wait!"))
+                using (var progress = new TinyEditorUtility.ProgressBarScope("Building Tools...", "Packaging node tools into native executables, please wait!"))
                 {
-                    var program = PrependMono("Packages/com.unity.tiny/Dist~/bee.exe");
-                    var output = TinyShell.RunInShell(program, new ShellProcessArgs()
+#if UNITY_EDITOR_WIN
+                    var program = "bee.exe";
+#else
+                    var program = "mono bee.exe";
+#endif
+                    var output = TinyShell.RunInShell($"{program}", new ShellProcessArgs()
                     {
                         WorkingDirectory = rootDir,
                         ExtraPaths = extraPaths,
@@ -383,61 +373,43 @@ namespace Unity.Tiny
 
 #endif // UNITY_TINY_INTERNAL
 
-        private static void UpdateToolchain(bool force)
-        {
-            var depDir = new DirectoryInfo("Tiny/Dist");
-            var dstBeeScript = new FileInfo("Tiny/Dist/Bees/BuildProgram.bee.cs");
-            
-            // we can't run bee from the Packages folder, as it may be read-only
-            var srcBeeScript = new FileInfo(Path.GetFullPath("Packages/com.unity.tiny/Dist~/Bees/BuildProgram.bee.cs"));
-            Assert.IsTrue(srcBeeScript.Exists, "Could not find Tiny toolchain update script");
-
-            if (false == dstBeeScript.Exists)
-            {
-                // main bee script not found (package install)? synchronize the whole tree
-                TinyBuildUtilities.CopyDirectory(
-                    from: new DirectoryInfo(Path.GetFullPath("Packages/com.unity.tiny/Dist~")),
-                    to: depDir,
-                    purge: true);
-            }
-            else if (force || dstBeeScript.LastWriteTimeUtc < srcBeeScript.LastWriteTimeUtc)
-            {
-                // new bee script (package update)? synchronize only the Bees folder
-                TinyBuildUtilities.CopyDirectory(
-                    from: new DirectoryInfo(Path.GetFullPath("Packages/com.unity.tiny/Dist~/Bees")),
-                    to: new DirectoryInfo(Path.Combine(depDir.FullName, "Bees")), 
-                    purge: true);
-            }
-            else
-            {
-                // let bee handle the rest: incremental builds are cheap
-            }
-
-            var extraPaths = new string[]
-            {
-                TinyPreferences.MonoDirectory
-            };
-            var program = PrependMono("bee.exe");
-            var output = TinyShell.RunInShell(program, new ShellProcessArgs()
-            {
-                WorkingDirectory = depDir,
-                ExtraPaths = extraPaths,
-                ThrowOnError = false,
-                MaxIdleTimeInMilliseconds = 10 * 1000 // 10min
-            });
-            if (!output.Succeeded || !Directory.Exists(PublicDistFolder))
-            {
-                throw new Exception($"Failed to update dependencies:\n{output.FullOutput}");
-            }
-        }
-
         private static void Install(bool force, bool silent)
         {
             using (new OverwriteToolsScope())
-            using (new TinyEditorUtility.ProgressBarScope("Tiny Mode", "Updating toolchain..."))
+            using (var progress = new TinyEditorUtility.ProgressBarScope())
             {
-                UpdateToolchain(force);
-                
+                var installLocation = new DirectoryInfo("Tiny");
+                var versionFile = new FileInfo(Path.Combine(installLocation.FullName, "lastUpdate.txt"));
+                var sourcePackage = new FileInfo(TinyConstants.PackagePath + "/tiny-runtime-dist.zip");
+                var shouldUpdate = sourcePackage.Exists && (!versionFile.Exists || versionFile.LastWriteTimeUtc < sourcePackage.LastWriteTimeUtc);
+
+                if (!force && !shouldUpdate)
+                {
+                    if (!silent)
+                    {
+                        UnityEngine.Debug.Log("Tiny: Runtime is already up to date");
+                    }
+                    return;
+                }
+
+                if (!sourcePackage.Exists)
+                {
+                    if (!silent)
+                    {
+                        UnityEngine.Debug.LogError($"Tiny: could not find {sourcePackage.FullName}");
+                    }
+                    return;
+                }
+
+                if (installLocation.Exists)
+                {
+                    progress.Update($"{TinyConstants.ApplicationName} Runtime", "Removing old runtime...");
+                    TinyBuildUtilities.PurgeDirectory(installLocation);
+                }
+                progress.Update("Installing new runtime...", 0.5f);
+                TinyBuildUtilities.UnzipFile(sourcePackage.FullName, installLocation.Parent);
+                File.WriteAllText(versionFile.FullName, $"{sourcePackage.FullName} install time: {DateTime.UtcNow.ToString()}");
+
 #if UNITY_EDITOR_OSX
                 // TODO: figure out why UnzipFile does not preserve executable bits in some cases
                 // chmod +x any native executables here
@@ -457,10 +429,7 @@ namespace Unity.Tiny
                     });
 #endif
 
-                if (!silent)
-                {
-                    UnityEngine.Debug.Log($"Installed {TinyConstants.ApplicationName} toolchain successfully");
-                }
+                UnityEngine.Debug.Log($"Installed {TinyConstants.ApplicationName} runtime at: {installLocation.FullName}");
             }
         }
 
@@ -486,7 +455,8 @@ namespace Unity.Tiny
 
         internal static void InstallSamples(bool interactive)
         {
-            AssetDatabase.ImportPackage(PublicSamplesPackage, interactive);
+            var packagePath = Path.GetFullPath(TinyConstants.PackagePath + "/tiny-samples.unitypackage");
+            AssetDatabase.ImportPackage(packagePath, interactive);
             CreateSampleLayers();
         }
 
@@ -511,11 +481,7 @@ namespace Unity.Tiny
 
         internal static string GetRuntimeDistDirectory()
         {
-#if UNITY_TINY_INTERNAL
-            return Path.Combine("Tiny", "Runtime");
-#else
-            return Path.Combine(PublicDistFolder, "Tiny", "Runtime");
-#endif
+            return Path.Combine("Tiny", "Dist");
         }
 
         internal static readonly DirectoryInfo RuntimeDataDefinitionDirectory =
@@ -558,11 +524,7 @@ namespace Unity.Tiny
             {
                 throw new ArgumentException("tool");
             }
-#if UNITY_TINY_INTERNAL
             return Path.Combine("Tiny", "Tools", toolName);
-#else
-            return Path.Combine(PublicDistFolder, "Tiny", "Tools", toolName);
-#endif
         }
 
         private static bool IncludesModule(TinyProject project, string moduleName)
@@ -577,4 +539,17 @@ namespace Unity.Tiny
             return options.Configuration == TinyBuildConfiguration.Release || IncludesModule(options.Project, k_BuiltInPhysicsModule) ? RuntimeVariantFull : RuntimeVariantStripped;
         }
     }
+
+#if !UNITY_TINY_INTERNAL
+    internal class TinyAssetPostProcessor : AssetPostprocessor
+    {
+        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+        {
+            if (!UnityEditorInternal.InternalEditorUtility.inBatchMode)
+            {
+                TinyRuntimeInstaller.InstallOnLoad();
+            }
+        }
+    }
+#endif
 }

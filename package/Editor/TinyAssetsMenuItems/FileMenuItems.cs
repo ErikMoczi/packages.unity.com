@@ -55,7 +55,7 @@ namespace Unity.Tiny
         [MenuItem(k_FileMenuPrefix + k_NewProject, priority = k_BasePriority)]
         public static void CreateNewProject()
         {
-            CreateNew(() => TinyEditorApplication.NewProject());
+            CreateNew(TinyEditorApplication.NewProject);
         }
 
         [MenuItem(k_TinyMenuPrefix + k_OpenProject, priority = k_BasePriority + 1)]
@@ -69,7 +69,7 @@ namespace Unity.Tiny
         [MenuItem(k_FileMenuPrefix + k_NewModule, priority = k_BasePriority + 50)]
         public static void CreateNewModule()
         {
-            CreateNew(() => TinyEditorApplication.NewModule());
+            CreateNew(TinyEditorApplication.NewModule);
         }
 
         [MenuItem(k_TinyMenuPrefix + k_OpenModule, priority = k_BasePriority + 51)]
@@ -126,6 +126,7 @@ namespace Unity.Tiny
             {
                 return;
             }
+
             SelectTinyObject(creator.Invoke());
         }
 

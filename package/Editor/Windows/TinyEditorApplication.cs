@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Net.Configuration;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -337,19 +336,11 @@ namespace Unity.Tiny
 
         /// <summary>
         /// Creates and loads a new .utproject
+        /// @NOTE The project only exists in memory until Save() is called
         /// </summary>
-        /// <param name="path">
-        /// New project path. Path is relative to the project folder, for example: "Assets/NewProject".
-        /// If provided path is null or empty, a file save dialog will be shown. 
-        /// </param>
-        /// <returns>New <see cref="TinyProject"/> instance.</returns>
-        public static TinyProject NewProject(string path = null)
+        public static TinyProject NewProject()
         {
             Assert.IsFalse(EditorApplication.isPlayingOrWillChangePlaymode);
-            if (!string.IsNullOrEmpty(path) && !IsPersistentObjectPathValid(path))
-            {
-                throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid project path provided.");
-            }
             
             var context = new TinyContext(ContextUsage.Edit);
             var registry = context.Registry;
@@ -364,7 +355,7 @@ namespace Unity.Tiny
             var entityGroup = registry.CreateEntityGroup(TinyId.New(), "NewEntityGroup");
             var entityGroupRef = (TinyEntityGroup.Reference) entityGroup;
             var cameraEntity = registry.CreateEntity(TinyId.New(), "Camera");
-            cameraEntity.AddComponent(TypeRefs.Core2D.TransformNode);
+            var transform = cameraEntity.AddComponent(TypeRefs.Core2D.TransformNode);
             var camera = cameraEntity.AddComponent(TypeRefs.Core2D.Camera2D);
             camera["clearFlags"] = new TinyEnum.Reference(TypeRefs.Core2D.CameraClearFlags.Dereference(registry), 1);
             camera.AssignPropertyFrom("backgroundColor", Color.black);
@@ -413,20 +404,19 @@ namespace Unity.Tiny
             };
             workspace.OpenedEntityGroups.Add(entityGroupRef);
 
+            var path = EditorUtility.SaveFilePanelInProject("New Project", project.Name, string.Empty, string.Empty);
+
             if (string.IsNullOrEmpty(path))
             {
-                path = EditorUtility.SaveFilePanelInProject("New Project", project.Name, string.Empty, string.Empty);
-                if (string.IsNullOrEmpty(path))
-                {
-                    return null;
-                }
-                
-                if (!IsPersistentObjectPathValid(path))
-                {
-                    throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid project path provided.");
-                }
+                return null;
             }
 
+            if (new FileInfo(path).Exists)
+            {
+                Debug.LogError($"Failed to create project, a file already exists at Path=[{path}]");
+                return null;
+            }
+            
             project.Name = Path.GetFileNameWithoutExtension(path);
             
             var editorContext = new TinyEditorContext((TinyProject.Reference) project, EditorContextType.Project, context, workspace);
@@ -437,27 +427,17 @@ namespace Unity.Tiny
             
             SavePersistentObjectsAs(editorContext, Path.Combine(path, Persistence.GetFileName(project)));
 
-            LoadContext(editorContext);
+            LoadContext(editorContext, isChanged: false);
+
             return project;
         }
 
-
         /// <summary>
         /// Creates and loads a new .utmodule
+        /// @NOTE The module only exists in memory until Save() is called
         /// </summary>
-        /// <param name="path">
-        /// New module path. Path is relative to the project folder, for example: "Assets/NewModule".
-        /// If provided path is null or empty, a file save dialog will be shown. 
-        /// </param>
-        /// <returns>New <see cref="TinyModule"/> instance.</returns>
-        public static TinyModule NewModule(string path = null)
+        public static TinyModule NewModule()
         {
-            Assert.IsFalse(EditorApplication.isPlayingOrWillChangePlaymode);
-            if (!string.IsNullOrEmpty(path) && !IsPersistentObjectPathValid(path))
-            {
-                throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid module path provided.");
-            }
-            
             var context = new TinyContext(ContextUsage.Edit);
             var registry = context.Registry;
 
@@ -477,18 +457,17 @@ namespace Unity.Tiny
             
             var workspace = new TinyEditorWorkspace();
 
+            var path = EditorUtility.SaveFilePanelInProject("New Module", module.Name, string.Empty, string.Empty);
+
             if (string.IsNullOrEmpty(path))
             {
-                path = EditorUtility.SaveFilePanelInProject("New Module", module.Name, string.Empty, string.Empty);
-                if (string.IsNullOrEmpty(path))
-                {
-                    return null;
-                }
-                
-                if (!IsPersistentObjectPathValid(path))
-                {
-                    throw new ArgumentException($"{TinyConstants.ApplicationName}: invalid module path provided.");
-                }
+                return null;
+            }
+
+            if (new FileInfo(path).Exists)
+            {
+                Debug.LogError($"Failed to create module, a file already exists at Path=[{path}]");
+                return null;
             }
             
             module.Name = Path.GetFileNameWithoutExtension(path);
@@ -497,7 +476,7 @@ namespace Unity.Tiny
             
             SavePersistentObjectsAs(editorContext, Path.Combine(path, Persistence.GetFileName(module)));
             
-            LoadContext(editorContext);
+            LoadContext(editorContext, isChanged: false);
 
             return module;
         }
@@ -534,13 +513,13 @@ namespace Unity.Tiny
             {
                 if (EditorUtility.DisplayDialog(
                     $"{TinyConstants.ApplicationName} asset version changed",
-                    "We have made some changes to the asset format in order to better support collaboration. \n" +
-                    "\n" +
+                    $"We have made some changes to the asset format in order to better support collaboration. \n" +
+                    $"\n" +
                     $"Serialized version: {project.LastSerializedVersion}\n" +
                     $"Current version: {TinyProject.CurrentSerializedVersion}\n" +
-                    "\n" +
-                    "WARNING: If you continue your project will be migrated to the new format. Make sure to backup your project before proceeding\n" +
-                    "",
+                    $"\n" +
+                    $"WARNING: If you continue your project will be migrated to the new format. Make sure to backup your project before proceeding\n" +
+                    $"",
                     "Yes",
                     "No"))
                 {
@@ -558,7 +537,7 @@ namespace Unity.Tiny
             
             SetupProject(registry, project);
             
-            LoadContext(editorContext);
+            LoadContext(editorContext, isChanged: false);
             return project;
         }
 
@@ -595,7 +574,7 @@ namespace Unity.Tiny
             project.Module = (TinyModule.Reference) module;
 
             var editorContext = new TinyEditorContext((TinyProject.Reference) project, EditorContextType.Module, context, TinyEditorPrefs.LoadWorkspace(project.PersistenceId));
-            LoadContext(editorContext);
+            LoadContext(editorContext, isChanged: false);
             return module;
         }
 
@@ -656,11 +635,6 @@ namespace Unity.Tiny
             return true;
         }
         
-        /// <summary>
-        /// Saves the current project or module to the assets directory.
-        /// Save a file dialog will be shown.
-        /// </summary>
-        /// <returns></returns>
         public static bool SaveAs()
         {
             var persistentObject = EditorContext.GetPersistentObjects().First();
@@ -772,7 +746,7 @@ namespace Unity.Tiny
 
             var selection = Selection.instanceIDs;
 
-            // @NOTE Closing a project can cause a Unity scene to save. We dont want to trigger persistence save for tiny
+            // @NOTE Closing a project can cause a Unity scene to save. We dont want to trigger persitsence save for tiny
             using (SaveModificationProcessor.DontSaveScope())
             {
                 OnCloseProject?.Invoke(EditorContext.Project, EditorContext.Context);
@@ -848,7 +822,8 @@ namespace Unity.Tiny
             var context = new TinyContext(usage);
             var registry = context.Registry;
 
-            if (!TinyTemp.Accept(registry, out var persistenceId))
+            string persistenceId;
+            if (!TinyTemp.Accept(registry, out persistenceId))
             {
                 LoadPersistenceId(persistenceId, context);
                 return;
@@ -879,13 +854,13 @@ namespace Unity.Tiny
             }
 
             Assert.IsNotNull(project);
-            LoadContext(editorContext);
+            LoadContext(editorContext, isChanged: true);
         }
         
         /// <summary>
         /// Sets up or migrates the initial state of the project
         /// * Includes required modules
-        /// * Performs any migration
+        /// * Perfrorms any migration
         /// </summary>
         /// <param name="registry"></param>
         /// <param name="project"></param>
@@ -905,7 +880,7 @@ namespace Unity.Tiny
         /// <summary>
         /// Sets up or migrates the initial state of a standalone module
         /// * Includes required modules
-        /// * Performs any migration
+        /// * Perfrorms any migration
         /// </summary>
         /// <param name="registry"></param>
         /// <param name="module"></param>
@@ -923,7 +898,7 @@ namespace Unity.Tiny
             }
         }
 
-        private static void LoadContext(TinyEditorContext context)
+        private static void LoadContext(TinyEditorContext context, bool isChanged)
         {
             Assert.IsNotNull(context);
 
@@ -976,7 +951,7 @@ namespace Unity.Tiny
             if (null != group && !string.IsNullOrEmpty(group.PersistenceId) && Persistence.IsPersistentObjectChanged(group))
             {
                 var result = EditorUtility.DisplayDialogComplex(
-                    "Entity group has changes",
+                    $"Entity group has changes",
                     $"'{group.Name}' has unsaved changes. Would you like to save before unloading?",
                     "Yes",
                     "No",
@@ -1059,42 +1034,6 @@ namespace Unity.Tiny
                     component.AssignIfDifferent("appStoreUrl", settings.AppStoreUrl);
                 }
             }
-        }
-
-        private static bool IsPersistentObjectPathValid(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return false;
-            }
-
-            if (!path.StartsWith("Assets/"))
-            {
-                return false;
-            }
-
-            if (path.EndsWith("/"))
-            {
-                return false;
-            }
-            
-            if (!Path.GetExtension(path).Equals(String.Empty))
-            {
-                return false;
-            }
-
-            if (!Uri.IsWellFormedUriString(path, UriKind.Relative))
-            {
-                return false;
-            }
-
-            var systemPath = Persistence.GetPathRelativeToProjectPath(path); 
-            if (Directory.Exists(systemPath))
-            {
-                return false;
-            }
-
-            return true;
         }
     }
 }
