@@ -35,6 +35,7 @@ namespace Unity.Burst
         // -------------------------------------------------------
         // Common options used by the compiler
         // -------------------------------------------------------
+        public const string OptionGroup = "group";
         public const string OptionPlatform = "platform=";
         public const string OptionBackend = "backend=";
         public const string OptionSafetyChecks = "safety-checks";
@@ -79,6 +80,7 @@ namespace Unity.Burst
         public const string OptionAotOutputPath = "output=";
         public const string OptionAotKeepIntermediateFiles = "keep-intermediate-files";
         public const string OptionAotNoLink = "nolink";
+        public const string OptionVerbose = "verbose";
 
 #if !BURST_INTERNAL
 
@@ -223,7 +225,7 @@ namespace Unity.Burst
             return attribute != null;
         }
 
-        public bool TryGetOptions(MemberInfo member, out string flagsOut)
+        public bool TryGetOptions(MemberInfo member, bool isJit, out string flagsOut)
         {
             flagsOut = null;
             BurstCompileAttribute attr;
@@ -233,7 +235,7 @@ namespace Unity.Burst
             }
             var flagsBuilderOut = new StringBuilder();
 
-            if (attr.CompileSynchronously || _forceBurstCompilationSynchronously || EnableBurstCompileSynchronously)
+            if (isJit && (attr.CompileSynchronously || _forceBurstCompilationSynchronously || EnableBurstCompileSynchronously))
             {
                 AddOption(flagsBuilderOut, GetOption(OptionJitEnableSynchronousCompilation));
             }

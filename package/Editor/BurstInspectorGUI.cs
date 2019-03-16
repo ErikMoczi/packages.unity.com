@@ -286,7 +286,7 @@ namespace Unity.Burst.Editor
                     methodOptions.EnableBurstCompileSynchronously = true;
 
                     string defaultOptions;
-                    if (methodOptions.TryGetOptions(target.JobType, out defaultOptions))
+                    if (methodOptions.TryGetOptions(target.IsStaticMethod ? (MemberInfo)target.Method : target.JobType, true, out defaultOptions))
                     {
                         options.Append(defaultOptions);
 

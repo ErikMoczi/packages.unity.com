@@ -146,8 +146,9 @@ extern ""C""
             }
 
             // Prepare options
-            var commonOptions = new List<string>();
 
+            // We are grouping methods per their compiler options (float precision...etc)
+            var methodGroups = new Dictionary<string, List<string>>();
             for (var i = 0; i < methodsToCompile.Count; i++)
             {
                 var burstCompileTarget = methodsToCompile[i];
@@ -158,15 +159,65 @@ extern ""C""
 
                 var methodStr = BurstCompilerService.GetMethodSignature(burstCompileTarget.Method);
                 var methodFullSignature = methodStr + "--" + Hash128.Compute(methodStr);
-                commonOptions.Add(GetOption(OptionAotMethod, methodFullSignature));
+
+                if (aotSettingsForTarget.DisableOptimisations)
+                    burstCompileTarget.Options.DisableOptimizations = true;
+
+                burstCompileTarget.Options.EnableBurstSafetyChecks = !aotSettingsForTarget.DisableSafetyChecks;
+
+                string optionsAsStr;
+                if (burstCompileTarget.TryGetOptionsAsString(false, out optionsAsStr))
+                {
+                    List<string> methodOptions;
+                    if (!methodGroups.TryGetValue(optionsAsStr, out methodOptions))
+                    {
+                        methodOptions = new List<string>();
+                        methodGroups.Add(optionsAsStr, methodOptions);
+                    }
+                    methodOptions.Add(GetOption(OptionAotMethod, methodFullSignature));
+                }
             }
 
+            var methodGroupOptions = new List<string>();
+
+            // We should have something like this in the end:
+            //
+            // --group                1st group of method with the following shared options
+            // --float-mode=xxx
+            // --method=...
+            // --method=...
+            //
+            // --group                2nd group of methods with the different shared options
+            // --float-mode=yyy
+            // --method=...
+            // --method=...
+            if (methodGroups.Count == 1)
+            {
+                var methodGroup = methodGroups.FirstOrDefault();
+                // No need to create a group if we don't have multiple
+                methodGroupOptions.Add(methodGroup.Key);
+                foreach (var methodOption in methodGroup.Value)
+                {
+                    methodGroupOptions.Add(methodOption);
+                }
+            }
+            else
+            {
+                foreach (var methodGroup in methodGroups)
+                {
+                    methodGroupOptions.Add(GetOption(OptionGroup));
+                    methodGroupOptions.Add(methodGroup.Key);
+                    foreach (var methodOption in methodGroup.Value)
+                    {
+                        methodGroupOptions.Add(methodOption);
+                    }
+                }
+            }
+
+            var commonOptions = new List<string>();
             var targetCpu = TargetCpu.Auto;
             var targetPlatform = GetTargetPlatformAndDefaultCpu(report.summary.platform, out targetCpu);
             commonOptions.Add(GetOption(OptionPlatform, targetPlatform));
-
-            if (!BurstEditorOptions.EnableBurstSafetyChecks)
-                commonOptions.Add(GetOption(OptionDisableSafetyChecks));
 
             // TODO: Add support for configuring the optimizations/CPU
             // TODO: Add support for per method options
@@ -289,17 +340,13 @@ extern ""C""
                 options.Add(GetOption(OptionAotOutputPath, outputFilePrefix));
                 options.Add(GetOption(OptionTarget, combination.TargetCpu));
 
-                if (aotSettingsForTarget.DisableOptimisations)
-                    options.Add(GetOption(OptionDisableOpt));
-                if (aotSettingsForTarget.DisableSafetyChecks)
-                    options.Add(GetOption(OptionDisableSafetyChecks));
-                else
-                    options.Add(GetOption(OptionSafetyChecks));
-
                 if (targetPlatform == TargetPlatform.iOS)
                 {
                     options.Add(GetOption(OptionStaticLinkage));
                 }
+
+                // finally add method group options
+                options.AddRange(methodGroupOptions);
 
                 var responseFile = Path.GetTempFileName();
                 File.WriteAllLines(responseFile, options);

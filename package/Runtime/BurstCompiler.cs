@@ -63,7 +63,7 @@ namespace Unity.Burst
             void* function = null;
 
             // The attribute is directly on the method, so we recover the underlying method here
-            if (BurstCompilerOptions.Global.TryGetOptions(delegateMethod.Method, out extraOptions))
+            if (BurstCompilerOptions.Global.TryGetOptions(delegateMethod.Method, false, out extraOptions))
             {
                 if (!string.IsNullOrWhiteSpace(extraOptions))
                 {

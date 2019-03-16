@@ -1,18 +1,16 @@
 # **_Burst User Guide_**
 
-# Overview
-
-Burst is a compiler, it translates from IL/.NET bytecode to highly optimized native code using LLVM. It is released as a unity package and integrated into Unity using the Unity Package Manager.
+Burst is a compiler that translates from IL/.NET bytecode to highly optimized native code using LLVM. It is released as a Unity package and integrated into Unity using the Unity Package Manager.
 
 # Quick Start
 
-## Compile a Job with the burst compiler
+## Compile a Job with the Burst compiler
 
 Burst is primarily designed to work efficiently with the Job system. 
 
-You can start using the burst compiler in your code by simply decorating a Job struct with the attribute `[BurstCompile]`
+You can start using the Burst compiler in your code by simply decorating a Job struct with the attribute `[BurstCompile]`
 
-```C#
+```c#
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -39,7 +37,7 @@ public class MyBurst2Behavior : MonoBehaviour
         output.Dispose();
     }
 
-    // Using BurstCompile to compile a Job with burst
+    // Using BurstCompile to compile a Job with Burst
     // Set CompileSynchronously to true to make sure that the method will not be compiled asynchronously
     // but on the first schedule
     [BurstCompile(CompileSynchronously = true)]
@@ -64,46 +62,73 @@ public class MyBurst2Behavior : MonoBehaviour
 }
 ```
 
-By default within the Editor, burst JIT compile jobs asynchronously, but in the example above, we are using the option `CompileSynchronously = true` to make sure that the method will be compiled on the first schedule. In general, you should use asynchronous compilation. See [`[BurstCompile]` options](#synchronous-compilation)
+By default within the Editor, Burst JIT compiles jobs asynchronously, but  the example above uses the option `CompileSynchronously = true` to make sure that the method is compiled on the first schedule. In general, you should use asynchronous compilation. See [`[BurstCompile]` options](#synchronous-compilation)
 
 ## Jobs/Burst Menu
 
-Burst adds a few menu entries to the Jobs menu:
+The Burst package adds a few menu entries to the Jobs menu for controlling Burst behavior:
 
 ![Burst menu entries](images/burst-menu.png)
 
-- **Use Burst Jobs**: When this is checked, Jobs with the attribute `[BurstCompile]` will be compiled by burst. Default is checked
-- **Burst Inspector**: Opens the [Burst Inspector Window](#burst-inspector)
-- **Enable Burst Safety Checks**: When this is checked, code that will use collection containers (e.g `NativeArray<T>`) will check safety usages most notably the job data dependency checking system and containers index out of bounds. Note that this option disables by default the noaliasing performance optimizations. Default is checked
-- **Enable Burst Compilation**: When this is checked, burst will compile jobs and burst custom delegates that are tagged with the attribute `[BurstCompile]`. Default is checked
-- **Show Burst Timings**: When this is checked, everytime burst will have to JIT compile a job in the Editor, the time taken to compile this method will be displayed in the log. Default is unchecked
+- **Burst Inspector**: Opens the [Burst Inspector Window](#burst-inspector).
+- **Enable Burst Safety Checks**: When checked, Burst enables safety checks on code that uses collection containers (e.g `NativeArray<T>`). Checks include job data dependency and container indexes out of bounds. Note that this option disables the noaliasing performance optimizations, by default. Default is checked.
+- **Enable Burst Compilation**: When checked, Burst compiles Jobs and Burst custom delegates that are tagged with the attribute `[BurstCompile]`. Default is checked.
+- **Show Burst Timings**: When checked, Burst logs the time it takes to JIT compile a Job in the Editor. Default is unchecked.
+
+## Burst AOT Settings
+
+When a project uses Ahead-of-Time (AOT) compilation, you can control Burst behavior using the **Burst AOT** Settings section of the **Project Settings** window. The AOT settings override the Burst settings on the **Jobs** menu when you make a standalone build of your project.
+
+![Burst AOT Settings](images/burst_aot_settings.png)
+
+- **Disable Optimizations**: Turns off Burst optimizations.
+- **Disable Safety Checks**: Turns off Burst safety checks.
+- **Disable Burst Compilation**: Turns off Burst entirely.
+
+You can set the Burst AOT settings as required for each of the supported platforms. The options are saved per platform as part of the project settings.
+
+**Note:** The Burst AOT Settings are available in Unity 2019.1+.
 
 ## Burst Inspector
 
-From the Jobs menu, you can open the burst inspector. The inspector allows you to view all the jobs that can be compiled, you can also then check the generated native code.
+The Burst Inspector window displays all the Jobs and other Burst compile targets in the project. Open the Inspector from the Jobs menu (**Jobs** > **Burst Inspector**).
+
+The inspector allows you to view all the Jobs that can be compiled, you can also then check the generated intermediate and native assembly code.
 
 ![Burst Inspector](images/burst-inspector.png)
 
-On the left pane, we have **Compile Targets** which provides a list of Jobs that burst can compile. Jobs that are highlighted in white can be compiled by burst, while the ones that are disabled don't have the `[BurstCompile]` attribute.
+On the left pane of the window, **Compile Targets** provides a list of the Jobs in the project that Burst can compile. Note that the disabled Jobs in the list don't have the `[BurstCompile]` attribute.
+
+On the right pane, the window displays options for viewing the assembly and intermediate code for the selected compile target.
+
+**To view the disassembly for a Job:**
 
 1. Select an active compile target from the _left pane_.
 2. On the _right pane_, press the button **Refresh Disassembly**
 3. Switch between the different tabs to display the details:
-   * The tab **Assembly** provides the final optimized native code generated by burst
-   * The tab **.NET IL** provides a view on the original .NET IL extracted from the Job method
-   * The tab **LLVM (Unoptimized)** provides a view on the internal LLVM IR before optimizations.
-   * The tab **LLVM (Optimized)** provides a view on the internal LLVM IR after optimizations.
-   * The tab **LLVM IR Optimization Diagnostics** provides detailed LLVM diagnostics of the optimizations (i.e if they succeeded or failed).
-4. You can also switch different options:
-   * The *Safety Checks* if enabled will generate code that includes container access safety checks (e.g check if a job is writing to a native container that is readonly)
-   * The **Optimizations** option if enabled allows the compiler to optimize the code.
-   * The **Fast Math** option if enabled allows the compiler to collapse mathematical operations to be more efficient, at the expense of not respecting an exact mathematical correctness (See the [compiler relaxation option](#compiler-relaxation))
+   * **Assembly** provides the final optimized native code generated by Burst
+   * **.NET IL** provides a view on the original .NET IL extracted from the Job method
+   * **LLVM IR (Unoptimized)** provides a view on the internal LLVM IR before optimizations.
+   * **LLVM IR (Optimized)** provides a view on the internal LLVM IR after optimizations.
+   * **LLVM IR Optimization Diagnostics** provides detailed LLVM diagnostics of the optimizations (i.e if they succeeded or failed).
+4. You can also turn on different options:
+   * The *Enhanced Disassembly* option inserts the source C# statements into the **Assembly** view, correlating the assembly code with the source file, line and statement.
+   * The *Safety Checks* option generates code that includes container access safety checks (e.g check if a job is writing to a native container that is readonly).
+   * The **Optimizations** option allows the compiler to optimize the code.
+   * The **Fast Math** option allows the compiler to collapse mathematical operations to be more efficient, at the expense of not respecting an exact mathematical correctness (See the [compiler relaxation option](#compiler-relaxation))
+
+## Command-line Options
+
+You can pass the following options to the Unity Editor on the command line to control Burst:
+
+- `--burst-disable-compilation` — turns Burst off.
+- `--burst-force-sync-compilation` — Burst always compiles synchronously. See [`[BurstCompile]` options](#synchronous-compilation).
 
 # C#/.NET Language Support
 
 Burst is working on a subset of .NET that doesn't allow the usage of any managed objects/reference types in your code (class in C#).
 
-The following sections gives more details about the constructs actually supported by burst.
+The following sections gives more details about the constructs actually supported by Burst.
 
 ## Supported .NET types
 
@@ -120,7 +145,7 @@ Burst supports the following primitive types:
 - `float`
 - `double`
 
-Burst does not support the following type:
+Burst does not support the following types:
 
 - `string` as this is a managed type
 - `decimal`
@@ -156,7 +181,7 @@ The `System.IntPtr` and `UIntPtr` are supported natively as an intrinsic struct 
 
 ### Pointer types
 
-Burst supports any pointer types to any burst supported types
+Burst supports any pointer types to any Burst supported types
 
 ### Generic types
 
@@ -165,7 +190,7 @@ Specifically, it supports full instantiation of generic calls for generic types 
 
 ### Array types
 
-Managed arrays are not supported by burst. You should use instead a native container, `NativeArray<T>` for instance.
+Managed arrays are not supported by Burst. You should use instead a native container, `NativeArray<T>` for instance.
 
 ## Language Support
 
@@ -274,12 +299,12 @@ The result of this code would be invalid and could lead to very serious bugs if 
 
 ### The solution with `burst` and the JobSystem
 
-To ensure that a Job can be safely vectorized (when there is a loop), burst relies on:
+To ensure that a Job can be safely vectorized (when there is a loop), Burst relies on:
 
 - The assumption brought by the safety of the JobSystem regarding the data in input/output that you can specify in the Job: It means that by default, all data accessed safety through a job are not aliasing
-- A further analysis of burst on the code to make sure that the code is also safe
+- A further analysis of Burst on the code to make sure that the code is also safe
 
-The alias analysis in burst is currently relying on a few constraints that your code needs to follow in order to let the auto-vectorizer to work correctly:
+The alias analysis in Burst is currently relying on a few constraints that your code needs to follow in order to let the auto-vectorizer to work correctly:
 
 - Only `NativeArray<T>` is used and only the property `Length` and or the indexer `this[index]` are used
 - Native containers (e.g `NativeArray<T>`) or a struct containing indirectly a container should not be copied to a local variable
@@ -330,7 +355,7 @@ The same loop with the **noalias analysis disabled** will be **copying only a si
     jl      .LBB0_2
 ```
 
-As we can see, the performance difference can be significant here. That's why noalias aware native code generation is fundamental, and that's what burst is trying to solve.
+As we can see, the performance difference can be significant here. That's why noalias aware native code generation is fundamental, and that's what Burst is trying to solve.
 
 ## Compiler options
 
@@ -341,16 +366,16 @@ When compiling a job, you can change the behavior of the compiler:
 - Forcing a synchronous compilation of the Job (only for the Editor/JIT case)
 - Using internal compiler options (not yet detailed)
 
-These flags can be set through the `[BurstCompile]` attribute, for example `[BurstCompile(Accuracy.Med, Support.Relaxed)]`
+These flags can be set through the `[BurstCompile]` attribute, for example `[BurstCompile(FloatPrecision.Med, FloatMode.Fast)]`
 
-### Accuracy
+### FloatPrecision
 
 The accuracy is defined by the following enumeration:
 
-```C#
-    public enum Accuracy
+``` c#
+    public enum FloatPrecision
     {
-        Std,
+        Standard,
         Low,
         Med,
         High,
@@ -366,35 +391,41 @@ Using the `High` accuracy should be largely enough for most games.
 
 An ULP (unit in the last place or unit of least precision) is the spacing between floating-point numbers, i.e., the value the least significant digit represents if it is 1.
 
-> We expect to support more ULP accuracy for `Med` and `Low` in a future version of burst
+> We expect to support more ULP accuracy for `Med` and `Low` in a future version of Burst
 
-### Compiler relaxation
+Note: The `FloatPrecision` Enum was named `Accuracy` in early versions of the Burst API.
 
-The compiler relaxation is defined by the following enumeration:
+### Compiler floating point math mode
 
-```C#
-    public enum Support
+The compiler floating point math mode is defined by the following enumeration:
+
+```c#
+    public enum FloatMode
     {
-        Strict,
-        Relaxed
+        Default,
+        Deterministic,
+        Fast,
+        Strict
     }
 ```
 
 - Strict: The compiler is not performing any re-arrangement of the calculation and will be careful at respecting special floating point values (denormals, NaN...). This is the **default value**.
-- Relaxed: The compiler can perform instructions re-arrangement and/or using dedicated/less precise hardware SIMD instructions.
+- Fast: The compiler can perform instructions re-arrangement and/or using dedicated/less precise hardware SIMD instructions.
+- Deterministic: (Preview) Uses deterministic math functions which guarantee that the same inputs always produce the same outputs.
 
-Typically, some hardware can support Multiply and Add (e.g mad `a * b + c`) into a single instruction. Using the relaxed calculation can allow these optimizations.
+Typically, some hardware can support Multiply and Add (e.g mad `a * b + c`) into a single instruction. Using the Fast calculation can allow these optimizations.
 The reordering of these instructions can lead to a lower accuracy.
 
-Using the `Relaxed` compiler relaxation can be used for many scenarios where the exact order of the calculation and the uniform handling of NaN values are not strictly required.
+Using the `Fast` compiler floating point math mode can be used for many scenarios where the exact order of the calculation and the uniform handling of NaN values are not strictly required.
 
+<a name="synchronous-compilation"></a>
 ### Synchronous compilation
 
-By default, the burst compiler in the editor will compile the jobs asynchronously.
+By default, the Burst compiler in the editor will compile the jobs asynchronously.
 
 You can change this behavior by setting `CompileSynchronously = true` for the `[BurstCompile]` attribute:
 
-```C#
+```c#
 [BurstCompile(CompileSynchronously = true)]
 public struct MyJob : IJob
 {
@@ -412,33 +443,49 @@ Also, many functions from the `math` type are also mapped directly to hardware S
 
 # Standalone Player support
 
-The burst compiler is supporting standalone players.
+The Burst compiler supports standalone players.
 
 ## Usage
 
-When building a player, burst will compile a single dynamic library for all the burst jobs in your game. Depending on the platform, the dynamic library will be output to a different folder (on Windows, it is in the path `Data/Plugins/lib_burst_generated.dll`)
+When building a player, Burst compiles a single dynamic library for all the Burst jobs in your game. Burst saves the dynamic library it compiles to a folder named according to the platfom (on Windows, it is in the path `Data/Plugins/lib_burst_generated.dll`)
 
-This library will be loaded by the Job system runtime on the first job compiled by burst.
+This library is loaded by the Job system runtime on the first job compiled by Burst.
 
-The settings to enable the compilation are controlled by the Jobs/burst menu, the same way than for the editor.
-
-In a future iteration, these settings will be moved to proper settings per platform/player.
+The settings to enable the compilation are controlled by the Project Burst AOT Settings, which override the Burst settings on the **Jobs** menu.
 
 ## Supported platforms
 
-Burst is supporting the following platforms for standalone players:
+Burst supports the following platforms for standalone players:
 
 - Windows
+  - Requires Visual Studio build tools and Windows 10 SDK
 - MacOS
+  - Requires Xcode
 - Linux
+  - Requires clang or gcc plus
 - Xbox One
-- PS4
-- Android (ARM v7 and v8+)
+  - Requires native tool chains (as required for Unity IL2CPP builds)
+- PS4 
+  - Requires native tool chains (as required for Unity IL2CPP builds)
+  - Minimum PS4 SDK for Burst support is 5.5.0
+- Android (ARM v7 and v8+) 
+  - Minimum NDK for Burst support is 13
+  - ANDROID_NDK_ROOT environment variable must be set
 - iOS (ARM v7 and v8+)
+  - Requires Unity 2018.3.6f1+ or Unity 2019.1.0b4+
+  - Xcode
+- UWP 
+  - Requires Visual Studio 2017 with Universal Windows Platform Development Workload
+  - C++ Universal Windows Platform Tools
 
+**Notes:**
+
+- Burst does not support cross-compilation between Windows, Mac, or Linux.
+- The UWP build always builds all platform binaries (X86, X64, ARMv7 and ARMv8).
+ 
 ## Known issues
 
 - Accuracy/Precision are currently not supported 
 - The target CPU is currently hardcoded per platform (e.g SSE4 for Windows 64 bits)
 
-These known issues will be resolved in a future release of burst.
+These known issues will be resolved in a future release of Burst.

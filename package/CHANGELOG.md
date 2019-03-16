@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0-preview.4] - 2019-03-15
+
+- Fix "Error while verifying module: Invalid bitcast" that could happen with return value in the context of deep nested conditionals
+- Fix support for AOT compilation with float precision/mode
+- Fix fast math for iOS/PS4
+- Fix issue with double not using optimized intrinsics for scalars
+- Fix issue when loading a MDB file was failing when building a standalone player
+- Fix no-alias analysis that would be disabled in a standalone player if only one of the method was failing
+- Fix bug with explicit layout struct returned as a pointer by a property but creating an invalid store
+- Change `FloatPrecision.Standard` defaulting from `FloatPrecision.High` (ULP1) to `FloatPrecision.Medium` (ULP3.5)
+
 ## [1.0.0-preview.3] - 2019-03-14
 
 - Fix compilation issue with uTiny builds

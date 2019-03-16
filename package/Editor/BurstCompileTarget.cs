@@ -41,6 +41,16 @@ namespace Unity.Burst.Editor
         /// </summary>
         public bool IsSupported => Options.IsSupported(JobType) || (IsStaticMethod && Options.IsSupported(Method));
 
+        public bool TryGetOptionsAsString(bool isJit, out string optionAsString)
+        {
+            if (IsStaticMethod)
+            {
+                return Options.TryGetOptions(Method, isJit, out optionAsString);
+            }
+
+            return Options.TryGetOptions(JobType, isJit, out optionAsString);
+        }
+
         /// <summary>
         /// Generated disassembly, or null if disassembly failed
         /// </summary>

@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -498,6 +500,43 @@ namespace Burst.Compiler.IL.Tests
         {
             p = (int*)(IntPtr)26;
             return p;
+        }
+
+
+        [TestCompiler]
+        public static void TestBlobAssetReferenceData()
+        {
+            var blob = new BlobAssetReferenceData(IntPtr.Zero);
+            blob.Validate();
+        }
+
+
+        [StructLayout(LayoutKind.Explicit, Size = 16)]
+        internal unsafe struct BlobAssetHeader
+        {
+            [FieldOffset(0)] public void* ValidationPtr;
+            [FieldOffset(8)] public int Length;
+            [FieldOffset(12)] public Allocator Allocator;
+        }
+
+        internal unsafe struct BlobAssetReferenceData
+        {
+            [NativeDisableUnsafePtrRestriction]
+            public byte* _ptr;
+
+            public BlobAssetReferenceData(IntPtr zero)
+            {
+                _ptr = (byte*)zero;
+            }
+
+            internal BlobAssetHeader* Header => ((BlobAssetHeader*)_ptr) - 1;
+
+            public void Validate()
+            {
+                if (_ptr != null)
+                    if (Header->ValidationPtr != _ptr)
+                        throw new InvalidOperationException("The BlobAssetReference is not valid. Likely it has already been unloaded or released");
+            }
         }
     }
 }

@@ -28,6 +28,13 @@ namespace Burst.Compiler.IL.Tests
             return (float) math.tan(value);
         }
 
+        [TestCompiler(-1000000f)]
+        [TestCompiler(-1.2f)]
+        public static float TestTan2(float value)
+        {
+            return (float)math.tan(value);
+        }
+
         [TestCompiler(DataRange.Standard11)]
         public static float TestAcos(float value)
         {
@@ -127,6 +134,19 @@ namespace Burst.Compiler.IL.Tests
 
         [TestCompiler(DataRange.Standard & ~DataRange.NaN)]
         public static float TestSignFloat(float value)
+        {
+            return math.sign(value);
+        }
+
+        [TestCompiler(-123.45)]
+        [TestCompiler(-1E-20)]
+        [TestCompiler(0.0)]
+        [TestCompiler(1E-10)]
+        [TestCompiler(123.45)]
+        [TestCompiler(double.NegativeInfinity)]
+        [TestCompiler(double.NaN)]
+        [TestCompiler(double.PositiveInfinity)]
+        public static double TestSignDouble(double value)
         {
             return math.sign(value);
         }
