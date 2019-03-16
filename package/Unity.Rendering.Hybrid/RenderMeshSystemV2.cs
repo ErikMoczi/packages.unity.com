@@ -72,7 +72,7 @@ namespace Unity.Rendering
         NativeList<SubSceneTagOrderVersion> m_LastKnownSubsceneTagVersion;
 
         #if UNITY_EDITOR
-        EditorRenderData m_DefaultEditorRenderData = new EditorRenderData { SceneCullingMask = UnityEditor.SceneManagement.EditorSceneManager.DefaultSceneCullingMask | (1UL << 59)};
+        EditorRenderData m_DefaultEditorRenderData = new EditorRenderData { SceneCullingMask = UnityEditor.SceneManagement.EditorSceneManager.DefaultSceneCullingMask };
         #else
         EditorRenderData m_DefaultEditorRenderData = new EditorRenderData { SceneCullingMask = ~0UL };
         #endif

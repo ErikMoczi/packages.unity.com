@@ -80,19 +80,13 @@ namespace Unity.Rendering
     [ExecuteAlways]
     public class LodRequirementsUpdateSystem : JobComponentSystem
     {
-        ComponentGroup m_MissingWorldMeshRenderBounds;
-        ComponentGroup m_MissingChunkWorldMeshRenderBounds;
-
         ComponentGroup m_Group;
         ComponentGroup m_MissingRootLodRequirement;
         ComponentGroup m_MissingLodRequirement;
 
         [BurstCompile]
-        struct UpdateLodRequirementsJob : IJobParallelFor
+        struct UpdateLodRequirementsJob : IJobChunk
         {
-            [DeallocateOnJobCompletion]
-            public NativeArray<ArchetypeChunk> Chunks;
-
             [ReadOnly] public ComponentDataFromEntity<MeshLODGroupComponent>    MeshLODGroupComponent;
 
             [ReadOnly] public ArchetypeChunkComponentType<MeshLODComponent>     MeshLODComponent;
@@ -101,11 +95,8 @@ namespace Unity.Rendering
             public ArchetypeChunkComponentType<LodRequirement>                  LodRequirement;
             public ArchetypeChunkComponentType<RootLodRequirement>              RootLodRequirement;
 
-
-            public void Execute(int index)
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                var chunk = Chunks[index];
-
                 //@TODO: Delta change...
                 var lodRequirement = chunk.GetNativeArray(LodRequirement);
                 var rootLodRequirement = chunk.GetNativeArray(RootLodRequirement);
@@ -217,14 +208,13 @@ namespace Unity.Rendering
 
             var updateLodJob = new UpdateLodRequirementsJob
             {
-                Chunks = m_Group.CreateArchetypeChunkArray(Allocator.TempJob),
                 MeshLODGroupComponent = GetComponentDataFromEntity<MeshLODGroupComponent>(true),
                 MeshLODComponent = GetArchetypeChunkComponentType<MeshLODComponent>(true),
                 LocalToWorldLookup = GetComponentDataFromEntity<LocalToWorld>(true),
                 LodRequirement = GetArchetypeChunkComponentType<LodRequirement>(),
                 RootLodRequirement = GetArchetypeChunkComponentType<RootLodRequirement>(),
             };
-            return updateLodJob.Schedule(updateLodJob.Chunks.Length, 1, dependency);
+            return updateLodJob.Schedule(m_Group, dependency);
         }
     }
 }

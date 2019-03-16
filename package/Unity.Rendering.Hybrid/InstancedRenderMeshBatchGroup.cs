@@ -398,7 +398,6 @@ namespace Unity.Rendering
 
         // Our idea of batches. This is indexed by local batch indices.
         NativeMultiHashMap<LocalGroupKey, BatchChunkData> m_BatchToChunkMap;
-        NativeMultiHashMap<LocalGroupKey, RootLodRequirement> m_RootLods;
 
         // Maps from internal to external batch ids
         NativeArray<int> m_InternalToExternalIds;
@@ -457,7 +456,6 @@ namespace Unity.Rendering
             m_ComponentSystem = componentSystem;
             m_CullingJobDependencyGroup = cullingJobDependencyGroup;
             m_BatchToChunkMap = new NativeMultiHashMap<LocalGroupKey, BatchChunkData>(32, Allocator.Persistent);
-            m_RootLods = new NativeMultiHashMap<LocalGroupKey, RootLodRequirement>(32, Allocator.Persistent);
             m_LocalIdPool = new NativeArray<int>(kMaxBatchCount, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             m_Tags = new NativeArray<FrozenRenderSceneTag>(kMaxBatchCount, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             m_ForceLowLOD = new NativeArray<byte>(kMaxBatchCount, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
@@ -496,7 +494,6 @@ namespace Unity.Rendering
             m_ExternalToInternalIds.Dispose();
             m_InternalToExternalIds.Dispose();
             m_BatchRendererGroup.Dispose();
-            m_RootLods.Dispose();
             m_BatchToChunkMap.Dispose();
             m_Tags.Dispose();
             m_ForceLowLOD.Dispose();
@@ -517,7 +514,6 @@ namespace Unity.Rendering
             m_ExternalBatchCount = 0;
 
             m_BatchToChunkMap.Clear();
-            m_RootLods.Clear();
 
             ResetLocalIdPool();
         }
@@ -707,20 +703,6 @@ namespace Unity.Rendering
 
                 runningOffset += chunk.Count;
 
-                // Pick up all root LOD requirements from chunk and track by local batch index for LOD selection preprocessing
-                {
-                    var rootLodArray = chunk.GetNativeArray(rootLodRequirements);
-                    var chunkIndex = 0;
-                    var rootIndex = 0;
-                    while (chunkIndex < rootLodArray.Length)
-                    {
-                        RootLodRequirement root = rootLodArray[rootIndex];
-                        m_RootLods.Add(localKey, root);
-                        chunkIndex += root.InstanceCount;
-                        rootIndex++;
-                    }
-                }
-
                 var matrixSizeOf = UnsafeUtility.SizeOf<float4x4>();
                 var localToWorld = chunk.GetNativeArray(localToWorldType);
                 float4x4* srcMatrices = (float4x4*) localToWorld.GetUnsafeReadOnlyPtr();
@@ -881,7 +863,6 @@ namespace Unity.Rendering
 
                 var localKey = new LocalGroupKey { Value = i };
                 m_BatchToChunkMap.Remove(localKey);
-                m_RootLods.Remove(localKey);
 
                 m_ExternalBatchCount--;
             }
