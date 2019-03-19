@@ -14,7 +14,7 @@ namespace Unity.Audio.Megacity
     [UpdateInGroup(typeof(AudioFrame))]
     public class SamplePlaybackSystem : ComponentSystem
     {
-        struct State : IComponentData
+        struct State : ISystemStateComponentData
         {
             public ECSoundPlayerNode SamplePlayer;
             public DSPConnection Connection;

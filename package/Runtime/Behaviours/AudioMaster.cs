@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Unity.Audio.Megacity
 {
-    class AudioMaster : MonoBehaviour
+    public class AudioMaster : MonoBehaviour
     {
 #pragma warning disable 0649
         public AudioMasterParameters Parameters;
@@ -12,14 +12,22 @@ namespace Unity.Audio.Megacity
         public bool AutoFadeIn = false;
 
         AudioManagerSystem m_AudioManger;
+        bool m_GameStarted;
 
-        void Start()
+        public void GameStarted()
+        {
+            m_GameStarted = true;
+            m_AudioManger.SetActive(true);
+        }
+
+
+        void OnEnable()
         {
             m_AudioManger = World.Active.GetOrCreateManager<AudioManagerSystem>();
             m_AudioManger.AudioEnabled = true;
 
-            if(AutoFadeIn)
-                m_AudioManger.SetActive(AutoFadeIn);
+            if(m_GameStarted || AutoFadeIn)
+                m_AudioManger.SetActive(true);
         }
 
         void Update()
@@ -35,6 +43,8 @@ namespace Unity.Audio.Megacity
                 var system = World.Active.GetOrCreateManager<AudioManagerSystem>();
                 if (system != null)
                     system.AudioEnabled = false;
+
+                m_AudioManger.SetActive(false);
             }
         }
     }

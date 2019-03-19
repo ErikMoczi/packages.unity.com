@@ -77,7 +77,7 @@ namespace Unity.Audio.Megacity
 
         AudioMasterParameters m_Parameters = AudioMasterParameters.Defaults();
 
-        public AudioManagerSystem()
+        protected override void OnCreateManager()
         {
             m_Block = DSPCommandBlockInterceptor.CreateCommandBlock(WorldGraph);
             m_BlocksAlive = true;

@@ -93,12 +93,17 @@ namespace Unity.Audio.Megacity
                 using (var disableEntitiesEnumerable = new ChunkEntityEnumerable(EntityManager, m_DisableData, Allocator.TempJob))
                 {
                     var disableSSSComponentType = GetArchetypeChunkSharedComponentType<MusicPlayerSSS>();
-                    var disableComponentType = GetArchetypeChunkSharedComponentType<MusicPlayer>();
                     ChunkEntityEnumerable.ChunkEntityEnumerator it = disableEntitiesEnumerable.GetEnumerator();
                     while (it.MoveNext())
                     {
                         var disableSSS = it.GetCurrentSharedData(disableSSSComponentType, EntityManager);
                         disableSSS.OnDisable(block);
+
+                        if (!processUpdateData)
+                        {
+                            PostUpdateCommands.RemoveComponent<MusicPlayerSSS>(it.Current);
+                            PostUpdateCommands.RemoveComponent<MusicPlayerSS>(it.Current);
+                        }
                     }
                 }
             }

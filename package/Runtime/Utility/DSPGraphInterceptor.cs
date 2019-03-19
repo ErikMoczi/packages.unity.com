@@ -788,14 +788,14 @@ class DSPGraphWindow : EditorWindow
     void OnEnable()
     {
 #if ENABLE_DSPGRAPH_INTERCEPTOR
-        Unity.Audio.DSPCommandBlockInterceptor.OnEnable(this);
+        Unity.Audio.Megacity.DSPCommandBlockInterceptor.OnEnable(this);
 #endif
     }
 
     void OnDisable()
     {
 #if ENABLE_DSPGRAPH_INTERCEPTOR
-        Unity.Audio.DSPCommandBlockInterceptor.OnDisable(this);
+        Unity.Audio.Megacity.DSPCommandBlockInterceptor.OnDisable(this);
 #endif
     }
 
@@ -805,7 +805,7 @@ class DSPGraphWindow : EditorWindow
         if (!m_Ticker.DoTick() || !EditorApplication.isPlaying)
             return;
 
-        Unity.Audio.DSPCommandBlockInterceptor.Update(this);
+        Unity.Audio.Megacity.DSPCommandBlockInterceptor.Update(this);
 #endif
     }
 

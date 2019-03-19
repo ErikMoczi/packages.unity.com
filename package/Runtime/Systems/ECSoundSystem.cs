@@ -21,59 +21,85 @@ namespace Unity.Audio.Megacity
         ECSoundPlayerNode[] m_SoundPlayerNodes;
         StateVariableFilter[] m_PlayerLPF;
 
-        public void AddFieldPlayers(AudioClip[] allClips)
+        public void AddFieldPlayers(DSPCommandBlockInterceptor block, AudioClip[] allClips)
         {
-            var block = DSPCommandBlockInterceptor.CreateCommandBlock(m_AudioManager.WorldGraph);
-
             m_SoundPlayerNodes = new ECSoundPlayerNode[allClips.Length];
 
             m_PlayerLPF = new StateVariableFilter[allClips.Length];
 
             var soundPlayerEntities = new NativeArray<Entity>(allClips.Length, Allocator.Persistent);
 
+            var rootNode = m_AudioManager.MasterChannel;
+
+            for (int n = 0; n < allClips.Length; n++)
+            {
+                var entity = EntityManager.CreateEntity();
+                var player = new ECSoundPlayer();
+                EntityManager.AddComponentData(entity, player);
+                EntityManager.AddComponentData(entity, new ECSoundFieldFinalMix());
+
+                m_SoundPlayerNodes[n] = ECSoundPlayerNode.Create(block, allClips[n].CreateAudioSampleProvider(0, 0, true));
+                player.m_Source = m_SoundPlayerNodes[n].node;
+
+                m_PlayerLPF[n] = StateVariableFilter.Create(block);
+                player.m_LPF = m_PlayerLPF[n].node;
+                block.AddInletPort(player.m_LPF, 2, SoundFormat.Stereo);
+                block.AddOutletPort(player.m_LPF, 2, SoundFormat.Stereo);
+
+                DSPCommandBlockInterceptor.SetNodeName(player.m_Source, allClips[n].name, DSPCommandBlockInterceptor.Group.Ambience);
+                DSPCommandBlockInterceptor.SetNodeName(player.m_LPF, "Lowpass filter", DSPCommandBlockInterceptor.Group.Ambience);
+
+                player.m_SoundPlayerIndex = n;
+
+                player.m_DirectMixConnection = block.Connect(player.m_Source, 0, rootNode, 0);
+                var lpfConnection = block.Connect(player.m_Source, 0, player.m_LPF, 0);
+                player.m_DirectLPFConnection = block.Connect(player.m_LPF, 0, rootNode, 0);
+
+                // A lot of sources start at full level (1.0), resulting in a mix that clips. So
+                // explicitly ease in from 0.0, since the default connection attenuation is 1.0.
+                block.SetAttenuation(player.m_DirectMixConnection, 0.0F);
+                block.SetAttenuation(player.m_DirectLPFConnection, 0.0F);
+
+                EntityManager.SetComponentData(entity, player);
+
+                soundPlayerEntities[n] = entity;
+            }
+
+            m_SoundFieldPlayerEntities = soundPlayerEntities;
+        }
+
+        public void CleanupFieldPlayers(DSPCommandBlockInterceptor block)
+        {
             try
             {
-                var rootNode = m_AudioManager.MasterChannel;
-
-                for (int n = 0; n < allClips.Length; n++)
+                // Make sure no DSP graphs are running at this point that consume data from this array.
+                var playerFromEntity = GetComponentDataFromEntity<ECSoundPlayer>(true);
+                for (int n = m_SoundFieldPlayerEntities.Length - 1; n >= 0; n--)
                 {
-                    var entity = EntityManager.CreateEntity();
-                    var player = new ECSoundPlayer();
-                    EntityManager.AddComponentData(entity, player);
-                    EntityManager.AddComponentData(entity, new ECSoundFieldFinalMix());
-
-                    m_SoundPlayerNodes[n] = ECSoundPlayerNode.Create(block, allClips[n].CreateAudioSampleProvider(0, 0, true));
-                    player.m_Source = m_SoundPlayerNodes[n].node;
-
-                    m_PlayerLPF[n] = StateVariableFilter.Create(block);
-                    player.m_LPF = m_PlayerLPF[n].node;
-                    block.AddInletPort(player.m_LPF, 2, SoundFormat.Stereo);
-                    block.AddOutletPort(player.m_LPF, 2, SoundFormat.Stereo);
-
-                    DSPCommandBlockInterceptor.SetNodeName(player.m_Source, allClips[n].name, DSPCommandBlockInterceptor.Group.Ambience);
-                    DSPCommandBlockInterceptor.SetNodeName(player.m_LPF, "Lowpass filter", DSPCommandBlockInterceptor.Group.Ambience);
-
-                    player.m_SoundPlayerIndex = n;
-
-                    player.m_DirectMixConnection = block.Connect(player.m_Source, 0, rootNode, 0);
-                    var lpfConnection = block.Connect(player.m_Source, 0, player.m_LPF, 0);
-                    player.m_DirectLPFConnection = block.Connect(player.m_LPF, 0, rootNode, 0);
-
-                    // A lot of sources start at full level (1.0), resulting in a mix that clips. So
-                    // explicitly ease in from 0.0, since the default connection attenuation is 1.0.
-                    block.SetAttenuation(player.m_DirectMixConnection, 0.0F);
-                    block.SetAttenuation(player.m_DirectLPFConnection, 0.0F);
-
-                    EntityManager.SetComponentData(entity, player);
-
-                    soundPlayerEntities[n] = entity;
+                    var entity = m_SoundFieldPlayerEntities[n];
+                    var player = playerFromEntity[entity];
+                    m_PlayerLPF[n].Dispose(block);
+                    m_SoundPlayerNodes[n].Dispose(block);
                 }
 
-                m_SoundFieldPlayerEntities = soundPlayerEntities;
+                for (int i = 0; i < m_SoundFieldPlayerEntities.Length; ++i)
+                {
+                    EntityManager.DestroyEntity(m_SoundFieldPlayerEntities[i]);
+                }
+
+                ForEach((Entity e, ref ECSoundEmitter c) =>
+                    {
+                        c.soundPlayerEntity = Entity.Null;
+                    }
+                );
             }
             finally
             {
-                block.Complete();
+                if (m_SoundFieldPlayerEntities.IsCreated)
+                    m_SoundFieldPlayerEntities.Dispose();
+
+                m_SoundPlayerNodes = null;
+                m_PlayerLPF = null;
             }
         }
 
@@ -120,20 +146,11 @@ namespace Unity.Audio.Megacity
 
             try
             {
-                // Make sure no DSP graphs are running at this point that consume data from this array.
-                var playerFromEntity = GetComponentDataFromEntity<ECSoundPlayer>(true);
-                for (int n = m_SoundFieldPlayerEntities.Length - 1; n >= 0; n--)
-                {
-                    var player = playerFromEntity[m_SoundFieldPlayerEntities[n]];
-                    m_PlayerLPF[n].Dispose(block);
-                    m_SoundPlayerNodes[n].Dispose(block);
-                }
+                CleanupFieldPlayers(block);
             }
             finally
             {
                 block.Complete();
-                if (m_SoundFieldPlayerEntities.IsCreated)
-                    m_SoundFieldPlayerEntities.Dispose();
             }
         }
 

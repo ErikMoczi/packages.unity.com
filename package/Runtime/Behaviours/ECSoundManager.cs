@@ -16,6 +16,8 @@ namespace Unity.Audio.Megacity
         public AudioClip[] m_Clips;
 
         ECSoundFieldMixSystem m_MixSystem;
+        ECSoundSystem m_SoundSystem;
+        AudioManagerSystem m_Manager;
         World m_World;
 
         public void OnEnable()
@@ -27,15 +29,28 @@ namespace Unity.Audio.Megacity
             for (int i = 0; i < m_SoundDefinitions.Length; i++)
                 m_SoundDefinitions[i].Reflect(m_EntityManager);
 
-            var soundSystem = m_World.GetOrCreateManager<ECSoundSystem>();
-            soundSystem.AddFieldPlayers(m_Clips);
+            m_Manager = m_World.GetOrCreateManager<AudioManagerSystem>();
 
-            m_MixSystem = m_World.GetOrCreateManager<ECSoundFieldMixSystem>();
-            m_MixSystem.AddFieldPlayers(m_Clips.Length);
+            var block = DSPCommandBlockInterceptor.CreateCommandBlock(m_Manager.WorldGraph);
+
+            try
+            {
+                m_SoundSystem = m_World.GetOrCreateManager<ECSoundSystem>();
+                m_SoundSystem.AddFieldPlayers(block, m_Clips);
+
+                m_MixSystem = m_World.GetOrCreateManager<ECSoundFieldMixSystem>();
+                m_MixSystem.AddFieldPlayers(m_Clips.Length);
+            }
+            finally
+            {
+                block.Complete();
+            }
         }
 
         public void OnDisable()
         {
+            if(m_World.IsCreated)
+                m_SoundSystem.CleanupFieldPlayers(m_Manager.FrameBlock);
         }
 
         public void Update()

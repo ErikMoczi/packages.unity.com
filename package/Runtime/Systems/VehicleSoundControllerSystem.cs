@@ -84,6 +84,12 @@ namespace Unity.Audio.Megacity
                     {
                         var disableDataControllerSSS = it.GetCurrentSharedData(disableDataControllerSSSComponentType, EntityManager);
                         disableDataControllerSSS.OnDisable(block);
+
+                        if (!processUpdateData) // Argh
+                        {
+                            PostUpdateCommands.RemoveComponent<VehicleSoundControllerSSS>(it.Current);
+                            PostUpdateCommands.RemoveComponent<VehicleSoundControllerSS>(it.Current);
+                        }
                     }
                 }
             }
