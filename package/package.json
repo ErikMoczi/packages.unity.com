@@ -1,7 +1,7 @@
 {
   "name": "com.unity.test-framework.tests",
   "displayName":  "Test Framework Tests",
-  "version": "1.0.7-headless1",
+  "version": "1.0.8-headless1",
   "type": "tests",
   "unity": "2019.1",
   "description": "Tests for the Unity Test framework.",
@@ -10,9 +10,9 @@
   "repository": {
     "type": "git",
     "url": "git@gitlab.cds.internal.unity3d.com/upm-packages/core/com.unity.test-framework.git",
-    "revision": "3ceac37c3cdc9899bc158bb46be5c9b561d7df55"
+    "revision": "0632ef9b5f348851ab661f77fcf6b0e818c6269b"
   }, 
   "dependencies": {
-    "com.unity.test-framework": "1.0.7-headless1"
+    "com.unity.test-framework": "1.0.8-headless1"
   }
 }
