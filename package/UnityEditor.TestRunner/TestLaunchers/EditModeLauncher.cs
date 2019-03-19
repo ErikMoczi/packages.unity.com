@@ -4,6 +4,7 @@ using UnityEditor.SceneManagement;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestRunner.Utils;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.TestRunner;
 using UnityEngine.TestTools.TestRunner.GUI;
@@ -50,6 +51,7 @@ namespace UnityEditor.TestTools.TestRunner
 
             m_EditModeRunner.Run();
             AddEventHandler<BackgroundListener>();
+            AddEventHandler<TestRunCallbackListener>();
         }
 
         private static bool OpenNewScene(out SceneSetup[] previousSceneSetup)

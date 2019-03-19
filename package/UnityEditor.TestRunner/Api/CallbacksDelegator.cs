@@ -60,10 +60,15 @@ namespace UnityEditor.TestTools.TestRunner.Api
 
         public void RunFailed(string failureMessage)
         {
-            var nunitTestResult = new TestSuiteResult(new TestSuite("test"));
-            nunitTestResult.SetResult(ResultState.Error, failureMessage);
-            var testResult = m_AdaptorFactory.Create(nunitTestResult);
-            TryInvokeAllCallbacks(callbacks => callbacks.RunFinished(testResult));
+            Debug.LogError(failureMessage);
+            TryInvokeAllCallbacks(callbacks =>
+            {
+                var errorCallback = callbacks as IErrorCallbacks;
+                if (errorCallback != null)
+                {
+                    errorCallback.OnError(failureMessage);
+                }
+            });
         }
 
         public void TestStarted(ITest test)

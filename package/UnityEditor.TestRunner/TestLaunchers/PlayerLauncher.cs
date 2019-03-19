@@ -7,6 +7,7 @@ using UnityEditor.TestRunner.TestLaunchers;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestRunner.Utils;
 using UnityEngine.TestTools.TestRunner;
 using UnityEngine.TestTools.TestRunner.Callbacks;
 
@@ -23,14 +24,18 @@ namespace UnityEditor.TestTools.TestRunner
     {
         private readonly PlaymodeTestsControllerSettings m_Settings;
         private readonly BuildTarget m_TargetPlatform;
-        private string m_TempBuildLocation;
         private ITestRunSettings m_OverloadTestRunSettings;
+        private string m_TestPlayerPath;
+        private bool m_DoNotLaunchTestPlayer;
+        private string m_SceneName;
 
-        public PlayerLauncher(PlaymodeTestsControllerSettings settings, BuildTarget? targetPlatform, ITestRunSettings overloadTestRunSettings)
+        public PlayerLauncher(PlaymodeTestsControllerSettings settings, BuildTarget? targetPlatform, ITestRunSettings overloadTestRunSettings, string testPlayerPath = null, bool doNotLaunchTestPlayer = false)
         {
             m_Settings = settings;
             m_TargetPlatform = targetPlatform ?? EditorUserBuildSettings.activeBuildTarget;
             m_OverloadTestRunSettings = overloadTestRunSettings;
+            m_TestPlayerPath = testPlayerPath;
+            m_DoNotLaunchTestPlayer = doNotLaunchTestPlayer;
         }
 
         protected override RuntimePlatform? TestTargetPlatform
@@ -49,8 +54,8 @@ namespace UnityEditor.TestTools.TestRunner
 
             using (var settings = new PlayerLauncherContextSettings(m_OverloadTestRunSettings))
             {
-                var sceneName = CreateSceneName();
-                var scene = PrepareScene(sceneName);
+                m_SceneName = CreateSceneName();
+                var scene = PrepareScene(m_SceneName);
 
                 var filter = m_Settings.filter.BuildNUnitFilter();
                 var runner = LoadTests(filter);
@@ -58,7 +63,7 @@ namespace UnityEditor.TestTools.TestRunner
                 if (exceptionThrown)
                 {
                     ReopenOriginalScene(m_Settings.originalScene);
-                    AssetDatabase.DeleteAsset(sceneName);
+                    AssetDatabase.DeleteAsset(m_SceneName);
                     CallbacksDelegator.instance.RunFailed("Run Failed: One or more errors in a prebuild setup. See the editor log for details.");
                     return;
                 }
@@ -70,7 +75,7 @@ namespace UnityEditor.TestTools.TestRunner
                 ExecutePostBuildCleanupMethods(runner.LoadedTest, filter);
 
                 ReopenOriginalScene(m_Settings.originalScene);
-                AssetDatabase.DeleteAsset(sceneName);
+                AssetDatabase.DeleteAsset(m_SceneName);
 
                 if (!success)
                 {
@@ -80,6 +85,11 @@ namespace UnityEditor.TestTools.TestRunner
                 }
 
                 editorConnectionTestCollector.PostSuccessfulBuildAction();
+
+                if (m_DoNotLaunchTestPlayer)
+                {
+                    EditorApplication.Exit(0);
+                }
             }
         }
 
@@ -90,6 +100,7 @@ namespace UnityEditor.TestTools.TestRunner
                 runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
                 runner.settings = m_Settings;
                 runner.AddEventHandlerMonoBehaviour<RemoteTestResultSender>();
+                runner.AddEventHandlerScriptableObject<TestRunCallbackListener>();
             });
             return scene;
         }
@@ -133,21 +144,18 @@ namespace UnityEditor.TestTools.TestRunner
             scenes.AddRange(EditorBuildSettings.scenes.Select(x => x.path));
             buildOptions.scenes = scenes.ToArray();
 
-            buildOptions.options |= BuildOptions.AutoRunPlayer | BuildOptions.Development | BuildOptions.ConnectToHost | BuildOptions.IncludeTestAssemblies | BuildOptions.StrictMode;
+            buildOptions.options |= BuildOptions.Development | BuildOptions.ConnectToHost | BuildOptions.IncludeTestAssemblies | BuildOptions.StrictMode;
+            if (!m_DoNotLaunchTestPlayer)
+            {
+                buildOptions.options |= BuildOptions.AutoRunPlayer;
+            }
+
             buildOptions.target = m_TargetPlatform;
 
             if (EditorUserBuildSettings.waitForPlayerConnection)
                 buildOptions.options |= BuildOptions.WaitForPlayerConnection;
 
             var buildTargetGroup = EditorUserBuildSettings.activeBuildTargetGroup;
-            var uniqueTempPathInProject = FileUtil.GetUniqueTempPathInProject();
-
-            if (reduceBuildLocationPathLength)
-            {
-                uniqueTempPathInProject = Path.GetTempFileName();
-                File.Delete(uniqueTempPathInProject);
-                Directory.CreateDirectory(uniqueTempPathInProject);
-            }
 
             //Check if Lz4 is supported for the current buildtargetgroup and enable it if need be
             if (PostprocessBuildPlayer.SupportsLz4Compression(buildTargetGroup, m_TargetPlatform))
@@ -158,27 +166,37 @@ namespace UnityEditor.TestTools.TestRunner
                     buildOptions.options |= BuildOptions.CompressWithLz4HC;
             }
 
-            m_TempBuildLocation = Path.GetFullPath(uniqueTempPathInProject);
+            string buildLocation;
+            if (!string.IsNullOrEmpty(m_TestPlayerPath))
+            {
+                buildLocation = m_TestPlayerPath;
+            }
+            else
+            {
+                var uniqueTempPathInProject = FileUtil.GetUniqueTempPathInProject();
+                var playerDirectoryName = reduceBuildLocationPathLength ? "PwT" : "PlayerWithTests";
+
+                if (reduceBuildLocationPathLength)
+                {
+                    uniqueTempPathInProject = Path.GetTempFileName();
+                    File.Delete(uniqueTempPathInProject);
+                    Directory.CreateDirectory(uniqueTempPathInProject);
+                }
+                var tempPath = Path.GetFullPath(uniqueTempPathInProject);
+                buildLocation = Path.Combine(tempPath, playerDirectoryName);
+            }
 
             string extensionForBuildTarget = PostprocessBuildPlayer.GetExtensionForBuildTarget(buildTargetGroup, buildOptions.target, buildOptions.options);
 
             var playerExecutableName = "PlayerWithTests";
-            var playerDirectoryName = reduceBuildLocationPathLength ? "PwT" : "PlayerWithTests";
+            playerExecutableName += string.Format(".{0}", extensionForBuildTarget);
 
-            var locationPath = Path.Combine(m_TempBuildLocation, playerDirectoryName);
-
-            if (!string.IsNullOrEmpty(extensionForBuildTarget))
-            {
-                playerExecutableName += string.Format(".{0}", extensionForBuildTarget);
-                locationPath = Path.Combine(locationPath, playerExecutableName);
-            }
-
-            buildOptions.locationPathName = locationPath;
+            buildOptions.locationPathName = Path.Combine(buildLocation, playerExecutableName);
 
             return new PlayerLauncherBuildOptions
             {
                 BuildPlayerOptions = buildOptions,
-                PlayerDirectory = Path.Combine(m_TempBuildLocation, playerDirectoryName),
+                PlayerDirectory = buildLocation,
             };
         }
     }

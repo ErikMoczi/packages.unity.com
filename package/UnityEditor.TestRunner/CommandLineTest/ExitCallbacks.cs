@@ -5,7 +5,7 @@ using UnityEngine;
 namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 {
     [Serializable]
-    internal class ExitCallbacks : ScriptableObject, ICallbacks
+    internal class ExitCallbacks : ScriptableObject, IErrorCallbacks
     {
         private bool m_AnyTestsExecuted;
         private bool m_RunFailed;
@@ -38,6 +38,11 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
 
         public void RunStarted(ITestAdaptor testsToRun)
         {
+        }
+
+        public void OnError(string message)
+        {
+            EditorApplication.Exit((int)Executer.ReturnCodes.Failed);
         }
     }
 }

@@ -4,6 +4,7 @@ using NUnit.Framework.Interfaces;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestRunner.Utils;
 using UnityEngine.TestTools.TestRunner;
 using UnityEngine.TestTools.TestRunner.Callbacks;
 
@@ -37,6 +38,7 @@ namespace UnityEditor.TestTools.TestRunner
                 runner.AddEventHandlerMonoBehaviour<PlayModeRunnerCallback>();
                 runner.AddEventHandlerScriptableObject<TestRunnerCallback>();
                 runner.AddEventHandlerScriptableObject<CallbacksDelegatorListener>();
+                runner.AddEventHandlerScriptableObject<TestRunCallbackListener>();
 
                 foreach (var eventHandler in m_EventHandlers)
                 {

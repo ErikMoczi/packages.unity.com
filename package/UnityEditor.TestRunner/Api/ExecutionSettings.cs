@@ -5,5 +5,7 @@ namespace UnityEditor.TestTools.TestRunner.Api
         public BuildTarget? targetPlatform;
         public ITestRunSettings overloadTestRunSettings;
         public Filter filter;
+        public string testPlayerPath;
+        public bool doNotLaunchTestPlayer;
     }
 }

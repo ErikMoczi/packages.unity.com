@@ -28,6 +28,8 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             string[] testFilters = null;
             string[] testCategories = null;
             string testSettingsFilePath = null;
+            string testPlayerPath = null;
+            bool doNotLaunchTestPlayer = false;
 
             var optionSet = new CommandLineOptionSet(
                 new CommandLineOption("quit", () => { quit = true; }),
@@ -36,7 +38,9 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
                 new CommandLineOption("testFilter", filters => { testFilters = filters; }),
                 new CommandLineOption("editorTestsCategories", catagories => { testCategories = catagories; }),
                 new CommandLineOption("testCategory", catagories => { testCategories = catagories; }),
-                new CommandLineOption("testSettingsFile", settingsFilePath => { testSettingsFilePath = settingsFilePath; })
+                new CommandLineOption("testSettingsFile", settingsFilePath => { testSettingsFilePath = settingsFilePath; }),
+                new CommandLineOption("testPlayerPath", path => { testPlayerPath = path; }),
+                new CommandLineOption("doNotLaunchTestPlayer", () => { doNotLaunchTestPlayer = true; })
             );
             optionSet.Parse(commandLineArgs);
 
@@ -60,7 +64,9 @@ namespace UnityEditor.TestTools.TestRunner.CommandLineTest
             {
                 filter = filter,
                 overloadTestRunSettings = new RunSettings(testSettings),
-                targetPlatform = buildTarget
+                targetPlatform = buildTarget,
+                testPlayerPath = testPlayerPath,
+                doNotLaunchTestPlayer = doNotLaunchTestPlayer
             };
         }
 

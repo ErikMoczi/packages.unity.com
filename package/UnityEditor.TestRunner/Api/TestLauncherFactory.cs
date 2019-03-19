@@ -28,7 +28,7 @@ namespace UnityEditor.TestTools.TestRunner.Api
         {
             if (executionSettings.targetPlatform != null)
             {
-                return GetPlayerLauncher(settings, executionSettings.targetPlatform.Value, executionSettings.overloadTestRunSettings);
+                return GetPlayerLauncher(settings, executionSettings);
             }
 
             if (PlayerSettings.runPlayModeTestAsEditModeTest)
@@ -49,9 +49,14 @@ namespace UnityEditor.TestTools.TestRunner.Api
             return new PlaymodeLauncher(settings);
         }
 
-        static TestLauncherBase GetPlayerLauncher(PlaymodeTestsControllerSettings settings, BuildTarget targetPlatform, ITestRunSettings overloadTestRunSettings)
+        static TestLauncherBase GetPlayerLauncher(PlaymodeTestsControllerSettings settings, ExecutionSettings executionSettings)
         {
-            return new PlayerLauncher(settings, targetPlatform, overloadTestRunSettings);
+            return new PlayerLauncher(
+                settings,
+                executionSettings.targetPlatform.Value,
+                executionSettings.overloadTestRunSettings,
+                executionSettings.testPlayerPath,
+                executionSettings.doNotLaunchTestPlayer);
         }
     }
 }

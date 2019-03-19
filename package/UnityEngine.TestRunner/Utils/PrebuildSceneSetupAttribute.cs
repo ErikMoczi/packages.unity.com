@@ -2,7 +2,7 @@ using System;
 
 namespace UnityEngine.TestTools
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Method)]
     public class PrebuildSetupAttribute : Attribute
     {
         public PrebuildSetupAttribute(Type targetClass)
