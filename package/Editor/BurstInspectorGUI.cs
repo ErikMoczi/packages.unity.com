@@ -194,6 +194,9 @@ namespace Unity.Burst.Editor
                     //target.Options.EnableBurstCompilation = true;
                 }
 
+                // Order targets per name
+                _targets.Sort((left, right) => string.Compare(left.GetDisplayName(), right.GetDisplayName(), StringComparison.Ordinal));
+
                 _treeView.Targets = _targets;
                 _treeView.Reload();
 

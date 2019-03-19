@@ -6,10 +6,11 @@ namespace Unity.Burst.Editor
 {
     internal class BurstCompileTarget
     {
-        public BurstCompileTarget(MethodInfo method, Type jobType, bool isStaticMethod)
+        public BurstCompileTarget(MethodInfo method, Type jobType, Type interfaceType, bool isStaticMethod)
         {
             Method = method ?? throw new ArgumentNullException(nameof(method));
             JobType = jobType ?? throw new ArgumentNullException(nameof(jobType));
+            JobInterfaceType = interfaceType; // can be null
             // This is important to clone the options as we don't want to modify the global instance
             Options = BurstCompilerOptions.Global.Clone();
             // The BurstCompilerAttribute can be either on the type or on the method
@@ -30,6 +31,11 @@ namespace Unity.Burst.Editor
         /// The type of the actual job (i.e. BoidsSimulationJob).
         /// </summary>
         public readonly Type JobType;
+
+        /// <summary>
+        /// The interface of the job (IJob, IJobParallelFor...)
+        /// </summary>
+        public readonly Type JobInterfaceType;
 
         /// <summary>
         /// The default compiler options
@@ -58,9 +64,9 @@ namespace Unity.Burst.Editor
 
         public string GetDisplayName()
         {
-            return IsStaticMethod ? Pretty(Method) : Pretty(JobType);
+            return IsStaticMethod ? Pretty(Method) : $"{Pretty(JobType)} - ({Pretty(JobInterfaceType)})";
         }
-        
+
         private static string Pretty(MethodInfo method)
         {
             var builder = new StringBuilder();
@@ -139,7 +145,9 @@ namespace Unity.Burst.Editor
                 return "char";
             }
 
-            return type.ToString().Replace("+", ".");
+            // When displaying job interface type, display the interface name of Unity.Jobs namespace
+            var typeName = type.IsInterface && type.Name.StartsWith("IJob") ? type.Name : type.ToString();
+            return typeName.Replace("+", ".");
         }
     }
 }

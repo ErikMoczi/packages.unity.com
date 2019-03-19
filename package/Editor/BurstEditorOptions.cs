@@ -68,7 +68,7 @@ namespace Unity.Burst.Editor
             return global;
         }
 
-        private static void GlobalOnOptionsChanged(object sender, PropertyChangingEventArgs e)
+        private static void GlobalOnOptionsChanged()
         {
             // We are not optimizing anything here, so whenever one option is set, we reset all of them
             EditorPrefs.SetBool(EnableBurstCompilationText, BurstCompilerOptions.Global.EnableBurstCompilation);

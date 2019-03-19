@@ -132,8 +132,6 @@ namespace Unity.Burst.Editor
             // Revisit all types to find things that are compilable using the above producers.
             foreach (var typePair in valueTypes)
             {
-                Type executeType = null;
-
                 var type = typePair.Type;
 
                 // collect static [BurstCompile] methods
@@ -146,7 +144,7 @@ namespace Unity.Burst.Editor
                         {
                             if (method.GetCustomAttribute<BurstCompileAttribute>() != null)
                             {
-                                var target = new BurstCompileTarget(method, type, true);
+                                var target = new BurstCompileTarget(method, type, null, true);
                                 result.Add(target);
                             }
                         }
@@ -168,39 +166,36 @@ namespace Unity.Burst.Editor
                 {
                     var genericLessInterface = interfaceType;
                     if (interfaceType.IsGenericType)
+                    {
                         genericLessInterface = interfaceType.GetGenericTypeDefinition();
+                    }
 
                     Type foundProducer;
                     if (interfaceToProducer.TryGetValue(genericLessInterface, out foundProducer))
                     {
-                        var genericParams = new List<Type>();
-                        genericParams.Add(type);
+                        var genericParams = new List<Type> {type};
                         if (interfaceType.IsGenericType)
+                        {
                             genericParams.AddRange(interfaceType.GenericTypeArguments);
+                        }
 
-                        executeType = foundProducer.MakeGenericType(genericParams.ToArray());
+                        try
+                        {
+                            var executeType = foundProducer.MakeGenericType(genericParams.ToArray());
+                            var executeMethod = executeType.GetMethod("Execute");
+                            if (executeMethod == null)
+                            {
+                                throw new InvalidOperationException($"Burst reflection error. The type `{executeType}` does not contain an `Execute` method");
+                            }
 
-                        break;
+                            var target = new BurstCompileTarget(executeMethod, type, interfaceType, false);
+                            result.Add(target);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogException(ex);
+                        }
                     }
-                }
-
-                if (null == executeType)
-                    continue;
-
-                try
-                {
-                    var executeMethod = executeType.GetMethod("Execute");
-                    if (executeMethod == null)
-                    {
-                        throw new InvalidOperationException($"Burst reflection error. The type `{executeType}` does not contain an `Execute` method");
-                    }
-
-                    var target = new BurstCompileTarget(executeMethod, type, false);
-                    result.Add(target);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogException(ex);
                 }
             }
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0-preview.5] - 2019-03-16
+
+- Fix regression with JIT caching that was not properly recompiling changed methods
+- Remove NativeDumpFlags from public API
+- Remove usage of PropertyChangingEventHandler to avoid conflicts with custom Newtonsoft.Json
+- Fix issue when a job could implement multiple job interfaces (IJob, IJobParallelFor...) but only the first one would be compiled
+- Improve display of job names in the inspector by including the type of job (IJob, IJobParallelFor...) and sorted alphabetically
+
 ## [1.0.0-preview.4] - 2019-03-15
 
 - Fix "Error while verifying module: Invalid bitcast" that could happen with return value in the context of deep nested conditionals

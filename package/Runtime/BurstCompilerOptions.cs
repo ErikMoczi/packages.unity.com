@@ -115,7 +115,7 @@ namespace Unity.Burst
             {
                 bool changed = _enableBurstCompilation != value;
                _enableBurstCompilation = value;
-               if (changed) OnOptionChanged(new PropertyChangingEventArgs(nameof(EnableBurstCompilation)));
+               if (changed) OnOptionsChanged();
             }
         }
 
@@ -126,7 +126,7 @@ namespace Unity.Burst
             {
                 bool changed = _enableBurstCompileSynchronously != value;
                 _enableBurstCompileSynchronously = value;
-                if (changed) OnOptionChanged(new PropertyChangingEventArgs(nameof(EnableBurstCompileSynchronously)));
+                if (changed) OnOptionsChanged();
             }
         }
 
@@ -137,7 +137,7 @@ namespace Unity.Burst
             {
                 bool changed = _enableBurstSafetyChecks != value;
                 _enableBurstSafetyChecks = value;
-                if (changed) OnOptionChanged(new PropertyChangingEventArgs(nameof(EnableBurstSafetyChecks)));
+                if (changed) OnOptionsChanged();
             }
         }
 
@@ -148,7 +148,7 @@ namespace Unity.Burst
             {
                 bool changed = _enableEnhancedAssembly != value;
                 _enableEnhancedAssembly = value;
-                if (changed) OnOptionChanged(new PropertyChangingEventArgs(nameof(EnableEnhancedAssembly)));
+                if (changed) OnOptionsChanged();
             }
         }
 
@@ -159,7 +159,7 @@ namespace Unity.Burst
             {
                 bool changed = _disableOptimizations != value;
                 _disableOptimizations = value;
-                if (changed) OnOptionChanged(new PropertyChangingEventArgs(nameof(DisableOptimizations)));
+                if (changed) OnOptionsChanged();
             }
         }
 
@@ -170,7 +170,7 @@ namespace Unity.Burst
             {
                 bool changed = _enableFastMath != value;
                 _enableFastMath = value;
-                if (changed) OnOptionChanged(new PropertyChangingEventArgs(nameof(EnableFastMath)));
+                if (changed) OnOptionsChanged();
             }
         }
 
@@ -181,11 +181,11 @@ namespace Unity.Burst
             {
                 bool changed = _enableBurstTimings != value;
                 _enableBurstTimings = value;
-                if (changed) OnOptionChanged(new PropertyChangingEventArgs(nameof(EnableBurstTimings)));
+                if (changed) OnOptionsChanged();
             }
         }
 
-        public PropertyChangingEventHandler OptionsChanged { get; set; }
+        public Action OptionsChanged { get; set; }
 
         public BurstCompilerOptions Clone()
         {
@@ -310,9 +310,9 @@ namespace Unity.Burst
             return "--" + optionName + (value ?? String.Empty);
         }
 
-        private void OnOptionChanged(PropertyChangingEventArgs e)
+        private void OnOptionsChanged()
         {
-            OptionsChanged?.Invoke(this, e);
+            OptionsChanged?.Invoke();
         }
 
 #if !UNITY_ZEROPLAYER && !UNITY_CSHARP_TINY
@@ -375,10 +375,10 @@ namespace Unity.Burst
     /// Flags used by <see cref="NativeCompiler.CompileMethod"/> to dump intermediate compiler results.
     /// </summary>
     [Flags]
-#if UNITY_EDITOR
-    internal enum NativeDumpFlags
-#else
+#if BURST_INTERNAL
     public enum NativeDumpFlags
+#else
+    internal enum NativeDumpFlags
 #endif
     {
         /// <summary>
