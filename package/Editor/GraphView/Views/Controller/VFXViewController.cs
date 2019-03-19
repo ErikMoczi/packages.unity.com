@@ -393,8 +393,9 @@ namespace UnityEditor.VFX.UI
 
             bool change = RecreateNodeEdges();
 
-            if (change)
+            if (change || m_ForceDataEdgeNotification)
             {
+                m_ForceDataEdgeNotification = false;
                 NotifyChange(Change.dataEdge);
             }
 
@@ -624,7 +625,7 @@ namespace UnityEditor.VFX.UI
             edge.OnDisable();
         }
 
-        public void Remove(IEnumerable<Controller> removedControllers)
+        public void Remove(IEnumerable<Controller> removedControllers, bool explicitDelete = false)
         {
             var removedContexts = new HashSet<VFXContextController>(removedControllers.OfType<VFXContextController>());
 
@@ -633,11 +634,13 @@ namespace UnityEditor.VFX.UI
 
             foreach (var controller in removed)
             {
-                RemoveElement(controller);
+                RemoveElement(controller, explicitDelete);
             }
         }
 
-        public void RemoveElement(Controller element)
+        bool m_ForceDataEdgeNotification;
+
+        public void RemoveElement(Controller element, bool explicitDelete = false)
         {
             if (element is VFXContextController)
             {
@@ -746,12 +749,16 @@ namespace UnityEditor.VFX.UI
 
                 if (to != null)
                 {
-                    to.sourceNode.OnEdgeGoingToBeRemoved(to);
+                    if( explicitDelete )
+                    {
+                        to.sourceNode.OnEdgeGoingToBeRemoved(to);
+                    }
                     var slot = to.model;
                     if (slot != null)
                     {
                         slot.UnlinkAll();
                     }
+                    m_ForceDataEdgeNotification = true;
                 }
             }
             else if (element is VFXGroupNodeController)
@@ -1867,7 +1874,7 @@ namespace UnityEditor.VFX.UI
 
                 VFXContextType type = VFXContextType.kNone;
                 VFXContext prevContext = null;
-                var orderedContexts = contextToController.Keys.OrderBy(t => t.contextType).ThenBy(t => systems[i][t]).ThenBy(t => t.position.x).ThenBy(t => t.position.y).ToArray();
+                var orderedContexts = systems[i].Keys.OrderBy(t => t.contextType).ThenBy(t => systems[i][t]).ThenBy(t => t.position.x).ThenBy(t => t.position.y).ToArray();
 
                 char letter = 'A';
                 foreach (var context in orderedContexts)
