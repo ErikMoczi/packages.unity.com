@@ -1,0 +1,12 @@
+{
+    "name": "Unity.Audio.Editor",
+    "references": [
+      "Unity.Audio",
+      "Unity.Entities.Hybrid",
+      "Unity.Mathematics"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [ "Editor" ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true
+}
