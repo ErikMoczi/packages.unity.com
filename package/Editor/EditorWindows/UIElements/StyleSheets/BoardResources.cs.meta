@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 86c7d916251422c42a4f9bd6083c0cb2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - m_BoardUxml: {fileID: 11400000, guid: dce1616bd8c588a40a54ff4d139bd4d8, type: 3}
+  - m_BoardSectionUxml: {fileID: 11400000, guid: bad9c256777cbd040a5813fd996cf761,
+      type: 3}
+  - m_BoardRowUxml: {fileID: 11400000, guid: 31b928b9bf291a843a90f40528648318, type: 3}
+  - m_BoardFieldUxml: {fileID: 11400000, guid: a39aa37e54ed9c345a06a23beb1d4209, type: 3}
+  - m_BoardStyleSheet: {fileID: 11400000, guid: 24615c64679e89e4aa76f9d174d5ae1e,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

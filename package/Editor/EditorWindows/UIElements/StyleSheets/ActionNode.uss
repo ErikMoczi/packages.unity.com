@@ -1,0 +1,24 @@
+.graphElement {
+    background-color: rgb(36, 36, 36);
+    padding-left: 20;
+    padding-top: 20;
+    padding-right: 20;
+    padding-bottom: 20;
+    position-type: relative;
+    min-width: 250;
+    /*
+    border-color: rgb(255, 0, 0);
+    flex-grow: 1;
+    flex-direction: column;
+    */
+}
+
+.actionNode {
+    min-height: 450;
+}
+
+/*
+.graphElement .blackboard {
+    min-height: 300;
+}
+*/

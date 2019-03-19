@@ -1,0 +1,21 @@
+{
+    "name": "Unity.AI.Planner.Editor",
+    "references": [
+        "Unity.PlayableGraphVisualizer.Editor",
+        "Unity.AI.Planner",
+        "Unity.Properties",
+        "Unity.Entities",
+        "Unity.Entities.Properties"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

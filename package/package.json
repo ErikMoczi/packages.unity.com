@@ -1,0 +1,22 @@
+{
+  "name": "com.unity.ai.planner",
+  "displayName": "AI Planner",
+  "version": "0.0.1-preview.1",
+  "unity": "2019.1",
+  "description": "The AI Planner includes authoring tools and a system for automated decision-making.\n\nAutomated planners are useful for:\n▪ Directing agent behavior either in a cooperative, neutral, or adversarial capacity\n▪ Auto-generating storylines or as an online story manager\n▪ Validating game design mechanics\n▪ Assisting in creating tutorials\n▪ Automated testing\n\nStart by creating a domain definition in the authoring tool that models the problem space at an abstract level. Then, create one or more plan definitions that provide rules for what actions or decisions can be made. Submit these to the planner system and get back a plan that converges on an optimal solution and can update as changes in the world occur.",
+  "dependencies": {
+    "com.unity.entities": "0.0.12-preview.24",
+    "com.unity.playablegraph-visualizer": "0.2.1-preview.3"
+  },
+  "keywords": [
+    "ai",
+    "planner",
+    "behavior",
+    "plan"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.cds.internal.unity3d.com:unity/com.unity.ai.planner.git",
+    "revision": "b1881a6088f47b52e92d7bda4b59a28882594b1a"
+  }
+}

@@ -1,0 +1,19 @@
+{
+    "name": "Unity.AI.Planner.Tests",
+    "references": [
+        "Unity.Entities",
+        "Unity.Properties",
+        "Unity.AI.Planner"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

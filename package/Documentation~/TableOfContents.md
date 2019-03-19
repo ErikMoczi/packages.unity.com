@@ -1,0 +1,6 @@
+* [AI Planner](index.md)
+  * [Creating a domain definition](DomainDefinition.md)
+  * [Creating a plan definition](PlanDefinition.md)
+  * [Extending BaseAgent](BaseAgent.md)
+  * [Operational actions](OperationalActions.md)
+  * [Visualizing a plan](PlanVisualizer.md)
