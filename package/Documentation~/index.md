@@ -17,7 +17,7 @@ To create an AI agent with the AI Planner, see the following guides:
 
 During execution, it is also useful to view an agent's plan through the [plan visualizer](PlanVisualizer.md).
 
-For a complete sample project, see: [Yolo](https://github.com/Unity-Technologies/yolo) 
+For a complete sample project, see: [Otto](https://github.com/Unity-Technologies/otto) 
 
 
 ## Talks
