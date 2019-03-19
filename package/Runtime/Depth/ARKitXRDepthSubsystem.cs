@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 #endif
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
 
@@ -39,22 +40,13 @@ namespace UnityEngine.XR.ARKit
                 void* changes);
 
             [DllImport("__Internal")]
-            static extern unsafe void* UnityARKit_depth_acquirePoints(
+            static extern unsafe void* UnityARKit_depth_acquirePointCloud(
                 TrackableId trackableId,
-                out int numPoints);
+                out void* positionsPtr, out void* identifiersPtr, out int numPoints);
 
             [DllImport("__Internal")]
-            static extern unsafe void UnityARKit_depth_releasePoints(
-                void* points);
-
-            [DllImport("__Internal")]
-            static extern unsafe void* UnityARKit_depth_acquireIds(
-                TrackableId trackableId,
-                out int numPoints);
-
-            [DllImport("__Internal")]
-            static extern unsafe void UnityARKit_depth_releaseIds(
-                void* ids);
+            static extern unsafe void UnityARKit_depth_releasePointCloud(
+                void* pointCloud);
 #else
             static void UnityARKit_depth_destroy()
             { }
@@ -80,28 +72,17 @@ namespace UnityEngine.XR.ARKit
                 void* changes)
             { }
 
-            static unsafe void* UnityARKit_depth_acquirePoints(
+            static unsafe void* UnityARKit_depth_acquirePointCloud(
                 TrackableId trackableId,
-                out int numPoints)
+                out void* positionsPtr, out void* identifiersPtr, out int numPoints)
             {
+                positionsPtr = identifiersPtr = null;
                 numPoints = 0;
                 return null;
             }
 
-            static unsafe void UnityARKit_depth_releasePoints(
-                void* points)
-            { }
-
-            static unsafe void* UnityARKit_depth_acquireIds(
-                TrackableId trackableId,
-                out int numPoints)
-            {
-                numPoints = 0;
-                return null;
-            }
-
-            static unsafe void UnityARKit_depth_releaseIds(
-                void* ids)
+            static unsafe void UnityARKit_depth_releasePointCloud(
+                void* pointCloud)
             { }
 #endif
 
@@ -148,52 +129,56 @@ namespace UnityEngine.XR.ARKit
                 UnityARKit_depth_stop();
             }
 
-            public override unsafe NativeArray<Vector3> GetFeaturePointPositions(
+            public override unsafe XRPointCloudData GetPointCloudData(
                 TrackableId trackableId,
                 Allocator allocator)
             {
+                void* positionsPtr, identifiersPtr;
                 int numPoints;
-                var pointsPtr = UnityARKit_depth_acquirePoints(trackableId, out numPoints);
+                var pointCloud = UnityARKit_depth_acquirePointCloud(
+                    trackableId,
+                    out positionsPtr, out identifiersPtr, out numPoints);
+
                 try
                 {
-                    var points = new NativeArray<Vector3>(numPoints, allocator);
-                    points.CopyFrom(
-                        NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector3>(
-                            pointsPtr, numPoints, Allocator.None));
+                    var positions = new NativeArray<Vector3>(numPoints, allocator);
+                    var positionsHandle = new TransformPositionsJob
+                    {
+                        positionsIn = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Quaternion>(positionsPtr, numPoints, Allocator.None),
+                        positionsOut = positions
+                    }.Schedule(numPoints, 32);
 
-                    return points;
+                    var identifiers = new NativeArray<ulong>(numPoints, allocator);
+                    identifiers.CopyFrom(NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<ulong>(identifiersPtr, numPoints, Allocator.None));
+
+                    positionsHandle.Complete();
+                    return new XRPointCloudData
+                    {
+                        positions = positions,
+                        identifiers = identifiers
+                    };
                 }
                 finally
                 {
-                    UnityARKit_depth_releasePoints(pointsPtr);
+                    UnityARKit_depth_releasePointCloud(pointCloud);
                 }
             }
+        }
 
-            public override unsafe NativeArray<ulong> GetFeaturePointIds(
-                TrackableId trackableId,
-                Allocator allocator)
-            {
-                int count;
-                var idPtr = UnityARKit_depth_acquireIds(trackableId, out count);
-                try
-                {
-                    var ids = new NativeArray<ulong>(count, allocator);
-                    ids.CopyFrom(
-                        NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<ulong>(
-                            idPtr, count, Allocator.None));
-                    return ids;
-                }
-                finally
-                {
-                    UnityARKit_depth_releaseIds(idPtr);
-                }
-            }
+        struct TransformPositionsJob : IJobParallelFor
+        {
+            [ReadOnly]
+            public NativeArray<Quaternion> positionsIn;
 
-            public override NativeArray<float> GetFeaturePointConfidence(
-                TrackableId trackableId,
-                Allocator allocator)
+            [WriteOnly]
+            public NativeArray<Vector3> positionsOut;
+
+            public void Execute(int index)
             {
-                return new NativeArray<float>(0, allocator);
+                positionsOut[index] = new Vector3(
+                     positionsIn[index].x,
+                     positionsIn[index].y,
+                    -positionsIn[index].z);
             }
         }
 

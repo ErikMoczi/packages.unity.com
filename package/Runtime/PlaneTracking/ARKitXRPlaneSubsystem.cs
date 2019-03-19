@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 #endif
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
 
@@ -36,23 +37,78 @@ namespace UnityEngine.XR.ARKit
                 UnityARKit_planes_stop();
             }
 
-            public override unsafe NativeArray<Vector2> GetBoundary(
+            public override unsafe void GetBoundary(
                 TrackableId trackableId,
-                Allocator allocator)
+                Allocator allocator,
+                ref NativeArray<Vector2> boundary)
             {
                 int numPoints;
-                var context = UnityARKit_planes_acquireBoundary(
+                void* verticesPtr;
+                void* plane = UnityARKit_planes_acquireBoundary(
                     trackableId,
+                    out verticesPtr,
                     out numPoints);
 
-                var boundary = new NativeArray<Vector2>(numPoints, allocator);
-                boundary.CopyFrom(
-                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector2>(
-                        context, numPoints, Allocator.None));
+                try
+                {
+                    CreateOrResizeNativeArrayIfNecessary(numPoints, allocator, ref boundary);
+                    var transformPositionsHandle = new TransformBoundaryPositionsJob
+                    {
+                        positionsIn = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector4>(verticesPtr, numPoints, Allocator.None),
+                        positionsOut = boundary
+                    }.Schedule(numPoints, 1);
 
-                UnityARKit_planes_releaseBoundary(context);
+                    new FlipBoundaryWindingJob
+                    {
+                        positions = boundary
+                    }.Schedule(transformPositionsHandle).Complete();
+                }
+                finally
+                {
+                    UnityARKit_planes_releaseBoundary(plane);
+                }
+            }
 
-                return boundary;
+            struct FlipBoundaryWindingJob : IJob
+            {
+                public NativeArray<Vector2> positions;
+
+                public void Execute()
+                {
+                    var half = positions.Length / 2;
+                    for (int i = 0; i < half; ++i)
+                    {
+                        var j = positions.Length - 1 - i;
+                        var temp = positions[i];
+                        positions[i] = positions[j];
+                        positions[j] = temp;
+                    }
+                }
+            }
+
+            struct TransformBoundaryPositionsJob : IJobParallelFor
+            {
+                [ReadOnly]
+                public NativeArray<Vector4> positionsIn;
+
+                [WriteOnly]
+                public NativeArray<Vector2> positionsOut;
+
+                public void Execute(int index)
+                {
+                    positionsOut[index] = new Vector2(
+                        // NB: https://developer.apple.com/documentation/arkit/arplanegeometry/2941052-boundaryvertices?language=objc
+                        // "The owning plane anchor's transform matrix defines the coordinate system for these points."
+                        // It doesn't explicitly state the y component is zero, but that must be the case if the
+                        // boundary points are in plane-space. Emperically, it has been true for horizontal and vertical planes.
+                        // This IS explicitly true for the extents (see above) and would follow the same logic.
+                        //
+                        // Boundary vertices are in right-handed coordinates and clockwise winding order. To convert
+                        // to left-handed, we flip the Z coordinate, but that also flips the winding, so we have to
+                        // flip the winding back to clockwise by reversing the polygon index (j).
+                         positionsIn[index].x,
+                        -positionsIn[index].z);
+                }
             }
 
             public override unsafe TrackableChanges<BoundedPlane> GetChanges(
@@ -116,6 +172,7 @@ namespace UnityEngine.XR.ARKit
             [DllImport("__Internal")]
             static extern unsafe void* UnityARKit_planes_acquireBoundary(
                 TrackableId trackableId,
+                out void* verticiesPtr,
                 out int numPoints);
 
             [DllImport("__Internal")]
@@ -150,8 +207,10 @@ namespace UnityEngine.XR.ARKit
 
             static unsafe void* UnityARKit_planes_acquireBoundary(
                 TrackableId trackableId,
+                out void* verticesPtr,
                 out int numPoints)
             {
+                verticesPtr = null;
                 numPoints = 0;
                 return null;
             }

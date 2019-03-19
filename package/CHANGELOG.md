@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2019-03-04
+## [2.0.0] - 2019-03-15
 ### Changes
 - Verified for 2019.2
 
@@ -77,7 +77,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [1.0.0-preview.8] - 2018-05-07
 
-### Added 
+### Added
 -Created a Legacy XRInput interface to automate the switch between 2018.1 and 2018.2 XRInput versions.
 
 ## [1.0.0-preview.8] - 2018-05-24
@@ -89,7 +89,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### This is the first release of the ARKit package for multi-platform AR.
 
-In this release we are shipping a working iteration of the ARKit package for 
+In this release we are shipping a working iteration of the ARKit package for
 Unity's native multi-platform AR support.
-Included in the package are static libraries, configuration files, binaries 
+Included in the package are static libraries, configuration files, binaries
 and project files needed to adapt ARKit to the Unity multi-platform AR API.
