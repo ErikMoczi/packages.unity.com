@@ -26,11 +26,11 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:Unity-Technologies/usd-unity-sdk.git",
-    "revision": "b48788773db987c1b6b62949a6d495440aea039e"
+    "revision": "d72744cbc0bea1f9d0c47fcc9899a299f6f5b039"
   },
   "unity": "2018.3",
   "unityRelease": "4f1",
-  "version": "1.0.0-preview.3",
+  "version": "1.0.0-preview.4",
   "samples": [
     {
       "displayName": "ExportMesh",
