@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 #endif
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
 
@@ -43,26 +44,9 @@ namespace UnityEngine.XR.ARCore
                 static extern unsafe public void UnityARCore_depth_ReleaseChanges(void* changes);
 
                 [DllImport("UnityARCore")]
-                static extern unsafe public void* UnityARCore_depth_AcquireFeaturePointPositions(
-                    TrackableId trackableId, out int numPoints);
-
-                [DllImport("UnityARCore")]
-                static extern unsafe public void UnityARCore_depth_ReleaseFeaturePointPositions(
-                    void* positions);
-
-                [DllImport("UnityARCore")]
-                static extern unsafe public void* UnityARCore_depth_AcquireFeaturePointIds(
-                    TrackableId trackableId, out int numIds);
-
-                [DllImport("UnityARCore")]
-                static extern unsafe public void UnityARCore_depth_ReleaseFeaturePointIds(void* ids);
-
-                [DllImport("UnityARCore")]
-                static extern unsafe public void* UnityARCore_depth_AcquireFeaturePointConfidence(
-                    TrackableId trackableId, out int numConfidence);
-
-                [DllImport("UnityARCore")]
-                static extern unsafe public void UnityARCore_depth_ReleaseFeaturePointConfidence(void* confidence);
+                public static extern unsafe int UnityARCore_depth_getPointCloudPtrs(
+                    TrackableId trackableId,
+                    out void* dataPtr, out void* identifierPtr);
 #else
                 static public void UnityARCore_depth_Initialize() {}
 
@@ -85,33 +69,13 @@ namespace UnityEngine.XR.ARCore
 
                 static public unsafe void UnityARCore_depth_ReleaseChanges(void* changes) {}
 
-                static public unsafe void* UnityARCore_depth_AcquireFeaturePointPositions(
+                public static unsafe int UnityARCore_depth_getPointCloudPtrs(
                     TrackableId trackableId,
-                    out int numPoints)
+                    out void* dataPtr, out void* identifierPtr)
                 {
-                    numPoints = 0;
-                    return null;
+                    dataPtr = identifierPtr = null;
+                    return 0;
                 }
-                static public unsafe void UnityARCore_depth_ReleaseFeaturePointPositions(
-                    void* positions) {}
-
-                static public unsafe void* UnityARCore_depth_AcquireFeaturePointIds(
-                    TrackableId trackableId, out int numIds)
-                {
-                    numIds = 0;
-                    return null;
-                }
-
-                static public unsafe void UnityARCore_depth_ReleaseFeaturePointIds(void* ids) {}
-
-                static public unsafe void* UnityARCore_depth_AcquireFeaturePointConfidence(
-                    TrackableId trackableId, out int numConfidence)
-                {
-                    numConfidence = 0;
-                    return null;
-                }
-
-                static public unsafe void UnityARCore_depth_ReleaseFeaturePointConfidence(void* confidence) {}
 #endif
             }
 
@@ -143,53 +107,93 @@ namespace UnityEngine.XR.ARCore
                 }
             }
 
-            public override unsafe NativeArray<Vector3> GetFeaturePointPositions(
-                TrackableId trackableId, Allocator allocator)
+            public override unsafe XRPointCloudData GetPointCloudData(
+                TrackableId trackableId,
+                Allocator allocator)
             {
-                int numPoints;
-                var context = NativeApi.UnityARCore_depth_AcquireFeaturePointPositions(trackableId, out numPoints);
+                void* dataPtr, identifierPtr;
+                int numPoints = NativeApi.UnityARCore_depth_getPointCloudPtrs(
+                    trackableId,
+                    out dataPtr, out identifierPtr);
 
+                var data = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Quaternion>(dataPtr, numPoints, Allocator.None);
+                
                 var positions = new NativeArray<Vector3>(numPoints, allocator);
+                var positionsJob = new TransformPositionsJob
+                {
+                    positionsIn = data,
+                    positionsOut = positions
+                };
+                var positionsHandle = positionsJob.Schedule(numPoints, 32);
 
-                positions.CopyFrom(
-                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector3>(
-                        context, numPoints, Allocator.None));
+                var confidenceValues = new NativeArray<float>(numPoints, allocator);
+                var confidenceJob = new ExtractConfidenceValuesJob
+                {
+                    confidenceIn = data,
+                    confidenceOut = confidenceValues
+                };
+                var confidenceHandle = confidenceJob.Schedule(numPoints, 32);
 
-                NativeApi.UnityARCore_depth_ReleaseFeaturePointPositions(context);
+                var identifiers = new NativeArray<ulong>(numPoints, allocator);
+                var identifiersJob = new CopyIdentifiersJob
+                {
+                    identifiersIn = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(identifierPtr, numPoints, Allocator.None),
+                    identifiersOut = identifiers
+                };
+                var identifiersHandle = identifiersJob.Schedule(numPoints, 32);
 
-                return positions;
+                JobHandle.CombineDependencies(positionsHandle, confidenceHandle, identifiersHandle).Complete();
+                return new XRPointCloudData
+                {
+                    positions = positions,
+                    identifiers = identifiers,
+                    confidenceValues = confidenceValues
+                };
             }
 
-            public override unsafe NativeArray<ulong> GetFeaturePointIds(
-                TrackableId trackableId, Allocator allocator)
+            struct CopyIdentifiersJob : IJobParallelFor
             {
-                int numPoints;
-                var context = NativeApi.UnityARCore_depth_AcquireFeaturePointIds(trackableId, out numPoints);
-                var ids = new NativeArray<ulong>(numPoints, allocator);
+                [ReadOnly]
+                public NativeArray<int> identifiersIn;
 
-                ids.CopyFrom(
-                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<ulong>(
-                        context, numPoints, Allocator.None));
+                [WriteOnly]
+                public NativeArray<ulong> identifiersOut;
 
-                NativeApi.UnityARCore_depth_ReleaseFeaturePointPositions(context);
-
-                return ids;
+                public void Execute(int index)
+                {
+                    identifiersOut[index] = (ulong)identifiersIn[index];
+                }
             }
 
-            public override unsafe NativeArray<float> GetFeaturePointConfidence(
-                TrackableId trackableId, Allocator allocator)
+            struct ExtractConfidenceValuesJob : IJobParallelFor
             {
-                int numPoints;
-                var context = NativeApi.UnityARCore_depth_AcquireFeaturePointConfidence(trackableId, out numPoints);
-                var confidence = new NativeArray<float>(numPoints, allocator);
+                [ReadOnly]
+                public NativeArray<Quaternion> confidenceIn;
 
-                confidence.CopyFrom(
-                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<float>(
-                        context, numPoints, Allocator.None));
+                [WriteOnly]
+                public NativeArray<float> confidenceOut;
 
-                NativeApi.UnityARCore_depth_ReleaseFeaturePointPositions(context);
+                public void Execute(int index)
+                {
+                    confidenceOut[index] = confidenceIn[index].w;
+                }
+            }
 
-                return confidence;
+            struct TransformPositionsJob : IJobParallelFor
+            {
+                [ReadOnly]
+                public NativeArray<Quaternion> positionsIn;
+
+                [WriteOnly]
+                public NativeArray<Vector3> positionsOut;
+
+                public void Execute(int index)
+                {
+                    positionsOut[index] = new Vector3(
+                         positionsIn[index].x,
+                         positionsIn[index].y,
+                        -positionsIn[index].z);
+                }
             }
 
             public override void Destroy()

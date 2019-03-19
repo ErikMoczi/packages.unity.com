@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 #endif
 using Unity.Collections;
+using Unity.Jobs;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
@@ -31,23 +32,64 @@ namespace UnityEngine.XR.ARCore
                 UnityARCore_planeTracking_stopTracking();
             }
 
-            public override unsafe NativeArray<Vector2> GetBoundary(
-                TrackableId trackableId, Allocator allocator)
+            public override unsafe void GetBoundary(
+                TrackableId trackableId,
+                Allocator allocator,
+                ref NativeArray<Vector2> boundary)
             {
                 int numPoints;
-                var context = UnityARCore_planeTracking_acquireBoundary(
+                var plane = UnityARCore_planeTracking_acquireBoundary(
                     trackableId,
                     out numPoints);
 
-                var boundary = new NativeArray<Vector2>(numPoints, allocator);
-                boundary.CopyFrom(
-                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector2>(
-                        context, numPoints, Allocator.None));
+                CreateOrResizeNativeArrayIfNecessary(numPoints, allocator, ref boundary);
 
-                UnityARCore_planeTracking_releaseBoundary(
-                    context);
+                if (UnityARCore_planeTracking_tryCopyBoundary(plane, boundary.GetUnsafePtr()))
+                {
+                    // Flip handedness and winding order
+                    var flipHandednessHandle = new FlipBoundaryHandednessJob
+                    {
+                        vertices = boundary
+                    }.Schedule(numPoints, 1);
 
-                return boundary;
+                    new FlipBoundaryWindingJob
+                    {
+                        vertices = boundary
+                    }.Schedule(flipHandednessHandle).Complete();
+                }
+                else
+                {
+                    boundary.Dispose();
+                }
+            }
+
+            struct FlipBoundaryWindingJob : IJob
+            {
+                public NativeArray<Vector2> vertices;
+
+                public void Execute()
+                {
+                    var half = vertices.Length / 2;
+                    for (int i = 0; i < half; ++i)
+                    {
+                        var j = vertices.Length - 1 - i;
+                        var temp = vertices[j];
+                        vertices[j] = vertices[i];
+                        vertices[i] = temp;
+                    }
+                }
+            }
+
+            struct FlipBoundaryHandednessJob : IJobParallelFor
+            {
+                public NativeArray<Vector2> vertices;
+
+                public void Execute(int index)
+                {
+                    vertices[index] = new Vector2(
+                         vertices[index].x,
+                        -vertices[index].y);
+                }
             }
 
             public override unsafe TrackableChanges<BoundedPlane> GetChanges(
@@ -109,20 +151,21 @@ namespace UnityEngine.XR.ARCore
                 void* changes);
 
             [DllImport("UnityARCore")]
-            static extern unsafe void* UnityARCore_planeTracking_acquireBoundary(
-                TrackableId trackableId,
-                out int numPoints);
-
-            [DllImport("UnityARCore")]
-            static extern unsafe void UnityARCore_planeTracking_releaseBoundary(
-                void* boundary);
-
-            [DllImport("UnityARCore")]
             static extern void UnityARCore_planeTracking_setPlaneDetectionMode(
                 PlaneDetectionMode mode);
 
             [DllImport("UnityARCore")]
             static extern void UnityARCore_planeTracking_destroy();
+
+            [DllImport("UnityARCore")]
+            static extern unsafe void* UnityARCore_planeTracking_acquireBoundary(
+                TrackableId trackableId,
+                out int numPoints);
+
+            [DllImport("UnityARCore")]
+            static extern unsafe bool UnityARCore_planeTracking_tryCopyBoundary(
+                void* plane,
+                void* boundaryOut);
 #else
             static void UnityARCore_planeTracking_startTracking()
             { }
@@ -145,6 +188,13 @@ namespace UnityEngine.XR.ARCore
                 void* changes)
             { }
 
+            static void UnityARCore_planeTracking_setPlaneDetectionMode(
+                PlaneDetectionMode mode)
+            { }
+
+            static void UnityARCore_planeTracking_destroy()
+            { }
+
             static unsafe void* UnityARCore_planeTracking_acquireBoundary(
                 TrackableId trackableId,
                 out int numPoints)
@@ -153,16 +203,12 @@ namespace UnityEngine.XR.ARCore
                 return null;
             }
 
-            static unsafe void UnityARCore_planeTracking_releaseBoundary(
-                void* boundary)
-            { }
-
-            static void UnityARCore_planeTracking_setPlaneDetectionMode(
-                PlaneDetectionMode mode)
-            { }
-
-            static void UnityARCore_planeTracking_destroy()
-            { }
+            static unsafe bool UnityARCore_planeTracking_tryCopyBoundary(
+                void* plane,
+                void* boundaryOut)
+            {
+                return false;
+            }
 #endif
         }
 
