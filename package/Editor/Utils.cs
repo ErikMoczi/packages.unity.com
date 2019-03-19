@@ -184,6 +184,8 @@ namespace Unity.QuickSearch
         private string m_Name;
         private Stopwatch m_Timer;
 
+        public double timeMs => m_Timer.Elapsed.TotalMilliseconds;
+
         public DebugTimer(string name)
         {
             m_Disposed = false;
@@ -197,8 +199,8 @@ namespace Unity.QuickSearch
                 return;
             m_Disposed = true;
             m_Timer.Stop();
-            TimeSpan timespan = m_Timer.Elapsed;
-            Debug.Log($"{m_Name} took {timespan.TotalMilliseconds} ms");
+            if (!String.IsNullOrEmpty(m_Name))
+                Debug.Log($"{m_Name} took {timeMs} ms");
         }
     }
 

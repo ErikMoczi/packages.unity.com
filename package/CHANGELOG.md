@@ -1,3 +1,9 @@
+## [1.0.2-preview.1] - 2019-03-18
+- Improve the performance of searches when folder filter is selected.
+- Remove assets and scene search provider default shortcuts. They were conflicting with other core shortcuts.
+- Remove duplicate items from search result.
+- Record average fetch time of search provider and display those times in the Filter Window.
+
 ## [1.0.1-preview.1] - 2019-02-27
 - Fix ReflectionTypeLoadException exception for certain user with invalid project assemblies
 - Optimize fetching results from menu, asset and scene search providers (~50x boost).

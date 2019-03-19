@@ -6,8 +6,11 @@ using System.Linq;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
-using UnityEditorInternal;
 using UnityEngine;
+
+#if QUICKSEARCH_DEBUG
+using UnityEditorInternal;
+#endif
 
 namespace Unity.QuickSearch
 {
@@ -15,17 +18,34 @@ namespace Unity.QuickSearch
     {
         private static class Styles
         {
-            public static Vector2 windowSize = new Vector2(200, 250);
+            public static Vector2 windowSize = new Vector2(250, 250);
             public static readonly GUIStyle filterHeader = new GUIStyle(EditorStyles.boldLabel)
             {
                 name = "quick-search-filter-header",
                 margin = new RectOffset(4, 4, 3, 2)
             };
 
+            public static readonly GUIStyle filterTimeLabel = new GUIStyle(EditorStyles.miniLabel)
+            {
+                name = "quick-search-filter-time-label",
+                fixedWidth = 50,
+                alignment = TextAnchor.MiddleRight,
+                margin = new RectOffset(0, 0, 1, 1),
+                fontSize = filterHeader.fontSize - 2,
+                fontStyle = FontStyle.Italic,
+                normal = new GUIStyleState { textColor = EditorStyles.helpBox.normal.textColor }
+            };
+
+            public static readonly GUIStyle filterTimeLongLabel = new GUIStyle(filterTimeLabel)
+            {
+                name = "quick-search-filter-time-long-label",
+                normal = new GUIStyleState() { textColor = Color.red }
+            };
+
             public static readonly GUIStyle filterToggle = new GUIStyle("Toggle")
             {
                 name = "quick-search-filter-toggle",
-                margin = new RectOffset(4, 4, 1, 1)
+                margin = new RectOffset(4, 4, 2, 1)
             };
 
             public static readonly GUIStyle filterEntry = new GUIStyle(EditorStyles.label) { name = "quick-search-filter-entry" };
@@ -185,6 +205,14 @@ namespace Unity.QuickSearch
 
             GUILayout.Label(desc.entry.name.displayName, Styles.filterHeader);
             GUILayout.FlexibleSpace();
+            if (desc.provider != null)
+            {
+                var avgTime = desc.provider.avgTime;
+                if (avgTime > 0.99)
+                    GUILayout.Label(avgTime.ToString("0.#") + " ms", avgTime < 20.0 ? Styles.filterTimeLabel : Styles.filterTimeLongLabel);
+               // else
+                 //   GUILayout.Label("< 1 ms", Styles.filterTimeLabel);
+            }
 
             EditorGUI.BeginChangeCheck();
             GUI.SetNextControlName($"Box_{m_ToggleFilterNextIndex++}");

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
@@ -27,6 +28,7 @@ namespace Unity.QuickSearch
 
             internal static string[] typeFilter = new[]
             {
+                "Folder",
                 "DefaultAsset",
                 "AnimationClip",
                 "AudioClip",
@@ -53,10 +55,7 @@ namespace Unity.QuickSearch
                 "packages"
             };
 
-            internal static string[] extraFilter = new[]
-            {
-                "folders"
-            };
+            internal static string[] extraFilter = new string[] {};
 
             private static readonly char[] k_InvalidSearchFileChars = Path.GetInvalidFileNameChars().Where(c => c != '*').ToArray();
 
@@ -70,10 +69,6 @@ namespace Unity.QuickSearch
                     fetchItems = (context, items, _provider) =>
                     {
                         var filter = context.searchQuery;
-
-                        // Check if folder should be filtered or not then remove the a: find tag
-                        bool findFolders = !context.categories.Any(c => c.name.displayName == "folders" && c.isEnabled == false);
-
                         var areas = context.categories.GetRange(0, areaFilter.Length);
 
                         if (areas.Any(c => !c.isEnabled))
@@ -94,7 +89,6 @@ namespace Unity.QuickSearch
 
                             items.AddRange(AssetDatabase.FindAssets(filter)
                                                         .Select(AssetDatabase.GUIDToAssetPath)
-                                                        .Where(path => !AssetDatabase.IsValidFolder(path))
                                                         .Take(1001)
                                                         .Select(path => _provider.CreateItem(path, Path.GetFileName(path))));
                         }
@@ -102,15 +96,8 @@ namespace Unity.QuickSearch
                         var safeFilter = string.Join("_", context.searchQuery.Split(k_InvalidSearchFileChars));
                         if (context.searchQuery.Contains('*'))
                         {
-                            items.AddRange(Directory.GetFiles(Application.dataPath, safeFilter, SearchOption.AllDirectories)
+                            items.AddRange(Directory.EnumerateFiles(Application.dataPath, safeFilter, SearchOption.AllDirectories)
                                 .Select(path => _provider.CreateItem(path.Replace(Application.dataPath, "Assets").Replace("\\", "/"), Path.GetFileName(path))));
-                        }
-
-                        if (findFolders)
-                        {
-                            items.AddRange(Directory.GetDirectories(Application.dataPath, safeFilter + "*", SearchOption.AllDirectories)
-                                                    .Select(path => _provider.CreateItem(path.Replace(Application.dataPath, "Assets").Replace("\\", "/"), Path.GetFileName(path))));
-                            
                         }
                     },
 
@@ -120,6 +107,10 @@ namespace Unity.QuickSearch
                             return item.id;
                         long fileSize = new FileInfo(item.id).Length;
                         item.description = $"{item.id} ({EditorUtility.FormatBytes(fileSize)})";
+
+                        var fsq = context.searchQuery.Replace("*", "");
+                        item.description = Regex.Replace(item.description, Regex.Escape(fsq), "<color=#FFFF00>" + fsq + "</color>", RegexOptions.IgnoreCase);
+
                         return item.description;
                     },
 
@@ -218,7 +209,7 @@ namespace Unity.QuickSearch
             }
 
             #if UNITY_2019_1_OR_NEWER
-            [UsedImplicitly, Shortcut("Help/Quick Search/Assets", KeyCode.A, ShortcutModifiers.Alt | ShortcutModifiers.Shift)]
+            [UsedImplicitly, Shortcut("Help/Quick Search/Assets")]
             public static void PopQuickSearch()
             {
                 SearchService.Filter.ResetFilter(false);
