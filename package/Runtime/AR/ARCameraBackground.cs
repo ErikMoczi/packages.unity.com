@@ -10,8 +10,10 @@ namespace UnityEngine.XR.ARFoundation
     /// <remarks>
     /// This is the component-ized version of <c>UnityEngine.XR.ARBackgroundRenderer</c>.
     /// </remarks>
-    [DisallowMultipleComponent, RequireComponent(typeof(Camera))]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARCameraBackground.html")]
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(ARCameraManager))]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@2.0/api/UnityEngine.XR.ARFoundation.ARCameraBackground.html")]
     public sealed class ARCameraBackground : MonoBehaviour
     {
         [SerializeField, FormerlySerializedAs("m_OverrideMaterial")]
@@ -56,13 +58,11 @@ namespace UnityEngine.XR.ARFoundation
         {
             get
             {
-                return backgroundRenderer.backgroundMaterial;
+                return m_BackgroundRenderer.backgroundMaterial;
             }
             private set
             {
-                backgroundRenderer.backgroundMaterial = value;
-                if (ARSubsystemManager.cameraSubsystem != null)
-                    ARSubsystemManager.cameraSubsystem.Material = value;
+                m_BackgroundRenderer.backgroundMaterial = value;
             }
         }
 
@@ -83,7 +83,7 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        [SerializeField] 
+        [SerializeField]
         ARBackgroundRendererAsset m_CustomRendererAsset;
 
         /// <summary>
@@ -100,20 +100,18 @@ namespace UnityEngine.XR.ARFoundation
             }
         }
 
-        ARFoundationBackgroundRenderer backgroundRenderer { get; set; }
+        ARFoundationBackgroundRenderer m_BackgroundRenderer { get; set; }
 
         Material CreateMaterialFromSubsystemShader()
         {
-            var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
-            if (m_CameraSetupThrewException || (cameraSubsystem == null))
+            if (m_CameraSetupThrewException)
                 return null;
 
             // Try to create a material from the plugin's provided shader.
-            string shaderName = "";
-            if (!cameraSubsystem.TryGetShaderName(ref shaderName))
+            if (String.IsNullOrEmpty(m_CameraManager.shaderName))
                 return null;
 
-            var shader = Shader.Find(shaderName);
+            var shader = Shader.Find(m_CameraManager.shaderName);
             if (shader == null)
             {
                 // If an exception is thrown, then something is irrecoverably wrong.
@@ -121,9 +119,8 @@ namespace UnityEngine.XR.ARFoundation
                 m_CameraSetupThrewException = true;
 
                 throw new InvalidOperationException(string.Format(
-                    "Could not find shader named \"{0}\" required for video overlay on camera subsystem named \"{1}\".",
-                    shaderName,
-                    cameraSubsystem.SubsystemDescriptor.id));
+                    "Could not find shader named \"{0}\" required for video overlay on camera subsystem.",
+                    m_CameraManager.shaderName));
             }
 
             return new Material(shader);
@@ -131,9 +128,24 @@ namespace UnityEngine.XR.ARFoundation
 
         void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
         {
-            ARSubsystemManager.cameraSubsystem.Camera = m_Camera;
             UpdateMaterial();
+
+            var mat = material;
+            var count = eventArgs.textures.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                mat.SetTexture(
+                    eventArgs.propertyNameIds[i],
+                    eventArgs.textures[i]);
+            }
+
             mode = ARRenderMode.MaterialAsBackground;
+
+            if (eventArgs.displayMatrix.HasValue)
+                mat.SetMatrix(k_DisplayTransformId, eventArgs.displayMatrix.Value);
+
+            if (eventArgs.projectionMatrix.HasValue)
+                m_Camera.projectionMatrix = eventArgs.projectionMatrix.Value;
         }
 
         void SetupBackgroundRenderer()
@@ -146,49 +158,40 @@ namespace UnityEngine.XR.ARFoundation
                     m_CustomRendererAsset.CreateHelperComponents(gameObject);
                 }
 
-                backgroundRenderer = m_LwrpBackgroundRenderer;
+                m_BackgroundRenderer = m_LwrpBackgroundRenderer;
             }
             else
             {
                 if (m_LegacyBackgroundRenderer == null)
                     m_LegacyBackgroundRenderer = new ARFoundationBackgroundRenderer();
 
-                backgroundRenderer = m_LegacyBackgroundRenderer;
+                m_BackgroundRenderer = m_LegacyBackgroundRenderer;
             }
 
-            backgroundRenderer.mode = mode;
-            backgroundRenderer.camera = m_Camera;
+            m_BackgroundRenderer.mode = mode;
+            m_BackgroundRenderer.camera = m_Camera;
         }
 
         void Awake()
         {
             m_Camera = GetComponent<Camera>();
+            m_CameraManager = GetComponent<ARCameraManager>();
             SetupBackgroundRenderer();
         }
 
         void OnEnable()
         {
             UpdateMaterial();
-            if (ARSubsystemManager.cameraSubsystem != null)
-                ARSubsystemManager.cameraSubsystem.Camera = m_Camera;
-            ARSubsystemManager.cameraFrameReceived += OnCameraFrameReceived;
-            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
+            m_CameraManager.frameReceived += OnCameraFrameReceived;
+            ARSession.stateChanged += OnSessionStateChanged;
         }
 
         void OnDisable()
         {
             mode = ARRenderMode.StandardBackground;
-            ARSubsystemManager.cameraFrameReceived -= OnCameraFrameReceived;
-            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
+            m_CameraManager.frameReceived -= OnCameraFrameReceived;
+            ARSession.stateChanged -= OnSessionStateChanged;
             m_CameraSetupThrewException = false;
-
-            // Tell the camera subsystem to stop doing work if we are still the active camera
-            var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
-            if ((cameraSubsystem != null) && (cameraSubsystem.Camera == m_Camera))
-            {
-                cameraSubsystem.Camera = null;
-                cameraSubsystem.Material = null;
-            }
 
             // We are no longer setting the projection matrix
             // so tell the camera to resume its normal projection
@@ -196,10 +199,10 @@ namespace UnityEngine.XR.ARFoundation
             m_Camera.ResetProjectionMatrix();
         }
 
-        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
+        void OnSessionStateChanged(ARSessionStateChangedEventArgs eventArgs)
         {
             // If the session goes away then return to using standard background mode
-            if (eventArgs.state < ARSystemState.SessionInitializing && backgroundRenderer != null)
+            if (eventArgs.state < ARSessionState.SessionInitializing && m_BackgroundRenderer != null)
                 mode = ARRenderMode.StandardBackground;
         }
 
@@ -218,6 +221,8 @@ namespace UnityEngine.XR.ARFoundation
         bool m_CameraSetupThrewException;
 
         Camera m_Camera;
+
+        ARCameraManager m_CameraManager;
 
         Material m_SubsystemMaterial;
 
@@ -279,5 +284,9 @@ namespace UnityEngine.XR.ARFoundation
                     (GraphicsSettings.renderPipelineAsset != null);
             }
         }
+
+        const string k_DisplayTransformName = "_UnityDisplayTransform";
+
+        static readonly int k_DisplayTransformId = Shader.PropertyToID(k_DisplayTransformName);
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine.XR.ARSubsystems;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -13,16 +14,17 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public Mesh mesh { get; private set; }
 
-        void OnPointCloudChanged(ARPointCloud pointCloud)
+        void OnPointCloudChanged(ARPointCloudUpdatedEventArgs eventArgs)
         {
-            var points = s_Vertices;
-            pointCloud.GetPoints(points, Space.Self);
+            s_Vertices.Clear();
+            foreach (var point in m_PointCloud.positions)
+                s_Vertices.Add(point);
 
             mesh.Clear();
-            mesh.SetVertices(points);
+            mesh.SetVertices(s_Vertices);
 
-            var indices = new int[points.Count];
-            for (int i = 0; i < points.Count; ++i)
+            var indices = new int[s_Vertices.Count];
+            for (int i = 0; i < s_Vertices.Count; ++i)
             {
                 indices[i] = i;
             }
@@ -43,26 +45,25 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             m_PointCloud.updated += OnPointCloudChanged;
-            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
             UpdateVisibility();
         }
 
         void OnDisable()
         {
             m_PointCloud.updated -= OnPointCloudChanged;
-            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
             UpdateVisibility();
         }
 
-        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
+        void Update()
         {
             UpdateVisibility();
         }
 
         void UpdateVisibility()
         {
-            var visible = enabled &&
-                (ARSubsystemManager.systemState == ARSystemState.SessionTracking);
+            var visible = 
+                enabled &&
+                (m_PointCloud.trackingState != TrackingState.None);
 
             SetVisible(visible);
         }

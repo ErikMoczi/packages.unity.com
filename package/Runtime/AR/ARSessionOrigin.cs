@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine.SpatialTracking;
-using UnityEngine.Experimental.XR;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -11,12 +9,12 @@ namespace UnityEngine.XR.ARFoundation
     /// </summary>
     /// <remarks>
     /// Session space vs Unity space
-    /// 
+    ///
     /// Since an AR device will be used to drive the <c>Camera</c>'s position and rotation,
     /// you cannot directly place the <c>Camera</c> at an arbitrary position in the Unity scene.
     /// Instead, you should position the <c>ARSessionOrigin</c>. This will make the <c>Camera</c>
     /// (and any detected features) relative to that as a result.
-    /// 
+    ///
     /// It is important to keep the <c>Camera</c> and detected features in the same space relative to
     /// each other (otherwise, detected features like planes won't appear in the correct place relative
     /// to the <c>Camera</c>). We call the space relative to the AR device's starting position
@@ -24,11 +22,11 @@ namespace UnityEngine.XR.ARFoundation
     /// report its position as (0, 0, 0). Detected features, such as planes, will be reported relative
     /// to this starting position. The purpose of the <c>ARSessionOrigin</c> is to convert the session space
     /// to Unity world space.
-    /// 
+    ///
     /// To facilitate this, the <c>ARSessionOrigin</c> creates a new <c>GameObject</c> called "Trackables"
     /// as a sibling of its <c>Camera</c>. This should be the parent <c>GameObject</c> for all
     /// detected features.
-    /// 
+    ///
     /// At runtime, a typical scene graph might look like this:
     /// - AR Session Origin
     ///     - Camera
@@ -37,21 +35,21 @@ namespace UnityEngine.XR.ARFoundation
     ///         - Detected plane 2
     ///         - Point cloud
     ///         - etc...
-    /// 
+    ///
     /// You can access the "trackables" <c>GameObject</c> with <see cref="trackablesParent"/>.
-    /// 
+    ///
     /// Note that the <c>localPosition</c> and <c>localRotation</c> of detected trackables
     /// remain in real-world meters relative to the AR device's starting position and rotation.
-    /// 
+    ///
     /// Scale
-    /// 
+    ///
     /// If you want to scale the content rendered by the <c>ARSessionOrigin</c> you should apply
     /// the scale to the <c>ARSessionOrigin</c>'s transform. This is preferrable to scaling
     /// the content directly as that can have undesirable side-effects. Physics and NavMeshes,
     /// for example, do not perform well when scaled very small.
     /// </remarks>
     [DisallowMultipleComponent]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARSessionOrigin.html")]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@2.0/api/UnityEngine.XR.ARFoundation.ARSessionOrigin.html")]
     public class ARSessionOrigin : MonoBehaviour
     {
         [SerializeField]
@@ -180,76 +178,6 @@ namespace UnityEngine.XR.ARFoundation
             transform.rotation = Quaternion.Inverse(rotation) * content.rotation;
         }
 
-        /// <summary>
-        /// Cast a ray from a point in screen space against trackables, i.e., detected features such as planes.
-        /// </summary>
-        /// <param name="screenPoint">The point, in device screen pixels, from which to cast.</param>
-        /// <param name="hitResults">Contents are replaced with the raycast results, if successful.</param>
-        /// <param name="trackableTypeMask">(Optional) The types of trackables to cast against.</param>
-        /// <returns>True if the raycast hit a trackable in the <paramref name="trackableTypeMask"/></returns>
-        public bool Raycast(Vector3 screenPoint, List<ARRaycastHit> hitResults, TrackableType trackableTypeMask = TrackableType.All)
-        {
-            if (hitResults == null)
-                throw new ArgumentNullException("hitResults");
-
-            var raycastSubsystem = ARSubsystemManager.raycastSubsystem;
-            if (raycastSubsystem == null)
-                return false;
-
-            var originTransform = camera != null ? camera.transform : trackablesParent;
-
-            // Results are in "trackables space"
-            if (raycastSubsystem.Raycast(screenPoint, s_RaycastHits, trackableTypeMask))
-            {
-                // Transform results back into world space
-                TransformRaycastResults(trackablesParent, hitResults, originTransform.position);
-                return hitResults.Count > 0;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Cast a <c>Ray</c> against trackables, i.e., detected features such as planes.
-        /// </summary>
-        /// <param name="ray">The <c>Ray</c>, in Unity world space, to cast.</param>
-        /// <param name="hitResults">Contents are replaced with the raycast results, if successful.</param>
-        /// <param name="trackableTypeMask">(Optional) The types of trackables to cast against.</param>
-        /// <param name="pointCloudRaycastAngleInDegrees">(Optional) Used to define the angle of the cone to use when raycasting against feature points.</param>
-        /// <returns>True if the raycast hit a trackable in the <paramref name="trackableTypeMask"/></returns>
-        public bool Raycast(Ray ray, List<ARRaycastHit> hitResults, TrackableType trackableTypeMask = TrackableType.All, float pointCloudRaycastAngleInDegrees = 5f)
-        {
-            if (trackablesParent == null)
-                return false;
-
-            if (hitResults == null)
-                throw new ArgumentNullException("hitResults");
-
-            var rayLocalSpace = trackablesParent.InverseTransformRay(ray);
-
-            XRRaycastSubsystem.Raycast(
-                rayLocalSpace,
-                ARSubsystemManager.depthSubsystem,
-                ARSubsystemManager.planeSubsystem,
-                s_RaycastHits,
-                trackableTypeMask,
-                pointCloudRaycastAngleInDegrees);
-
-            TransformRaycastResults(trackablesParent, hitResults, ray.origin);
-
-            return hitResults.Count > 0;
-        }
-
-        static void TransformRaycastResults(Transform transform, List<ARRaycastHit> hits, Vector3 rayOrigin)
-        {
-            hits.Clear();
-            foreach (var hit in s_RaycastHits)
-            {
-                float distanceInWorldSpace = (hit.Pose.position - rayOrigin).magnitude;
-                hits.Add(new ARRaycastHit(hit, distanceInWorldSpace, transform));
-            }
-        }
-
         void Awake()
         {
             // This will be the parent GameObject for any trackables (such as planes) for which
@@ -316,20 +244,7 @@ namespace UnityEngine.XR.ARFoundation
                 var pose = GetCameraOriginPose();
                 trackablesParent.position = pose.position;
                 trackablesParent.rotation = pose.rotation;
-
-                var cameraSubsystem = ARSubsystemManager.cameraSubsystem;
-                if ((cameraSubsystem != null) && (cameraSubsystem.Camera != null))
-                {
-                    // This rig may not be using the AR Session's camera, but it
-                    // is probably rendering AR content. The projection matrices
-                    // should match in order for the AR content to look correct.
-                    // Otherwise, it will appear "floaty".
-                    if (camera != cameraSubsystem.Camera)
-                        camera.projectionMatrix = cameraSubsystem.Camera.projectionMatrix;
-                }
             }
         }
-
-        static List<XRRaycastHit> s_RaycastHits = new List<XRRaycastHit>();
     }
 }

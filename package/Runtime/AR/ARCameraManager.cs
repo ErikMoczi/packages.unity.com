@@ -12,6 +12,7 @@ namespace UnityEngine.XR.ARFoundation
     [DefaultExecutionOrder(ARUpdateOrder.k_CameraManager)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Camera))]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@2.0/api/UnityEngine.XR.ARFoundation.ARCameraManager.html")]
     public sealed class ARCameraManager : MonoBehaviour
     {
         [SerializeField]

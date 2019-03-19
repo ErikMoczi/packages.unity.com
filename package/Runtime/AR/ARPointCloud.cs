@@ -1,71 +1,103 @@
 using System;
-using System.Collections.Generic;
-using UnityEngine.Experimental.XR;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.XR.ARSubsystems;
 
 namespace UnityEngine.XR.ARFoundation
 {
     /// <summary>
     /// Represents a detected point cloud, aka feature points.
     /// </summary>
+    [DefaultExecutionOrder(ARUpdateOrder.k_PointCloud)]
     [DisallowMultipleComponent]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPointCloud.html")]
-    public class ARPointCloud : MonoBehaviour
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@2.0/api/UnityEngine.XR.ARFoundation.ARPointCloud.html")]
+    public class ARPointCloud : ARTrackable<XRPointCloud, ARPointCloud>
     {
         /// <summary>
-        /// Invoked when the point cloud is updated.
+        /// Invoked whenever the point cloud is updated.
         /// </summary>
-        public event Action<ARPointCloud> updated;
+        public event Action<ARPointCloudUpdatedEventArgs> updated;
 
         /// <summary>
-        /// The last frame during which the point cloud was updated.
+        /// An array of positions for each point in the point cloud.
+        /// This array is parallel to <see cref="identifiers"/> and
+        /// <see cref="confidenceValues"/>. Check for existence with
+        /// <c>positions.IsCreated</c>. Positions are provided in 
+        /// point cloud space, that is, relative to this <see cref="ARPointCloud"/>'s
+        /// local position and rotation.
         /// </summary>
-        /// <remarks>
-        /// This is consistent with the value you get from <c>Time.frameCount</c>
-        /// </remarks>
-        public int lastUpdatedFrame
+        public NativeArray<Vector3> positions
         {
             get
             {
-                return depthSubsystem.LastUpdatedFrame;
+                return GetUndisposable(m_Data.positions);
             }
         }
 
         /// <summary>
-        /// Replaces the contents of <paramref name="points"/> with the feature points in Unity world space.
+        /// An array of identifiers for each point in the point cloud.
+        /// This array is parallel to <see cref="positions"/> and
+        /// <see cref="confidenceValues"/>. Check for existence with
+        /// <c>identifiers.IsCreated</c>.
         /// </summary>
-        /// <param name="points">A <c>List</c> of <c>Vector3</c>s. The contents are replaced with the current point cloud.</param>
-        /// <param name="space">Which coordinate system to use. <c>Space.Self</c> refers to session space,
-        /// while <c>Space.World</c> refers to Unity world space. The default is <c>Space.World</c>.</param>
-        public void GetPoints(List<Vector3> points, Space space = Space.World)
+        public NativeArray<ulong> identifiers
         {
-            depthSubsystem.GetPoints(points);
-
-            if (space == Space.World)
-                transform.parent.TransformPointList(points);
+            get
+            {
+                return GetUndisposable(m_Data.identifiers);
+            }
         }
 
         /// <summary>
-        /// Gets the confidence values for each point in the point cloud.
+        /// An array of confidence values for each point in the point cloud
+        /// ranging from 0..1.
+        /// This array is parallel to <see cref="positions"/> and
+        /// <see cref="identifiers"/>. Check for existence with
+        /// <c>confidenceValues.IsCreated</c>.
         /// </summary>
-        /// <param name="confidence">A <c>List</c> of <c>float</c>s representing the confidence values for each point
-        /// in the point cloud. The contents are replaced with the current confidence values.</param>
-        public void GetConfidence(List<float> confidence)
+        public NativeArray<float> confidenceValues
         {
-            depthSubsystem.GetConfidence(confidence);
+            get
+            {
+                return GetUndisposable(m_Data.confidenceValues);
+            }
         }
 
-        /// <summary>
-        /// The XR Subsystem providing the point cloud data.
-        /// </summary>
-        XRDepthSubsystem depthSubsystem
+        void Update()
         {
-            get { return ARSubsystemManager.depthSubsystem; }
+            if (m_PointsUpdated && updated != null)
+            {
+                m_PointsUpdated = false;
+                updated(new ARPointCloudUpdatedEventArgs());
+            }
         }
 
-        internal void OnUpdated()
+        void OnDestroy()
         {
-            if (updated != null)
-                updated(this);
+            m_Data.Dispose();
         }
+
+        // Creates an alias to the same array, but the caller cannot Dispose it.
+        unsafe NativeArray<T> GetUndisposable<T>(NativeArray<T> disposable) where T : struct
+        {
+            if (!disposable.IsCreated)
+                return default(NativeArray<T>);
+
+            return NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(
+                disposable.GetUnsafePtr(),
+                disposable.Length,
+                Allocator.None);
+        }
+
+        internal void UpdateData(XRDepthSubsystem subsystem)
+        {
+            m_Data.Dispose();
+            m_Data = subsystem.GetPointCloudData(trackableId, Allocator.Persistent);
+            m_PointsUpdated = m_Data.positions.IsCreated;
+        }
+
+        XRPointCloudData m_Data;
+
+        bool m_PointsUpdated = false;
     }
 }

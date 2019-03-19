@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine.Experimental.XR;
+using UnityEngine.XR.ARSubsystems;
 
 namespace UnityEngine.XR.ARFoundation
 {
@@ -14,7 +14,7 @@ namespace UnityEngine.XR.ARFoundation
     /// It will also update a <c>LineRenderer</c> with the boundary points, if present.
     /// </remarks>
     [RequireComponent(typeof(ARPlane))]
-    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@1.0/api/UnityEngine.XR.ARFoundation.ARPlaneMeshVisualizer.html")]
+    [HelpURL("https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@2.0/api/UnityEngine.XR.ARFoundation.ARPlaneMeshVisualizer.html")]
     public sealed class ARPlaneMeshVisualizer : MonoBehaviour
     {
         /// <summary>
@@ -22,38 +22,20 @@ namespace UnityEngine.XR.ARFoundation
         /// </summary>
         public Mesh mesh { get; private set; }
 
-        /// <summary>
-        /// Invoked after <seealso cref="mesh"/> has been regenerated, but before
-        /// any components have been updated to use the new <c>Mesh</c>.
-        /// </summary>
-        public event Action<ARPlaneMeshVisualizer> meshUpdated;
-
         void OnBoundaryChanged(ARPlaneBoundaryChangedEventArgs eventArgs)
         {
-            // Ignore subsumed planes
-            if (m_Plane.boundedPlane.SubsumedById != TrackableId.InvalidId)
-            {
-                DisableComponents();
+            var boundary = m_Plane.boundary;
+            if (!ARPlaneMeshGenerators.GenerateMesh(mesh, new Pose(transform.localPosition, transform.localRotation), boundary))
                 return;
-            }
-
-            var center = eventArgs.center;
-            var normal = eventArgs.normal;
-            var polygon = eventArgs.convexBoundary;
-
-            if (!ARPlaneMeshGenerators.GenerateMesh(mesh, m_Plane.boundedPlane.Pose, center, normal, polygon))
-                return;
-
-            if (meshUpdated != null)
-                meshUpdated(this);
 
             var lineRenderer = GetComponent<LineRenderer>();
             if (lineRenderer != null)
             {
-                lineRenderer.positionCount = polygon.Count;
-                for (int i = 0; i < polygon.Count; ++i)
+                lineRenderer.positionCount = boundary.Length;
+                for (int i = 0; i < boundary.Length; ++i)
                 {
-                    lineRenderer.SetPosition(i, polygon[i]);
+                    var point2 = boundary[i];
+                    lineRenderer.SetPosition(i, new Vector3(point2.x, 0, point2.y));
                 }
             }
 
@@ -91,20 +73,11 @@ namespace UnityEngine.XR.ARFoundation
         void UpdateVisibility()
         {
             var visible = enabled &&
-                (m_Plane.trackingState != TrackingState.Unavailable) &&
-                (ARSubsystemManager.systemState > ARSystemState.Ready);
+                (m_Plane.trackingState != TrackingState.None) &&
+                (ARSession.state > ARSessionState.Ready) &&
+                (m_Plane.subsumedBy == null);
 
             SetVisible(visible);
-        }
-
-        void OnUpdated(ARPlane plane)
-        {
-            UpdateVisibility();
-        }
-
-        void OnSystemStateChanged(ARSystemStateChangedEventArgs eventArgs)
-        {
-            UpdateVisibility();
         }
 
         void Awake()
@@ -116,16 +89,13 @@ namespace UnityEngine.XR.ARFoundation
         void OnEnable()
         {
             m_Plane.boundaryChanged += OnBoundaryChanged;
-            m_Plane.updated += OnUpdated;
-            ARSubsystemManager.systemStateChanged += OnSystemStateChanged;
             UpdateVisibility();
+            OnBoundaryChanged(default(ARPlaneBoundaryChangedEventArgs));
         }
 
         void OnDisable()
         {
             m_Plane.boundaryChanged -= OnBoundaryChanged;
-            m_Plane.updated -= OnUpdated;
-            ARSubsystemManager.systemStateChanged -= OnSystemStateChanged;
             UpdateVisibility();
         }
 
@@ -147,6 +117,15 @@ namespace UnityEngine.XR.ARFoundation
                 }
 
                 transform.hasChanged = false;
+            }
+
+            if (m_Plane.subsumedBy != null)
+            {
+                DisableComponents();
+            }
+            else
+            {
+                UpdateVisibility();
             }
         }
 

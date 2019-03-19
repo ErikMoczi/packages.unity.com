@@ -1,22 +1,14 @@
 # AR Foundation
 
-Use the AR Foundation package to add high-level functionality for working with augmented reality. Unity 2018.1 includes built-in multi-platform support for AR. These APIs are in the `UnityEngine.Experimental.XR` namespace, and consist of a number of `Subsystem`s, e.g., `XRPlaneSubsystem`. Several XR Subsystems comprise the low-level API for interacting with AR. The **AR Foundation** package wraps this low-level API into a cohesive whole and enhances it with additional utilities, such as AR session lifecycle management and the creation of `GameObject`s to represent detected features in the environment.
+Use the AR Foundation package to add high-level functionality for working with augmented reality. Unity 2018.1 includes built-in multi-platform support for AR. These APIs are in the `UnityEngine.XR.ARSubsystems` namespace, and consist of a number of `Subsystem`s, e.g., `XRPlaneSubsystem`. Several XR Subsystems comprise the low-level API for interacting with AR. The **AR Foundation** package wraps this low-level API into a cohesive whole and enhances it with additional utilities, such as AR session lifecycle management and the creation of `GameObject`s to represent detected features in the environment.
 
-AR Foundation is a set of utilities for dealing with devices that support following concepts:
-- Planar surface detection
-- Point clouds, aka feature points
-- Reference points: an arbitrary position and orientation that the device tracks
-- Light estimation: estimates for average color temperature and brightness in physical space.
-- World tracking: tracking the device's position and orientation in physical space.
-- Face tracking: tracking the position and orientation of the face of a person.
+## Branch Guidelines
+* `master` ==> Target this branch for changes that need to be in the most recent preview package. Then cherry-pick changes from this branch into older, non-staging branches. `master` will eventually branch to `2.1.x` once work on a newer release begins. 
 
-## Installing AR Foundation
+* `2.0.x` - Target this branch for changes that should be in the 2.0.x package versions.
 
-To install this package, follow the instructions in the [Package Manager documentation](https://docs.unity3d.com/Packages/com.unity.package-manager-ui@latest/index.html).
+* `2.0.x-staging` - Only merge to this branch from `2.0.x` in preparation for a release. This package should ideally contain the exact contents of the latest release on [staging Bintray](https://bintray.com/unity/unity-staging/com.unity.xr.arfoundation). So before a new release QA would validate against `2.0.x` and then a merge would take place into `2.0.x-staging`.
 
-This package is `com.unity.xr.arfoundation`
+* `1.1.x` - Target this branch for changes that should be in the 1.1.x package versions.
 
-## Documentation
-
-* [Script API](Runtime/AR/)
-* [Manual](Documentation/com.unity.xr.arfoundation.md)
+* `1.1.x-staging` - Only merge to this branch from `1.1.x` in preparation for a release. This package should ideally contain the exact contents of the latest release on [staging Bintray](https://bintray.com/unity/unity-staging/com.unity.xr.arfoundation). So before a new release QA would validate against `1.1.x` and then a merge would take place into `1.1.x-staging`.
