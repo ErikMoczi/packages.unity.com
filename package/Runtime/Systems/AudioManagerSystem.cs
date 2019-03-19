@@ -61,13 +61,15 @@ namespace Unity.Audio.Megacity
         {
             get
             {
-                if(!m_BlocksAlive)
+                if (!m_BlocksAlive)
                     throw new InvalidOperationException("Audio manager frame blocks not available at this time");
 
                 return m_Block;
             }
         }
 
+        DSPConnection m_ConverterConnection;
+        DSPNode m_ConverterNode;
         DSPConnection m_MasterConnection;
         DSPNode m_MasterGainNode;
         DSPNode m_LimiterNode;
@@ -86,7 +88,19 @@ namespace Unity.Audio.Megacity
             m_Block.AddOutletPort(m_MasterGainNode, 2, SoundFormat.Stereo);
             m_Block.SetFloat<GainNodeJob.Params, NoProvs, GainNodeJob>(m_MasterGainNode, GainNodeJob.Params.Vol1, 0, 0);
             m_Block.SetFloat<GainNodeJob.Params, NoProvs, GainNodeJob>(m_MasterGainNode, GainNodeJob.Params.Vol2, 0, 0);
-            m_MasterConnection = m_Block.Connect(m_MasterGainNode, 0, WorldGraph.GetRootDSP(), 0);
+
+            if (Application.platform == RuntimePlatform.XboxOne)
+            {
+                m_ConverterNode = m_Block.CreateDSPNode<StereoTo7Point1NodeJob.Params, NoProvs, StereoTo7Point1NodeJob>();
+                m_Block.AddInletPort(m_ConverterNode, 2, SoundFormat.Stereo);
+                m_Block.AddOutletPort(m_ConverterNode, 8, SoundFormat.SevenDot1);
+                m_ConverterConnection = m_Block.Connect(m_MasterGainNode, 0, m_ConverterNode, 0);
+                m_MasterConnection = m_Block.Connect(m_ConverterNode, 0, WorldGraph.GetRootDSP(), 0);
+            }
+            else
+            {
+                m_MasterConnection = m_Block.Connect(m_MasterGainNode, 0, WorldGraph.GetRootDSP(), 0);
+            }
 
             m_LimiterNode = m_Block.CreateDSPNode<LimiterNodeJob.Params, LimiterNodeJob.Provs, LimiterNodeJob>();
             m_Block.AddInletPort(m_LimiterNode, 2, SoundFormat.Stereo);
@@ -114,8 +128,13 @@ namespace Unity.Audio.Megacity
 
         protected override void OnDestroyManager()
         {
-            if(m_BlocksAlive)
+            if (m_BlocksAlive)
             {
+                if (Application.platform == RuntimePlatform.XboxOne)
+                {
+                    m_Block.ReleaseDSPNode(m_ConverterNode);
+                }
+
                 m_Block.ReleaseDSPNode(m_MasterGainNode);
                 m_Block.ReleaseDSPNode(m_LimiterNode);
                 m_Block.Complete();
@@ -159,11 +178,11 @@ namespace Unity.Audio.Megacity
             }
         }
 
-        public void SetActive (bool value)
+        public void SetActive(bool value)
         {
             var volume = value ? 1 : 0;
-            m_Block.SetFloat<GainNodeJob.Params, NoProvs, GainNodeJob>(m_MasterGainNode, GainNodeJob.Params.Vol1, volume, 5*44100);
-            m_Block.SetFloat<GainNodeJob.Params, NoProvs, GainNodeJob>(m_MasterGainNode, GainNodeJob.Params.Vol2, volume, 5*44100);
+            m_Block.SetFloat<GainNodeJob.Params, NoProvs, GainNodeJob>(m_MasterGainNode, GainNodeJob.Params.Vol1, volume, 5 * 44100);
+            m_Block.SetFloat<GainNodeJob.Params, NoProvs, GainNodeJob>(m_MasterGainNode, GainNodeJob.Params.Vol2, volume, 5 * 44100);
         }
     }
 

@@ -213,13 +213,14 @@ namespace Unity.Audio.Megacity
             {
                 m_Speed = 1;
             }
+
             // turn down the volume when the car is moving forward at max speed;
             // otherwise fade to full folume -- that's when volume is less than max, or the angles are non-zero
             if (m_MasterVolumeTarget != 1
-                && (math.abs(m_Speed - 1) > 0.1
-                    || math.abs(m_YawAngle) > 0.2
-                    || math.abs(m_PitchAngle) > 0.2
-                    || math.abs(m_RollAngle) > 0.2
+                && (math.abs(prev - m_Speed) > 0.0017
+                    || math.abs(m_YawAngle) > 0.4
+                    || math.abs(m_PitchAngle) > 0.4
+                    || math.abs(m_RollAngle) > 0.4
                 )
             )
             {

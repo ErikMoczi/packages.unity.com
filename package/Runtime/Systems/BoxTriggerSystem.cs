@@ -33,7 +33,7 @@ namespace Unity.Audio.Megacity
             public ChunkEntityEnumerable m_BoundingBoxEnumerable;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Translation> m_PointPosition;
+            public ComponentDataFromEntity<LocalToWorld> m_PointPosition;
 
             [ReadOnly]
             public ComponentDataFromEntity<BoxIndex> m_PointBoxIndex;
@@ -45,7 +45,7 @@ namespace Unity.Audio.Megacity
             public ArchetypeChunkEntityType m_PointEntityType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<Translation> m_PositionType;
+            public ArchetypeChunkComponentType<LocalToWorld> m_PositionType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<BoxIndex> m_BoxIndexType;
@@ -55,13 +55,13 @@ namespace Unity.Audio.Megacity
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var pointEntities = chunk.GetNativeArray(m_PointEntityType);
-                var positionComponents = chunk.GetNativeArray<Translation>(m_PositionType);
+                var positionComponents = chunk.GetNativeArray<LocalToWorld>(m_PositionType);
                 var boxIndexComponents = chunk.GetNativeArray<BoxIndex>(m_BoxIndexType);
 
                 for (int p = 0; p < pointEntities.Length; p++)
                 {
                     var pointEntity = pointEntities[p];
-                    var position = positionComponents[p].Value;
+                    var position = math.transform(positionComponents[p].Value, new float3());
 
                     Entity newBoundingBox = Entity.Null;
                     foreach (var boundingBoxEntity in m_BoundingBoxEnumerable)
@@ -103,11 +103,11 @@ namespace Unity.Audio.Megacity
             var job = new TriggerJob
             {
                 m_BoundingBoxEnumerable = m_BoundingBoxEnumerable,
-                m_PointPosition = GetComponentDataFromEntity<Translation>(),
+                m_PointPosition = GetComponentDataFromEntity<LocalToWorld>(),
                 m_PointBoxIndex = GetComponentDataFromEntity<BoxIndex>(),
                 m_BoundingBoxes = GetComponentDataFromEntity<BoundingBox>(),
                 m_PointEntityType = GetArchetypeChunkEntityType(),
-                m_PositionType = GetArchetypeChunkComponentType<Translation>(true),
+                m_PositionType = GetArchetypeChunkComponentType<LocalToWorld>(true),
                 m_BoxIndexType = GetArchetypeChunkComponentType<BoxIndex>(),
                 m_EntityCommandBuffer = m_Barrier.CreateCommandBuffer().ToConcurrent()
             };
@@ -134,7 +134,7 @@ namespace Unity.Audio.Megacity
             m_PointGroup = GetComponentGroup(
                 new EntityArchetypeQuery
                 {
-                    All = new ComponentType[] { typeof(Translation), typeof(BoxIndex) },
+                    All = new ComponentType[] { typeof(LocalToWorld), typeof(BoxIndex) },
                     None = Array.Empty<ComponentType>(),
                     Any = Array.Empty<ComponentType>(),
                 });
