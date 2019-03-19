@@ -7,32 +7,34 @@ namespace Unity.UNetWeaver
     class MessageClassProcessor
     {
         TypeDefinition m_td;
+        Weaver m_Weaver;
 
-        public MessageClassProcessor(TypeDefinition td)
+        public MessageClassProcessor(TypeDefinition td, Weaver weaver)
         {
-            Weaver.DLog(td, "MessageClassProcessor for " + td.Name);
             m_td = td;
+            m_Weaver = weaver;
+            m_Weaver.DLog(td, "MessageClassProcessor for " + td.Name);
         }
 
         public void Process()
         {
-            Weaver.DLog(m_td, "MessageClassProcessor Start");
+            m_Weaver.DLog(m_td, "MessageClassProcessor Start");
 
-            Weaver.ResetRecursionCount();
+            m_Weaver.ResetRecursionCount();
 
             GenerateSerialization();
-            if (Weaver.fail)
+            if (m_Weaver.fail)
             {
                 return;
             }
 
             GenerateDeSerialization();
-            Weaver.DLog(m_td, "MessageClassProcessor Done");
+            m_Weaver.DLog(m_td, "MessageClassProcessor Done");
         }
 
         void GenerateSerialization()
         {
-            Weaver.DLog(m_td, "  GenerateSerialization");
+            m_Weaver.DLog(m_td, "  GenerateSerialization");
             foreach (var m in m_td.Methods)
             {
                 if (m.Name == "Serialize")
@@ -49,7 +51,7 @@ namespace Unity.UNetWeaver
             {
                 if (field.FieldType.FullName == m_td.FullName)
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_td.Name + " [" + field.FullName + "]. [MessageBase] member cannot be self referencing.");
                     return;
                 }
@@ -58,9 +60,9 @@ namespace Unity.UNetWeaver
             MethodDefinition serializeFunc = new MethodDefinition("Serialize", MethodAttributes.Public |
                     MethodAttributes.Virtual |
                     MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                    m_Weaver.voidType);
 
-            serializeFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkWriterType)));
+            serializeFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkWriterType)));
             ILProcessor serWorker = serializeFunc.Body.GetILProcessor();
 
             foreach (var field in m_td.Fields)
@@ -70,19 +72,19 @@ namespace Unity.UNetWeaver
 
                 if (field.FieldType.Resolve().HasGenericParameters)
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_td.Name + " [" + field.FieldType + "/" + field.FieldType.FullName + "]. [MessageBase] member cannot have generic parameters.");
                     return;
                 }
 
                 if (field.FieldType.Resolve().IsInterface)
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_td.Name + " [" + field.FieldType + "/" + field.FieldType.FullName + "]. [MessageBase] member cannot be an interface.");
                     return;
                 }
 
-                MethodReference writeFunc = Weaver.GetWriteFunc(field.FieldType);
+                MethodReference writeFunc = m_Weaver.GetWriteFunc(field.FieldType);
                 if (writeFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
@@ -92,7 +94,7 @@ namespace Unity.UNetWeaver
                 }
                 else
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_td.Name + " unknown type [" + field.FieldType + "/" + field.FieldType.FullName + "]. [MessageBase] member variables must be basic types.");
                     return;
                 }
@@ -104,7 +106,7 @@ namespace Unity.UNetWeaver
 
         void GenerateDeSerialization()
         {
-            Weaver.DLog(m_td, "  GenerateDeserialization");
+            m_Weaver.DLog(m_td, "  GenerateDeserialization");
             foreach (var m in m_td.Methods)
             {
                 if (m.Name == "Deserialize")
@@ -119,9 +121,9 @@ namespace Unity.UNetWeaver
             MethodDefinition serializeFunc = new MethodDefinition("Deserialize", MethodAttributes.Public |
                     MethodAttributes.Virtual |
                     MethodAttributes.HideBySig,
-                    Weaver.voidType);
+                    m_Weaver.voidType);
 
-            serializeFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkReaderType)));
+            serializeFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkReaderType)));
             ILProcessor serWorker = serializeFunc.Body.GetILProcessor();
 
             foreach (var field in m_td.Fields)
@@ -129,7 +131,7 @@ namespace Unity.UNetWeaver
                 if (field.IsStatic || field.IsPrivate || field.IsSpecialName)
                     continue;
 
-                MethodReference readerFunc = Weaver.GetReadFunc(field.FieldType);
+                MethodReference readerFunc = m_Weaver.GetReadFunc(field.FieldType);
                 if (readerFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
@@ -139,7 +141,7 @@ namespace Unity.UNetWeaver
                 }
                 else
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateDeSerialization for " + m_td.Name + " unknown type [" + field.FieldType + "]. [SyncVar] member variables must be basic types.");
                     return;
                 }

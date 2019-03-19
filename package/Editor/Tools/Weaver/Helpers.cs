@@ -58,7 +58,7 @@ namespace Unity.UNetWeaver
             return null;
         }
 
-        public static bool InheritsFromSyncList(TypeReference typeRef)
+        public static bool InheritsFromSyncList(TypeReference typeRef, Weaver weaver)
         {
             try
             {
@@ -68,14 +68,14 @@ namespace Unity.UNetWeaver
                     return false;
                 }
 
-                foreach (var type in ResolveInheritanceHierarchy(typeRef))
+                foreach (var type in ResolveInheritanceHierarchy(typeRef, weaver))
                 {
                     // only need to check for generic instances, as we're looking for SyncList<T>
                     if (type.IsGenericInstance)
                     {
                         // resolves the instance type to it's generic type definition, for example SyncList<Int> to SyncList<T>
                         var typeDef = type.Resolve();
-                        if (typeDef.HasGenericParameters && typeDef.FullName == Weaver.SyncListType.FullName)
+                        if (typeDef.HasGenericParameters && typeDef.FullName == weaver.SyncListType.FullName)
                         {
                             return true;
                         }
@@ -90,19 +90,19 @@ namespace Unity.UNetWeaver
             return false;
         }
 
-        public static IEnumerable<TypeReference> ResolveInheritanceHierarchy(TypeReference type)
+        public static IEnumerable<TypeReference> ResolveInheritanceHierarchy(TypeReference type, Weaver weaver)
         {
             // for value types the hierarchy is pre-defined as "<Self> : System.ValueType : System.Object"
             if (type.IsValueType)
             {
                 yield return type;
-                yield return Weaver.valueTypeType;
-                yield return Weaver.objectType;
+                yield return weaver.valueTypeType;
+                yield return weaver.objectType;
                 yield break;
             }
 
             // resolve entire hierarchy from <Self> to System.Object
-            while (type != null && type.FullName != Weaver.objectType.FullName)
+            while (type != null && type.FullName != weaver.objectType.FullName)
             {
                 yield return type;
 
@@ -127,7 +127,7 @@ namespace Unity.UNetWeaver
             }
 
 
-            yield return Weaver.objectType;
+            yield return weaver.objectType;
         }
 
         public static string DestinationFileFor(string outputDir, string assemblyPath)

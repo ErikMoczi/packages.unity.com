@@ -74,4 +74,13 @@ public class WeaverILGenerationTests
             new MockInstruction(OpCodes.Call, "System.Void WeaverILGenerationTests_SyncLists_Base::Awake()")
             );
     }
+
+    [Test]
+    public void SyncNetworkBehaviourBaseClassPreStartClientMethodFromSubclass()
+    {
+        WeaverILMatcher.MatchMethodIL(typeof(WeaverILGenerationTests_SyncLists), "PreStartClient", false, 0, 1,
+            new MockInstruction(OpCodes.Ldarg_0),
+            new MockInstruction(OpCodes.Call, "System.Void WeaverILGenerationTests_SyncLists_Base::PreStartClient()")
+        );
+    }
 }

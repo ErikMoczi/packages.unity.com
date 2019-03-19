@@ -8,13 +8,15 @@ namespace Unity.UNetWeaver
     {
         TypeDefinition m_TypeDef;
         TypeReference m_ItemType;
+        Weaver m_Weaver;
         const MethodAttributes kPublicStaticHide = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
         const MethodAttributes kPublicVirtualHide = MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig;
 
-        public SyncListStructProcessor(TypeDefinition typeDef)
+        public SyncListStructProcessor(TypeDefinition typeDef, Weaver weaver)
         {
-            Weaver.DLog(typeDef, "SyncListStructProcessor for " + typeDef.Name);
             m_TypeDef = typeDef;
+            m_Weaver = weaver;
+            m_Weaver.DLog(typeDef, "SyncListStructProcessor for " + typeDef.Name);
         }
 
         public void Process()
@@ -23,17 +25,17 @@ namespace Unity.UNetWeaver
             var gt = (GenericInstanceType)m_TypeDef.BaseType;
             if (gt.GenericArguments.Count == 0)
             {
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 Log.Error("SyncListStructProcessor no generic args");
                 return;
             }
-            m_ItemType = Weaver.scriptDef.MainModule.ImportReference(gt.GenericArguments[0]);
+            m_ItemType = m_Weaver.m_ScriptDef.MainModule.ImportReference(gt.GenericArguments[0]);
 
-            Weaver.DLog(m_TypeDef, "SyncListStructProcessor Start item:" + m_ItemType.FullName);
+            m_Weaver.DLog(m_TypeDef, "SyncListStructProcessor Start item:" + m_ItemType.FullName);
 
-            Weaver.ResetRecursionCount();
+            m_Weaver.ResetRecursionCount();
             var writeItemFunc = GenerateSerialization();
-            if (Weaver.fail)
+            if (m_Weaver.fail)
             {
                 return;
             }
@@ -46,7 +48,7 @@ namespace Unity.UNetWeaver
             GenerateReadFunc(readItemFunc);
             GenerateWriteFunc(writeItemFunc);
 
-            Weaver.DLog(m_TypeDef, "SyncListStructProcessor Done");
+            m_Weaver.DLog(m_TypeDef, "SyncListStructProcessor Done");
         }
 
         /* deserialization of entire list. generates code like:
@@ -74,24 +76,24 @@ namespace Unity.UNetWeaver
             }
 
             // create new reader for this type
-            MethodDefinition readerFunc = new MethodDefinition(functionName, kPublicStaticHide, Weaver.voidType);
+            MethodDefinition readerFunc = new MethodDefinition(functionName, kPublicStaticHide, m_Weaver.voidType);
 
-            readerFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkReaderType)));
+            readerFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkReaderType)));
             readerFunc.Parameters.Add(new ParameterDefinition("instance", ParameterAttributes.None, m_TypeDef));
 
-            readerFunc.Body.Variables.Add(new VariableDefinition(Weaver.uint16Type));
-            readerFunc.Body.Variables.Add(new VariableDefinition(Weaver.uint16Type));
+            readerFunc.Body.Variables.Add(new VariableDefinition(m_Weaver.uint16Type));
+            readerFunc.Body.Variables.Add(new VariableDefinition(m_Weaver.uint16Type));
             readerFunc.Body.InitLocals = true;
 
             ILProcessor worker = readerFunc.Body.GetILProcessor();
 
             worker.Append(worker.Create(OpCodes.Ldarg_0));
-            worker.Append(worker.Create(OpCodes.Callvirt, Weaver.NetworkReadUInt16));
+            worker.Append(worker.Create(OpCodes.Callvirt, m_Weaver.NetworkReadUInt16));
             worker.Append(worker.Create(OpCodes.Stloc_0));
 
             // Call Clear() from the base class
             worker.Append(worker.Create(OpCodes.Ldarg_1));
-            MethodReference genericClearMethod = Helpers.MakeHostInstanceGeneric(Weaver.SyncListClear, m_ItemType);
+            MethodReference genericClearMethod = Helpers.MakeHostInstanceGeneric(m_Weaver.SyncListClear, m_ItemType);
             worker.Append(worker.Create(OpCodes.Callvirt, genericClearMethod));
 
             worker.Append(worker.Create(OpCodes.Ldc_I4_0));
@@ -110,7 +112,7 @@ namespace Unity.UNetWeaver
             worker.Append(worker.Create(OpCodes.Callvirt, readItemFunc));
 
             // call the generic AddInternal from the base class
-            var addInternal = Weaver.ResolveMethod(Weaver.SyncListStructType, "AddInternal");
+            var addInternal = m_Weaver.ResolveMethod(m_Weaver.SyncListStructType, "AddInternal");
             var addInternalTyped = Helpers.MakeHostInstanceGeneric(addInternal, m_ItemType);
             worker.Append(worker.Create(OpCodes.Callvirt, addInternalTyped));
 
@@ -130,7 +132,7 @@ namespace Unity.UNetWeaver
             //worker.Append(worker.Create(OpCodes.Ldloc_1));
             worker.Append(worker.Create(OpCodes.Ret));
 
-            Weaver.RegisterReadByReferenceFunc(m_TypeDef.FullName, readerFunc);
+            m_Weaver.RegisterReadByReferenceFunc(m_TypeDef.FullName, readerFunc);
         }
 
         /*serialization of entire list. generates code like:
@@ -158,13 +160,13 @@ namespace Unity.UNetWeaver
             }
 
             // create new writer for this type
-            MethodDefinition writerFunc = new MethodDefinition(functionName, kPublicStaticHide, Weaver.voidType);
+            MethodDefinition writerFunc = new MethodDefinition(functionName, kPublicStaticHide, m_Weaver.voidType);
 
-            writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkWriterType)));
-            writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(m_TypeDef)));
+            writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkWriterType)));
+            writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_TypeDef)));
 
-            writerFunc.Body.Variables.Add(new VariableDefinition(Weaver.uint16Type));
-            writerFunc.Body.Variables.Add(new VariableDefinition(Weaver.uint16Type));
+            writerFunc.Body.Variables.Add(new VariableDefinition(m_Weaver.uint16Type));
+            writerFunc.Body.Variables.Add(new VariableDefinition(m_Weaver.uint16Type));
             writerFunc.Body.InitLocals = true;
 
             ILProcessor worker = writerFunc.Body.GetILProcessor();
@@ -172,14 +174,14 @@ namespace Unity.UNetWeaver
             worker.Append(worker.Create(OpCodes.Ldarg_1));
 
             // call the generic Count from the base class
-            var getCount = Weaver.ResolveMethod(Weaver.SyncListStructType, "get_Count");
+            var getCount = m_Weaver.ResolveMethod(m_Weaver.SyncListStructType, "get_Count");
             var getCountTyped = Helpers.MakeHostInstanceGeneric(getCount, m_ItemType);
             worker.Append(worker.Create(OpCodes.Callvirt, getCountTyped));
 
             worker.Append(worker.Create(OpCodes.Stloc_0));
             worker.Append(worker.Create(OpCodes.Ldarg_0));
             worker.Append(worker.Create(OpCodes.Ldloc_0));
-            worker.Append(worker.Create(OpCodes.Callvirt, Weaver.NetworkWriteUInt16));
+            worker.Append(worker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriteUInt16));
             worker.Append(worker.Create(OpCodes.Ldc_I4_0));
             worker.Append(worker.Create(OpCodes.Stloc_1));
 
@@ -196,7 +198,7 @@ namespace Unity.UNetWeaver
             worker.Append(worker.Create(OpCodes.Ldloc_1));
 
             // call the generic [] from the base class
-            var getItem = Weaver.ResolveMethod(Weaver.SyncListStructType, "GetItem");
+            var getItem = m_Weaver.ResolveMethod(m_Weaver.SyncListStructType, "GetItem");
             var getItemTyped = Helpers.MakeHostInstanceGeneric(getItem, m_ItemType);
             worker.Append(worker.Create(OpCodes.Callvirt, getItemTyped));
             worker.Append(worker.Create(OpCodes.Callvirt, writeItemFunc));
@@ -214,28 +216,28 @@ namespace Unity.UNetWeaver
 
             worker.Append(worker.Create(OpCodes.Ret));
 
-            Weaver.RegisterWriteFunc(m_TypeDef.FullName, writerFunc);
+            m_Weaver.RegisterWriteFunc(m_TypeDef.FullName, writerFunc);
         }
 
         // serialization of individual element
         MethodReference GenerateSerialization()
         {
-            Weaver.DLog(m_TypeDef, "  GenerateSerialization");
+            m_Weaver.DLog(m_TypeDef, "  GenerateSerialization");
             foreach (var m in m_TypeDef.Methods)
             {
                 if (m.Name == "SerializeItem")
                     return m;
             }
 
-            MethodDefinition serializeFunc = new MethodDefinition("SerializeItem", kPublicVirtualHide, Weaver.voidType);
+            MethodDefinition serializeFunc = new MethodDefinition("SerializeItem", kPublicVirtualHide, m_Weaver.voidType);
 
-            serializeFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkWriterType)));
+            serializeFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkWriterType)));
             serializeFunc.Parameters.Add(new ParameterDefinition("item", ParameterAttributes.None, m_ItemType));
             ILProcessor serWorker = serializeFunc.Body.GetILProcessor();
 
             if (m_ItemType.IsGenericInstance)
             {
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 Log.Error("GenerateSerialization for " + Helpers.PrettyPrintType(m_ItemType) + " failed. Struct passed into SyncListStruct<T> can't have generic parameters");
                 return null;
             }
@@ -245,24 +247,24 @@ namespace Unity.UNetWeaver
                 if (field.IsStatic || field.IsPrivate || field.IsSpecialName)
                     continue;
 
-                var importedField = Weaver.scriptDef.MainModule.ImportReference(field);
+                var importedField = m_Weaver.m_ScriptDef.MainModule.ImportReference(field);
                 var ft = importedField.FieldType.Resolve();
 
                 if (ft.HasGenericParameters)
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_TypeDef.Name + " [" + ft + "/" + ft.FullName + "]. UNet [MessageBase] member cannot have generic parameters.");
                     return null;
                 }
 
                 if (ft.IsInterface)
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_TypeDef.Name + " [" + ft + "/" + ft.FullName + "]. UNet [MessageBase] member cannot be an interface.");
                     return null;
                 }
 
-                MethodReference writeFunc = Weaver.GetWriteFunc(field.FieldType);
+                MethodReference writeFunc = m_Weaver.GetWriteFunc(field.FieldType);
                 if (writeFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
@@ -272,7 +274,7 @@ namespace Unity.UNetWeaver
                 }
                 else
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_TypeDef.Name + " unknown type [" + ft + "/" + ft.FullName + "]. UNet [MessageBase] member variables must be basic types.");
                     return null;
                 }
@@ -285,7 +287,7 @@ namespace Unity.UNetWeaver
 
         MethodReference GenerateDeserialization()
         {
-            Weaver.DLog(m_TypeDef, "  GenerateDeserialization");
+            m_Weaver.DLog(m_TypeDef, "  GenerateDeserialization");
             foreach (var m in m_TypeDef.Methods)
             {
                 if (m.Name == "DeserializeItem")
@@ -294,7 +296,7 @@ namespace Unity.UNetWeaver
 
             MethodDefinition serializeFunc = new MethodDefinition("DeserializeItem", kPublicVirtualHide, m_ItemType);
 
-            serializeFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkReaderType)));
+            serializeFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkReaderType)));
 
             ILProcessor serWorker = serializeFunc.Body.GetILProcessor();
 
@@ -311,10 +313,10 @@ namespace Unity.UNetWeaver
                 if (field.IsStatic || field.IsPrivate || field.IsSpecialName)
                     continue;
 
-                var importedField = Weaver.scriptDef.MainModule.ImportReference(field);
+                var importedField = m_Weaver.m_ScriptDef.MainModule.ImportReference(field);
                 var ft = importedField.FieldType.Resolve();
 
-                MethodReference readerFunc = Weaver.GetReadFunc(field.FieldType);
+                MethodReference readerFunc = m_Weaver.GetReadFunc(field.FieldType);
                 if (readerFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Ldloca, 0));
@@ -324,7 +326,7 @@ namespace Unity.UNetWeaver
                 }
                 else
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateDeserialization for " + m_TypeDef.Name + " unknown type [" + ft + "]. UNet [SyncVar] member variables must be basic types.");
                     return null;
                 }

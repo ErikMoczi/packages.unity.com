@@ -29,6 +29,7 @@ namespace Unity.UNetWeaver
         const int k_SyncVarLimit = 32;
         int m_QosChannel;
 
+        Weaver m_Weaver;
         TypeDefinition m_td;
         int m_NetIdFieldCounter;
 
@@ -36,102 +37,103 @@ namespace Unity.UNetWeaver
         const string k_RpcPrefix = "InvokeRpc";
         const string k_TargetRpcPrefix = "InvokeTargetRpc";
 
-        public NetworkBehaviourProcessor(TypeDefinition td)
+        public NetworkBehaviourProcessor(TypeDefinition td, Weaver weaver)
         {
-            Weaver.DLog(td, "NetworkBehaviourProcessor");
             m_td = td;
+            m_Weaver = weaver;
+            m_Weaver.DLog(td, "NetworkBehaviourProcessor");
         }
 
         public void Process()
         {
             if (m_td.HasGenericParameters)
             {
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 Log.Error("NetworkBehaviour " + m_td.Name + " cannot have generic parameters");
                 return;
             }
-            Weaver.DLog(m_td, "Process Start");
+            m_Weaver.DLog(m_td, "Process Start");
             ProcessVersion();
             ProcessSyncVars();
-            Weaver.ResetRecursionCount();
+            m_Weaver.ResetRecursionCount();
 
             ProcessMethods();
 
             ProcessEvents();
-            if (Weaver.fail)
+            if (m_Weaver.fail)
             {
                 return;
             }
             GenerateNetworkSettings();
             GenerateConstants();
 
-            Weaver.ResetRecursionCount();
+            m_Weaver.ResetRecursionCount();
             GenerateSerialization();
-            if (Weaver.fail)
+            if (m_Weaver.fail)
             {
                 return;
             }
 
             GenerateDeSerialization();
             GeneratePreStartClient();
-            Weaver.DLog(m_td, "Process Done");
+            m_Weaver.DLog(m_td, "Process Done");
         }
 
-        static void WriteClientActiveCheck(ILProcessor worker, string mdName, Instruction label, string errString)
+        void WriteClientActiveCheck(ILProcessor worker, string mdName, Instruction label, string errString)
         {
             // client active check
-            worker.Append(worker.Create(OpCodes.Call, Weaver.NetworkClientGetActive));
+            worker.Append(worker.Create(OpCodes.Call, m_Weaver.NetworkClientGetActive));
             worker.Append(worker.Create(OpCodes.Brtrue, label));
 
             worker.Append(worker.Create(OpCodes.Ldstr, errString + " " + mdName + " called on server."));
-            worker.Append(worker.Create(OpCodes.Call, Weaver.logErrorReference));
+            worker.Append(worker.Create(OpCodes.Call, m_Weaver.logErrorReference));
             worker.Append(worker.Create(OpCodes.Ret));
             worker.Append(label);
         }
 
-        static void WriteServerActiveCheck(ILProcessor worker, string mdName, Instruction label, string errString)
+        void WriteServerActiveCheck(ILProcessor worker, string mdName, Instruction label, string errString)
         {
             // server active check
-            worker.Append(worker.Create(OpCodes.Call, Weaver.NetworkServerGetActive));
+            worker.Append(worker.Create(OpCodes.Call, m_Weaver.NetworkServerGetActive));
             worker.Append(worker.Create(OpCodes.Brtrue, label));
 
             worker.Append(worker.Create(OpCodes.Ldstr, errString + " " + mdName + " called on client."));
-            worker.Append(worker.Create(OpCodes.Call, Weaver.logErrorReference));
+            worker.Append(worker.Create(OpCodes.Call, m_Weaver.logErrorReference));
             worker.Append(worker.Create(OpCodes.Ret));
             worker.Append(label);
         }
 
-        static void WriteSetupLocals(ILProcessor worker)
+        void WriteSetupLocals(ILProcessor worker)
         {
             worker.Body.InitLocals = true;
-            worker.Body.Variables.Add(new VariableDefinition(Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkWriterType)));
+            worker.Body.Variables.Add(new VariableDefinition(m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkWriterType)));
         }
 
-        static void WriteCreateWriter(ILProcessor worker)
+        void WriteCreateWriter(ILProcessor worker)
         {
             // create writer
-            worker.Append(worker.Create(OpCodes.Newobj, Weaver.NetworkWriterCtor));
+            worker.Append(worker.Create(OpCodes.Newobj, m_Weaver.NetworkWriterCtor));
             worker.Append(worker.Create(OpCodes.Stloc_0));
             worker.Append(worker.Create(OpCodes.Ldloc_0));
         }
 
-        static void WriteMessageSize(ILProcessor worker)
+        void WriteMessageSize(ILProcessor worker)
         {
             //write size
             worker.Append(worker.Create(OpCodes.Ldc_I4_0));
-            worker.Append(worker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWriteInt16));
+            worker.Append(worker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWriteInt16));
         }
 
-        static void WriteMessageId(ILProcessor worker, int msgId)
+        void WriteMessageId(ILProcessor worker, int msgId)
         {
             // write msg id
             worker.Append(worker.Create(OpCodes.Ldloc_0));
             worker.Append(worker.Create(OpCodes.Ldc_I4, msgId));
             worker.Append(worker.Create(OpCodes.Conv_U2));
-            worker.Append(worker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWriteInt16));
+            worker.Append(worker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWriteInt16));
         }
 
-        static bool WriteArguments(ILProcessor worker, MethodDefinition md, string errString, bool skipFirst)
+        bool WriteArguments(ILProcessor worker, MethodDefinition md, string errString, bool skipFirst)
         {
             // write each argument
             short argNum = 1;
@@ -143,11 +145,11 @@ namespace Unity.UNetWeaver
                     continue;
                 }
 
-                MethodReference writeFunc = Weaver.GetWriteFunc(pd.ParameterType);
+                MethodReference writeFunc = m_Weaver.GetWriteFunc(pd.ParameterType);
                 if (writeFunc == null)
                 {
                     Log.Error("WriteArguments for " + md.Name + " type " + pd.ParameterType + " not supported");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return false;
                 }
                 // use built-in writer func on writer object
@@ -169,7 +171,7 @@ namespace Unity.UNetWeaver
                 }
             }
 
-            MethodDefinition versionMethod = new MethodDefinition("UNetVersion", MethodAttributes.Private, Weaver.voidType);
+            MethodDefinition versionMethod = new MethodDefinition("UNetVersion", MethodAttributes.Private, m_Weaver.voidType);
             ILProcessor worker = versionMethod.Body.GetILProcessor();
             worker.Append(worker.Create(OpCodes.Ret));
             m_td.Methods.Add(versionMethod);
@@ -180,7 +182,7 @@ namespace Unity.UNetWeaver
             if (m_Cmds.Count == 0 && m_Rpcs.Count == 0 && m_TargetRpcs.Count == 0 && m_Events.Count == 0 && m_SyncLists.Count == 0)
                 return;
 
-            Weaver.DLog(m_td, "  GenerateConstants ");
+            m_Weaver.DLog(m_td, "  GenerateConstants ");
 
             // find static constructor
             MethodDefinition cctor = null;
@@ -206,7 +208,7 @@ namespace Unity.UNetWeaver
                     else
                     {
                         Log.Error("No cctor for " + m_td.Name);
-                        Weaver.fail = true;
+                        m_Weaver.fail = true;
                         return;
                     }
                 }
@@ -219,7 +221,7 @@ namespace Unity.UNetWeaver
                     MethodAttributes.SpecialName |
                     MethodAttributes.RTSpecialName |
                     MethodAttributes.Static,
-                    Weaver.voidType);
+                    m_Weaver.voidType);
             }
 
             // find instance constructor
@@ -238,7 +240,7 @@ namespace Unity.UNetWeaver
                     }
                     else
                     {
-                        Weaver.fail = true;
+                        m_Weaver.fail = true;
                         Log.Error("No ctor for " + m_td.Name);
                         return;
                     }
@@ -249,7 +251,7 @@ namespace Unity.UNetWeaver
 
             if (ctor == null)
             {
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 Log.Error("No ctor for " + m_td.Name);
                 return;
             }
@@ -260,73 +262,73 @@ namespace Unity.UNetWeaver
             int cmdIndex = 0;
             foreach (MethodDefinition md in m_Cmds)
             {
-                FieldReference cmdConstant = Weaver.ResolveField(m_td, "kCmd" + md.Name);
+                FieldReference cmdConstant = m_Weaver.ResolveField(m_td, "kCmd" + md.Name);
 
                 int cmdHash = GetHashCode(m_td.Name + ":Cmd:" + md.Name);
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Ldc_I4, cmdHash));
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Stsfld, cmdConstant));
-                //Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Cmd:" + md.Name);
+                //m_Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Cmd:" + md.Name);
 
-                GenerateCommandDelegate(cctorWorker, Weaver.registerCommandDelegateReference, m_CmdInvocationFuncs[cmdIndex], cmdConstant);
+                GenerateCommandDelegate(cctorWorker, m_Weaver.registerCommandDelegateReference, m_CmdInvocationFuncs[cmdIndex], cmdConstant);
                 cmdIndex += 1;
             }
 
             int rpcIndex = 0;
             foreach (MethodDefinition md in m_Rpcs)
             {
-                FieldReference rpcConstant = Weaver.ResolveField(m_td, "kRpc" + md.Name);
+                FieldReference rpcConstant = m_Weaver.ResolveField(m_td, "kRpc" + md.Name);
 
                 int rpcHash = GetHashCode(m_td.Name + ":Rpc:" + md.Name);
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Ldc_I4, rpcHash));
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Stsfld, rpcConstant));
-                //Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Rpc:" + md.Name);
+                //m_Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Rpc:" + md.Name);
 
-                GenerateCommandDelegate(cctorWorker, Weaver.registerRpcDelegateReference, m_RpcInvocationFuncs[rpcIndex], rpcConstant);
+                GenerateCommandDelegate(cctorWorker, m_Weaver.registerRpcDelegateReference, m_RpcInvocationFuncs[rpcIndex], rpcConstant);
                 rpcIndex += 1;
             }
 
             int targetRpcIndex = 0;
             foreach (MethodDefinition md in m_TargetRpcs)
             {
-                FieldReference targetRpcConstant = Weaver.ResolveField(m_td, "kTargetRpc" + md.Name);
+                FieldReference targetRpcConstant = m_Weaver.ResolveField(m_td, "kTargetRpc" + md.Name);
 
                 int targetRpcHash = GetHashCode(m_td.Name + ":TargetRpc:" + md.Name);
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Ldc_I4, targetRpcHash));
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Stsfld, targetRpcConstant));
-                //Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Rpc:" + md.Name);
+                //m_Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Rpc:" + md.Name);
 
-                GenerateCommandDelegate(cctorWorker, Weaver.registerRpcDelegateReference, m_TargetRpcInvocationFuncs[targetRpcIndex], targetRpcConstant);
+                GenerateCommandDelegate(cctorWorker, m_Weaver.registerRpcDelegateReference, m_TargetRpcInvocationFuncs[targetRpcIndex], targetRpcConstant);
                 targetRpcIndex += 1;
             }
 
             int eventIndex = 0;
             foreach (EventDefinition ed in m_Events)
             {
-                FieldReference eventConstant = Weaver.ResolveField(m_td, "kEvent" + ed.Name);
+                FieldReference eventConstant = m_Weaver.ResolveField(m_td, "kEvent" + ed.Name);
 
                 int eventHash = GetHashCode(m_td.Name + ":Event:" + ed.Name);
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Ldc_I4, eventHash));
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Stsfld, eventConstant));
-                //Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Event:" + ed.Name);
+                //m_Weaver.DLog(m_td, "    Constant " + m_td.Name + ":Event:" + ed.Name);
 
-                GenerateCommandDelegate(cctorWorker, Weaver.registerEventDelegateReference, m_EventInvocationFuncs[eventIndex], eventConstant);
+                GenerateCommandDelegate(cctorWorker, m_Weaver.registerEventDelegateReference, m_EventInvocationFuncs[eventIndex], eventConstant);
                 eventIndex += 1;
             }
 
             int syncListIndex = 0;
             foreach (FieldDefinition fd in m_SyncLists)
             {
-                FieldReference listConstant = Weaver.ResolveField(m_td, "kList" + fd.Name);
+                FieldReference listConstant = m_Weaver.ResolveField(m_td, "kList" + fd.Name);
 
                 int listHash = GetHashCode(m_td.Name + ":List:" + fd.Name);
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Ldc_I4, listHash));
                 cctorWorker.Append(cctorWorker.Create(OpCodes.Stsfld, listConstant));
-                //Weaver.DLog(m_td, "    Constant " + m_td.Name + ":List:" + fd.Name);
+                //m_Weaver.DLog(m_td, "    Constant " + m_td.Name + ":List:" + fd.Name);
 
 
                 GenerateSyncListInstanceInitializer(ctorWorker, fd);
 
-                GenerateCommandDelegate(cctorWorker, Weaver.registerSyncListDelegateReference, m_SyncListInvocationFuncs[syncListIndex], listConstant);
+                GenerateCommandDelegate(cctorWorker, m_Weaver.registerSyncListDelegateReference, m_SyncListInvocationFuncs[syncListIndex], listConstant);
                 syncListIndex += 1;
             }
 
@@ -334,7 +336,7 @@ namespace Unity.UNetWeaver
             // "NetworkCRC.RegisterBehaviour('MyScript', 2);"
             cctorWorker.Append(cctorWorker.Create(OpCodes.Ldstr, m_td.Name));
             cctorWorker.Append(cctorWorker.Create(OpCodes.Ldc_I4, m_QosChannel));
-            cctorWorker.Append(cctorWorker.Create(OpCodes.Call, Weaver.RegisterBehaviourReference));
+            cctorWorker.Append(cctorWorker.Create(OpCodes.Call, m_Weaver.RegisterBehaviourReference));
 
             cctorWorker.Append(cctorWorker.Create(OpCodes.Ret));
             if (!cctorFound)
@@ -375,14 +377,14 @@ namespace Unity.UNetWeaver
                     else
                     {
                         Log.Error("No awake for " + m_td.Name);
-                        Weaver.fail = true;
+                        m_Weaver.fail = true;
                         return;
                     }
                 }
             }
             else
             {
-                awake = new MethodDefinition("Awake", MethodAttributes.Private, Weaver.voidType);
+                awake = new MethodDefinition("Awake", MethodAttributes.Private, m_Weaver.voidType);
             }
 
             ILProcessor awakeWorker = awake.Body.GetILProcessor();
@@ -413,7 +415,7 @@ namespace Unity.UNetWeaver
             var t = m_td.BaseType;
 
             // as long as basetype is not NetworkBehaviour
-            while (t.FullName != Weaver.NetworkBehaviourType.FullName)
+            while (t.FullName != m_Weaver.NetworkBehaviourType.FullName)
             {
                 // check for the first Awake() method in the hierarchy
                 var awake = t.Resolve().Methods.FirstOrDefault<MethodDefinition>(x => x.Name == "Awake" && !x.HasParameters);
@@ -447,7 +449,7 @@ namespace Unity.UNetWeaver
 
             // Not initialized by the user in the field definition, e.g:
             // public SyncListInt Foo;
-            var listCtor = Weaver.scriptDef.MainModule.ImportReference(fd.FieldType.Resolve().Methods.First<MethodDefinition>(x => x.Name == ".ctor" && !x.HasParameters));
+            var listCtor = m_Weaver.m_ScriptDef.MainModule.ImportReference(fd.FieldType.Resolve().Methods.First<MethodDefinition>(x => x.Name == ".ctor" && !x.HasParameters));
 
             ctorWorker.Append(ctorWorker.Create(OpCodes.Ldarg_0));
             ctorWorker.Append(ctorWorker.Create(OpCodes.Newobj, listCtor));
@@ -461,12 +463,12 @@ namespace Unity.UNetWeaver
         void GenerateCommandDelegate(ILProcessor awakeWorker, MethodReference registerMethod, MethodDefinition func, FieldReference field)
         {
             awakeWorker.Append(awakeWorker.Create(OpCodes.Ldtoken, m_td));
-            awakeWorker.Append(awakeWorker.Create(OpCodes.Call, Weaver.getTypeFromHandleReference));
+            awakeWorker.Append(awakeWorker.Create(OpCodes.Call, m_Weaver.getTypeFromHandleReference));
             awakeWorker.Append(awakeWorker.Create(OpCodes.Ldsfld, field));
             awakeWorker.Append(awakeWorker.Create(OpCodes.Ldnull));
             awakeWorker.Append(awakeWorker.Create(OpCodes.Ldftn, func));
 
-            awakeWorker.Append(awakeWorker.Create(OpCodes.Newobj, Weaver.CmdDelegateConstructor));
+            awakeWorker.Append(awakeWorker.Create(OpCodes.Newobj, m_Weaver.CmdDelegateConstructor));
             awakeWorker.Append(awakeWorker.Create(OpCodes.Call, registerMethod));
         }
 
@@ -482,18 +484,18 @@ namespace Unity.UNetWeaver
             awakeWorker.Append(awakeWorker.Create(OpCodes.Ldsfld, m_SyncListStaticFields[index]));
 
             GenericInstanceType syncListGeneric = (GenericInstanceType)fd.FieldType.Resolve().BaseType;
-            syncListGeneric = (GenericInstanceType)Weaver.scriptDef.MainModule.ImportReference(syncListGeneric);
+            syncListGeneric = (GenericInstanceType)m_Weaver.m_ScriptDef.MainModule.ImportReference(syncListGeneric);
 
             TypeReference listValueType = syncListGeneric.GenericArguments[0];
-            MethodReference genericInitBehaviourMethod = Helpers.MakeHostInstanceGeneric(Weaver.SyncListInitBehaviourReference, listValueType);
+            MethodReference genericInitBehaviourMethod = Helpers.MakeHostInstanceGeneric(m_Weaver.SyncListInitBehaviourReference, listValueType);
             awakeWorker.Append(awakeWorker.Create(OpCodes.Callvirt, genericInitBehaviourMethod));
 
-            Weaver.scriptDef.MainModule.ImportReference(genericInitBehaviourMethod);
+            m_Weaver.m_ScriptDef.MainModule.ImportReference(genericInitBehaviourMethod);
         }
 
         void GenerateSerialization()
         {
-            Weaver.DLog(m_td, "  GenerateSerialization");
+            m_Weaver.DLog(m_td, "  GenerateSerialization");
 
             foreach (var m in m_td.Methods)
             {
@@ -504,26 +506,26 @@ namespace Unity.UNetWeaver
             MethodDefinition serialize = new MethodDefinition("OnSerialize", MethodAttributes.Public |
                 MethodAttributes.Virtual |
                 MethodAttributes.HideBySig,
-                Weaver.boolType);
+                m_Weaver.boolType);
 
-            serialize.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkWriterType)));
-            serialize.Parameters.Add(new ParameterDefinition("forceAll", ParameterAttributes.None, Weaver.boolType));
+            serialize.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkWriterType)));
+            serialize.Parameters.Add(new ParameterDefinition("forceAll", ParameterAttributes.None, m_Weaver.boolType));
             ILProcessor serWorker = serialize.Body.GetILProcessor();
 
 
             serialize.Body.InitLocals = true;
-            VariableDefinition dirtyLocal = new VariableDefinition(Weaver.boolType);
+            VariableDefinition dirtyLocal = new VariableDefinition(m_Weaver.boolType);
 
             serialize.Body.Variables.Add(dirtyLocal);
 
             // call base class
             bool baseClassSerialize = false;
-            if (m_td.BaseType.FullName != Weaver.NetworkBehaviourType.FullName)
+            if (m_td.BaseType.FullName != m_Weaver.NetworkBehaviourType.FullName)
             {
-                MethodReference baseSerialize = Weaver.ResolveMethod(m_td.BaseType, "OnSerialize");
+                MethodReference baseSerialize = m_Weaver.ResolveMethod(m_td.BaseType, "OnSerialize");
                 if (baseSerialize != null)
                 {
-                    VariableDefinition baseResult = new VariableDefinition(Weaver.boolType);
+                    VariableDefinition baseResult = new VariableDefinition(m_Weaver.boolType);
                     serialize.Body.Variables.Add(baseResult);
 
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_0)); // base
@@ -562,14 +564,14 @@ namespace Unity.UNetWeaver
                 serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
                 serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
                 serWorker.Append(serWorker.Create(OpCodes.Ldfld, syncVar));
-                MethodReference writeFunc = Weaver.GetWriteFunc(syncVar.FieldType);
+                MethodReference writeFunc = m_Weaver.GetWriteFunc(syncVar.FieldType);
                 if (writeFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Call, writeFunc));
                 }
                 else
                 {
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     Log.Error("GenerateSerialization for " + m_td.Name + " unknown type [" + syncVar.FieldType + "]. UNet [SyncVar] member variables must be basic types.");
                     return;
                 }
@@ -586,13 +588,13 @@ namespace Unity.UNetWeaver
             serWorker.Append(serWorker.Create(OpCodes.Stloc_0));
 
             // write syncvars
-            int dirtyBit = Weaver.GetSyncVarStart(m_td.BaseType.FullName); // start at number of syncvars in parent
+            int dirtyBit = m_Weaver.GetSyncVarStart(m_td.BaseType.FullName); // start at number of syncvars in parent
             foreach (FieldDefinition syncVar in m_SyncVars)
             {
                 Instruction varLabel = serWorker.Create(OpCodes.Nop);
 
                 serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
-                serWorker.Append(serWorker.Create(OpCodes.Call, Weaver.NetworkBehaviourDirtyBitsReference));
+                serWorker.Append(serWorker.Create(OpCodes.Call, m_Weaver.NetworkBehaviourDirtyBitsReference));
                 serWorker.Append(serWorker.Create(OpCodes.Ldc_I4, 1 << dirtyBit));
                 serWorker.Append(serWorker.Create(OpCodes.And));
                 serWorker.Append(serWorker.Create(OpCodes.Brfalse, varLabel));
@@ -603,7 +605,7 @@ namespace Unity.UNetWeaver
                 serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
                 serWorker.Append(serWorker.Create(OpCodes.Ldfld, syncVar));
 
-                MethodReference writeFunc = Weaver.GetWriteFunc(syncVar.FieldType);
+                MethodReference writeFunc = m_Weaver.GetWriteFunc(syncVar.FieldType);
                 if (writeFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Call, writeFunc));
@@ -611,7 +613,7 @@ namespace Unity.UNetWeaver
                 else
                 {
                     Log.Error("GenerateSerialization for " + m_td.Name + " unknown type [" + syncVar.FieldType + "]. UNet [SyncVar] member variables must be basic types.");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return;
                 }
                 serWorker.Append(varLabel);
@@ -620,10 +622,10 @@ namespace Unity.UNetWeaver
 
             WriteDirtyCheck(serWorker, false);
 
-            if (Weaver.generateLogErrors)
+            if (m_Weaver.generateLogErrors)
             {
                 serWorker.Append(serWorker.Create(OpCodes.Ldstr, "Injected Serialize " + m_td.Name));
-                serWorker.Append(serWorker.Create(OpCodes.Call, Weaver.logErrorReference));
+                serWorker.Append(serWorker.Create(OpCodes.Call, m_Weaver.logErrorReference));
             }
 
             if (baseClassSerialize)
@@ -640,9 +642,9 @@ namespace Unity.UNetWeaver
             m_td.Methods.Add(serialize);
         }
 
-        static void WriteDirtyCheck(ILProcessor serWorker, bool reset)
+        void WriteDirtyCheck(ILProcessor serWorker, bool reset)
         {
-            //Weaver.DLog(m_td, "    GenerateSerialization dirtyCheck");
+            //m_Weaver.DLog(m_td, "    GenerateSerialization dirtyCheck");
 
             // Generates: if (!dirty) { write dirty bits, set dirty bool }
             Instruction dirtyLabel = serWorker.Create(OpCodes.Nop);
@@ -653,8 +655,8 @@ namespace Unity.UNetWeaver
             // write dirty bits
             serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
             serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
-            serWorker.Append(serWorker.Create(OpCodes.Call, Weaver.NetworkBehaviourDirtyBitsReference));
-            serWorker.Append(serWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWritePacked32));
+            serWorker.Append(serWorker.Create(OpCodes.Call, m_Weaver.NetworkBehaviourDirtyBitsReference));
+            serWorker.Append(serWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWritePacked32));
             if (reset)
             {
                 serWorker.Append(serWorker.Create(OpCodes.Ldc_I4_1));
@@ -665,12 +667,12 @@ namespace Unity.UNetWeaver
             serWorker.Append(dirtyLabel);
         }
 
-        static int GetChannelId(FieldDefinition field)
+        int GetChannelId(FieldDefinition field)
         {
             int channel = 0;
             foreach (var ca in field.CustomAttributes)
             {
-                if (ca.AttributeType.FullName == Weaver.SyncVarType.FullName)
+                if (ca.AttributeType.FullName == m_Weaver.SyncVarType.FullName)
                 {
                     foreach (CustomAttributeNamedArgument customField in ca.Fields)
                     {
@@ -691,7 +693,7 @@ namespace Unity.UNetWeaver
             foundMethod = null;
             foreach (var ca in syncVar.CustomAttributes)
             {
-                if (ca.AttributeType.FullName == Weaver.SyncVarType.FullName)
+                if (ca.AttributeType.FullName == m_Weaver.SyncVarType.FullName)
                 {
                     foreach (CustomAttributeNamedArgument customField in ca.Fields)
                     {
@@ -708,19 +710,19 @@ namespace Unity.UNetWeaver
                                         if (m.Parameters[0].ParameterType != syncVar.FieldType)
                                         {
                                             Log.Error("SyncVar Hook function " + hookFunctionName + " has wrong type signature for " + m_td.Name);
-                                            Weaver.fail = true;
+                                            m_Weaver.fail = true;
                                             return false;
                                         }
                                         foundMethod = m;
                                         return true;
                                     }
                                     Log.Error("SyncVar Hook function " + hookFunctionName + " must have one argument " + m_td.Name);
-                                    Weaver.fail = true;
+                                    m_Weaver.fail = true;
                                     return false;
                                 }
                             }
                             Log.Error("SyncVar Hook function " + hookFunctionName + " not found for " + m_td.Name);
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return false;
                         }
                     }
@@ -734,7 +736,7 @@ namespace Unity.UNetWeaver
             MethodDefinition meth = new MethodDefinition("GetNetworkChannel", MethodAttributes.Public |
                 MethodAttributes.Virtual |
                 MethodAttributes.HideBySig,
-                Weaver.int32Type);
+                m_Weaver.int32Type);
 
             ILProcessor worker = meth.Body.GetILProcessor();
 
@@ -748,7 +750,7 @@ namespace Unity.UNetWeaver
             MethodDefinition meth = new MethodDefinition("GetNetworkSendInterval", MethodAttributes.Public |
                 MethodAttributes.Virtual |
                 MethodAttributes.HideBySig,
-                Weaver.singleType);
+                m_Weaver.singleType);
 
             ILProcessor worker = meth.Body.GetILProcessor();
 
@@ -762,7 +764,7 @@ namespace Unity.UNetWeaver
             // look for custom attribute
             foreach (var ca in m_td.CustomAttributes)
             {
-                if (ca.AttributeType.FullName == Weaver.NetworkSettingsType.FullName)
+                if (ca.AttributeType.FullName == m_Weaver.NetworkSettingsType.FullName)
                 {
                     // generate virtual functions
                     foreach (var field in ca.Fields)
@@ -777,7 +779,7 @@ namespace Unity.UNetWeaver
                             {
                                 Log.Error(
                                     "GetNetworkChannel, is already implemented, please make sure you either use NetworkSettings or GetNetworkChannel");
-                                Weaver.fail = true;
+                                m_Weaver.fail = true;
                                 return;
                             }
                             m_QosChannel = (int)field.Argument.Value;
@@ -795,7 +797,7 @@ namespace Unity.UNetWeaver
                             {
                                 Log.Error(
                                     "GetNetworkSendInterval, is already implemented, please make sure you either use NetworkSettings or GetNetworkSendInterval");
-                                Weaver.fail = true;
+                                m_Weaver.fail = true;
                                 return;
                             }
                             GenerateNetworkIntervalSetting((float)field.Argument.Value);
@@ -817,20 +819,33 @@ namespace Unity.UNetWeaver
                     return;
             }
 
+            preStartMethod = new MethodDefinition("PreStartClient", MethodAttributes.Public |
+                MethodAttributes.Virtual |
+                MethodAttributes.HideBySig,
+                m_Weaver.voidType);
+            serWorker = preStartMethod.Body.GetILProcessor();
+            //Add base class
+            if (m_td.BaseType.FullName != m_Weaver.NetworkBehaviourType.FullName)
+            {
+                MethodReference basePreStartMethod = m_Weaver.ResolveMethod(m_td.BaseType, "PreStartClient");
+                if (basePreStartMethod != null)
+                {
+                    serWorker.Append(serWorker.Create(OpCodes.Ldarg_0)); // base
+
+                    serWorker.Append(serWorker.Create(OpCodes.Call, basePreStartMethod));
+                }
+            }
+            if (m_SyncVars.Count == 0)
+            {
+                serWorker.Append(serWorker.Create(OpCodes.Ret));
+                m_td.Methods.Add(preStartMethod);
+                return;
+            }
+
             foreach (FieldDefinition syncVar in m_SyncVars)
             {
-                if (syncVar.FieldType.FullName == Weaver.gameObjectType.FullName)
+                if (syncVar.FieldType.FullName == m_Weaver.gameObjectType.FullName)
                 {
-                    if (preStartMethod == null)
-                    {
-                        preStartMethod = new MethodDefinition("PreStartClient", MethodAttributes.Public |
-                            MethodAttributes.Virtual |
-                            MethodAttributes.HideBySig,
-                            Weaver.voidType);
-
-                        serWorker = preStartMethod.Body.GetILProcessor();
-                    }
-
                     FieldDefinition netIdField = m_SyncVarNetIds[m_NetIdFieldCounter];
                     m_NetIdFieldCounter += 1;
 
@@ -838,13 +853,13 @@ namespace Unity.UNetWeaver
                     Instruction nullLabel = serWorker.Create(OpCodes.Nop);
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
                     serWorker.Append(serWorker.Create(OpCodes.Ldflda, netIdField));
-                    serWorker.Append(serWorker.Create(OpCodes.Call, Weaver.NetworkInstanceIsEmpty));
+                    serWorker.Append(serWorker.Create(OpCodes.Call, m_Weaver.NetworkInstanceIsEmpty));
                     serWorker.Append(serWorker.Create(OpCodes.Brtrue, nullLabel));
 
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
                     serWorker.Append(serWorker.Create(OpCodes.Ldfld, netIdField));
-                    serWorker.Append(serWorker.Create(OpCodes.Call, Weaver.FindLocalObjectReference));
+                    serWorker.Append(serWorker.Create(OpCodes.Call, m_Weaver.FindLocalObjectReference));
 
                     // return value of FindLocalObjectReference is on stack, assign it to the syncvar
                     serWorker.Append(serWorker.Create(OpCodes.Stfld, syncVar));
@@ -862,7 +877,7 @@ namespace Unity.UNetWeaver
 
         void GenerateDeSerialization()
         {
-            Weaver.DLog(m_td, "  GenerateDeSerialization");
+            m_Weaver.DLog(m_td, "  GenerateDeSerialization");
             m_NetIdFieldCounter  = 0;
 
             foreach (var m in m_td.Methods)
@@ -874,16 +889,16 @@ namespace Unity.UNetWeaver
             MethodDefinition serialize = new MethodDefinition("OnDeserialize", MethodAttributes.Public |
                 MethodAttributes.Virtual |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
-            serialize.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkReaderType)));
-            serialize.Parameters.Add(new ParameterDefinition("initialState", ParameterAttributes.None, Weaver.boolType));
+            serialize.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkReaderType)));
+            serialize.Parameters.Add(new ParameterDefinition("initialState", ParameterAttributes.None, m_Weaver.boolType));
             ILProcessor serWorker = serialize.Body.GetILProcessor();
 
             // call base class
-            if (m_td.BaseType.FullName != Weaver.NetworkBehaviourType.FullName)
+            if (m_td.BaseType.FullName != m_Weaver.NetworkBehaviourType.FullName)
             {
-                MethodReference baseDeserialize = Weaver.ResolveMethod(m_td.BaseType, "OnDeserialize");
+                MethodReference baseDeserialize = m_Weaver.ResolveMethod(m_td.BaseType, "OnDeserialize");
                 if (baseDeserialize != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_0)); // base
@@ -908,7 +923,7 @@ namespace Unity.UNetWeaver
 
             foreach (var syncVar in m_SyncVars)
             {
-                MethodReference readByReferenceFunc = Weaver.GetReadByReferenceFunc(syncVar.FieldType);
+                MethodReference readByReferenceFunc = m_Weaver.GetReadByReferenceFunc(syncVar.FieldType);
                 if (readByReferenceFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
@@ -922,18 +937,18 @@ namespace Unity.UNetWeaver
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_0));
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
 
-                    if (syncVar.FieldType.FullName == Weaver.gameObjectType.FullName)
+                    if (syncVar.FieldType.FullName == m_Weaver.gameObjectType.FullName)
                     {
                         // GameObject SyncVar - assign to generated netId var
                         FieldDefinition netIdField = m_SyncVarNetIds[m_NetIdFieldCounter];
                         m_NetIdFieldCounter += 1;
 
-                        serWorker.Append(serWorker.Create(OpCodes.Callvirt, Weaver.NetworkReaderReadNetworkInstanceId));
+                        serWorker.Append(serWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkReaderReadNetworkInstanceId));
                         serWorker.Append(serWorker.Create(OpCodes.Stfld, netIdField));
                     }
                     else
                     {
-                        MethodReference readFunc = Weaver.GetReadFunc(syncVar.FieldType);
+                        MethodReference readFunc = m_Weaver.GetReadFunc(syncVar.FieldType);
                         if (readFunc != null)
                         {
                             serWorker.Append(serWorker.Create(OpCodes.Call, readFunc));
@@ -941,7 +956,7 @@ namespace Unity.UNetWeaver
                         else
                         {
                             Log.Error("GenerateDeSerialization for " + m_td.Name + " unknown type [" + syncVar.FieldType + "]. UNet [SyncVar] member variables must be basic types.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
                         serWorker.Append(serWorker.Create(OpCodes.Stfld, syncVar));
@@ -957,16 +972,16 @@ namespace Unity.UNetWeaver
 
             // setup local for dirty bits
             serialize.Body.InitLocals = true;
-            VariableDefinition dirtyBitsLocal = new VariableDefinition(Weaver.int32Type);
+            VariableDefinition dirtyBitsLocal = new VariableDefinition(m_Weaver.int32Type);
             serialize.Body.Variables.Add(dirtyBitsLocal);
 
             // get dirty bits
             serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
-            serWorker.Append(serWorker.Create(OpCodes.Callvirt, Weaver.NetworkReaderReadPacked32));
+            serWorker.Append(serWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkReaderReadPacked32));
             serWorker.Append(serWorker.Create(OpCodes.Stloc_0));
 
             // conditionally read each syncvar
-            int dirtyBit = Weaver.GetSyncVarStart(m_td.BaseType.FullName); // start at number of syncvars in parent
+            int dirtyBit = m_Weaver.GetSyncVarStart(m_td.BaseType.FullName); // start at number of syncvars in parent
             foreach (FieldDefinition syncVar in m_SyncVars)
             {
                 Instruction varLabel = serWorker.Create(OpCodes.Nop);
@@ -977,7 +992,7 @@ namespace Unity.UNetWeaver
                 serWorker.Append(serWorker.Create(OpCodes.And));
                 serWorker.Append(serWorker.Create(OpCodes.Brfalse, varLabel));
 
-                MethodReference readByReferenceFunc = Weaver.GetReadByReferenceFunc(syncVar.FieldType);
+                MethodReference readByReferenceFunc = m_Weaver.GetReadByReferenceFunc(syncVar.FieldType);
                 if (readByReferenceFunc != null)
                 {
                     serWorker.Append(serWorker.Create(OpCodes.Ldarg_1));
@@ -987,11 +1002,11 @@ namespace Unity.UNetWeaver
                 }
                 else
                 {
-                    MethodReference readFunc = Weaver.GetReadFunc(syncVar.FieldType);
+                    MethodReference readFunc = m_Weaver.GetReadFunc(syncVar.FieldType);
                     if (readFunc == null)
                     {
                         Log.Error("GenerateDeSerialization for " + m_td.Name + " unknown type [" + syncVar.FieldType + "]. UNet [SyncVar] member variables must be basic types.");
-                        Weaver.fail = true;
+                        m_Weaver.fail = true;
                         return;
                     }
 
@@ -1023,10 +1038,10 @@ namespace Unity.UNetWeaver
                 dirtyBit += 1;
             }
 
-            if (Weaver.generateLogErrors)
+            if (m_Weaver.generateLogErrors)
             {
                 serWorker.Append(serWorker.Create(OpCodes.Ldstr, "Injected Deserialize " + m_td.Name));
-                serWorker.Append(serWorker.Create(OpCodes.Call, Weaver.logErrorReference));
+                serWorker.Append(serWorker.Create(OpCodes.Call, m_Weaver.logErrorReference));
             }
 
             serWorker.Append(serWorker.Create(OpCodes.Ret));
@@ -1044,7 +1059,7 @@ namespace Unity.UNetWeaver
                 {
                     continue;
                 }
-                MethodReference readFunc = Weaver.GetReadFunc(arg.ParameterType); //?
+                MethodReference readFunc = m_Weaver.GetReadFunc(arg.ParameterType); //?
 
                 if (readFunc != null)
                 {
@@ -1052,11 +1067,11 @@ namespace Unity.UNetWeaver
                     worker.Append(worker.Create(OpCodes.Call, readFunc));
 
                     // conversion.. is this needed?
-                    if (arg.ParameterType.FullName == Weaver.singleType.FullName)
+                    if (arg.ParameterType.FullName == m_Weaver.singleType.FullName)
                     {
                         worker.Append(worker.Create(OpCodes.Conv_R4));
                     }
-                    else if (arg.ParameterType.FullName == Weaver.doubleType.FullName)
+                    else if (arg.ParameterType.FullName == m_Weaver.doubleType.FullName)
                     {
                         worker.Append(worker.Create(OpCodes.Conv_R8));
                     }
@@ -1064,7 +1079,7 @@ namespace Unity.UNetWeaver
                 else
                 {
                     Log.Error("ProcessNetworkReaderParameters for " + m_td.Name + ":" + md.Name + " type " + arg.ParameterType + " not supported");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return false;
                 }
             }
@@ -1087,7 +1102,7 @@ namespace Unity.UNetWeaver
             MethodDefinition cmd = new MethodDefinition(k_CmdPrefix + md.Name, MethodAttributes.Family |
                 MethodAttributes.Static |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             ILProcessor cmdWorker = cmd.Body.GetILProcessor();
             Instruction label = cmdWorker.Create(OpCodes.Nop);
@@ -1110,10 +1125,10 @@ namespace Unity.UNetWeaver
             return cmd;
         }
 
-        static void AddInvokeParameters(ICollection<ParameterDefinition> collection)
+        void AddInvokeParameters(ICollection<ParameterDefinition> collection)
         {
-            collection.Add(new ParameterDefinition("obj", ParameterAttributes.None, Weaver.NetworkBehaviourType2));
-            collection.Add(new ParameterDefinition("reader", ParameterAttributes.None, Weaver.scriptDef.MainModule.ImportReference(Weaver.NetworkReaderType)));
+            collection.Add(new ParameterDefinition("obj", ParameterAttributes.None, m_Weaver.NetworkBehaviourType2));
+            collection.Add(new ParameterDefinition("reader", ParameterAttributes.None, m_Weaver.m_ScriptDef.MainModule.ImportReference(m_Weaver.NetworkReaderType)));
         }
 
         /*
@@ -1148,7 +1163,7 @@ namespace Unity.UNetWeaver
         {
             MethodDefinition cmd = new MethodDefinition("Call" +  md.Name, MethodAttributes.Public |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             // add paramters
             foreach (ParameterDefinition pd in md.Parameters)
@@ -1161,10 +1176,10 @@ namespace Unity.UNetWeaver
 
             WriteSetupLocals(cmdWorker);
 
-            if (Weaver.generateLogErrors)
+            if (m_Weaver.generateLogErrors)
             {
                 cmdWorker.Append(cmdWorker.Create(OpCodes.Ldstr, "Call Command function " + md.Name));
-                cmdWorker.Append(cmdWorker.Create(OpCodes.Call, Weaver.logErrorReference));
+                cmdWorker.Append(cmdWorker.Create(OpCodes.Call, m_Weaver.logErrorReference));
             }
 
             WriteClientActiveCheck(cmdWorker, md.Name, label, "Command function");
@@ -1173,7 +1188,7 @@ namespace Unity.UNetWeaver
 
             Instruction localClientLabel = cmdWorker.Create(OpCodes.Nop);
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldarg_0));
-            cmdWorker.Append(cmdWorker.Create(OpCodes.Call, Weaver.UBehaviourIsServer));
+            cmdWorker.Append(cmdWorker.Create(OpCodes.Call, m_Weaver.UBehaviourIsServer));
             cmdWorker.Append(cmdWorker.Create(OpCodes.Brfalse, localClientLabel));
 
             // call the cmd function directly.
@@ -1195,23 +1210,23 @@ namespace Unity.UNetWeaver
             // create the command id constant
             FieldDefinition cmdConstant = new FieldDefinition("kCmd" + md.Name,
                 FieldAttributes.Static | FieldAttributes.Private,
-                Weaver.int32Type);
+                m_Weaver.int32Type);
             m_td.Fields.Add(cmdConstant);
 
             // write command constant
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldloc_0));
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldsfld, cmdConstant));
-            cmdWorker.Append(cmdWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWritePacked32));
+            cmdWorker.Append(cmdWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWritePacked32));
 
             // write playerId from this NetworkBehaviour
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldloc_0));
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldarg_0));
             // load unetviewfield
-            cmdWorker.Append(cmdWorker.Create(OpCodes.Call, Weaver.getComponentReference));
+            cmdWorker.Append(cmdWorker.Create(OpCodes.Call, m_Weaver.getComponentReference));
             // load and write netId field
-            cmdWorker.Append(cmdWorker.Create(OpCodes.Callvirt, Weaver.getUNetIdReference));
+            cmdWorker.Append(cmdWorker.Create(OpCodes.Callvirt, m_Weaver.getUNetIdReference));
 
-            var writeFunc = Weaver.GetWriteFunc(Weaver.NetworkInstanceIdType);
+            var writeFunc = m_Weaver.GetWriteFunc(m_Weaver.NetworkInstanceIdType);
             cmdWorker.Append(cmdWorker.Create(OpCodes.Callvirt, writeFunc));
 
             if (!WriteArguments(cmdWorker, md, "Command", false))
@@ -1239,7 +1254,7 @@ namespace Unity.UNetWeaver
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldloc_0));
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldc_I4, channel)); // QoS transport channel (reliable/unreliable)
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldstr, cmdName));
-            cmdWorker.Append(cmdWorker.Create(OpCodes.Call, Weaver.sendCommandInternal));
+            cmdWorker.Append(cmdWorker.Create(OpCodes.Call, m_Weaver.sendCommandInternal));
 
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ret));
 
@@ -1251,7 +1266,7 @@ namespace Unity.UNetWeaver
             MethodDefinition rpc = new MethodDefinition(k_RpcPrefix + md.Name, MethodAttributes.Family |
                 MethodAttributes.Static |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             ILProcessor rpcWorker = rpc.Body.GetILProcessor();
             Instruction label = rpcWorker.Create(OpCodes.Nop);
@@ -1263,7 +1278,7 @@ namespace Unity.UNetWeaver
             rpcWorker.Append(rpcWorker.Create(OpCodes.Castclass, m_td));
 
             //ClientScene.readyconnection
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, Weaver.ReadyConnectionReference));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, m_Weaver.ReadyConnectionReference));
 
             if (!ProcessNetworkReaderParameters(md, rpcWorker, true))
                 return null;
@@ -1282,7 +1297,7 @@ namespace Unity.UNetWeaver
             MethodDefinition rpc = new MethodDefinition(k_RpcPrefix + md.Name, MethodAttributes.Family |
                 MethodAttributes.Static |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             ILProcessor rpcWorker = rpc.Body.GetILProcessor();
             Instruction label = rpcWorker.Create(OpCodes.Nop);
@@ -1309,7 +1324,7 @@ namespace Unity.UNetWeaver
         {
             MethodDefinition rpc = new MethodDefinition("Call" +  md.Name, MethodAttributes.Public |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             // add paramters
             foreach (ParameterDefinition pd in md.Parameters)
@@ -1329,10 +1344,10 @@ namespace Unity.UNetWeaver
             // check specifically for ULocalConnectionToServer so a host is not trying to send
             // an TargetRPC to the "server" from it's local client.
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldarg_1));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Isinst, Weaver.ULocalConnectionToServerType));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Isinst, m_Weaver.ULocalConnectionToServerType));
             rpcWorker.Append(rpcWorker.Create(OpCodes.Brfalse, labelConnectionCheck));
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldstr, string.Format("TargetRPC Function {0} called on connection to server", md.Name)));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, Weaver.logErrorReference));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, m_Weaver.logErrorReference));
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ret));
             rpcWorker.Append(labelConnectionCheck);
 
@@ -1345,22 +1360,22 @@ namespace Unity.UNetWeaver
             // create the command id constant
             FieldDefinition rpcConstant = new FieldDefinition("kTargetRpc" + md.Name,
                 FieldAttributes.Static | FieldAttributes.Private,
-                Weaver.int32Type);
+                m_Weaver.int32Type);
             m_td.Fields.Add(rpcConstant);
 
             // write command constant
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldloc_0));
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldsfld, rpcConstant));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWritePacked32));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWritePacked32));
 
             // write this.unetView.netId
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldloc_0));
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldarg_0));
             // load unetviewfield
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, Weaver.getComponentReference));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, m_Weaver.getComponentReference));
             // load and write netId field
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.getUNetIdReference));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWriteNetworkInstanceId));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.getUNetIdReference));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWriteNetworkInstanceId));
 
             if (!WriteArguments(rpcWorker, md, "TargetRPC", true))
                 return null;
@@ -1388,7 +1403,7 @@ namespace Unity.UNetWeaver
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldloc_0)); // writer
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldc_I4, channel)); // QoS transport channel (reliable/unreliable)
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldstr, rpcName));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.sendTargetRpcInternal));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.sendTargetRpcInternal));
 
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ret));
 
@@ -1399,7 +1414,7 @@ namespace Unity.UNetWeaver
         {
             MethodDefinition rpc = new MethodDefinition("Call" +  md.Name, MethodAttributes.Public |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             // add paramters
             foreach (ParameterDefinition pd in md.Parameters)
@@ -1423,22 +1438,22 @@ namespace Unity.UNetWeaver
             // create the command id constant
             FieldDefinition rpcConstant = new FieldDefinition("kRpc" + md.Name,
                 FieldAttributes.Static | FieldAttributes.Private,
-                Weaver.int32Type);
+                m_Weaver.int32Type);
             m_td.Fields.Add(rpcConstant);
 
             // write command constant
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldloc_0));
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldsfld, rpcConstant));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWritePacked32));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWritePacked32));
 
             // write this.unetView.netId
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldloc_0));
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldarg_0));
             // load unetviewfield
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, Weaver.getComponentReference));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Call, m_Weaver.getComponentReference));
             // load and write netId field
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.getUNetIdReference));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWriteNetworkInstanceId));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.getUNetIdReference));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWriteNetworkInstanceId));
 
             if (!WriteArguments(rpcWorker, md, "RPC", false))
                 return null;
@@ -1465,7 +1480,7 @@ namespace Unity.UNetWeaver
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldloc_0)); // writer
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldc_I4, channel)); // QoS transport channel (reliable/unreliable)
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ldstr, rpcName));
-            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, Weaver.sendRpcInternal));
+            rpcWorker.Append(rpcWorker.Create(OpCodes.Callvirt, m_Weaver.sendRpcInternal));
 
             rpcWorker.Append(rpcWorker.Create(OpCodes.Ret));
 
@@ -1474,22 +1489,22 @@ namespace Unity.UNetWeaver
 
         bool ProcessMethodsValidateFunction(MethodReference md, CustomAttribute ca, string actionType)
         {
-            if (md.ReturnType.FullName == Weaver.IEnumeratorType.FullName)
+            if (md.ReturnType.FullName == m_Weaver.IEnumeratorType.FullName)
             {
                 Log.Error(actionType + " function [" + m_td.FullName + ":" + md.Name + "] cannot be a coroutine");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
-            if (md.ReturnType.FullName != Weaver.voidType.FullName)
+            if (md.ReturnType.FullName != m_Weaver.voidType.FullName)
             {
                 Log.Error(actionType + " function [" + m_td.FullName + ":" + md.Name + "] must have a void return type.");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
             if (md.HasGenericParameters)
             {
                 Log.Error(actionType + " [" + m_td.FullName + ":" + md.Name + "] cannot have generic parameters");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
             return true;
@@ -1503,45 +1518,45 @@ namespace Unity.UNetWeaver
                 if (p.IsOut)
                 {
                     Log.Error(actionType + " function [" + m_td.FullName + ":" + md.Name + "] cannot have out parameters");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return false;
                 }
                 if (p.IsOptional)
                 {
                     Log.Error(actionType + "function [" + m_td.FullName + ":" + md.Name + "] cannot have optional parameters");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return false;
                 }
                 if (p.ParameterType.Resolve().IsAbstract)
                 {
                     Log.Error(actionType + " function [" + m_td.FullName + ":" + md.Name + "] cannot have abstract parameters");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return false;
                 }
                 if (p.ParameterType.IsByReference)
                 {
                     Log.Error(actionType + " function [" + m_td.FullName + ":" + md.Name + "] cannot have ref parameters");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return false;
                 }
                 // TargetRPC is an exception to this rule and can have a NetworkConnection as first parameter
-                if (p.ParameterType.FullName == Weaver.NetworkConnectionType.FullName &&
-                    !(ca.AttributeType.FullName == Weaver.TargetRpcType.FullName && i == 0))
+                if (p.ParameterType.FullName == m_Weaver.NetworkConnectionType.FullName &&
+                    !(ca.AttributeType.FullName == m_Weaver.TargetRpcType.FullName && i == 0))
                 {
                     Log.Error(actionType + " [" + m_td.FullName + ":" + md.Name + "] cannot use a NetworkConnection as a parameter. To access a player object's connection on the server use connectionToClient");
                     Log.Error("Name: " + ca.AttributeType.FullName + " parameter: " + md.Parameters[0].ParameterType.FullName);
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return false;
                 }
-                if (Weaver.IsDerivedFrom(p.ParameterType.Resolve(), Weaver.ComponentType))
+                if (m_Weaver.IsDerivedFrom(p.ParameterType.Resolve(), m_Weaver.ComponentType))
                 {
-                    if (p.ParameterType.FullName != Weaver.NetworkIdentityType.FullName)
+                    if (p.ParameterType.FullName != m_Weaver.NetworkIdentityType.FullName)
                     {
                         Log.Error(actionType + " function [" + m_td.FullName + ":" + md.Name + "] parameter [" + p.Name +
                             "] is of the type [" +
                             p.ParameterType.Name +
                             "] which is a Component. You cannot pass a Component to a remote call. Try passing data from within the component.");
-                        Weaver.fail = true;
+                        m_Weaver.fail = true;
                         return false;
                     }
                 }
@@ -1554,14 +1569,14 @@ namespace Unity.UNetWeaver
             if (md.Name.Length > 2 && md.Name.Substring(0, 3) != "Cmd")
             {
                 Log.Error("Command function [" + m_td.FullName + ":" + md.Name + "] doesnt have 'Cmd' prefix");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
             if (md.IsStatic)
             {
                 Log.Error("Command function [" + m_td.FullName + ":" + md.Name + "] cant be a static method");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
@@ -1585,14 +1600,14 @@ namespace Unity.UNetWeaver
             if (md.Name.Length > prefixLen && md.Name.Substring(0, prefixLen) != targetPrefix)
             {
                 Log.Error("Target Rpc function [" + m_td.FullName + ":" + md.Name + "] doesnt have 'Target' prefix");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
             if (md.IsStatic)
             {
                 Log.Error("TargetRpc function [" + m_td.FullName + ":" + md.Name + "] cant be a static method");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
@@ -1604,14 +1619,14 @@ namespace Unity.UNetWeaver
             if (md.Parameters.Count < 1)
             {
                 Log.Error("Target Rpc function [" + m_td.FullName + ":" + md.Name + "] must have a NetworkConnection as the first parameter");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
-            if (md.Parameters[0].ParameterType.FullName != Weaver.NetworkConnectionType.FullName)
+            if (md.Parameters[0].ParameterType.FullName != m_Weaver.NetworkConnectionType.FullName)
             {
                 Log.Error("Target Rpc function [" + m_td.FullName + ":" + md.Name + "] first parameter must be a NetworkConnection");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
@@ -1627,14 +1642,14 @@ namespace Unity.UNetWeaver
             if (md.Name.Length > 2 && md.Name.Substring(0, 3) != "Rpc")
             {
                 Log.Error("Rpc function [" + m_td.FullName + ":" + md.Name + "] doesnt have 'Rpc' prefix");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
             if (md.IsStatic)
             {
                 Log.Error("ClientRpc function [" + m_td.FullName + ":" + md.Name + "] cant be a static method");
-                Weaver.fail = true;
+                m_Weaver.fail = true;
                 return false;
             }
 
@@ -1657,10 +1672,10 @@ namespace Unity.UNetWeaver
             // find command and RPC functions
             foreach (MethodDefinition md in m_td.Methods)
             {
-                Weaver.ResetRecursionCount();
+                m_Weaver.ResetRecursionCount();
                 foreach (var ca in md.CustomAttributes)
                 {
-                    if (ca.AttributeType.FullName == Weaver.CommandType.FullName)
+                    if (ca.AttributeType.FullName == m_Weaver.CommandType.FullName)
                     {
                         if (!ProcessMethodsValidateCommand(md, ca))
                             return;
@@ -1668,7 +1683,7 @@ namespace Unity.UNetWeaver
                         if (names.Contains(md.Name))
                         {
                             Log.Error("Duplicate Command name [" + m_td.FullName + ":" + md.Name + "]");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
                         names.Add(md.Name);
@@ -1684,13 +1699,13 @@ namespace Unity.UNetWeaver
                         if (cmdCallFunc != null)
                         {
                             m_CmdCallFuncs.Add(cmdCallFunc);
-                            Weaver.lists.replacedMethods.Add(md);
-                            Weaver.lists.replacementMethods.Add(cmdCallFunc);
+                            m_Weaver.lists.replacedMethods.Add(md);
+                            m_Weaver.lists.replacementMethods.Add(cmdCallFunc);
                         }
                         break;
                     }
 
-                    if (ca.AttributeType.FullName == Weaver.TargetRpcType.FullName)
+                    if (ca.AttributeType.FullName == m_Weaver.TargetRpcType.FullName)
                     {
                         if (!ProcessMethodsValidateTargetRpc(md, ca))
                             return;
@@ -1698,7 +1713,7 @@ namespace Unity.UNetWeaver
                         if (names.Contains(md.Name))
                         {
                             Log.Error("Duplicate Target Rpc name [" + m_td.FullName + ":" + md.Name + "]");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
                         names.Add(md.Name);
@@ -1714,13 +1729,13 @@ namespace Unity.UNetWeaver
                         if (rpcCallFunc != null)
                         {
                             m_TargetRpcCallFuncs.Add(rpcCallFunc);
-                            Weaver.lists.replacedMethods.Add(md);
-                            Weaver.lists.replacementMethods.Add(rpcCallFunc);
+                            m_Weaver.lists.replacedMethods.Add(md);
+                            m_Weaver.lists.replacementMethods.Add(rpcCallFunc);
                         }
                         break;
                     }
 
-                    if (ca.AttributeType.FullName == Weaver.ClientRpcType.FullName)
+                    if (ca.AttributeType.FullName == m_Weaver.ClientRpcType.FullName)
                     {
                         if (!ProcessMethodsValidateRpc(md, ca))
                             return;
@@ -1728,7 +1743,7 @@ namespace Unity.UNetWeaver
                         if (names.Contains(md.Name))
                         {
                             Log.Error("Duplicate ClientRpc name [" + m_td.FullName + ":" + md.Name + "]");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
                         names.Add(md.Name);
@@ -1744,8 +1759,8 @@ namespace Unity.UNetWeaver
                         if (rpcCallFunc != null)
                         {
                             m_RpcCallFuncs.Add(rpcCallFunc);
-                            Weaver.lists.replacedMethods.Add(md);
-                            Weaver.lists.replacementMethods.Add(rpcCallFunc);
+                            m_Weaver.lists.replacedMethods.Add(md);
+                            m_Weaver.lists.replacementMethods.Add(rpcCallFunc);
                         }
                         break;
                     }
@@ -1795,15 +1810,15 @@ namespace Unity.UNetWeaver
             }
             if (eventField == null)
             {
-                Weaver.DLog(m_td, "ERROR: no event field?!");
-                Weaver.fail = true;
+                m_Weaver.DLog(m_td, "ERROR: no event field?!");
+                m_Weaver.fail = true;
                 return null;
             }
 
             MethodDefinition cmd = new MethodDefinition("InvokeSyncEvent" + ed.Name, MethodAttributes.Family |
                 MethodAttributes.Static |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             ILProcessor cmdWorker = cmd.Body.GetILProcessor();
             Instruction label1 = cmdWorker.Create(OpCodes.Nop);
@@ -1825,7 +1840,7 @@ namespace Unity.UNetWeaver
             cmdWorker.Append(cmdWorker.Create(OpCodes.Ldfld, eventField));
 
             // read the event arguments
-            MethodReference invoke = Weaver.ResolveMethod(eventField.FieldType, "Invoke");
+            MethodReference invoke = m_Weaver.ResolveMethod(eventField.FieldType, "Invoke");
             if (!ProcessNetworkReaderParameters(invoke.Resolve(), cmdWorker, false))
                 return null;
 
@@ -1840,10 +1855,10 @@ namespace Unity.UNetWeaver
 
         MethodDefinition ProcessEventCall(EventDefinition ed, CustomAttribute ca)
         {
-            MethodReference invoke = Weaver.ResolveMethod(ed.EventType, "Invoke");
+            MethodReference invoke = m_Weaver.ResolveMethod(ed.EventType, "Invoke");
             MethodDefinition evt = new MethodDefinition("Call" +  ed.Name, MethodAttributes.Public |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
             // add paramters
             foreach (ParameterDefinition pd in invoke.Parameters)
             {
@@ -1866,21 +1881,21 @@ namespace Unity.UNetWeaver
             // create the command id constant
             FieldDefinition evtConstant = new FieldDefinition("kEvent" + ed.Name,
                 FieldAttributes.Static | FieldAttributes.Private,
-                Weaver.int32Type);
+                m_Weaver.int32Type);
             m_td.Fields.Add(evtConstant);
 
             // write command constant
             evtWorker.Append(evtWorker.Create(OpCodes.Ldloc_0)); // networkWriter
             evtWorker.Append(evtWorker.Create(OpCodes.Ldsfld, evtConstant));
-            evtWorker.Append(evtWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWritePacked32));
+            evtWorker.Append(evtWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWritePacked32));
 
             // write this.unetView.netId
             evtWorker.Append(evtWorker.Create(OpCodes.Ldloc_0)); // networkWriter
             evtWorker.Append(evtWorker.Create(OpCodes.Ldarg_0)); // this
-            evtWorker.Append(evtWorker.Create(OpCodes.Call, Weaver.getComponentReference)); // unetView
+            evtWorker.Append(evtWorker.Create(OpCodes.Call, m_Weaver.getComponentReference)); // unetView
             // load and write netId field
-            evtWorker.Append(evtWorker.Create(OpCodes.Callvirt, Weaver.getUNetIdReference)); // netId
-            evtWorker.Append(evtWorker.Create(OpCodes.Callvirt, Weaver.NetworkWriterWriteNetworkInstanceId));   // networkWriter.Write(this.unetView.netId)
+            evtWorker.Append(evtWorker.Create(OpCodes.Callvirt, m_Weaver.getUNetIdReference)); // netId
+            evtWorker.Append(evtWorker.Create(OpCodes.Callvirt, m_Weaver.NetworkWriterWriteNetworkInstanceId));   // networkWriter.Write(this.unetView.netId)
 
             if (!WriteArguments(evtWorker, invoke.Resolve(), "SyncEvent", false))
                 return null;
@@ -1900,7 +1915,7 @@ namespace Unity.UNetWeaver
             evtWorker.Append(evtWorker.Create(OpCodes.Ldloc_0)); // writer
             evtWorker.Append(evtWorker.Create(OpCodes.Ldc_I4, channel)); // QoS transport channel (reliable/unreliable)
             evtWorker.Append(evtWorker.Create(OpCodes.Ldstr, ed.Name));
-            evtWorker.Append(evtWorker.Create(OpCodes.Call, Weaver.sendEventInternal));
+            evtWorker.Append(evtWorker.Create(OpCodes.Call, m_Weaver.sendEventInternal));
 
             evtWorker.Append(evtWorker.Create(OpCodes.Ret));
 
@@ -1914,19 +1929,19 @@ namespace Unity.UNetWeaver
             {
                 foreach (var ca in ed.CustomAttributes)
                 {
-                    if (ca.AttributeType.FullName == Weaver.SyncEventType.FullName)
+                    if (ca.AttributeType.FullName == m_Weaver.SyncEventType.FullName)
                     {
                         if (ed.Name.Length > 4 && ed.Name.Substring(0, 5) != "Event")
                         {
                             Log.Error("Event  [" + m_td.FullName + ":" + ed.FullName + "] doesnt have 'Event' prefix");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
                         if (ed.EventType.Resolve().HasGenericParameters)
                         {
                             Log.Error("Event  [" + m_td.FullName + ":" + ed.FullName + "] cannot have generic parameters");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
@@ -1940,15 +1955,15 @@ namespace Unity.UNetWeaver
                         m_td.Methods.Add(eventFunc);
                         m_EventInvocationFuncs.Add(eventFunc);
 
-                        Weaver.DLog(m_td, "ProcessEvent " + ed);
+                        m_Weaver.DLog(m_td, "ProcessEvent " + ed);
 
                         MethodDefinition eventCallFunc = ProcessEventCall(ed, ca);
                         m_td.Methods.Add(eventCallFunc);
 
-                        Weaver.lists.replacedEvents.Add(ed);
-                        Weaver.lists.replacementEvents.Add(eventCallFunc);
+                        m_Weaver.lists.replacedEvents.Add(ed);
+                        m_Weaver.lists.replacementEvents.Add(eventCallFunc);
 
-                        Weaver.DLog(m_td, "  Event: " + ed.Name);
+                        m_Weaver.DLog(m_td, "  Event: " + ed.Name);
                         break;
                     }
                 }
@@ -1983,7 +1998,7 @@ namespace Unity.UNetWeaver
             MethodDefinition set = new MethodDefinition("set_Network" + originalName, MethodAttributes.Public |
                 MethodAttributes.SpecialName |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             ILProcessor setWorker = set.Body.GetILProcessor();
 
@@ -2007,16 +2022,16 @@ namespace Unity.UNetWeaver
             {
                 //if (NetworkServer.localClientActive && !syncVarHookGuard)
                 Instruction label = setWorker.Create(OpCodes.Nop);
-                setWorker.Append(setWorker.Create(OpCodes.Call, Weaver.NetworkServerGetLocalClientActive));
+                setWorker.Append(setWorker.Create(OpCodes.Call, m_Weaver.NetworkServerGetLocalClientActive));
                 setWorker.Append(setWorker.Create(OpCodes.Brfalse, label));
                 setWorker.Append(setWorker.Create(OpCodes.Ldarg_0));
-                setWorker.Append(setWorker.Create(OpCodes.Call, Weaver.getSyncVarHookGuard));
+                setWorker.Append(setWorker.Create(OpCodes.Call, m_Weaver.getSyncVarHookGuard));
                 setWorker.Append(setWorker.Create(OpCodes.Brtrue, label));
 
                 // syncVarHookGuard = true;
                 setWorker.Append(setWorker.Create(OpCodes.Ldarg_0));
                 setWorker.Append(setWorker.Create(OpCodes.Ldc_I4_1));
-                setWorker.Append(setWorker.Create(OpCodes.Call, Weaver.setSyncVarHookGuard));
+                setWorker.Append(setWorker.Create(OpCodes.Call, m_Weaver.setSyncVarHookGuard));
 
                 // call hook
                 setWorker.Append(setWorker.Create(OpCodes.Ldarg_0));
@@ -2026,23 +2041,23 @@ namespace Unity.UNetWeaver
                 // syncVarHookGuard = false;
                 setWorker.Append(setWorker.Create(OpCodes.Ldarg_0));
                 setWorker.Append(setWorker.Create(OpCodes.Ldc_I4_0));
-                setWorker.Append(setWorker.Create(OpCodes.Call, Weaver.setSyncVarHookGuard));
+                setWorker.Append(setWorker.Create(OpCodes.Call, m_Weaver.setSyncVarHookGuard));
 
                 setWorker.Append(label);
             }
 
-            if (fd.FieldType.FullName == Weaver.gameObjectType.FullName)
+            if (fd.FieldType.FullName == m_Weaver.gameObjectType.FullName)
             {
                 // reference to netId Field to set
                 setWorker.Append(setWorker.Create(OpCodes.Ldarg_0));
                 setWorker.Append(setWorker.Create(OpCodes.Ldflda, netFieldId));
 
-                setWorker.Append(setWorker.Create(OpCodes.Call, Weaver.setSyncVarGameObjectReference));
+                setWorker.Append(setWorker.Create(OpCodes.Call, m_Weaver.setSyncVarGameObjectReference));
             }
             else
             {
                 // make generic version of SetSyncVar with field type
-                GenericInstanceMethod gm = new GenericInstanceMethod(Weaver.setSyncVarReference);
+                GenericInstanceMethod gm = new GenericInstanceMethod(m_Weaver.setSyncVarReference);
                 gm.GenericArguments.Add(fd.FieldType);
 
                 // invoke SetSyncVar
@@ -2061,19 +2076,19 @@ namespace Unity.UNetWeaver
         {
             string originalName = fd.Name;
 
-            Weaver.lists.replacedFields.Add(fd);
-            Weaver.DLog(m_td, "Sync Var " + fd.Name + " " + fd.FieldType + " " + Weaver.gameObjectType);
+            m_Weaver.lists.replacedFields.Add(fd);
+            m_Weaver.DLog(m_td, "Sync Var " + fd.Name + " " + fd.FieldType + " " + m_Weaver.gameObjectType);
 
             // GameObject SyncVars have a new field for netId
             FieldDefinition netFieldId = null;
-            if (fd.FieldType.FullName == Weaver.gameObjectType.FullName)
+            if (fd.FieldType.FullName == m_Weaver.gameObjectType.FullName)
             {
                 netFieldId = new FieldDefinition("___" + fd.Name + "NetId",
                     FieldAttributes.Private,
-                    Weaver.NetworkInstanceIdType);
+                    m_Weaver.NetworkInstanceIdType);
 
                 m_SyncVarNetIds.Add(netFieldId);
-                Weaver.lists.netIdFields.Add(netFieldId);
+                m_Weaver.lists.netIdFields.Add(netFieldId);
             }
 
             var get = ProcessSyncVarGet(fd, originalName);
@@ -2090,7 +2105,7 @@ namespace Unity.UNetWeaver
             m_td.Methods.Add(get);
             m_td.Methods.Add(set);
             m_td.Properties.Add(propertyDefinition);
-            Weaver.lists.replacementProperties.Add(set);
+            m_Weaver.lists.replacementProperties.Add(set);
         }
 
         /*
@@ -2106,12 +2121,12 @@ namespace Unity.UNetWeaver
                 ((SyncListTestPlayerBehaviour)obj).m_ints.HandleMsg(reader);
             }
         */
-        static MethodDefinition ProcessSyncListInvoke(FieldDefinition fd)
+        MethodDefinition ProcessSyncListInvoke(FieldDefinition fd)
         {
             MethodDefinition cmd = new MethodDefinition("InvokeSyncList" + fd.Name, MethodAttributes.Family |
                 MethodAttributes.Static |
                 MethodAttributes.HideBySig,
-                Weaver.voidType);
+                m_Weaver.voidType);
 
             ILProcessor syncList = cmd.Body.GetILProcessor();
             Instruction label = syncList.Create(OpCodes.Nop);
@@ -2127,9 +2142,9 @@ namespace Unity.UNetWeaver
 
             // make specialized version of HandleMsg
             GenericInstanceType syncListGeneric = (GenericInstanceType)fd.FieldType.Resolve().BaseType;
-            syncListGeneric = (GenericInstanceType)Weaver.scriptDef.MainModule.ImportReference(syncListGeneric);
+            syncListGeneric = (GenericInstanceType)m_Weaver.m_ScriptDef.MainModule.ImportReference(syncListGeneric);
             TypeReference listValueType = syncListGeneric.GenericArguments[0];
-            MethodReference genericHandleMsgMethod = Helpers.MakeHostInstanceGeneric(Weaver.SyncListInitHandleMsg, listValueType);
+            MethodReference genericHandleMsgMethod = Helpers.MakeHostInstanceGeneric(m_Weaver.SyncListInitHandleMsg, listValueType);
             syncList.Append(syncList.Create(OpCodes.Callvirt, genericHandleMsgMethod));
 
             syncList.Append(syncList.Create(OpCodes.Ret));
@@ -2147,7 +2162,7 @@ namespace Unity.UNetWeaver
             // create the command id constant
             return new FieldDefinition("kList" + fd.Name,
                 FieldAttributes.Static | FieldAttributes.Private,
-                Weaver.int32Type);
+                m_Weaver.int32Type);
         }
 
         void ProcessSyncVars()
@@ -2156,7 +2171,7 @@ namespace Unity.UNetWeaver
 
             // the mapping of dirtybits to sync-vars is implicit in the order of the fields here. this order is recorded in m_replacementProperties.
             // start assigning syncvars at the place the base class stopped, if any
-            int dirtyBitCounter = Weaver.GetSyncVarStart(m_td.BaseType.FullName);
+            int dirtyBitCounter = m_Weaver.GetSyncVarStart(m_td.BaseType.FullName);
 
             m_SyncVarNetIds.Clear();
             List<FieldDefinition> listFields = new List<FieldDefinition>();
@@ -2166,67 +2181,67 @@ namespace Unity.UNetWeaver
             {
                 foreach (var ca in fd.CustomAttributes)
                 {
-                    if (ca.AttributeType.FullName == Weaver.SyncVarType.FullName)
+                    if (ca.AttributeType.FullName == m_Weaver.SyncVarType.FullName)
                     {
                         var resolvedField = fd.FieldType.Resolve();
 
-                        if (Weaver.IsDerivedFrom(resolvedField, Weaver.NetworkBehaviourType))
+                        if (m_Weaver.IsDerivedFrom(resolvedField, m_Weaver.NetworkBehaviourType))
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] cannot be derived from NetworkBehaviour.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
-                        if (Weaver.IsDerivedFrom(resolvedField, Weaver.ScriptableObjectType))
+                        if (m_Weaver.IsDerivedFrom(resolvedField, m_Weaver.ScriptableObjectType))
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] cannot be derived from ScriptableObject.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
                         if ((fd.Attributes & FieldAttributes.Static) != 0)
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] cannot be static.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
                         if (resolvedField.HasGenericParameters)
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] cannot have generic parameters.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
                         if (resolvedField.IsInterface)
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] cannot be an interface.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
                         var fieldModuleName = resolvedField.Module.Name;
-                        if (fieldModuleName != Weaver.scriptDef.MainModule.Name &&
-                            fieldModuleName != Weaver.m_UnityAssemblyDefinition.MainModule.Name &&
-                            fieldModuleName != Weaver.m_UNetAssemblyDefinition.MainModule.Name &&
-                            fieldModuleName != Weaver.corLib.Name &&
+                        if (fieldModuleName != m_Weaver.m_ScriptDef.MainModule.Name &&
+                            fieldModuleName != m_Weaver.m_UnityAssemblyDefinition.MainModule.Name &&
+                            fieldModuleName != m_Weaver.m_UNetAssemblyDefinition.MainModule.Name &&
+                            fieldModuleName != m_Weaver.m_CorLib.Name &&
                             fieldModuleName != "netstandard.dll" &&
                             fieldModuleName != "System.Runtime.dll" // this is only for Metro, built-in types are not in corlib on metro
                         )
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] from " + resolvedField.Module.ToString() + " cannot be a different module.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
                         if (fd.FieldType.IsArray)
                         {
                             Log.Error("SyncVar [" + fd.FullName + "] cannot be an array. Use a SyncList instead.");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
 
-                        if (Helpers.InheritsFromSyncList(fd.FieldType))
+                        if (Helpers.InheritsFromSyncList(fd.FieldType, m_Weaver))
                         {
                             Log.Warning(string.Format("Script class [{0}] has [SyncVar] attribute on SyncList field {1}, SyncLists should not be marked with SyncVar.", m_td.FullName, fd.Name));
                             break;
@@ -2241,7 +2256,7 @@ namespace Unity.UNetWeaver
                         if (dirtyBitCounter == k_SyncVarLimit)
                         {
                             Log.Error("Script class [" + m_td.FullName + "] has too many SyncVars (" + k_SyncVarLimit + "). (This could include base classes)");
-                            Weaver.fail = true;
+                            m_Weaver.fail = true;
                             return;
                         }
                         break;
@@ -2251,16 +2266,16 @@ namespace Unity.UNetWeaver
                 if (fd.FieldType.FullName.Contains("UnityEngine.Networking.SyncListStruct"))
                 {
                     Log.Error("SyncListStruct member variable [" + fd.FullName + "] must use a dervied class, like \"class MySyncList : SyncListStruct<MyStruct> {}\".");
-                    Weaver.fail = true;
+                    m_Weaver.fail = true;
                     return;
                 }
 
-                if (Weaver.IsDerivedFrom(fd.FieldType.Resolve(), Weaver.SyncListType))
+                if (m_Weaver.IsDerivedFrom(fd.FieldType.Resolve(), m_Weaver.SyncListType))
                 {
                     if (fd.IsStatic)
                     {
                         Log.Error("SyncList [" + m_td.FullName + ":" + fd.FullName + "] cannot be a static");
-                        Weaver.fail = true;
+                        m_Weaver.fail = true;
                         return;
                     }
 
@@ -2273,7 +2288,7 @@ namespace Unity.UNetWeaver
                     if (dirtyBitCounter == k_SyncVarLimit)
                     {
                         Log.Error("Script class [" + m_td.FullName + "] has too many SyncVars (" + k_SyncVarLimit + "). (This could include base classes)");
-                        Weaver.fail = true;
+                        m_Weaver.fail = true;
                         return;
                     }
                 }
@@ -2295,7 +2310,7 @@ namespace Unity.UNetWeaver
                 m_td.Methods.Add(func);
             }
 
-            Weaver.SetNumSyncVars(m_td.FullName, numSyncVars);
+            m_Weaver.SetNumSyncVars(m_td.FullName, numSyncVars);
         }
 
         // Copy of Mono string.GetHashCode(), so that we generate same hashes regardless of runtime (mono/MS .NET)

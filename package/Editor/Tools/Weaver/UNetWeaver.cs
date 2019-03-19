@@ -53,181 +53,183 @@ namespace Unity.UNetWeaver
     class Weaver
     {
         // UNetwork types
-        public static TypeReference NetworkBehaviourType;
-        public static TypeReference NetworkBehaviourType2;
-        public static TypeReference MonoBehaviourType;
-        public static TypeReference ScriptableObjectType;
-        public static TypeReference NetworkConnectionType;
-        public static TypeReference ULocalConnectionToServerType;
-        public static TypeReference ULocalConnectionToClientType;
+        public TypeReference NetworkBehaviourType;
+        public TypeReference NetworkBehaviourType2;
+        public TypeReference MonoBehaviourType;
+        public TypeReference ScriptableObjectType;
+        public TypeReference NetworkConnectionType;
+        public TypeReference ULocalConnectionToServerType;
+        public TypeReference ULocalConnectionToClientType;
 
-        public static TypeReference MessageBaseType;
-        public static TypeReference SyncListStructType;
+        public TypeReference MessageBaseType;
+        public TypeReference SyncListStructType;
 
-        public static MethodReference NetworkBehaviourDirtyBitsReference;
-        public static TypeReference NetworkClientType;
-        public static TypeReference NetworkServerType;
-        public static TypeReference NetworkCRCType;
+        public MethodReference NetworkBehaviourDirtyBitsReference;
+        public TypeReference NetworkClientType;
+        public TypeReference NetworkServerType;
+        public TypeReference NetworkCRCType;
 
-        public static TypeReference NetworkReaderType;
-        public static TypeDefinition NetworkReaderDef;
+        public TypeReference NetworkReaderType;
+        public TypeDefinition NetworkReaderDef;
 
-        public static TypeReference NetworkWriterType;
-        public static TypeDefinition NetworkWriterDef;
+        public TypeReference NetworkWriterType;
+        public TypeDefinition NetworkWriterDef;
 
-        public static MethodReference NetworkWriterCtor;
-        public static MethodReference NetworkReaderCtor;
-        public static TypeReference MemoryStreamType;
-        public static MethodReference MemoryStreamCtor;
-        public static MethodReference getComponentReference;
-        public static MethodReference getUNetIdReference;
-        public static MethodReference getPlayerIdReference;
-        public static TypeReference NetworkIdentityType;
-        public static TypeReference NetworkInstanceIdType;
-        public static TypeReference NetworkSceneIdType;
-        public static TypeReference IEnumeratorType;
+        public MethodReference NetworkWriterCtor;
+        public MethodReference NetworkReaderCtor;
+        public TypeReference MemoryStreamType;
+        public MethodReference MemoryStreamCtor;
+        public MethodReference getComponentReference;
+        public MethodReference getUNetIdReference;
+        public MethodReference getPlayerIdReference;
+        public TypeReference NetworkIdentityType;
+        public TypeReference NetworkInstanceIdType;
+        public TypeReference NetworkSceneIdType;
+        public TypeReference IEnumeratorType;
 
-        public static TypeReference ClientSceneType;
-        public static MethodReference FindLocalObjectReference;
-        public static MethodReference RegisterBehaviourReference;
-        public static MethodReference ReadyConnectionReference;
+        public TypeReference ClientSceneType;
+        public MethodReference FindLocalObjectReference;
+        public MethodReference RegisterBehaviourReference;
+        public MethodReference ReadyConnectionReference;
 
-        public static TypeReference ComponentType;
+        public TypeReference ComponentType;
 
-        public static TypeReference CmdDelegateReference;
-        public static MethodReference CmdDelegateConstructor;
+        public TypeReference CmdDelegateReference;
+        public MethodReference CmdDelegateConstructor;
 
-        public static MethodReference NetworkReaderReadInt32;
+        public MethodReference NetworkReaderReadInt32;
 
-        public static MethodReference NetworkWriterWriteInt32;
-        public static MethodReference NetworkWriterWriteInt16;
+        public MethodReference NetworkWriterWriteInt32;
+        public MethodReference NetworkWriterWriteInt16;
 
-        public static MethodReference NetworkServerGetActive;
-        public static MethodReference NetworkServerGetLocalClientActive;
-        public static MethodReference NetworkClientGetActive;
-        public static MethodReference UBehaviourIsServer;
-        public static MethodReference NetworkReaderReadPacked32;
-        public static MethodReference NetworkReaderReadPacked64;
-        public static MethodReference NetworkReaderReadByte;
-        public static MethodReference NetworkWriterWritePacked32;
-        public static MethodReference NetworkWriterWritePacked64;
+        public MethodReference NetworkServerGetActive;
+        public MethodReference NetworkServerGetLocalClientActive;
+        public MethodReference NetworkClientGetActive;
+        public MethodReference UBehaviourIsServer;
+        public MethodReference NetworkReaderReadPacked32;
+        public MethodReference NetworkReaderReadPacked64;
+        public MethodReference NetworkReaderReadByte;
+        public MethodReference NetworkWriterWritePacked32;
+        public MethodReference NetworkWriterWritePacked64;
 
-        public static MethodReference NetworkWriterWriteNetworkInstanceId;
-        public static MethodReference NetworkWriterWriteNetworkSceneId;
+        public MethodReference NetworkWriterWriteNetworkInstanceId;
+        public MethodReference NetworkWriterWriteNetworkSceneId;
 
-        public static MethodReference NetworkReaderReadNetworkInstanceId;
-        public static MethodReference NetworkReaderReadNetworkSceneId;
-        public static MethodReference NetworkInstanceIsEmpty;
+        public MethodReference NetworkReaderReadNetworkInstanceId;
+        public MethodReference NetworkReaderReadNetworkSceneId;
+        public MethodReference NetworkInstanceIsEmpty;
 
-        public static MethodReference NetworkReadUInt16;
-        public static MethodReference NetworkWriteUInt16;
+        public MethodReference NetworkReadUInt16;
+        public MethodReference NetworkWriteUInt16;
 
         // custom attribute types
-        public static TypeReference SyncVarType;
-        public static TypeReference CommandType;
-        public static TypeReference ClientRpcType;
-        public static TypeReference TargetRpcType;
-        public static TypeReference SyncEventType;
-        public static TypeReference SyncListType;
-        public static MethodReference SyncListInitBehaviourReference;
-        public static MethodReference SyncListInitHandleMsg;
-        public static MethodReference SyncListClear;
-        public static TypeReference NetworkSettingsType;
+        public TypeReference SyncVarType;
+        public TypeReference CommandType;
+        public TypeReference ClientRpcType;
+        public TypeReference TargetRpcType;
+        public TypeReference SyncEventType;
+        public TypeReference SyncListType;
+        public MethodReference SyncListInitBehaviourReference;
+        public MethodReference SyncListInitHandleMsg;
+        public MethodReference SyncListClear;
+        public TypeReference NetworkSettingsType;
 
         // sync list types
-        public static TypeReference SyncListFloatType;
-        public static TypeReference SyncListIntType;
-        public static TypeReference SyncListUIntType;
-        public static TypeReference SyncListBoolType;
-        public static TypeReference SyncListStringType;
+        public TypeReference SyncListFloatType;
+        public TypeReference SyncListIntType;
+        public TypeReference SyncListUIntType;
+        public TypeReference SyncListBoolType;
+        public TypeReference SyncListStringType;
 
-        public static MethodReference SyncListFloatReadType;
-        public static MethodReference SyncListIntReadType;
-        public static MethodReference SyncListUIntReadType;
-        public static MethodReference SyncListStringReadType;
-        public static MethodReference SyncListBoolReadType;
+        public MethodReference SyncListFloatReadType;
+        public MethodReference SyncListIntReadType;
+        public MethodReference SyncListUIntReadType;
+        public MethodReference SyncListStringReadType;
+        public MethodReference SyncListBoolReadType;
 
-        public static MethodReference SyncListFloatWriteType;
-        public static MethodReference SyncListIntWriteType;
-        public static MethodReference SyncListUIntWriteType;
-        public static MethodReference SyncListBoolWriteType;
-        public static MethodReference SyncListStringWriteType;
+        public MethodReference SyncListFloatWriteType;
+        public MethodReference SyncListIntWriteType;
+        public MethodReference SyncListUIntWriteType;
+        public MethodReference SyncListBoolWriteType;
+        public MethodReference SyncListStringWriteType;
 
         // system types
-        public static TypeReference voidType;
-        public static TypeReference singleType;
-        public static TypeReference doubleType;
-        public static TypeReference decimalType;
-        public static TypeReference boolType;
-        public static TypeReference stringType;
-        public static TypeReference int64Type;
-        public static TypeReference uint64Type;
-        public static TypeReference int32Type;
-        public static TypeReference uint32Type;
-        public static TypeReference int16Type;
-        public static TypeReference uint16Type;
-        public static TypeReference byteType;
-        public static TypeReference sbyteType;
-        public static TypeReference charType;
-        public static TypeReference objectType;
-        public static TypeReference valueTypeType;
-        public static TypeReference vector2Type;
-        public static TypeReference vector3Type;
-        public static TypeReference vector4Type;
-        public static TypeReference colorType;
-        public static TypeReference color32Type;
-        public static TypeReference quaternionType;
-        public static TypeReference rectType;
-        public static TypeReference rayType;
-        public static TypeReference planeType;
-        public static TypeReference matrixType;
-        public static TypeReference hashType;
-        public static TypeReference typeType;
-        public static TypeReference gameObjectType;
-        public static TypeReference transformType;
-        public static TypeReference unityObjectType;
-        public static MethodReference gameObjectInequality;
+        public TypeReference voidType;
+        public TypeReference singleType;
+        public TypeReference doubleType;
+        public TypeReference decimalType;
+        public TypeReference boolType;
+        public TypeReference stringType;
+        public TypeReference int64Type;
+        public TypeReference uint64Type;
+        public TypeReference int32Type;
+        public TypeReference uint32Type;
+        public TypeReference int16Type;
+        public TypeReference uint16Type;
+        public TypeReference byteType;
+        public TypeReference sbyteType;
+        public TypeReference charType;
+        public TypeReference objectType;
+        public TypeReference valueTypeType;
+        public TypeReference vector2Type;
+        public TypeReference vector3Type;
+        public TypeReference vector4Type;
+        public TypeReference colorType;
+        public TypeReference color32Type;
+        public TypeReference quaternionType;
+        public TypeReference rectType;
+        public TypeReference rayType;
+        public TypeReference planeType;
+        public TypeReference matrixType;
+        public TypeReference hashType;
+        public TypeReference typeType;
+        public TypeReference gameObjectType;
+        public TypeReference transformType;
+        public TypeReference unityObjectType;
+        public MethodReference gameObjectInequality;
 
-        public static MethodReference setSyncVarReference;
-        public static MethodReference setSyncVarHookGuard;
-        public static MethodReference getSyncVarHookGuard;
-        public static MethodReference setSyncVarGameObjectReference;
-        public static MethodReference registerCommandDelegateReference;
-        public static MethodReference registerRpcDelegateReference;
-        public static MethodReference registerEventDelegateReference;
-        public static MethodReference registerSyncListDelegateReference;
-        public static MethodReference getTypeReference;
-        public static MethodReference getTypeFromHandleReference;
-        public static MethodReference logErrorReference;
-        public static MethodReference logWarningReference;
-        public static MethodReference sendCommandInternal;
-        public static MethodReference sendRpcInternal;
-        public static MethodReference sendTargetRpcInternal;
-        public static MethodReference sendEventInternal;
+        public MethodReference setSyncVarReference;
+        public MethodReference setSyncVarHookGuard;
+        public MethodReference getSyncVarHookGuard;
+        public MethodReference setSyncVarGameObjectReference;
+        public MethodReference registerCommandDelegateReference;
+        public MethodReference registerRpcDelegateReference;
+        public MethodReference registerEventDelegateReference;
+        public MethodReference registerSyncListDelegateReference;
+        public MethodReference getTypeReference;
+        public MethodReference getTypeFromHandleReference;
+        public MethodReference logErrorReference;
+        public MethodReference logWarningReference;
+        public MethodReference sendCommandInternal;
+        public MethodReference sendRpcInternal;
+        public MethodReference sendTargetRpcInternal;
+        public MethodReference sendEventInternal;
 
-        public static WeaverLists lists;
+        public WeaverLists lists;
 
-        public static AssemblyDefinition scriptDef;
-        public static ModuleDefinition corLib;
-        public static AssemblyDefinition m_UnityAssemblyDefinition;
-        public static AssemblyDefinition m_UNetAssemblyDefinition;
+        public AssemblyDefinition m_ScriptDef;
+        public ModuleDefinition m_CorLib;
+        public AssemblyDefinition m_UnityAssemblyDefinition;
+        public AssemblyDefinition m_UNetAssemblyDefinition;
 
-        static bool m_DebugFlag = true;
+        bool m_DebugFlag = true;
 
-        public static bool fail;
-        public static bool generateLogErrors = false;
+        public bool fail;
+        public bool generateLogErrors = false;
 
         // this is used to prevent stack overflows when generating serialization code when there are self-referencing types.
         // All the utility classes use GetWriteFunc() to generate serialization code, so the recursion check is implemented there instead of in each utility class.
         // A NetworkBehaviour with the max SyncVars (32) can legitimately increment this value to 65 - so max must be higher than that
         const int MaxRecursionCount = 128;
-        static int s_RecursionCount;
-        public static void ResetRecursionCount()
+        int s_RecursionCount;
+
+        public Weaver() { }
+        public void ResetRecursionCount()
         {
             s_RecursionCount = 0;
         }
 
-        public static bool CanBeResolved(TypeReference parent)
+        public bool CanBeResolved(TypeReference parent)
         {
             while (parent != null)
             {
@@ -254,7 +256,7 @@ namespace Unity.UNetWeaver
             return true;
         }
 
-        public static bool IsArrayType(TypeReference variable)
+        public bool IsArrayType(TypeReference variable)
         {
             if ((variable.IsArray && ((ArrayType)variable).ElementType.IsArray) || // jagged array
                 (variable.IsArray && ((ArrayType)variable).Rank > 1)) // multidimensional array
@@ -262,7 +264,7 @@ namespace Unity.UNetWeaver
             return true;
         }
 
-        public static void DLog(TypeDefinition td, string fmt, params object[] args)
+        public void DLog(TypeDefinition td, string fmt, params object[] args)
         {
             if (!m_DebugFlag)
                 return;
@@ -270,7 +272,7 @@ namespace Unity.UNetWeaver
             Console.WriteLine("[" + td.Name + "] " + String.Format(fmt, args));
         }
 
-        public static int GetSyncVarStart(string className)
+        public int GetSyncVarStart(string className)
         {
             if (lists.numSyncVars.ContainsKey(className))
             {
@@ -281,12 +283,12 @@ namespace Unity.UNetWeaver
             return 0;
         }
 
-        public static void SetNumSyncVars(string className, int num)
+        public void SetNumSyncVars(string className, int num)
         {
             lists.numSyncVars[className] = num;
         }
 
-        public static MethodReference GetWriteFunc(TypeReference variable)
+        public MethodReference GetWriteFunc(TypeReference variable)
         {
             if (s_RecursionCount++ > MaxRecursionCount)
             {
@@ -342,16 +344,16 @@ namespace Unity.UNetWeaver
             return newWriterFunc;
         }
 
-        static public void RegisterWriteFunc(string name, MethodDefinition newWriterFunc)
+        public void RegisterWriteFunc(string name, MethodDefinition newWriterFunc)
         {
             lists.writeFuncs[name] = newWriterFunc;
             lists.generatedWriteFunctions.Add(newWriterFunc);
 
-            ConfirmGeneratedCodeClass(scriptDef.MainModule);
+            ConfirmGeneratedCodeClass(m_ScriptDef.MainModule);
             lists.generateContainerClass.Methods.Add(newWriterFunc);
         }
 
-        public static MethodReference GetReadByReferenceFunc(TypeReference variable)
+        public MethodReference GetReadByReferenceFunc(TypeReference variable)
         {
             if (lists.readByReferenceFuncs.ContainsKey(variable.FullName))
             {
@@ -360,7 +362,7 @@ namespace Unity.UNetWeaver
             return null;
         }
 
-        public static MethodReference GetReadFunc(TypeReference variable)
+        public MethodReference GetReadFunc(TypeReference variable)
         {
             if (lists.readFuncs.ContainsKey(variable.FullName))
             {
@@ -416,25 +418,25 @@ namespace Unity.UNetWeaver
             return newReaderFunc;
         }
 
-        static public void RegisterReadByReferenceFunc(string name, MethodDefinition newReaderFunc)
+        public void RegisterReadByReferenceFunc(string name, MethodDefinition newReaderFunc)
         {
             lists.readByReferenceFuncs[name] = newReaderFunc;
             lists.generatedReadFunctions.Add(newReaderFunc);
 
-            ConfirmGeneratedCodeClass(scriptDef.MainModule);
+            ConfirmGeneratedCodeClass(m_ScriptDef.MainModule);
             lists.generateContainerClass.Methods.Add(newReaderFunc);
         }
 
-        static public void RegisterReadFunc(string name, MethodDefinition newReaderFunc)
+        public void RegisterReadFunc(string name, MethodDefinition newReaderFunc)
         {
             lists.readFuncs[name] = newReaderFunc;
             lists.generatedReadFunctions.Add(newReaderFunc);
 
-            ConfirmGeneratedCodeClass(scriptDef.MainModule);
+            ConfirmGeneratedCodeClass(m_ScriptDef.MainModule);
             lists.generateContainerClass.Methods.Add(newReaderFunc);
         }
 
-        static MethodDefinition GenerateArrayReadFunc(TypeReference variable, MethodReference elementReadFunc)
+        MethodDefinition GenerateArrayReadFunc(TypeReference variable, MethodReference elementReadFunc)
         {
             if (!IsArrayType(variable))
             {
@@ -458,7 +460,7 @@ namespace Unity.UNetWeaver
                 MethodAttributes.HideBySig,
                 variable);
 
-            readerFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, scriptDef.MainModule.ImportReference(NetworkReaderType)));
+            readerFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, m_ScriptDef.MainModule.ImportReference(NetworkReaderType)));
 
             readerFunc.Body.Variables.Add(new VariableDefinition(int32Type));
             readerFunc.Body.Variables.Add(new VariableDefinition(variable));
@@ -517,7 +519,7 @@ namespace Unity.UNetWeaver
             return readerFunc;
         }
 
-        static MethodDefinition GenerateArrayWriteFunc(TypeReference variable, MethodReference elementWriteFunc)
+        MethodDefinition GenerateArrayWriteFunc(TypeReference variable, MethodReference elementWriteFunc)
         {
             if (!IsArrayType(variable))
             {
@@ -541,8 +543,8 @@ namespace Unity.UNetWeaver
                 MethodAttributes.HideBySig,
                 voidType);
 
-            writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, scriptDef.MainModule.ImportReference(NetworkWriterType)));
-            writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, scriptDef.MainModule.ImportReference(variable)));
+            writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, m_ScriptDef.MainModule.ImportReference(NetworkWriterType)));
+            writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, m_ScriptDef.MainModule.ImportReference(variable)));
 
             writerFunc.Body.Variables.Add(new VariableDefinition(uint16Type));
             writerFunc.Body.Variables.Add(new VariableDefinition(uint16Type));
@@ -606,7 +608,7 @@ namespace Unity.UNetWeaver
             return writerFunc;
         }
 
-        static MethodDefinition GenerateWriterFunction(TypeReference variable)
+        MethodDefinition GenerateWriterFunction(TypeReference variable)
         {
             if (!IsValidTypeToGenerate(variable.Resolve()))
             {
@@ -629,8 +631,8 @@ namespace Unity.UNetWeaver
                 MethodAttributes.HideBySig,
                 voidType);
 
-            writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, scriptDef.MainModule.ImportReference(NetworkWriterType)));
-            writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, scriptDef.MainModule.ImportReference(variable)));
+            writerFunc.Parameters.Add(new ParameterDefinition("writer", ParameterAttributes.None, m_ScriptDef.MainModule.ImportReference(NetworkWriterType)));
+            writerFunc.Parameters.Add(new ParameterDefinition("value", ParameterAttributes.None, m_ScriptDef.MainModule.ImportReference(variable)));
 
             ILProcessor worker = writerFunc.Body.GetILProcessor();
 
@@ -672,13 +674,13 @@ namespace Unity.UNetWeaver
             }
             if (fields == 0)
             {
-                Log.Warning("The class / struct " + variable.Name + " has no public or non-static fields to serialize");
+                Log.Warning("The class / struct " + variable.Name + " has no public or non-fields to serialize");
             }
             worker.Append(worker.Create(OpCodes.Ret));
             return writerFunc;
         }
 
-        static MethodDefinition GenerateReadFunction(TypeReference variable)
+        MethodDefinition GenerateReadFunction(TypeReference variable)
         {
             if (!IsValidTypeToGenerate(variable.Resolve()))
             {
@@ -706,7 +708,7 @@ namespace Unity.UNetWeaver
             readerFunc.Body.Variables.Add(new VariableDefinition(variable));
             readerFunc.Body.InitLocals = true;
 
-            readerFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, scriptDef.MainModule.ImportReference(NetworkReaderType)));
+            readerFunc.Parameters.Add(new ParameterDefinition("reader", ParameterAttributes.None, m_ScriptDef.MainModule.ImportReference(NetworkReaderType)));
 
             ILProcessor worker = readerFunc.Body.GetILProcessor();
 
@@ -765,7 +767,7 @@ namespace Unity.UNetWeaver
             }
             if (fields == 0)
             {
-                Log.Warning("The class / struct " + variable.Name + " has no public or non-static fields to serialize");
+                Log.Warning("The class / struct " + variable.Name + " has no public or non-fields to serialize");
             }
 
             worker.Append(worker.Create(OpCodes.Ldloc_0));
@@ -773,7 +775,7 @@ namespace Unity.UNetWeaver
             return readerFunc;
         }
 
-        static Instruction GetEventLoadInstruction(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, int iCount, FieldReference foundEventField)
+        Instruction GetEventLoadInstruction(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, int iCount, FieldReference foundEventField)
         {
             // go backwards until find a ldfld instruction for this event field
             while (iCount > 0)
@@ -792,7 +794,7 @@ namespace Unity.UNetWeaver
             return null;
         }
 
-        static void ProcessInstructionMethod(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, Instruction instr, MethodReference opMethodRef, int iCount)
+        void ProcessInstructionMethod(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, Instruction instr, MethodReference opMethodRef, int iCount)
         {
             //DLog(td, "ProcessInstructionMethod " + opMethod.Name);
             if (opMethodRef.Name == "Invoke")
@@ -846,7 +848,7 @@ namespace Unity.UNetWeaver
             }
         }
 
-        static void ConfirmGeneratedCodeClass(ModuleDefinition moduleDef)
+        void ConfirmGeneratedCodeClass(ModuleDefinition moduleDef)
         {
             if (lists.generateContainerClass == null)
             {
@@ -864,7 +866,7 @@ namespace Unity.UNetWeaver
             }
         }
 
-        static void ProcessInstructionField(TypeDefinition td, MethodDefinition md, Instruction i, FieldDefinition opField)
+        void ProcessInstructionField(TypeDefinition td, MethodDefinition md, Instruction i, FieldDefinition opField)
         {
             // dont replace property call sites in constructors or deserialize
             if (md.Name == ".ctor" || md.Name == "OnDeserialize")
@@ -886,7 +888,7 @@ namespace Unity.UNetWeaver
             }
         }
 
-        static void ProcessInstruction(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, Instruction i, int iCount)
+        void ProcessInstruction(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, Instruction i, int iCount)
         {
             if (i.OpCode == OpCodes.Call || i.OpCode == OpCodes.Callvirt)
             {
@@ -909,7 +911,7 @@ namespace Unity.UNetWeaver
         }
 
         // this is required to early-out from a function with "ref" or "out" parameters
-        static void InjectGuardParameters(MethodDefinition md, ILProcessor worker, Instruction top)
+        void InjectGuardParameters(MethodDefinition md, ILProcessor worker, Instruction top)
         {
             int offset = md.Resolve().IsStatic ? 0 : 1;
             for (int index = 0; index < md.Parameters.Count; index++)
@@ -940,7 +942,7 @@ namespace Unity.UNetWeaver
         }
 
         // this is required to early-out from a function with a return value.
-        static void InjectGuardReturnValue(MethodDefinition md, ILProcessor worker, Instruction top)
+        void InjectGuardReturnValue(MethodDefinition md, ILProcessor worker, Instruction top)
         {
             if (md.ReturnType.FullName != voidType.FullName)
             {
@@ -960,7 +962,7 @@ namespace Unity.UNetWeaver
             }
         }
 
-        static void InjectServerGuard(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, bool logWarning)
+        void InjectServerGuard(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, bool logWarning)
         {
             if (!IsNetworkBehaviour(td))
             {
@@ -982,7 +984,7 @@ namespace Unity.UNetWeaver
             worker.InsertBefore(top, worker.Create(OpCodes.Ret));
         }
 
-        static void InjectClientGuard(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, bool logWarning)
+        void InjectClientGuard(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md, bool logWarning)
         {
             if (!IsNetworkBehaviour(td))
             {
@@ -1005,7 +1007,7 @@ namespace Unity.UNetWeaver
             worker.InsertBefore(top, worker.Create(OpCodes.Ret));
         }
 
-        static void ProcessSiteMethod(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md)
+        void ProcessSiteMethod(ModuleDefinition moduleDef, TypeDefinition td, MethodDefinition md)
         {
             // process all references to replaced members with properties
             //Weaver.DLog(td, "      ProcessSiteMethod " + md);
@@ -1057,7 +1059,7 @@ namespace Unity.UNetWeaver
             }
         }
 
-        static void ProcessSiteClass(ModuleDefinition moduleDef, TypeDefinition td)
+        void ProcessSiteClass(ModuleDefinition moduleDef, TypeDefinition td)
         {
             //Console.WriteLine("    ProcessSiteClass " + td);
             foreach (MethodDefinition md in td.Methods)
@@ -1071,7 +1073,7 @@ namespace Unity.UNetWeaver
             }
         }
 
-        static void ProcessSitesModule(ModuleDefinition moduleDef)
+        void ProcessSitesModule(ModuleDefinition moduleDef)
         {
             var startTime = System.DateTime.Now;
 
@@ -1086,47 +1088,47 @@ namespace Unity.UNetWeaver
             if (lists.generateContainerClass != null)
             {
                 moduleDef.Types.Add(lists.generateContainerClass);
-                scriptDef.MainModule.ImportReference(lists.generateContainerClass);
+                m_ScriptDef.MainModule.ImportReference(lists.generateContainerClass);
 
                 foreach (var f in lists.generatedReadFunctions)
                 {
-                    scriptDef.MainModule.ImportReference(f);
+                    m_ScriptDef.MainModule.ImportReference(f);
                 }
 
                 foreach (var f in lists.generatedWriteFunctions)
                 {
-                    scriptDef.MainModule.ImportReference(f);
+                    m_ScriptDef.MainModule.ImportReference(f);
                 }
             }
             Console.WriteLine("  ProcessSitesModule " + moduleDef.Name + " elapsed time:" + (System.DateTime.Now - startTime));
         }
 
-        static void ProcessPropertySites()
+        void ProcessPropertySites()
         {
-            ProcessSitesModule(scriptDef.MainModule);
+            ProcessSitesModule(m_ScriptDef.MainModule);
         }
 
-        static bool ProcessMessageType(TypeDefinition td)
+        bool ProcessMessageType(TypeDefinition td)
         {
-            var proc = new MessageClassProcessor(td);
+            var proc = new MessageClassProcessor(td, this);
             proc.Process();
             return true;
         }
 
-        static bool ProcessSyncListStructType(TypeDefinition td)
+        bool ProcessSyncListStructType(TypeDefinition td)
         {
-            var proc = new SyncListStructProcessor(td);
+            var proc = new SyncListStructProcessor(td, this);
             proc.Process();
             return true;
         }
 
-        static void ProcessMonoBehaviourType(TypeDefinition td)
+        void ProcessMonoBehaviourType(TypeDefinition td)
         {
-            var proc = new MonoBehaviourProcessor(td);
+            var proc = new MonoBehaviourProcessor(td, this);
             proc.Process();
         }
 
-        static bool ProcessNetworkBehaviourType(TypeDefinition td)
+        bool ProcessNetworkBehaviourType(TypeDefinition td)
         {
             foreach (var md in td.Resolve().Methods)
             {
@@ -1138,12 +1140,12 @@ namespace Unity.UNetWeaver
             }
             DLog(td, "Found NetworkBehaviour " + td.FullName);
 
-            NetworkBehaviourProcessor proc = new NetworkBehaviourProcessor(td);
+            NetworkBehaviourProcessor proc = new NetworkBehaviourProcessor(td, this);
             proc.Process();
             return true;
         }
 
-        public static MethodReference ResolveMethod(TypeReference t, string name)
+        public MethodReference ResolveMethod(TypeReference t, string name)
         {
             //Console.WriteLine("ResolveMethod " + t.ToString () + " " + name);
             if (t == null)
@@ -1156,7 +1158,7 @@ namespace Unity.UNetWeaver
             {
                 if (methodRef.Name == name)
                 {
-                    return scriptDef.MainModule.ImportReference(methodRef);
+                    return m_ScriptDef.MainModule.ImportReference(methodRef);
                 }
             }
             Log.Error("ResolveMethod failed " + t.Name + "::" + name + " " + t.Resolve());
@@ -1171,7 +1173,7 @@ namespace Unity.UNetWeaver
             return null;
         }
 
-        static MethodReference ResolveMethodWithArg(TypeReference t, string name, TypeReference argType)
+        MethodReference ResolveMethodWithArg(TypeReference t, string name, TypeReference argType)
         {
             foreach (var methodRef in t.Resolve().Methods)
             {
@@ -1181,7 +1183,7 @@ namespace Unity.UNetWeaver
                     {
                         if (methodRef.Parameters[0].ParameterType.FullName == argType.FullName)
                         {
-                            return scriptDef.MainModule.ImportReference(methodRef);
+                            return m_ScriptDef.MainModule.ImportReference(methodRef);
                         }
                     }
                 }
@@ -1191,7 +1193,7 @@ namespace Unity.UNetWeaver
             return null;
         }
 
-        static MethodDefinition ResolveDefaultPublicCtor(TypeReference variable)
+        MethodDefinition ResolveDefaultPublicCtor(TypeReference variable)
         {
             foreach (MethodDefinition methodRef in variable.Resolve().Methods)
             {
@@ -1205,7 +1207,7 @@ namespace Unity.UNetWeaver
             return null;
         }
 
-        static GenericInstanceMethod ResolveMethodGeneric(TypeReference t, string name, TypeReference genericType)
+        GenericInstanceMethod ResolveMethodGeneric(TypeReference t, string name, TypeReference genericType)
         {
             foreach (var methodRef in t.Resolve().Methods)
             {
@@ -1215,7 +1217,7 @@ namespace Unity.UNetWeaver
                     {
                         if (methodRef.GenericParameters.Count == 1)
                         {
-                            MethodReference tmp = scriptDef.MainModule.ImportReference(methodRef);
+                            MethodReference tmp = m_ScriptDef.MainModule.ImportReference(methodRef);
                             GenericInstanceMethod gm = new GenericInstanceMethod(tmp);
                             gm.GenericArguments.Add(genericType);
                             if (gm.GenericArguments[0].FullName == genericType.FullName)
@@ -1232,31 +1234,31 @@ namespace Unity.UNetWeaver
             return null;
         }
 
-        public static FieldReference ResolveField(TypeReference t, string name)
+        public FieldReference ResolveField(TypeReference t, string name)
         {
             foreach (FieldDefinition fd in t.Resolve().Fields)
             {
                 if (fd.Name == name)
                 {
-                    return scriptDef.MainModule.ImportReference(fd);
+                    return m_ScriptDef.MainModule.ImportReference(fd);
                 }
             }
             return null;
         }
 
-        public static MethodReference ResolveProperty(TypeReference t, string name)
+        public MethodReference ResolveProperty(TypeReference t, string name)
         {
             foreach (var fd in t.Resolve().Properties)
             {
                 if (fd.Name == name)
                 {
-                    return scriptDef.MainModule.ImportReference(fd.GetMethod);
+                    return m_ScriptDef.MainModule.ImportReference(fd.GetMethod);
                 }
             }
             return null;
         }
 
-        static void SetupUnityTypes()
+        void SetupUnityTypes()
         {
             vector2Type = m_UnityAssemblyDefinition.MainModule.GetType("UnityEngine.Vector2");
             vector3Type = m_UnityAssemblyDefinition.MainModule.GetType("UnityEngine.Vector3");
@@ -1292,23 +1294,23 @@ namespace Unity.UNetWeaver
             SyncListStringType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.SyncListString");
         }
 
-        static void SetupCorLib()
+        void SetupCorLib()
         {
             var name = AssemblyNameReference.Parse("mscorlib");
             var parameters = new ReaderParameters
             {
-                AssemblyResolver = scriptDef.MainModule.AssemblyResolver,
+                AssemblyResolver = m_ScriptDef.MainModule.AssemblyResolver,
             };
-            corLib = scriptDef.MainModule.AssemblyResolver.Resolve(name, parameters).MainModule;
+            m_CorLib = m_ScriptDef.MainModule.AssemblyResolver.Resolve(name, parameters).MainModule;
         }
 
-        static TypeReference ImportCorLibType(string fullName)
+        TypeReference ImportCorLibType(string fullName)
         {
-            var type = corLib.GetType(fullName) ?? corLib.ExportedTypes.First(t => t.FullName == fullName).Resolve();
-            return scriptDef.MainModule.ImportReference(type);
+            var type = m_CorLib.GetType(fullName) ?? m_CorLib.ExportedTypes.First(t => t.FullName == fullName).Resolve();
+            return m_ScriptDef.MainModule.ImportReference(type);
         }
 
-        static void SetupTargetTypes()
+        void SetupTargetTypes()
         {
             // system types
             SetupCorLib();
@@ -1379,13 +1381,13 @@ namespace Unity.UNetWeaver
 
             CmdDelegateReference = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.NetworkBehaviour/CmdDelegate");
             CmdDelegateConstructor = ResolveMethod(CmdDelegateReference, ".ctor");
-            scriptDef.MainModule.ImportReference(gameObjectType);
-            scriptDef.MainModule.ImportReference(transformType);
+            m_ScriptDef.MainModule.ImportReference(gameObjectType);
+            m_ScriptDef.MainModule.ImportReference(transformType);
 
             TypeReference unetViewTmp = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.NetworkIdentity");
-            NetworkIdentityType = scriptDef.MainModule.ImportReference(unetViewTmp);
+            NetworkIdentityType = m_ScriptDef.MainModule.ImportReference(unetViewTmp);
 
-            NetworkInstanceIdType = scriptDef.MainModule.ImportReference(NetworkInstanceIdType);
+            NetworkInstanceIdType = m_ScriptDef.MainModule.ImportReference(NetworkInstanceIdType);
 
             SyncListFloatReadType = ResolveMethod(SyncListFloatType, "ReadReference");
             SyncListIntReadType = ResolveMethod(SyncListIntType, "ReadReference");
@@ -1401,20 +1403,20 @@ namespace Unity.UNetWeaver
 
 
             NetworkBehaviourType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.NetworkBehaviour");
-            NetworkBehaviourType2 = scriptDef.MainModule.ImportReference(NetworkBehaviourType);
+            NetworkBehaviourType2 = m_ScriptDef.MainModule.ImportReference(NetworkBehaviourType);
             NetworkConnectionType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.NetworkConnection");
 
             MonoBehaviourType = m_UnityAssemblyDefinition.MainModule.GetType("UnityEngine.MonoBehaviour");
             ScriptableObjectType = m_UnityAssemblyDefinition.MainModule.GetType("UnityEngine.ScriptableObject");
 
             NetworkConnectionType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.NetworkConnection");
-            NetworkConnectionType = scriptDef.MainModule.ImportReference(NetworkConnectionType);
+            NetworkConnectionType = m_ScriptDef.MainModule.ImportReference(NetworkConnectionType);
 
             ULocalConnectionToServerType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.ULocalConnectionToServer");
-            ULocalConnectionToServerType = scriptDef.MainModule.ImportReference(ULocalConnectionToServerType);
+            ULocalConnectionToServerType = m_ScriptDef.MainModule.ImportReference(ULocalConnectionToServerType);
 
             ULocalConnectionToClientType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.ULocalConnectionToClient");
-            ULocalConnectionToClientType = scriptDef.MainModule.ImportReference(ULocalConnectionToClientType);
+            ULocalConnectionToClientType = m_ScriptDef.MainModule.ImportReference(ULocalConnectionToClientType);
 
             MessageBaseType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.MessageBase");
             SyncListStructType = m_UNetAssemblyDefinition.MainModule.GetType("UnityEngine.Networking.SyncListStruct`1");
@@ -1454,13 +1456,13 @@ namespace Unity.UNetWeaver
             sendTargetRpcInternal = ResolveMethod(NetworkBehaviourType, "SendTargetRPCInternal");
             sendEventInternal = ResolveMethod(NetworkBehaviourType, "SendEventInternal");
 
-            SyncListType = scriptDef.MainModule.ImportReference(SyncListType);
+            SyncListType = m_ScriptDef.MainModule.ImportReference(SyncListType);
             SyncListInitBehaviourReference = ResolveMethod(SyncListType, "InitializeBehaviour");
             SyncListInitHandleMsg = ResolveMethod(SyncListType, "HandleMsg");
             SyncListClear = ResolveMethod(SyncListType, "Clear");
         }
 
-        static void SetupReadFunctions()
+        void SetupReadFunctions()
         {
             lists.readFuncs = new Dictionary<string, MethodReference>
             {
@@ -1507,7 +1509,7 @@ namespace Unity.UNetWeaver
             };
         }
 
-        static void SetupWriteFunctions()
+        void SetupWriteFunctions()
         {
             lists.writeFuncs = new Dictionary<string, MethodReference>
             {
@@ -1550,7 +1552,7 @@ namespace Unity.UNetWeaver
             };
         }
 
-        static bool IsNetworkBehaviour(TypeDefinition td)
+        bool IsNetworkBehaviour(TypeDefinition td)
         {
             if (!td.IsClass)
                 return false;
@@ -1577,7 +1579,7 @@ namespace Unity.UNetWeaver
             return false;
         }
 
-        static public bool IsDerivedFrom(TypeDefinition td, TypeReference baseClass)
+        public bool IsDerivedFrom(TypeDefinition td, TypeReference baseClass)
         {
             if (!td.IsClass)
                 return false;
@@ -1613,12 +1615,12 @@ namespace Unity.UNetWeaver
             return false;
         }
 
-        public static bool IsValidTypeToGenerate(TypeDefinition variable)
+        public bool IsValidTypeToGenerate(TypeDefinition variable)
         {
             // a valid type is a simple class or struct. so we generate only code for types we dont know, and if they are not inside
             // this assembly it must mean that we are trying to serialize a variable outside our scope. and this will fail.
 
-            string assembly = scriptDef.MainModule.Name;
+            string assembly = m_ScriptDef.MainModule.Name;
             if (variable.Module.Name == assembly)
                 return true;
 
@@ -1630,7 +1632,7 @@ namespace Unity.UNetWeaver
             return false;
         }
 
-        static void CheckMonoBehaviour(TypeDefinition td)
+        void CheckMonoBehaviour(TypeDefinition td)
         {
             if (IsDerivedFrom(td, MonoBehaviourType))
             {
@@ -1638,7 +1640,7 @@ namespace Unity.UNetWeaver
             }
         }
 
-        static bool CheckNetworkBehaviour(TypeDefinition td)
+        bool CheckNetworkBehaviour(TypeDefinition td)
         {
             if (!td.IsClass)
                 return false;
@@ -1681,7 +1683,7 @@ namespace Unity.UNetWeaver
             return didWork;
         }
 
-        static bool CheckMessageBase(TypeDefinition td)
+        bool CheckMessageBase(TypeDefinition td)
         {
             if (!td.IsClass)
                 return false;
@@ -1718,7 +1720,7 @@ namespace Unity.UNetWeaver
             return didWork;
         }
 
-        static bool CheckSyncListStruct(TypeDefinition td)
+        bool CheckSyncListStruct(TypeDefinition td)
         {
             if (!td.IsClass)
                 return false;
@@ -1755,18 +1757,21 @@ namespace Unity.UNetWeaver
             return didWork;
         }
 
-        static bool Weave(string assName, IEnumerable<string> dependencies, IAssemblyResolver assemblyResolver, string unityEngineDLLPath, string unityUNetDLLPath, string outputDir)
+        bool Weave(string assName, IEnumerable<string> dependencies, IAssemblyResolver assemblyResolver, string unityEngineDLLPath, string unityUNetDLLPath, string outputDir)
         {
             var readParams = Helpers.ReaderParameters(assName, dependencies, assemblyResolver, unityEngineDLLPath, unityUNetDLLPath);
 
             string pdbToDelete = null;
-            using (scriptDef = AssemblyDefinition.ReadAssembly(assName, readParams))
+            using (m_UnityAssemblyDefinition = AssemblyDefinition.ReadAssembly(unityEngineDLLPath))
+            using (m_ScriptDef = AssemblyDefinition.ReadAssembly(assName, readParams))
+            using (m_UNetAssemblyDefinition = AssemblyDefinition.ReadAssembly(unityUNetDLLPath))
             {
+                SetupUnityTypes();
                 SetupTargetTypes();
                 SetupReadFunctions();
                 SetupWriteFunctions();
 
-                ModuleDefinition moduleDefinition = scriptDef.MainModule;
+                ModuleDefinition moduleDefinition = m_ScriptDef.MainModule;
                 Console.WriteLine("Script Module: {0}", moduleDefinition.Name);
 
                 // Process each NetworkBehaviour
@@ -1794,8 +1799,8 @@ namespace Unity.UNetWeaver
                             }
                             catch (Exception ex)
                             {
-                                if (scriptDef.MainModule.SymbolReader != null)
-                                    scriptDef.MainModule.SymbolReader.Dispose();
+                                if (m_ScriptDef.MainModule.SymbolReader != null)
+                                    m_ScriptDef.MainModule.SymbolReader.Dispose();
                                 fail = true;
                                 throw ex;
                             }
@@ -1803,8 +1808,8 @@ namespace Unity.UNetWeaver
 
                         if (fail)
                         {
-                            if (scriptDef.MainModule.SymbolReader != null)
-                                scriptDef.MainModule.SymbolReader.Dispose();
+                            if (m_ScriptDef.MainModule.SymbolReader != null)
+                                m_ScriptDef.MainModule.SymbolReader.Dispose();
                             return false;
                         }
                     }
@@ -1829,8 +1834,8 @@ namespace Unity.UNetWeaver
                     catch (Exception e)
                     {
                         Log.Error("ProcessPropertySites exception: " + e);
-                        if (scriptDef.MainModule.SymbolReader != null)
-                            scriptDef.MainModule.SymbolReader.Dispose();
+                        if (m_ScriptDef.MainModule.SymbolReader != null)
+                            m_ScriptDef.MainModule.SymbolReader.Dispose();
                         return false;
                     }
 
@@ -1838,8 +1843,8 @@ namespace Unity.UNetWeaver
                     if (fail)
                     {
                         //Log.Error("Failed phase II.");
-                        if (scriptDef.MainModule.SymbolReader != null)
-                            scriptDef.MainModule.SymbolReader.Dispose();
+                        if (m_ScriptDef.MainModule.SymbolReader != null)
+                            m_ScriptDef.MainModule.SymbolReader.Dispose();
                         return false;
                     }
 
@@ -1861,11 +1866,11 @@ namespace Unity.UNetWeaver
                         pdbToDelete = Path.ChangeExtension(assName, ".pdb");
                     }
                     
-                    scriptDef.Write(writeParams);
+                    m_ScriptDef.Write(writeParams);
                 }
                 
-                if (scriptDef.MainModule.SymbolReader != null)
-                    scriptDef.MainModule.SymbolReader.Dispose();
+                if (m_ScriptDef.MainModule.SymbolReader != null)
+                    m_ScriptDef.MainModule.SymbolReader.Dispose();
             }
 
             if (pdbToDelete != null)
@@ -1874,15 +1879,10 @@ namespace Unity.UNetWeaver
             return true;
         }
 
-        public static bool WeaveAssemblies(IEnumerable<string> assemblies, IEnumerable<string> dependencies, IAssemblyResolver assemblyResolver, string outputDir, string unityEngineDLLPath, string unityUNetDLLPath)
+        public bool WeaveAssemblies(IEnumerable<string> assemblies, IEnumerable<string> dependencies, IAssemblyResolver assemblyResolver, string outputDir, string unityEngineDLLPath, string unityUNetDLLPath)
         {
             fail = false;
             lists = new WeaverLists();
-
-            m_UnityAssemblyDefinition = AssemblyDefinition.ReadAssembly(unityEngineDLLPath);
-            m_UNetAssemblyDefinition = AssemblyDefinition.ReadAssembly(unityUNetDLLPath);
-
-            SetupUnityTypes();
 
             try
             {
@@ -1899,7 +1899,7 @@ namespace Unity.UNetWeaver
                 Log.Error("Exception :" + e);
                 return false;
             }
-            corLib = null;
+            //corLib = null;
             return true;
         }
     }

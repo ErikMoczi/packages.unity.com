@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2] - 2019-03-18
+
+### Changed
+- Fixed issue with population of Syncvar variable on a class derived from a networkbehaviour base class (case 1066429)
+- Fixed issue with IsDynamic not working on .net 3.5 profile (use something else)]
+- Fixed file lock error when building under certain conditions (case 1115492)
+ 
 ## [1.0.1] - 2019-02-14
 
 ### Changed

@@ -37,7 +37,7 @@ namespace UnityEditor.Networking
             {
                 return;
             }
-            
+
             // Should not run on own assembly
             if (targetAssembly.Contains(k_HlapiRuntimeAssemblyName))
             {
@@ -101,7 +101,7 @@ namespace UnityEditor.Networking
                 {
                     try
                     {
-                        if (!assembly.IsDynamic)
+                        if (!(assembly.ManifestModule is System.Reflection.Emit.ModuleBuilder))
                             depenencyPaths.Add(Path.GetDirectoryName(Assembly.Load(assembly.GetName().Name).Location));
                     }
                     catch (FileNotFoundException) { }

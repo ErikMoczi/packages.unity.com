@@ -31,7 +31,8 @@ namespace Unity.UNetWeaver
             CheckAssemblies(assemblies);
             Log.WarningMethod = printWarning;
             Log.ErrorMethod = printError;
-            return Weaver.WeaveAssemblies(assemblies, extraAssemblyPaths, null, outputDirectory, unityEngine, unetDLL);
+            Weaver weaver = new Weaver();
+            return weaver.WeaveAssemblies(assemblies, extraAssemblyPaths, null, outputDirectory, unityEngine, unetDLL);
         }
 
         private static void CheckDLLPath(string path)
