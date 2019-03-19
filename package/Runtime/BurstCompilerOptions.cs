@@ -6,6 +6,9 @@ using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
+#if !BURST_INTERNAL
+using Unity.Jobs.LowLevel.Unsafe;
+#endif
 
 #if BURST_INTERNAL
 namespace Burst.Compiler.IL
@@ -115,6 +118,10 @@ namespace Unity.Burst
             {
                 bool changed = _enableBurstCompilation != value;
                _enableBurstCompilation = value;
+                // We need also to disable jobs as functions are being cached by the job system
+                // and when we ask for disabling burst, we are also asking the job system
+                // to no longer use the cached functions
+                JobsUtility.JobCompilerEnabled = value;
                if (changed) OnOptionsChanged();
             }
         }

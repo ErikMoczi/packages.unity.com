@@ -1,12 +1,17 @@
 # Changelog
 
+## [1.0.0-preview.6] - 2019-03-17
+
+- Fix invalid codegen with deep nested conditionals
+- Fix issue with burst menu "Enable Compilation" to also disable cache jobs
+- Improve handling of PS4 toolchain detection
+
 ## [1.0.0-preview.5] - 2019-03-16
 
 - Fix regression with JIT caching that was not properly recompiling changed methods
 - Remove NativeDumpFlags from public API
 - Remove usage of PropertyChangingEventHandler to avoid conflicts with custom Newtonsoft.Json
 - Fix issue when a job could implement multiple job interfaces (IJob, IJobParallelFor...) but only the first one would be compiled
-- Improve display of job names in the inspector by including the type of job (IJob, IJobParallelFor...) and sorted alphabetically
 
 ## [1.0.0-preview.4] - 2019-03-15
 
